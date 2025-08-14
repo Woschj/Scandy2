@@ -659,9 +659,28 @@ def send_email(to_email, subject, html_content=None, text_content=None, from_nam
 
 @ensure_app_context
 def send_auftrag_confirmation_email(ticket_data, auftrag_details, recipient_email):
-    """Sendet eine Bestätigungs-E-Mail für einen neuen Auftrag"""
+    """Sendet eine Bestätigungs-E-Mail für einen neuen Auftrag (unterstützt Admin-Vorlagen)."""
     try:
-        # E-Mail-Einstellungen laden
+        # Vorlage bevorzugt verwenden
+        try:
+            from app.services.admin_email_templates_service import AdminEmailTemplatesService
+            rendered = AdminEmailTemplatesService.render_template_by_key('auftrag_confirmation', {
+                'ticket': ticket_data,
+                'auftrag': auftrag_details,
+            })
+            default_subject = f"Auftragsbestätigung - {ticket_data.get('ticket_number', 'Neuer Auftrag')}"
+            if rendered and (rendered.get('html_content') or rendered.get('text_content')):
+                return send_email(
+                    to_email=recipient_email,
+                    subject=rendered.get('subject') or default_subject,
+                    html_content=rendered.get('html_content'),
+                    text_content=rendered.get('text_content'),
+                    from_name="BTZ Köln - Auftragssystem"
+                )
+        except Exception as _tpl_err:
+            logger.warning(f"E-Mail-Vorlage 'auftrag_confirmation' nicht verfügbar/nutzbar: {_tpl_err}")
+
+        # Fallback: bestehendes statisches Template
         email_config = get_email_config()
         if not email_config:
             logger.error("E-Mail-Konfiguration nicht verfügbar")
@@ -853,6 +872,24 @@ def send_password_mail(recipient, password):
 @ensure_app_context
 def send_password_reset_mail(recipient, password=None, reset_link=None):
     subject = 'Scandy Passwort-Reset'
+    # Versuch über Admin-Vorlage (Key: password_reset)
+    try:
+        from app.services.admin_email_templates_service import AdminEmailTemplatesService
+        rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
+            'reset_link': reset_link,
+            'password': password,
+            'recipient': recipient,
+        })
+        if rendered and (rendered.get('html_content') or rendered.get('text_content')):
+            subj = rendered.get('subject') or subject
+            success = _send_email_direct_html(recipient, subj, rendered.get('html_content'), rendered.get('text_content'), mail_type="reset")
+            if success:
+                logger.info(f"Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Vorlage)")
+            return success
+    except Exception as _tpl_err:
+        logger.warning(f"E-Mail-Vorlage 'password_reset' nicht verfügbar/nutzbar: {_tpl_err}")
+
+    # Fallback: bisheriger Textkörper
     if reset_link:
         body = f"Sie haben einen Passwort-Reset angefordert.\nBitte klicken Sie auf folgenden Link, um Ihr Passwort zurückzusetzen:\n{reset_link}\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
     elif password:

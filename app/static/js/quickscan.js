@@ -348,6 +348,7 @@ const QuickScan = {
         }
 
         if (upperBarcode === 'VIBE') {
+            if (window.location.pathname.startsWith('/mobile/quickscan')) { this.keyBuffer=''; this.updateDisplay(this.keyBuffer, input.id === 'workerScanInput'); return; }
             const overlay = document.createElement('div');
             overlay.className = 'zebra-overlay';
             document.body.appendChild(overlay);
@@ -379,6 +380,7 @@ const QuickScan = {
         }
 
         if (upperBarcode === 'AIIO') {
+            if (window.location.pathname.startsWith('/mobile/quickscan')) { this.keyBuffer=''; this.updateDisplay(this.keyBuffer, input.id === 'workerScanInput'); return; }
             const overlay = document.createElement('div');
             overlay.className = 'zebra-overlay';
             document.body.appendChild(overlay);
@@ -825,6 +827,10 @@ const QuickScan = {
     },
 
     showDancingEmojis() {
+        if (window.location.pathname.startsWith('/mobile/quickscan')) {
+            // Easter-Eggs auf Mobilseite deaktivieren
+            return;
+        }
         // Vorhandene Zebras entfernen, falls welche da sind
         document.querySelectorAll('.dancing-zebra').forEach(el => el.remove());
         

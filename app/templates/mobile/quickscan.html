@@ -7,183 +7,65 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Scandy Quickscan">
-    
+
     <title>Scandy Quickscan</title>
-    
-    <!-- PWA Manifest -->
+
     <link rel="manifest" href="{{ url_for('static', filename='manifest-quickscan.json') }}">
-    
-    <!-- Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/scandy-favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/scandy-favicon.png') }}">
-    
-    <!-- Styles -->
-    <!-- Inter Font (wie im Hauptlayout) -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quickscan.css') }}">
-    
+
     <style nonce="{{ csp_nonce }}">
-        /* Mobile-spezifische Styles */
-        body {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            overflow-x: hidden;
-        }
-        
+        body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; overflow-x: hidden; }
         .mobile-container { min-height: 100vh; background: var(--fallback-b2, #e5e7eb); }
-        
-        .quickscan-card { border-radius: 0; background: var(--fallback-b1, #fff); }
-        
-        .scan-button {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-            border: none;
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .scan-button:active {
-            transform: scale(0.95);
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-        }
-        
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        .status-online { background-color: #10b981; }
-        .status-offline { background-color: #ef4444; }
-        
-        /* Vollbild-Modus für PWA */
-        @media (display-mode: standalone) {
-            .mobile-container {
-                padding-top: env(safe-area-inset-top);
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-        }
+        @media (display-mode: standalone) { .mobile-container { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); } }
     </style>
 </head>
 <body>
     <div class="mobile-container flex items-stretch p-0">
-        <div class="quickscan-card w-full max-w-md mx-auto">
-            <div class="p-3">
-                <!-- Minimaler Header (ohne großes Logo) -->
-                <div class="flex items-center justify-between mb-2">
-                    <div class="text-sm font-semibold text-gray-700">QuickScan</div>
+        <div class="w-full max-w-md mx-auto">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="text-lg font-semibold">QuickScan</h1>
                     <span class="text-xs text-gray-500">mobil</span>
                 </div>
 
-                <!-- Login Form (falls nicht eingeloggt) -->
                 {% if not current_user.is_authenticated %}
                 <form method="POST" action="{{ url_for('mobile.login') }}" class="space-y-4">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
                     <div class="form-control">
-                        <input type="text" name="username" placeholder="Benutzername" 
-                               class="input input-bordered w-full" required autofocus>
+                        <input type="text" name="username" placeholder="Benutzername" class="input input-bordered w-full" required autofocus>
                     </div>
-                    
                     <div class="form-control">
-                        <input type="password" name="password" placeholder="Passwort" 
-                               class="input input-bordered w-full" required>
+                        <input type="password" name="password" placeholder="Passwort" class="input input-bordered w-full" required>
                     </div>
-                    
                     <button type="submit" class="btn btn-primary w-full">
-                        <i class="fas fa-sign-in-alt mr-2"></i>
-                        Anmelden
+                        <i class="fas fa-sign-in-alt mr-2"></i>Anmelden
                     </button>
                 </form>
-                
                 {% else %}
-                <!-- Quickscan Interface (funktional, kompakt) -->
-                <div class="space-y-3">
-                    <!-- Zwei Scan-Buttons oben (mit kleinen Zusammenfassungen) -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="scanItemBtn" class="btn btn-primary h-12 flex flex-col items-center justify-center text-sm" data-step="1">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-tools"></i>
-                                <span>Artikel</span>
-                            </div>
-                            <div id="itemSummary" class="text-[10px] opacity-80 leading-none">Tippen zum Scannen</div>
-                        </button>
-                        <button id="scanWorkerBtn" class="btn btn-neutral h-12 flex flex-col items-center justify-center text-sm" data-step="2">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-id-badge"></i>
-                                <span>Mitarbeiter</span>
-                            </div>
-                            <div id="workerSummary" class="text-[10px] opacity-80 leading-none">Tippen zum Scannen</div>
-                        </button>
-                    </div>
 
-                    <!-- Kamera-Vorschau darunter -->
-                    <div class="relative w-full overflow-hidden rounded-xl shadow bg-black camera-container">
-                        <video id="cameraPreview" class="w-full h-full object-cover" autoplay playsinline muted></video>
-                        <!-- Overlay-Rahmen -->
-                        <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <div class="border-2 border-white/80 rounded-lg w-[78%] h-[62%] shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]"></div>
-                        </div>
-                        <!-- Kamera Controls -->
-                        <div class="absolute bottom-2 left-0 right-0 flex items-center justify-between px-3">
-                            <button id="toggleTorchBtn" class="btn btn-xs btn-ghost text-white">
-                                <i class="fas fa-bolt mr-1"></i> Licht
-                            </button>
-                            <div class="text-white text-xs opacity-80" id="scanHint">Tippe „Artikel/Mitarbeiter scannen“</div>
-                            <button id="switchCameraBtn" class="btn btn-xs btn-ghost text-white">
-                                <i class="fas fa-camera-rotate mr-1"></i> Kamera
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Aktionen unten -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="resetMobileQuickscan" class="btn">Zurücksetzen</button>
-                        <button id="confirmMobileQuickscan" class="btn btn-primary" disabled>
-                            <i class="fas fa-check mr-2"></i> Bestätigen
-                        </button>
-                    </div>
-
-                    <div class="divider text-xs">Angemeldet als {{ current_user.username }}</div>
-                     <a href="{{ url_for('mobile.logout') }}" class="btn btn-error btn-sm w-full">
-                         <i class="fas fa-sign-out-alt mr-2"></i> Abmelden
-                     </a>
-                 </div>
+                {% include 'mobile/quickscan_panel.html' %}
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Service Worker für PWA -->
     <script nonce="{{ csp_nonce }}">
-        // Service Worker registrieren
-        // Für Debug ggf. deaktivieren: Service Worker kann Layout-Caches halten
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-                regs.forEach(r => r.unregister());
-            });
-            // Zum Wiederaktivieren einfach obigen Block entfernen und folgendes nutzen:
-            // navigator.serviceWorker.register('/static/js/quickscan-sw.js?v=3')
+            navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(r => r.unregister()); });
         }
     </script>
-
-    <!-- Quickscan JavaScript -->
+    <!-- ZXing Fallback für Geräte ohne BarcodeDetector -->
+    <script nonce="{{ csp_nonce }}" src="https://unpkg.com/@zxing/browser@0.1.4/umd/index.min.js"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/quickscan.js') }}?v=2"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/scanner.js') }}?v=2"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/mobile-quickscan.js') }}?v=2"></script>
-    
-    <!-- Entfernt: Bottom Action Bar -->
-    
-    <!-- Mobile-spezifische Funktionen werden in mobile-quickscan.js initialisiert -->
 </body>
-</html> 
+</html>

@@ -19,6 +19,7 @@ from app.routes.backup_routes import bp as backup_bp
 from app.routes.ticket_history_routes import bp as ticket_history_bp
 from app.routes.canteen import bp as canteen_bp
 from app.routes.mobile import bp as mobile_bp
+from app.routes.admin_email_templates import bp as admin_email_templates_bp
 
 def init_app(app):
     """Registriert alle Blueprints mit ihren URL-Präfixen"""
@@ -41,8 +42,10 @@ def init_app(app):
     app.register_blueprint(ticket_history_bp)  # Ticket-History API
     app.register_blueprint(canteen_bp)  # Kantinenplan-Routen
     app.register_blueprint(mobile_bp)  # Mobile Quickscan-App
+    app.register_blueprint(admin_email_templates_bp)  # Admin E-Mail-Vorlagen
 
 __all__ = [
     'auth_bp', 'tools_bp', 'workers_bp', 'consumables_bp',
     'api_bp', 'admin_bp', 'quick_scan_bp', 'history_bp', 'main_bp', 'dashboard_bp', 'lending_bp', 'tickets_bp', 'setup_bp', 'jobs_bp', 'media_bp', 'backup_bp', 'ticket_history_bp', 'canteen_bp'
+    , 'admin_email_templates_bp'
 ]

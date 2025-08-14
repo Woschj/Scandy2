@@ -5005,14 +5005,26 @@ def email_settings():
                 else:
                     flash(f'E-Mail-Test fehlgeschlagen: {message}', 'error')
         
-        # Lade aktuelle Konfiguration
+        # Lade aktuelle Konfiguration und Vorlagen-Infos
         config = AdminEmailService.get_email_config()
+        try:
+            from app.services.admin_email_templates_service import AdminEmailTemplatesService
+            # Standardvorlagen sicherstellen (einmalig)
+            AdminEmailTemplatesService.ensure_default_templates()
+            templates = AdminEmailTemplatesService.list_templates()
+            mappings = AdminEmailTemplatesService.get_template_mappings()
+            # Mapping key -> template
+            templates_by_key = {t.get('key'): t for t in templates}
+        except Exception:
+            templates = []
+            mappings = {'auftrag_confirmation': 'auftrag_confirmation', 'password_reset': 'password_reset', 'user_welcome': 'user_welcome'}
+            templates_by_key = {}
         
         # Entferne das Passwort aus der Konfiguration für das Template
         if config and 'mail_password' in config:
             config['mail_password'] = ''  # Leeres Feld, da Passwort verschlüsselt ist
         
-        return render_template('admin/email_settings.html', config=config)
+        return render_template('admin/email_settings.html', config=config, templates=templates, mappings=mappings, templates_by_key=templates_by_key)
         
     except Exception as e:
         logger.error(f"Fehler bei E-Mail-Einstellungen: {e}")

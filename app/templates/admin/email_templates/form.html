@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ template and 'Vorlage bearbeiten' or 'Vorlage erstellen' }} - {{ system_name }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<style>
+.ql-editor { min-height: 220px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="card-title text-2xl">
+                    <i class="fas fa-file-code text-primary mr-2"></i>
+                    {{ template and 'Vorlage bearbeiten' or 'Neue E-Mail-Vorlage' }}
+                </h1>
+                <a href="{{ url_for('admin_email_templates.index') }}" class="btn">
+                    Zurück
+                </a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mb-4">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Name</span></label>
+                        <input type="text" class="input input-bordered" value="{{ (template and template.name) or '' }}" disabled>
+                        <input type="hidden" name="name" value="{{ (template and template.name) or '' }}">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Schlüssel (key)</span></label>
+                        <input type="text" class="input input-bordered" value="{{ (template and template.key) or '' }}" disabled>
+                        <input type="hidden" name="key" value="{{ (template and template.key) or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Betreff</span></label>
+                    <input type="text" name="subject" class="input input-bordered" value="{{ (template and template.subject) or '' }}">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">HTML-Inhalt</span></label>
+                        <div id="quillEditor" class="bg-base-100"></div>
+                        <textarea name="html_content" id="htmlContentField" class="hidden">{{ (template and template.html_content) or '' }}</textarea>
+                        <label class="label"><span class="label-text-alt">Formatieren Sie den Inhalt mit dem Editor. Der HTML-Code wird gespeichert.</span></label>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Text-Inhalt (Fallback)</span></label>
+                        <textarea name="text_content" class="textarea textarea-bordered min-h-[220px]" placeholder="Nur-Text Version">{{ (template and template.text_content) or '' }}</textarea>
+                        <label class="label"><span class="label-text-alt">Wird genutzt als Fallback für Clients ohne HTML.</span></label>
+                    </div>
+                </div>
+
+                {% if template %}
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <div>
+                            <i class="fas fa-info-circle"></i>
+                            <div>
+                                <h3 class="font-semibold">Verfügbare Platzhalter</h3>
+                                {% if template.key == 'auftrag_confirmation' %}
+                                <p class="text-sm">Kontextvariablen:</p>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>{{ '{{ ticket.ticket_number }}' }}, {{ '{{ ticket.title }}' }}, {{ '{{ ticket.category }}' }}, {{ '{{ ticket.priority }}' }}, {{ '{{ ticket.description }}' }}, {{ '{{ ticket.created_at }}' }}</li>
+                                    <li>{{ '{{ auftrag.auftraggeber_name }}' }}, {{ '{{ auftrag.bereich }}' }}</li>
+                                </ul>
+                                {% elif template.key == 'password_reset' %}
+                                <p class="text-sm">Kontextvariablen:</p>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>{{ '{{ username }}' }}, {{ '{{ reset_link }}' }}, {{ '{{ password }}' }}</li>
+                                </ul>
+                                {% elif template.key == 'user_welcome' %}
+                                <p class="text-sm">Kontextvariablen:</p>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>{{ '{{ firstname }}' }}, {{ '{{ username }}' }}, {{ '{{ password }}' }}, {{ '{{ login_url }}' }}</li>
+                                </ul>
+                                {% else %}
+                                <p class="text-sm">Keine spezifischen Variablen definiert.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>Speichern
+                    </button>
+                    {% if template %}
+                    <form method="POST" action="{{ url_for('admin_email_templates.send_test', template_id=template._id) }}">
+                        <input type="hidden" name="recipient" value="{{ current_user.email }}">
+                        <button class="btn btn-info" type="submit"><i class="fas fa-paper-plane mr-2"></i>Test an mich</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    var htmlField = document.getElementById('htmlContentField');
+    var quill = new Quill('#quillEditor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link'],
+                [{ 'align': [] }],
+                ['clean']
+            ]
+        }
+    });
+    // Startinhalt setzen
+    if (htmlField && htmlField.value) {
+        quill.root.innerHTML = htmlField.value;
+    }
+    // Beim Absenden Inhalt in verstecktes Feld schreiben
+    var form = htmlField.closest('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            htmlField.value = quill.root.innerHTML;
+        });
+    }
+});
+</script>
+{% endblock %}
+
+

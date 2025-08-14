@@ -12,13 +12,7 @@
 
   function $(id) { return document.getElementById(id); }
 
-  function setButtonState() {
-    const confirmBtn = $('confirmMobileQuickscan');
-    if (confirmBtn) {
-      confirmBtn.disabled = !(selectedItem && selectedWorker);
-    }
-    // Hinweis: optionale Felder/Leisten sind in der aktuellen UI entfernt
-  }
+  function setButtonState() {}
 
   function setStep(step) {
     currentStep = step; // 'item' | 'worker'
@@ -80,15 +74,33 @@
   }
 
   async function detectOnce() {
-    if (!('BarcodeDetector' in window)) return;
     try {
-      const detector = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'codabar'] });
-      const barcodes = await detector.detect(els.video);
-      if (barcodes?.length) {
-        handleBarcode(barcodes[0].rawValue.trim());
+      if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'codabar'] });
+        const barcodes = await detector.detect(els.video);
+        if (barcodes?.length) {
+          handleBarcode(barcodes[0].rawValue.trim());
+          return;
+        }
+      } else if (window.ZXingBrowser && els.video) {
+        // ZXing Fallback: einmaliges Grab und Dekodieren des aktuellen Frames
+        const codeReader = window.ZXingBrowser.BrowserMultiFormatReader ? new window.ZXingBrowser.BrowserMultiFormatReader() : null;
+        if (codeReader) {
+          try {
+            const result = await codeReader.decodeFromVideoElement(els.video);
+            if (result && result.text) {
+              handleBarcode(String(result.text).trim());
+              codeReader.reset();
+              return;
+            }
+            codeReader.reset();
+          } catch (err) {
+            // still loop
+          }
+        }
       }
     } catch (e) {
-      // Ignorieren, weiter versuchen
+      // weiter versuchen
     }
   }
 
@@ -109,8 +121,10 @@
       if (selectedItem) setStep('worker');
     } else if (currentStep === 'worker') {
       await lookupWorker(code);
+      if (selectedItem && selectedWorker) {
+        await confirmAction();
+      }
     }
-    setButtonState();
   }
 
   async function lookupItem(barcode) {
@@ -170,16 +184,6 @@
       worker_barcode: selectedWorker.barcode,
       action: selectedItem.type === 'consumable' ? 'use' : (selectedItem.status === 'ausgeliehen' ? 'return' : 'lend')
     };
-    if (selectedItem.type === 'consumable') {
-      const qtyEl = $('qtyInput');
-      const qty = parseInt((qtyEl && qtyEl.value) ? qtyEl.value : '1', 10);
-      payload.quantity = Math.max(1, isNaN(qty) ? 1 : qty);
-    }
-    if (selectedItem.type === 'tool' && selectedItem.status !== 'ausgeliehen') {
-      const dateEl = $('returnDateInput');
-      const dateVal = dateEl ? dateEl.value : '';
-      if (dateVal) payload.expected_return_date = dateVal;
-    }
     try {
       const res = await fetch('/quick_scan/process', {
         method: 'POST',
@@ -227,19 +231,23 @@
   }
 
   function bindEvents() {
-    $('scanItemBtn').addEventListener('click', async () => {
+    const itemBtn = $('scanItemBtn');
+    if (itemBtn) itemBtn.addEventListener('click', async () => {
       setStep('item');
       await startCamera(); // iOS: getUserMedia im User-Gesture-Kontext
     });
-    $('scanWorkerBtn').addEventListener('click', async () => {
+    const workerBtn = $('scanWorkerBtn');
+    if (workerBtn) workerBtn.addEventListener('click', async () => {
       setStep('worker');
       await startCamera(); // iOS: getUserMedia im User-Gesture-Kontext
     });
-    $('switchCameraBtn').addEventListener('click', async () => {
+    const switchBtn = $('switchCameraBtn');
+    if (switchBtn) switchBtn.addEventListener('click', async () => {
       useEnvironment = !useEnvironment;
       await startCamera();
     });
-    $('toggleTorchBtn').addEventListener('click', async () => {
+    const torchBtn = $('toggleTorchBtn');
+    if (torchBtn) torchBtn.addEventListener('click', async () => {
       const ok = await applyTorch(!torchOn);
       if (!ok) toast('info', 'Blitz nicht verfügbar');
     });
@@ -263,7 +271,8 @@
         el.value = String(v);
       });
     }
-    $('confirmMobileQuickscan').addEventListener('click', confirmAction);
+    const confirmBtn = $('confirmMobileQuickscan');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmAction);
     const resetBtn = document.getElementById('resetMobileQuickscan');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => resetState(true));
@@ -278,7 +287,6 @@
     }
     bindEvents();
     setStep('item');
-    setButtonState();
     // WICHTIG: Kamera erst nach User-Tap starten (iOS Safari-Anforderung)
   });
 })();

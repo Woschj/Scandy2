@@ -5,6 +5,7 @@ Alle E-Mail-Funktionalitäten an einem Ort
 from typing import Dict, Any, List, Optional
 from flask import current_app, render_template_string
 from app.utils.email_utils import send_email
+from app.services.admin_email_templates_service import AdminEmailTemplatesService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,20 +27,25 @@ class EmailService:
             bool: True wenn erfolgreich gesendet
         """
         try:
-            subject = "Scandy - Passwort zurücksetzen"
+            subject_default = "Scandy - Passwort zurücksetzen"
+            reset_link = f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/auth/reset/{reset_token}"
+            rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
+                'username': username,
+                'reset_link': reset_link,
+            })
+            if rendered and (rendered.get('html_content') or rendered.get('text_content')):
+                return send_email(user_email, rendered.get('subject') or subject_default, rendered.get('html_content'), rendered.get('text_content'))
+            # Fallback: inline-Template
             template = """
             <h2>Passwort zurücksetzen</h2>
             <p>Hallo {{ username }},</p>
             <p>Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt.</p>
-            <p>Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
+            <p><a href='{{ reset_link }}'>Passwort jetzt zurücksetzen</a></p>
             <p>Der Link ist 24 Stunden gültig.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
-            
-            html_content = render_template_string(template, 
-                                                username=username)
-            
-            return send_email(user_email, subject, html_content)
+            html_content = render_template_string(template, username=username, reset_link=reset_link)
+            return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
             logger.error(f"Fehler beim Senden der Passwort-Reset-E-Mail: {str(e)}")
@@ -61,8 +67,16 @@ class EmailService:
         """
         try:
             login_url = f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/auth/login"
-            
-            subject = "Scandy - Ihre Zugangsdaten"
+            subject_default = "Scandy - Ihre Zugangsdaten"
+            rendered = AdminEmailTemplatesService.render_template_by_key('user_welcome', {
+                'firstname': firstname,
+                'username': username,
+                'password': password,
+                'login_url': login_url,
+            })
+            if rendered and (rendered.get('html_content') or rendered.get('text_content')):
+                return send_email(user_email, rendered.get('subject') or subject_default, rendered.get('html_content'), rendered.get('text_content'))
+            # Fallback: inline-Template
             template = """
             <h2>Willkommen bei Scandy!</h2>
             <p>Hallo {{ firstname }},</p>
@@ -72,17 +86,12 @@ class EmailService:
                 <li><strong>Benutzername:</strong> {{ username }}</li>
                 <li><strong>Passwort:</strong> {{ password }}</li>
             </ul>
+            <p>Login: <a href='{{ login_url }}'>{{ login_url }}</a></p>
             <p>Bitte ändern Sie Ihr Passwort nach der ersten Anmeldung.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
-            
-            html_content = render_template_string(template, 
-                                                username=username, 
-                                                password=password,
-                                                firstname=firstname,
-                                                login_url=login_url)
-            
-            return send_email(user_email, subject, html_content)
+            html_content = render_template_string(template, username=username, password=password, firstname=firstname, login_url=login_url)
+            return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
             logger.error(f"Fehler beim Senden der neuen Benutzer-E-Mail: {str(e)}")

@@ -1,0 +1,42 @@
+<div class="flex flex-col gap-4">
+    <div class="grid grid-cols-2 gap-4 w-full">
+        <!-- Karte: Werkzeug/Verbrauchsgut -->
+        <button type="button" id="scanItemBtn" class="card w-full h-[300px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] border-2 border-transparent">
+            <div class="card-body flex flex-col items-center justify-center h-full">
+                <i class="fas fa-tools text-2xl text-primary mb-1"></i>
+                <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
+                <div id="itemCardContent" class="text-center">
+                    <p class="text-sm opacity-50">Tippen &amp; mit Kamera scannen</p>
+                    <div id="itemSummary" class="sr-only">Tippen zum Scannen</div>
+                </div>
+            </div>
+        </button>
+
+        <!-- Karte: Mitarbeiter -->
+        <button type="button" id="scanWorkerBtn" class="card w-full h-[300px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] border-2 border-transparent">
+            <div class="card-body flex flex-col items-center justify-center h-full">
+                <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
+                <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
+                <div id="workerCardContent" class="text-center">
+                    <p class="text-sm opacity-50">Tippen &amp; mit Kamera scannen</p>
+                    <div id="workerSummary" class="sr-only">Tippen zum Scannen</div>
+                </div>
+            </div>
+        </button>
+    </div>
+
+    <!-- Kamera-Vorschau -->
+    <div class="relative w-full max-w-md mx-auto overflow-hidden rounded-xl shadow bg-black">
+        <video id="cameraPreview" class="w-full h-40 object-cover" autoplay playsinline muted></video>
+        <div class="absolute bottom-2 left-0 right-0 flex items-center justify-between px-3">
+            <button id="toggleTorchBtn" class="btn btn-xs btn-ghost text-white"><i class="fas fa-bolt mr-1"></i>Licht</button>
+            <div id="scanHint" class="text-white text-xs opacity-80">Tippe auf eine Karte zum Scannen</div>
+            <button id="switchCameraBtn" class="btn btn-xs btn-ghost text-white"><i class="fas fa-camera-rotate mr-1"></i>Kamera</button>
+        </div>
+    </div>
+
+    <div class="divider text-xs">Angemeldet als {{ current_user.username }}</div>
+    <a href="{{ url_for('mobile.logout') }}" class="btn btn-error btn-sm w-full"><i class="fas fa-sign-out-alt mr-2"></i>Abmelden</a>
+</div>
+
+
