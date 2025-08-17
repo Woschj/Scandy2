@@ -18,6 +18,225 @@ success() { echo "✅ $*"; }
 error() { echo "❌ $*"; }
 info() { echo "ℹ️  $*"; }
 
+# Session-Wartungsfunktion
+fix_sessions() {
+    log "Behebe Session-Probleme..."
+    if [ -d "/opt/scandy/app/flask_session" ]; then
+        # Prüfe auf gemischte Berechtigungen und korrigiere sie
+        log "Prüfe auf gemischte Session-Berechtigungen..."
+        MIXED_PERMS=$(find /opt/scandy/app/flask_session/ -type f -not -user root -o -not -group root -o -not -perm 644 2>/dev/null | wc -l)
+        if [ "$MIXED_PERMS" -gt 0 ]; then
+            log "Gefunden: $MIXED_PERMS Dateien mit gemischten Berechtigungen - korrigiere..."
+        fi
+        
+        # Lösche nur sehr alte Session-Dateien (älter als 7 Tage)
+        log "Lösche alte Session-Dateien (älter als 7 Tage)..."
+        find /opt/scandy/app/flask_session/ -type f -name "*.session" -mtime +7 -delete 2>/dev/null || true
+        
+        # Setze korrekte Berechtigungen für alle bestehenden Session-Dateien
+        log "Setze Session-Datei-Berechtigungen..."
+        find /opt/scandy/app/flask_session/ -type f -exec chown root:root {} \; 2>/dev/null || true
+        find /opt/scandy/app/flask_session/ -type f -exec chmod 644 {} \; 2>/dev/null || true
+        
+        # Setze korrekte Berechtigungen für Session-Verzeichnis
+        log "Setze Session-Verzeichnis-Berechtigungen..."
+        chown -R root:root /opt/scandy/app/flask_session/
+        chmod 755 /opt/scandy/app/flask_session/
+        
+        # Erstelle .gitkeep um das Verzeichnis zu erhalten
+        touch /opt/scandy/app/flask_session/.gitkeep
+        chown root:root /opt/scandy/app/flask_session/.gitkeep
+        chmod 644 /opt/scandy/app/flask_session/.gitkeep
+        
+        success "Session-Probleme behoben"
+    else
+        # Erstelle Session-Verzeichnis falls es nicht existiert
+        log "Erstelle Session-Verzeichnis..."
+        mkdir -p /opt/scandy/app/flask_session
+        chown -R root:root /opt/scandy/app/flask_session/
+        chmod 755 /opt/scandy/app/flask_session/
+        touch /opt/scandy/app/flask_session/.gitkeep
+        chown root:root /opt/scandy/app/flask_session/.gitkeep
+        chmod 644 /opt/scandy/app/flask_session/.gitkeep
+        success "Session-Verzeichnis erstellt"
+    fi
+}
+
+# Verbesserte Session-Berechtigungsfunktion
+fix_session_permissions() {
+    log "Korrigiere Session-Berechtigungen..."
+    
+    # Erstelle Session-Verzeichnis falls es nicht existiert
+    mkdir -p /opt/scandy/app/flask_session
+    
+    # Setze korrekte Besitzer und Gruppe
+    chown -R root:root /opt/scandy/app/flask_session/
+    
+    # Setze Verzeichnisberechtigungen
+    chmod 755 /opt/scandy/app/flask_session/
+    
+    # Setze Dateiberechtigungen für bestehende Dateien
+    if [ "$(ls -A /opt/scandy/app/flask_session/ 2>/dev/null)" ]; then
+        find /opt/scandy/app/flask_session/ -type f -exec chmod 644 {} \; 2>/dev/null || true
+    fi
+    
+    # Erstelle .gitkeep mit korrekten Berechtigungen
+    touch /opt/scandy/app/flask_session/.gitkeep
+    chown root:root /opt/scandy/app/flask_session/.gitkeep
+    chmod 644 /opt/scandy/app/flask_session/.gitkeep
+    
+    # Setze umask für neue Dateien
+    umask 022
+    
+    success "Session-Berechtigungen korrigiert"
+}
+
+# Port-Freimachungsfunktion
+free_port_80() {
+    log "Mache Port 80 frei..."
+    
+    # Scandy-Service stoppen (falls läuft)
+    if systemctl is-active --quiet scandy 2>/dev/null; then
+        log "Stoppe laufenden Scandy-Service..."
+        systemctl stop scandy 2>/dev/null || true
+        systemctl disable scandy 2>/dev/null || true
+    fi
+    
+    # Alle bekannten Webserver stoppen
+    local webservers=("apache2" "nginx" "lighttpd" "httpd" "caddy" "traefik")
+    
+    for server in "${webservers[@]}"; do
+        if systemctl is-active --quiet "$server" 2>/dev/null; then
+            log "Stoppe $server..."
+            systemctl stop "$server" 2>/dev/null || true
+            systemctl disable "$server" 2>/dev/null || true
+        fi
+    done
+    
+    # Alle Webserver- und Scandy-Prozesse beenden
+    pkill -f "apache2\|nginx\|lighttpd\|httpd\|caddy\|traefik\|python.*:80\|gunicorn.*:80\|scandy" 2>/dev/null || true
+    
+    # Warte bis alle Prozesse gestoppt sind
+    sleep 3
+    
+    # Prüfe ob Port 80 jetzt frei ist
+    if ! ss -H -ltn 2>/dev/null | grep -q ":80 "; then
+        success "Port 80 erfolgreich freigemacht!"
+        return 0
+    else
+        # Versuche hartnäckige Prozesse zu beenden
+        log "Port 80 ist immer noch belegt - versuche hartnäckige Prozesse zu beenden..."
+        
+        # Finde alle Prozesse auf Port 80
+        local port80_pids=$(ss -H -ltnp 2>/dev/null | grep ":80 " | awk '{print $7}' | cut -d',' -f1 | cut -d'=' -f2 | sort -u)
+        
+        for pid in $port80_pids; do
+            if [ -n "$pid" ] && [ "$pid" != "-" ]; then
+                log "Beende Prozess $pid auf Port 80..."
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+        done
+        
+        sleep 2
+        
+        # Finale Prüfung
+        if ! ss -H -ltn 2>/dev/null | grep -q ":80 "; then
+            success "Port 80 nach hartnäckiger Bereinigung freigemacht!"
+            return 0
+        else
+            error "Port 80 konnte nicht freigemacht werden"
+            return 1
+        fi
+    fi
+}
+
+# Webserver-Dienste dauerhaft deaktivieren
+disable_webserver_services() {
+    log "Deaktiviere Webserver-Dienste dauerhaft..."
+    
+    local webservers=("apache2" "nginx" "lighttpd" "httpd" "caddy" "traefik")
+    
+    for server in "${webservers[@]}"; do
+        if systemctl is-enabled --quiet "$server" 2>/dev/null; then
+            log "Deaktiviere $server dauerhaft..."
+            systemctl disable "$server" 2>/dev/null || true
+            systemctl mask "$server" 2>/dev/null || true
+        fi
+    done
+    
+    success "Webserver-Dienste dauerhaft deaktiviert"
+}
+
+# Alte Scandy-Prozesse bereinigen (für Neuinstallationen)
+cleanup_old_scandy() {
+    log "Bereinige alte Scandy-Prozesse für Neuinstallation..."
+    
+    # Scandy-Service stoppen und deaktivieren
+    if systemctl is-active --quiet scandy 2>/dev/null; then
+        log "Stoppe laufenden Scandy-Service..."
+        systemctl stop scandy 2>/dev/null || true
+        systemctl disable scandy 2>/dev/null || true
+    fi
+    
+    # Alle Gunicorn-Prozesse beenden (sanft)
+    log "Beende alle Gunicorn-Prozesse..."
+    pkill -f "gunicorn" 2>/dev/null || true
+    
+    # Alle Scandy-bezogenen Prozesse beenden (sanft)
+    log "Beende alle Scandy-bezogenen Prozesse..."
+    pkill -f "scandy\|python.*scandy" 2>/dev/null || true
+    
+    # Warte bis alle Prozesse gestoppt sind
+    sleep 3
+    
+    # Verwende einen einfacheren Ansatz: Beende alle Prozesse auf Port 80 direkt
+    if ss -H -ltn 2>/dev/null | grep -q ":80 "; then
+        log "Port 80 ist belegt - beende alle Prozesse direkt..."
+        local port80_pids=$(ss -H -ltnp 2>/dev/null | grep ":80 " | awk '{print $7}' | cut -d',' -f1 | cut -d'=' -f2 | sort -u)
+        for pid in $port80_pids; do
+            if [ -n "$pid" ] && [ "$pid" != "-" ]; then
+                log "Beende Prozess $pid auf Port 80..."
+                # Verwende kill -9 direkt mit Timeout
+                timeout 3s bash -c "kill -9 $pid" 2>/dev/null || true
+            fi
+        done
+        sleep 2
+    fi
+    
+    # Prüfe ob noch Prozesse laufen (nur für Logging)
+    if pgrep -f "gunicorn\|scandy" >/dev/null 2>&1; then
+        log "Warnung: Einige Prozesse laufen noch, aber Installation wird fortgesetzt..."
+    fi
+    
+    success "Alte Scandy-Prozesse bereinigt"
+}
+
+# Port-Status anzeigen
+show_port_status() {
+    log "Aktueller Port-Status:"
+    echo "Port 80: $(ss -H -ltn 2>/dev/null | grep -q ':80 ' && echo '🔴 Belegt' || echo '🟢 Frei')"
+    echo "Port 443: $(ss -H -ltn 2>/dev/null | grep -q ':443 ' && echo '🔴 Belegt' || echo '🟢 Frei')"
+    echo "Port 5001: $(ss -H -ltn 2>/dev/null | grep -q ':5001 ' && echo '🔴 Belegt' || echo '🟢 Frei')"
+    
+    # Zeige welche Prozesse auf den Ports laufen
+    echo ""
+    log "Prozesse auf den Ports:"
+    # Verwende eine einfachere Methode ohne while-Schleife
+    local port_processes=$(ss -H -ltnp 2>/dev/null | grep -E ':(80|443|5001) ' || true)
+    if [ -n "$port_processes" ]; then
+        echo "$port_processes" | sed 's/^/  /'
+    else
+        echo "  Keine Prozesse auf den Ports gefunden"
+    fi
+}
+
+# Alte Scandy-Prozesse VOR der Port-Prüfung bereinigen
+log "Bereinige alte Scandy-Prozesse vor der Port-Prüfung..."
+cleanup_old_scandy
+
+# Port-Status anzeigen (nach der Bereinigung)
+show_port_status
+
 # Port-Auswahl
 echo ""
 echo "🌐 Port-Auswahl für Scandy:"
@@ -25,8 +244,9 @@ echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
 echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
 echo "3) Port 5001 (Standard-Scandy-Port)"
 echo "4) Benutzerdefinierter Port"
+echo "5) Port 80 erzwingen (stoppt andere Webserver)"
 echo ""
-read -p "Wähle Port (1-4): " PORT_CHOICE
+read -p "Wähle Port (1-5): " PORT_CHOICE
 
 case $PORT_CHOICE in
     1)
@@ -45,19 +265,48 @@ case $PORT_CHOICE in
         read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT
         PORT_NAME="Benutzerdefiniert"
         ;;
+    5)
+        WEB_PORT=80
+        PORT_NAME="Port 80 erzwingen"
+        # Sofort Port 80 freimachen
+        log "Erzwinge Port 80 - stoppe alle Webserver..."
+        if free_port_80; then
+            success "Port 80 erfolgreich freigemacht!"
+            # Deaktiviere Webserver-Dienste dauerhaft
+            disable_webserver_services
+        else
+            error "Port 80 konnte nicht freigemacht werden - verwende Port 5001"
+            WEB_PORT=5001
+            PORT_NAME="Standard-Scandy (Port 80 nicht freizubekommen)"
+        fi
+        ;;
     *)
         WEB_PORT=80
         PORT_NAME="Standard-HTTP (Standardauswahl)"
         ;;
 esac
 
-# Prüfe ob Port verfügbar ist
+# Prüfe ob Port verfügbar ist und mache ihn ggf. frei
 if [ "$WEB_PORT" = "80" ] || [ "$WEB_PORT" = "443" ]; then
     if ss -H -ltn 2>/dev/null | grep -q ":$WEB_PORT "; then
-        error "Port $WEB_PORT ist bereits belegt!"
-        info "Verwende stattdessen Port 5001"
-        WEB_PORT=5001
-        PORT_NAME="Standard-Scandy (Port 80/443 belegt)"
+        log "Port $WEB_PORT ist belegt - versuche ihn freizumachen..."
+        
+        if [ "$WEB_PORT" = "80" ]; then
+            # Versuche Port 80 freizumachen
+            if free_port_80; then
+                success "Port 80 erfolgreich freigemacht!"
+                PORT_NAME="Standard-HTTP (Port freigemacht)"
+            else
+                log "Port 80 konnte nicht freigemacht werden - verwende Port 5001"
+                WEB_PORT=5001
+                PORT_NAME="Standard-Scandy (Port 80 nicht freizubekommen)"
+            fi
+        else
+            # Für Port 443: Verwende Port 5001
+            log "Port 443 konnte nicht freigemacht werden - verwende Port 5001"
+            WEB_PORT=5001
+            PORT_NAME="Standard-Scandy (Port 443 nicht freizubekommen)"
+        fi
     fi
 fi
 
@@ -375,10 +624,12 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/opt/scandy
-Environment=PATH=/opt/scandy/venv/bin
+Environment=PATH=/opt/scandy/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONPATH=/opt/scandy
 EnvironmentFile=/opt/scandy/.env
 ExecStart=$EXEC_START
+ExecStartPre=/bin/bash -c 'mkdir -p /opt/scandy/app/flask_session && chown -R root:root /opt/scandy/app/flask_session && chmod 755 /opt/scandy/app/flask_session && find /opt/scandy/app/flask_session -type f -exec chmod 644 {} \; 2>/dev/null || true'
+ExecStartPost=/bin/bash -c 'sleep 3 && chown -R root:root /opt/scandy/app/flask_session 2>/dev/null || true && chmod 755 /opt/scandy/app/flask_session 2>/dev/null || true && find /opt/scandy/app/flask_session -type f -exec chmod 644 {} \; 2>/dev/null || true'
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -399,14 +650,87 @@ if command -v ufw >/dev/null 2>&1; then
     info "Port $WEB_PORT freigegeben"
 fi
 
-# 9. Services starten
+# 8.1. Cron-Job für Session-Wartung einrichten
+log "Richte Cron-Job für Session-Wartung ein..."
+cat > /etc/cron.d/scandy-session-cleanup << EOF
+# Scandy Session-Wartung - läuft alle 5 Minuten
+*/5 * * * * root /bin/bash -c 'if [ -d "/opt/scandy/app/flask_session" ]; then find /opt/scandy/app/flask_session -type f -mtime +7 -delete 2>/dev/null || true; find /opt/scandy/app/flask_session -type f -exec chown root:root {} \; -exec chmod 644 {} \; 2>/dev/null || true; chmod 755 /opt/scandy/app/flask_session 2>/dev/null || true; chown root:root /opt/scandy/app/flask_session/ 2>/dev/null || true; fi'
+EOF
+
+# Setze Berechtigungen für Cron-Job
+chmod 644 /etc/cron.d/scandy-session-cleanup
+success "Cron-Job für Session-Wartung eingerichtet"
+
+# 8.1.1. Systemstart-Script für Session-Berechtigungen
+log "Richte Systemstart-Script für Session-Berechtigungen ein..."
+cat > /etc/systemd/system/scandy-session-fix.service << EOF
+[Unit]
+Description=Fix Scandy Session Permissions on Boot
+After=network.target
+Before=scandy.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'if [ -d "/opt/scandy/app/flask_session" ]; then find /opt/scandy/app/flask_session -type f -exec chown root:root {} \; -exec chmod 644 {} \; 2>/dev/null || true; chmod 755 /opt/scandy/app/flask_session 2>/dev/null || true; chown root:root /opt/scandy/app/flask_session/ 2>/dev/null || true; fi'
+RemainAfterExit=yes
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Aktiviere den Service
+systemctl daemon-reload
+systemctl enable scandy-session-fix.service >/dev/null 2>&1
+success "Systemstart-Script für Session-Berechtigungen eingerichtet"
+
+# 8.2. Webserver-Dienste dauerhaft deaktivieren wenn Port 80 verwendet wird
+if [ "$WEB_PORT" = "80" ]; then
+    log "Port 80 wird verwendet - deaktiviere Webserver-Dienste dauerhaft..."
+    disable_webserver_services
+    
+    # Erstelle auch einen Cron-Job der alle 10 Minuten prüft ob Port 80 frei ist
+    log "Richte Cron-Job für Port 80-Überwachung ein..."
+    cat > /etc/cron.d/scandy-port80-monitor << EOF
+# Scandy Port 80 Überwachung - läuft alle 10 Minuten
+*/10 * * * * root /bin/bash -c 'if ss -H -ltn 2>/dev/null | grep -q ":80 " && ! ss -H -ltn 2>/dev/null | grep -q ":80 .*scandy"; then /opt/scandy/venv/bin/python3 -c "import subprocess; subprocess.run([\"pkill\", \"-f\", \"apache2|nginx|lighttpd|httpd|caddy|traefik\"], capture_output=True)" 2>/dev/null || true; fi'
+EOF
+    
+    chmod 644 /etc/cron.d/scandy-port80-monitor
+    success "Cron-Job für Port 80-Überwachung eingerichtet"
+fi
+
+# 9. Session-System prophylaktisch einrichten
+log "Richte Session-System prophylaktisch ein..."
+fix_sessions
+fix_session_permissions
+
+success "Session-System prophylaktisch eingerichtet"
+
+# 10. Services starten
 log "Starte Services..."
 systemctl restart mongod
 
 # Starte Scandy mit besserer Fehlerbehandlung
 log "Starte Scandy-Service..."
+
+# Finale Session-Berechtigungsprüfung vor dem Start
+log "Führe finale Session-Berechtigungsprüfung durch..."
+fix_session_permissions
+
 if systemctl restart scandy; then
     success "Scandy-Service gestartet"
+    
+    # Warte kurz und prüfe dann Session-Status
+    sleep 3
+    if [ -d "/opt/scandy/app/flask_session" ]; then
+        log "Prüfe Session-Verzeichnis nach Service-Start..."
+        ls -la /opt/scandy/app/flask_session/ | head -5
+        
+        # Stelle sicher, dass neue Session-Dateien die richtigen Berechtigungen haben
+        log "Korrigiere Berechtigungen für neue Session-Dateien..."
+        fix_session_permissions
+    fi
 else
     error "Fehler beim Starten des Scandy-Services"
     log "Service-Status:"
@@ -433,7 +757,7 @@ else
     fi
 fi
 
-# 10. Warten auf App-Start
+# 12. Warten auf App-Start
 log "Warte auf App-Start..."
 for i in {1..60}; do
     # Prüfe sowohl Systemd-Service als auch manuellen Prozess
@@ -499,7 +823,7 @@ for i in {1..60}; do
     sleep 2
 done
 
-# 11. Fertig!
+# 13. Fertig!
 echo ""
 success "Installation abgeschlossen!"
 echo "🌐 Web-App: http://$(hostname -I | awk '{print $1}'):$WEB_PORT"

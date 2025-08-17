@@ -683,7 +683,8 @@ def create():
             else:
                 flash(message, 'error')
                 # Bei Fehlern müssen wir auch die Ticket-Listen laden
-                categories = get_ticket_categories_from_settings()
+                from app.services.ticket_category_service import ticket_category_service
+                categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
                 departments = get_departments_from_settings()
                 show_all_tickets = current_user.role in ['admin', 'mitarbeiter']
                 return render_template('tickets/create.html', 
@@ -702,7 +703,8 @@ def create():
             logger.error(f"Fehler beim Erstellen des Tickets: {str(e)}")
             flash('Fehler beim Erstellen des Tickets', 'error')
             # Bei Fehlern müssen wir auch die Ticket-Listen laden
-            categories = get_ticket_categories_from_settings()
+            from app.services.ticket_category_service import ticket_category_service
+            categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
             departments = get_departments_from_settings()
             show_all_tickets = current_user.role in ['admin', 'mitarbeiter']
             return render_template('tickets/create.html', 
@@ -719,7 +721,8 @@ def create():
     
     # GET Request - Formular anzeigen
     try:
-        categories = get_ticket_categories_from_settings()
+        from app.services.ticket_category_service import ticket_category_service
+        categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
         departments = get_departments_from_settings()
         
         # Prüfe ob der User ein Admin ist (für "Alle Tickets" Tab)
@@ -884,8 +887,9 @@ def view(ticket_id):
                             nur_arbeiten.append(teile[0].strip())
                 auftrag_details['ausgefuehrte_arbeiten_nur_text'] = '\n'.join(nur_arbeiten)
         
-        # Hole alle Kategorien aus der settings Collection
-        categories = get_ticket_categories_from_settings()
+        # Hole Kategorien der aktuellen Abteilung
+        from app.services.ticket_category_service import ticket_category_service
+        categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
         
         # Hole alle Benutzer für die Zuweisung (falls benötigt)
         users = mongodb.find('users', {'is_active': True})
@@ -1094,8 +1098,9 @@ def detail(id):
         if not assigned_users and ticket.get('assigned_to'):
             assigned_users = [ticket['assigned_to']]
 
-        # Hole alle Kategorien aus der settings Collection
-        categories = get_ticket_categories_from_settings()
+        # Hole Kategorien der aktuellen Abteilung
+        from app.services.ticket_category_service import ticket_category_service
+        categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
 
         # Bestimme Berechtigungen
         can_edit = current_user.role in ['admin', 'mitarbeiter', 'teilnehmer'] or ticket.get('created_by') == current_user.username
@@ -1919,7 +1924,8 @@ def inject_unread_tickets_count():
 def public_create_order():
     """Interne Auftragserstellung für eingeloggte Benutzer."""
     if request.method == 'GET':
-        categories = get_ticket_categories_from_settings()
+        from app.services.ticket_category_service import ticket_category_service
+        categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
         return render_template('tickets/create_auftrag.html', 
                              categories=categories,
                              error=None)
@@ -1930,7 +1936,8 @@ def external_create_order():
     """Externe Auftragserstellung ohne Login für externe Einbindungen."""
     if request.method == 'POST':
         return _handle_auftrag_creation(external=True)
-    categories = get_ticket_categories_from_settings()
+    from app.services.ticket_category_service import ticket_category_service
+    categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
     return render_template('tickets/auftrag_external_embed.html', 
                          categories=categories,
                          error=None)
@@ -1958,7 +1965,8 @@ def _handle_auftrag_creation(external=False):
             
             # Validiere die Pflichtfelder
             if not title:
-                categories = get_ticket_categories_from_settings()
+                from app.services.ticket_category_service import ticket_category_service
+                categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
                 if external or not current_user.is_authenticated:
                     return render_template('tickets/auftrag_external_embed.html', 
                                          categories=categories,
@@ -1969,7 +1977,8 @@ def _handle_auftrag_creation(external=False):
                                          error='Titel ist erforderlich.')
                 
             if not description:
-                categories = get_ticket_categories_from_settings()
+                from app.services.ticket_category_service import ticket_category_service
+                categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
                 if external or not current_user.is_authenticated:
                     return render_template('tickets/auftrag_external_embed.html', 
                                          categories=categories,
@@ -2044,7 +2053,8 @@ def _handle_auftrag_creation(external=False):
             
         except Exception as e:
             logging.error(f"Fehler bei der öffentlichen Auftragserstellung: {str(e)}", exc_info=True)
-            categories = get_ticket_categories_from_settings()
+            from app.services.ticket_category_service import ticket_category_service
+            categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
             if external or not current_user.is_authenticated:
                 return render_template('tickets/auftrag_external_embed.html', 
                                      categories=categories,
@@ -2053,8 +2063,9 @@ def _handle_auftrag_creation(external=False):
                 flash('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.', 'error')
                 return redirect(url_for('tickets.public_create_order'))
     
-    # Hole die Kategorien für das Formular
-    categories = get_ticket_categories_from_settings()
+    # Hole die Kategorien für das Formular (abteilungsgebunden)
+    from app.services.ticket_category_service import ticket_category_service
+    categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
     
     if external or not current_user.is_authenticated:
         return render_template('tickets/auftrag_external_embed.html', 

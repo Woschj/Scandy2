@@ -58,6 +58,10 @@ def _decrypt_password(encrypted_password):
         return None
     try:
         key = _get_encryption_key()
+        if not key:
+            logger.warning("Verschlüsselungsschlüssel konnte nicht generiert werden")
+            return None
+            
         key_bytes = base64.urlsafe_b64decode(key)
         encrypted_bytes = base64.urlsafe_b64decode(encrypted_password.encode())
         
@@ -74,8 +78,8 @@ def _decrypt_password(encrypted_password):
 def get_email_config():
     """Lädt die E-Mail-Konfiguration aus der Datenbank"""
     try:
-        from app.models.mongodb_database import MongoDBDatabase
-        mongodb = MongoDBDatabase()
+        from app.models.mongodb_database import MongoDB
+        mongodb = MongoDB()
         
         config = {
             'mail_server': 'smtp.gmail.com',
@@ -106,6 +110,11 @@ def get_email_config():
         config['mail_port'] = int(config['mail_port'])
         config['mail_use_tls'] = config['mail_use_tls'] == 'true' if isinstance(config['mail_use_tls'], str) else config['mail_use_tls']
         
+        # Prüfe ob Konfiguration vollständig ist
+        if not config['mail_username'] or not config['mail_password']:
+            logger.warning("E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt")
+            return None
+        
         return config
     except Exception as e:
         logger.error(f"Fehler beim Laden der E-Mail-Konfiguration: {e}")
@@ -114,9 +123,9 @@ def get_email_config():
 def save_email_config(config_data):
     """Speichert die E-Mail-Konfiguration in der Datenbank"""
     try:
-        from app.models.mongodb_database import MongoDBDatabase
+        from app.models.mongodb_database import MongoDB
         
-        mongodb = MongoDBDatabase()
+        mongodb = MongoDB()
         
         # Absender-E-Mail automatisch aus SMTP-Anmeldedaten setzen (wird in init_mail verwendet)
         config_data['mail_default_sender'] = config_data['mail_username']
@@ -152,161 +161,72 @@ def save_email_config(config_data):
 def test_email_config(config_data):
     """Testet die E-Mail-Konfiguration"""
     try:
-        from flask import Flask
-        from flask_mail import Mail, Message
+        # Prüfe ob Konfiguration vollständig ist
+        if not config_data.get('mail_username') or not config_data.get('mail_password'):
+            logger.error("E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt")
+            return False, "E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt"
+        
+        # Passwort entschlüsseln falls verschlüsselt
+        password = config_data['mail_password']
+        if password.startswith('gAAAAA'):
+            try:
+                decrypted_password = _decrypt_password(password)
+                if decrypted_password:
+                    password = decrypted_password
+                else:
+                    logger.warning("Passwort konnte nicht entschlüsselt werden")
+                    return False, "Passwort konnte nicht entschlüsselt werden"
+            except Exception as e:
+                logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
+                return False, f"Fehler beim Entschlüsseln des Passworts: {str(e)}"
+        
+        # Teste SMTP-Verbindung direkt
         import smtplib
         from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
         
-        # Erstelle temporäre Flask-App für Test
-        test_app = Flask(__name__)
-        test_app.config['MAIL_SERVER'] = config_data['mail_server']
-        test_app.config['MAIL_PORT'] = int(config_data['mail_port'])
-        test_app.config['MAIL_USE_TLS'] = config_data['mail_use_tls']
-        test_app.config['MAIL_USE_SSL'] = not config_data['mail_use_tls'] and int(config_data['mail_port']) == 465
-        test_app.config['MAIL_USERNAME'] = config_data['mail_username']
-        test_app.config['MAIL_PASSWORD'] = config_data['mail_password']
-        test_app.config['MAIL_DEFAULT_SENDER'] = config_data['mail_username']
+        logger.info(f"Teste E-Mail-Konfiguration: {config_data['mail_server']}:{config_data['mail_port']}")
         
-        # Zuerst SMTP-Verbindung testen
-        try:
-            if test_app.config['MAIL_USE_SSL']:
-                server = smtplib.SMTP_SSL(test_app.config['MAIL_SERVER'], test_app.config['MAIL_PORT'])
-            else:
-                server = smtplib.SMTP(test_app.config['MAIL_SERVER'], test_app.config['MAIL_PORT'])
-            
-            # Prüfe ob STARTTLS verfügbar ist - verbesserte Erkennung
-            capabilities_before = server.ehlo()
-            starttls_available = False
-            
-            # Methode 1: Prüfe esmtp_features (am zuverlässigsten)
-            if hasattr(server, 'esmtp_features') and server.esmtp_features:
-                starttls_available = 'starttls' in server.esmtp_features
-            
-            # Methode 2: Prüfe in den Capabilities-Strings (Fallback)
-            if not starttls_available and capabilities_before and len(capabilities_before) > 1:
-                for cap in capabilities_before[1]:
-                    if isinstance(cap, bytes):
-                        try:
-                            cap_str = cap.decode('utf-8', errors='ignore')
-                        except UnicodeDecodeError:
-                            cap_str = cap.decode('latin-1', errors='ignore')
-                    else:
-                        cap_str = str(cap)
-                    
-                    if 'starttls' in cap_str.lower():
-                        starttls_available = True
-                        break
-            
-            # Methode 3: Für bekannte Server - versuche STARTTLS auch wenn nicht erkannt
-            known_servers = ['smtp.gmail.com', 'smtp.office365.com', 'smtp-mail.outlook.com']
-            if not starttls_available and config_data['mail_server'] in known_servers and int(config_data['mail_port']) == 587:
-                starttls_available = True
-            
-            # TLS aktivieren falls konfiguriert und verfügbar
-            if test_app.config['MAIL_USE_TLS'] and starttls_available:
-                server.starttls()
-                # Neue EHLO nach TLS
-                capabilities_after = server.ehlo()
-            else:
-                capabilities_after = capabilities_before
-            
-            # Prüfe ob AUTH unterstützt wird (nach TLS, also nach dem zweiten EHLO!)
-            auth_supported = False
-            
-            # Methode 1: Prüfe esmtp_features NACH TLS
-            if hasattr(server, 'esmtp_features') and server.esmtp_features:
-                auth_supported = 'auth' in server.esmtp_features
-            
-            # Methode 2: Fallback - Prüfe in den Capabilities-Strings NACH TLS
-            if not auth_supported and capabilities_after and len(capabilities_after) > 1:
-                for cap in capabilities_after[1]:
-                    if isinstance(cap, bytes):
-                        try:
-                            cap_str = cap.decode('utf-8', errors='ignore')
-                        except UnicodeDecodeError:
-                            cap_str = cap.decode('latin-1', errors='ignore')
-                    else:
-                        cap_str = str(cap)
-                    
-                    if 'auth' in cap_str.lower():
-                        auth_supported = True
-                        break
-            
-            # Methode 3: Konvertiere ASCII-Codes zu String und prüfe AUTH NACH TLS
-            if not auth_supported and capabilities_after and len(capabilities_after) > 1:
-                all_capabilities = []
-                for cap in capabilities_after[1]:
-                    if isinstance(cap, bytes):
-                        try:
-                            cap_str = cap.decode('utf-8', errors='ignore')
-                        except UnicodeDecodeError:
-                            cap_str = cap.decode('latin-1', errors='ignore')
-                    else:
-                        cap_str = str(cap)
-                    all_capabilities.append(cap_str)
-                combined_capabilities = ' '.join(all_capabilities)
-                if 'auth' in combined_capabilities.lower():
-                    auth_supported = True
-            
-            # Methode 4: Für bekannte Server - AUTH wird unterstützt
-            known_servers = ['smtp.gmail.com', 'smtp.office365.com', 'smtp-mail.outlook.com']
-            if not auth_supported and config_data['mail_server'] in known_servers and starttls_available:
-                auth_supported = True
-            
-            # Authentifizierung nur testen, wenn unterstützt
-            if auth_supported:
-                if config_data['mail_username'] and config_data['mail_password']:
-                    server.login(config_data['mail_username'], config_data['mail_password'])
-                else:
-                    server.quit()
-                    return False, "Authentifizierung erforderlich, aber keine Anmeldedaten angegeben."
-            else:
-                # Server ohne Authentifizierung - verwende nur Absender-E-Mail
-                if not config_data.get('mail_username'):
-                    server.quit()
-                    return False, "Für Server ohne Authentifizierung ist eine Absender-E-Mail-Adresse erforderlich."
-                logger.info(f"SMTP-Server {config_data['mail_server']} verwendet ohne Authentifizierung")
-            
-            server.quit()
-            
-        except smtplib.SMTPAuthenticationError as e:
-            return False, f"Authentifizierung fehlgeschlagen: {str(e)}"
-        except smtplib.SMTPConnectError as e:
-            return False, f"Verbindung zum SMTP-Server fehlgeschlagen: {str(e)}"
-        except smtplib.SMTPException as e:
-            return False, f"SMTP-Fehler: {str(e)}"
-        except Exception as e:
-            return False, f"Verbindungsfehler: {str(e)}"
-        
-        # Wenn SMTP-Test erfolgreich, versende Test-E-Mail
-        test_mail = Mail(test_app)
-        
-        # Test-E-Mail-Adresse verwenden, falls vorhanden
-        test_recipient = config_data.get('test_email', config_data['mail_username'])
-        
-        with test_app.app_context():
-            msg = Message(
-                'Scandy E-Mail-Test',
-                recipients=[test_recipient],
-                body='Dies ist eine Test-E-Mail von Scandy. Die E-Mail-Konfiguration funktioniert korrekt.'
-            )
-            test_mail.send(msg)
-        
-        return True, f"E-Mail-Test erfolgreich an {test_recipient} gesendet"
-        
-    except Exception as e:
-        error_msg = str(e)
-        if "SMTP AUTH extension not supported" in error_msg:
-            return False, "SMTP-Server unterstützt keine Authentifizierung. Prüfen Sie die Server-Einstellungen oder verwenden Sie einen anderen Port."
-        elif "Authentication failed" in error_msg:
-            return False, "Authentifizierung fehlgeschlagen. Prüfen Sie Benutzername und Passwort."
-        elif "Connection refused" in error_msg:
-            return False, "Verbindung zum SMTP-Server verweigert. Prüfen Sie Server-Adresse und Port."
-        elif "timeout" in error_msg.lower():
-            return False, "Verbindungstimeout. Prüfen Sie Ihre Internetverbindung und Firewall-Einstellungen."
+        # SMTP-Verbindung aufbauen
+        if config_data['mail_use_tls'] and config_data['mail_port'] == 465:
+            server = smtplib.SMTP_SSL(config_data['mail_server'], config_data['mail_port'])
         else:
-            return False, f"E-Mail-Test fehlgeschlagen: {error_msg}"
+            server = smtplib.SMTP(config_data['mail_server'], config_data['mail_port'])
+        
+        # EHLO senden
+        server.ehlo()
+        
+        # STARTTLS aktivieren falls konfiguriert
+        if config_data['mail_use_tls'] and config_data['mail_port'] == 587:
+            server.starttls()
+            server.ehlo()
+        
+        # Authentifizierung testen
+        server.login(config_data['mail_username'], password)
+        
+        # Test-E-Mail senden
+        test_msg = MIMEText("Dies ist eine Test-E-Mail von Scandy.")
+        test_msg['Subject'] = 'Scandy E-Mail-Test'
+        test_msg['From'] = config_data['mail_username']
+        test_msg['To'] = config_data.get('test_email', config_data['mail_username'])
+        
+        server.send_message(test_msg)
+        server.quit()
+        
+        logger.info("E-Mail-Konfiguration erfolgreich getestet")
+        return True, "E-Mail-Konfiguration funktioniert"
+        
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP-Authentifizierungsfehler: {e}")
+        return False, f"Authentifizierungsfehler: {str(e)}"
+    except smtplib.SMTPConnectError as e:
+        logger.error(f"SMTP-Verbindungsfehler: {e}")
+        return False, f"Verbindungsfehler: {str(e)}"
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP-Fehler: {e}")
+        return False, f"SMTP-Fehler: {str(e)}"
+    except Exception as e:
+        logger.error(f"Unerwarteter Fehler beim E-Mail-Test: {e}")
+        return False, f"Unerwarteter Fehler: {str(e)}"
 
 def init_mail(app):
     global mail
@@ -871,39 +791,68 @@ def send_password_mail(recipient, password):
 
 @ensure_app_context
 def send_password_reset_mail(recipient, password=None, reset_link=None):
-    subject = 'Scandy Passwort-Reset'
-    # Versuch über Admin-Vorlage (Key: password_reset)
+    """Sendet Passwort-Reset-E-Mail"""
     try:
-        from app.services.admin_email_templates_service import AdminEmailTemplatesService
-        rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
-            'reset_link': reset_link,
-            'password': password,
-            'recipient': recipient,
-        })
-        if rendered and (rendered.get('html_content') or rendered.get('text_content')):
-            subj = rendered.get('subject') or subject
-            success = _send_email_direct_html(recipient, subj, rendered.get('html_content'), rendered.get('text_content'), mail_type="reset")
-            if success:
-                logger.info(f"Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Vorlage)")
-            return success
-    except Exception as _tpl_err:
-        logger.warning(f"E-Mail-Vorlage 'password_reset' nicht verfügbar/nutzbar: {_tpl_err}")
+        subject = 'Scandy Passwort-Reset'
+        
+        # Prüfe ob E-Mail-Konfiguration verfügbar ist
+        config = get_email_config()
+        if not config:
+            logger.error(f"[MAIL][reset] E-Mail-Konfiguration nicht verfügbar - Passwort-Reset-E-Mail kann nicht gesendet werden an {recipient}")
+            return False
+        
+        # Prüfe ob alle erforderlichen E-Mail-Einstellungen vorhanden sind
+        required_settings = ['mail_server', 'mail_port', 'mail_username', 'mail_password']
+        for setting in required_settings:
+            if not config.get(setting):
+                logger.error(f"[MAIL][reset] Fehlende E-Mail-Einstellung: {setting}")
+                return False
+        
+        logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail wird vorbereitet: Empfänger={recipient}, Passwort={bool(password)}, Reset_Link={bool(reset_link)}")
+        
+        # Versuch über Admin-Vorlage (Key: password_reset)
+        try:
+            from app.services.admin_email_templates_service import AdminEmailTemplatesService
+            rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
+                'reset_link': reset_link,
+                'password': password,
+                'recipient': recipient,
+            })
+            if rendered and (rendered.get('html_content') or rendered.get('text_content')):
+                subj = rendered.get('subject') or subject
+                logger.info(f"[MAIL][reset] Verwende E-Mail-Vorlage für Passwort-Reset")
+                success = _send_email_direct_html(recipient, subj, rendered.get('html_content'), rendered.get('text_content'), mail_type="reset")
+                if success:
+                    logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Vorlage)")
+                else:
+                    logger.error(f"[MAIL][reset] Passwort-Reset-E-Mail fehlgeschlagen (Vorlage)")
+                return success
+        except Exception as _tpl_err:
+            logger.warning(f"[MAIL][reset] E-Mail-Vorlage 'password_reset' nicht verfügbar/nutzbar: {_tpl_err}")
 
-    # Fallback: bisheriger Textkörper
-    if reset_link:
-        body = f"Sie haben einen Passwort-Reset angefordert.\nBitte klicken Sie auf folgenden Link, um Ihr Passwort zurückzusetzen:\n{reset_link}\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
-    elif password:
-        body = f"Ihr neues Passwort lautet: {password}\nBitte ändern Sie es nach dem Login.\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
-    else:
-        body = "Es ist ein Fehler aufgetreten."
-    try:
-        # Verwende direkte SMTP-Verbindung um "Gesendet"-Ordner zu vermeiden
-        success = _send_email_direct(recipient, subject, body, mail_type="reset")
-        if success:
-            logger.info(f"Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (ohne Speicherung im Gesendet-Ordner)")
-        return success
+        # Fallback: Einfacher Textkörper
+        logger.info(f"[MAIL][reset] Verwende Fallback-Text für Passwort-Reset")
+        if reset_link:
+            body = f"Sie haben einen Passwort-Reset angefordert.\n\nBitte klicken Sie auf folgenden Link, um Ihr Passwort zurückzusetzen:\n{reset_link}\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
+        elif password:
+            body = f"Ihr neues Passwort lautet: {password}\n\nBitte ändern Sie es nach dem Login.\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
+        else:
+            body = "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Administrator."
+        
+        try:
+            # Verwende direkte SMTP-Verbindung
+            success = _send_email_direct(recipient, subject, body, mail_type="reset")
+            if success:
+                logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Fallback)")
+            else:
+                logger.error(f"[MAIL][reset] Passwort-Reset-E-Mail fehlgeschlagen (Fallback)")
+            return success
+        except Exception as e:
+            logger.error(f"[MAIL][reset] Fehler beim Versenden der Passwort-Reset-E-Mail (Fallback): {e}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Fehler beim Versenden der Passwort-Reset-E-Mail: {e}")
+        logger.error(f"[MAIL][reset] Unerwarteter Fehler in send_password_reset_mail: {e}")
         return False
 
 @ensure_app_context
@@ -1102,4 +1051,144 @@ def reload_email_config(app):
         return True
     except Exception as e:
         logger.error(f"Fehler beim Neuladen der E-Mail-Konfiguration: {e}")
+        return False
+
+def debug_email_status():
+    """Debug-Funktion um den E-Mail-Status zu prüfen"""
+    try:
+        config = get_email_config()
+        if not config:
+            return {
+                'status': 'error',
+                'message': 'Keine E-Mail-Konfiguration gefunden',
+                'details': 'Bitte konfigurieren Sie das E-Mail-System im Admin-Bereich'
+            }
+        
+        # Prüfe ob alle erforderlichen Felder vorhanden sind
+        required_fields = ['mail_server', 'mail_port', 'mail_username', 'mail_password']
+        missing_fields = [field for field in required_fields if not config.get(field)]
+        
+        if missing_fields:
+            return {
+                'status': 'error',
+                'message': f'Unvollständige E-Mail-Konfiguration',
+                'details': f'Fehlende Felder: {", ".join(missing_fields)}',
+                'config': {k: v if k != 'mail_password' else '***' for k, v in config.items()}
+            }
+        
+        return {
+            'status': 'ok',
+            'message': 'E-Mail-Konfiguration vollständig',
+            'details': f'SMTP: {config["mail_server"]}:{config["mail_port"]}, TLS: {config["mail_use_tls"]}',
+            'config': {k: v if k != 'mail_password' else '***' for k, v in config.items()}
+        }
+        
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Fehler beim Prüfen des E-Mail-Status: {str(e)}',
+            'details': 'Überprüfen Sie die Logs für weitere Details'
+        }
+
+def send_email_with_config(to_email, subject, html_content=None, text_content=None, config=None):
+    """
+    Sendet eine E-Mail mit einer spezifischen Konfiguration
+    
+    Args:
+        to_email: Empfänger-E-Mail
+        subject: Betreff
+        html_content: HTML-Inhalt (optional)
+        text_content: Text-Inhalt (optional)
+        config: E-Mail-Konfiguration (optional, falls nicht angegeben wird get_email_config() verwendet)
+    
+    Returns:
+        bool: True wenn erfolgreich, False bei Fehler
+    """
+    try:
+        if not config:
+            config = get_email_config()
+        
+        if not config:
+            logger.error("Keine E-Mail-Konfiguration verfügbar")
+            return False
+        
+        # Prüfe ob alle erforderlichen Einstellungen vorhanden sind
+        required_settings = ['mail_server', 'mail_port', 'mail_username', 'mail_password']
+        for setting in required_settings:
+            if not config.get(setting):
+                logger.error(f"Fehlende E-Mail-Einstellung: {setting}")
+                return False
+        
+        # Passwort entschlüsseln falls verschlüsselt
+        password = config['mail_password']
+        if password.startswith('gAAAAA'):
+            try:
+                decrypted_password = _decrypt_password(password)
+                if decrypted_password:
+                    password = decrypted_password
+                else:
+                    logger.error("Passwort konnte nicht entschlüsselt werden")
+                    return False
+            except Exception as e:
+                logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
+                return False
+        
+        # SMTP-Verbindung aufbauen
+        if config.get('mail_use_tls') and config['mail_port'] == 465:
+            server = smtplib.SMTP_SSL(config['mail_server'], config['mail_port'])
+        else:
+            server = smtplib.SMTP(config['mail_server'], config['mail_port'])
+        
+        # EHLO senden
+        server.ehlo()
+        
+        # STARTTLS aktivieren falls konfiguriert
+        if config.get('mail_use_tls') and config['mail_port'] == 587:
+            server.starttls()
+            server.ehlo()
+        
+        # Authentifizierung
+        server.login(config['mail_username'], password)
+        
+        # E-Mail erstellen
+        if html_content and text_content:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = config['mail_username']
+            msg['To'] = to_email
+            
+            text_part = MIMEText(text_content, 'plain', 'utf-8')
+            html_part = MIMEText(html_content, 'html', 'utf-8')
+            
+            msg.attach(text_part)
+            msg.attach(html_part)
+        elif html_content:
+            msg = MIMEText(html_content, 'html', 'utf-8')
+            msg['Subject'] = subject
+            msg['From'] = config['mail_username']
+            msg['To'] = to_email
+        else:
+            msg = MIMEText(text_content or '', 'plain', 'utf-8')
+            msg['Subject'] = subject
+            msg['From'] = config['mail_username']
+            msg['To'] = to_email
+        
+        # E-Mail senden
+        server.send_message(msg)
+        server.quit()
+        
+        logger.info(f"E-Mail erfolgreich gesendet an {to_email}: {subject}")
+        return True
+        
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP-Authentifizierungsfehler: {e}")
+        return False
+    except smtplib.SMTPConnectError as e:
+        logger.error(f"SMTP-Verbindungsfehler: {e}")
+        return False
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP-Fehler: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unerwarteter Fehler beim E-Mail-Versand: {e}")
         return False 

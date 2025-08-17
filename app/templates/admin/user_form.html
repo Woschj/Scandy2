@@ -147,25 +147,40 @@
                     </div>
                 </div>
 
-                <!-- Abteilung (einzelne Auswahl) -->
+                <!-- Abteilungen (Mehrfachauswahl) + Standard-Abteilung -->
                 <div class="mt-8">
                     <h3 class="text-lg font-semibold mb-4">
                         <i class="fas fa-building text-primary mr-2"></i>
-                        Abteilung
+                        Abteilungen
                     </h3>
-                    <div>
-                        <label class="label"><span class="label-text">Zugeordnete Abteilung</span></label>
-                        <select name="default_department" class="select select-bordered w-full" required>
-                            {% for dep in departments %}
-                            <option value="{{ dep }}" {% if user_default_department == dep %}selected{% endif %}>{{ dep }}</option>
-                            {% endfor %}
-                        </select>
-                        <label class="label">
-                            <span class="label-text-alt text-info">
-                                - Für Admins: legt nur die Standard-Abteilung fest; Zugriff auf alle Bereiche bleibt erhalten.<br>
-                                - Für andere Rollen: die ausgewählte Abteilung ist die einzige, auf die zugegriffen werden kann.
-                            </span>
-                        </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Zugeordnete Abteilungen</span></label>
+                            <div class="border rounded-md p-3 max-h-56 overflow-auto">
+                                {% for dep in departments %}
+                                <label class="label cursor-pointer justify-start gap-3">
+                                    <input type="checkbox" name="allowed_departments" value="{{ dep }}" class="checkbox checkbox-primary"
+                                           {% if dep in (user_allowed_departments or []) %}checked{% endif %}>
+                                    <span class="label-text">{{ dep }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <label class="label">
+                                <span class="label-text-alt text-info">Mehrfachauswahl möglich. Für Nicht-Admins wird serverseitig auf genau eine Abteilung reduziert.</span>
+                            </label>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Standard-Abteilung</span></label>
+                            <select name="default_department" class="select select-bordered w-full">
+                                <option value="">– bitte wählen –</option>
+                                {% for dep in departments %}
+                                <option value="{{ dep }}" {% if user_default_department == dep %}selected{% endif %}>{{ dep }}</option>
+                                {% endfor %}
+                            </select>
+                            <label class="label">
+                                <span class="label-text-alt text-info">Sollte zu den zugeordneten Abteilungen gehören. Wird serverseitig validiert und ggf. ergänzt.</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

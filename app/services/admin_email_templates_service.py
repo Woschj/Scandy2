@@ -143,6 +143,22 @@ class AdminEmailTemplatesService:
             if not recipient_email:
                 return False, 'Empfänger-E-Mail fehlt.'
 
+            # Prüfe ob E-Mail-Konfiguration vorhanden ist
+            from app.services.admin_email_service import AdminEmailService
+            email_config = AdminEmailService.get_email_config()
+            if not email_config:
+                return False, 'Keine E-Mail-Konfiguration gefunden. Bitte konfigurieren Sie zuerst das E-Mail-System.'
+
+            # Prüfe ob alle erforderlichen E-Mail-Einstellungen vorhanden sind
+            required_settings = ['mail_server', 'mail_port', 'mail_username', 'mail_password']
+            missing_settings = []
+            for setting in required_settings:
+                if setting not in email_config or not email_config[setting]:
+                    missing_settings.append(setting.replace('mail_', ''))
+            
+            if missing_settings:
+                return False, f'Fehlende E-Mail-Einstellungen: {", ".join(missing_settings)}. Bitte vervollständigen Sie die E-Mail-Konfiguration.'
+
             subject_tpl = template.get('subject') or 'Test-E-Mail'
             html_tpl = template.get('html_content') or ''
             text_tpl = template.get('text_content') or ''
@@ -189,18 +205,55 @@ class AdminEmailTemplatesService:
                 html_content = html_tpl
                 text_content = text_tpl
 
-            success = send_email(
-                to_email=recipient_email,
-                subject=subject,
-                html_content=html_content or None,
-                text_content=text_content or None,
-            )
-            if success:
-                return True, f'Test-E-Mail gesendet an {recipient_email}.'
-            return False, 'Versand fehlgeschlagen.'
+            # Sende Test-E-Mail mit direkter SMTP-Verbindung
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+                from email.mime.multipart import MIMEMultipart
+                from email.header import Header
+                
+                # E-Mail-Nachricht erstellen
+                msg = MIMEMultipart()
+                msg['From'] = email_config['mail_username']
+                msg['To'] = recipient_email
+                msg['Subject'] = Header(subject, 'utf-8')
+                
+                # Body hinzufügen
+                if html_content:
+                    msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+                elif text_content:
+                    msg.attach(MIMEText(text_content, 'plain', 'utf-8'))
+                else:
+                    msg.attach(MIMEText('Test-E-Mail ohne Inhalt', 'plain', 'utf-8'))
+                
+                # SMTP-Verbindung aufbauen
+                if email_config['mail_use_tls'] and email_config['mail_port'] == 465:
+                    server = smtplib.SMTP_SSL(email_config['mail_server'], email_config['mail_port'])
+                else:
+                    server = smtplib.SMTP(email_config['mail_server'], email_config['mail_port'])
+                
+                # STARTTLS aktivieren falls konfiguriert
+                if email_config['mail_use_tls'] and email_config['mail_port'] == 587:
+                    server.starttls()
+                
+                # Authentifizierung
+                if email_config.get('use_auth', True) and email_config['mail_username'] and email_config['mail_password']:
+                    server.login(email_config['mail_username'], email_config['mail_password'])
+                
+                # E-Mail senden (als Bytes, um ASCII-Kodierungsprobleme zu vermeiden)
+                server.sendmail(email_config['mail_username'], recipient_email, msg.as_bytes())
+                server.quit()
+                
+                logger.info(f"Test-E-Mail erfolgreich gesendet an {recipient_email}")
+                return True, f'Test-E-Mail erfolgreich gesendet an {recipient_email}.'
+                
+            except Exception as e:
+                logger.error(f"Fehler beim SMTP-Versand der Test-E-Mail: {e}")
+                return False, f'E-Mail-Versand fehlgeschlagen: {str(e)}'
+                
         except Exception as e:
             logger.error(f"Fehler beim Testversand: {e}")
-            return False, f"Fehler beim Testversand: {e}"
+            return False, f"Fehler beim Testversand: {str(e)}"
 
     @staticmethod
     def render_template_by_key(template_key: str, context: Dict[str, Any]) -> Optional[Dict[str, Optional[str]]]:

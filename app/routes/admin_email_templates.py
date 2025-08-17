@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 
 from app.utils.decorators import admin_required
@@ -57,13 +57,33 @@ def delete(template_id: str):
 @login_required
 @admin_required
 def send_test(template_id: str):
-    recipient = request.form.get('recipient', '').strip()
-    success, message = AdminEmailTemplatesService.send_test_email(template_id, recipient)
-    if success:
-        flash(message, 'success')
-    else:
-        flash(message, 'error')
-    return redirect(url_for('admin_email_templates.index'))
+    """Sendet eine Test-E-Mail für eine E-Mail-Vorlage"""
+    try:
+        recipient = request.form.get('recipient', '').strip()
+        
+        if not recipient:
+            return jsonify({'success': False, 'message': 'Empfänger-E-Mail fehlt'})
+        
+        # Template-ID bereinigen
+        template_id = template_id.strip()
+        
+        # Prüfe ob Template existiert
+        template = AdminEmailTemplatesService.get_template(template_id)
+        if not template:
+            return jsonify({'success': False, 'message': 'E-Mail-Vorlage nicht gefunden'})
+        
+        # Sende Test-E-Mail
+        success, message = AdminEmailTemplatesService.send_test_email(template_id, recipient)
+        
+        # Gib immer JSON-Antwort zurück
+        if success:
+            return jsonify({'success': True, 'message': message})
+        else:
+            return jsonify({'success': False, 'message': message})
+        
+    except Exception as e:
+        error_message = f"Fehler beim Senden der Test-E-Mail: {str(e)}"
+        return jsonify({'success': False, 'message': error_message})
 
 
 @bp.route('/ensure-defaults', methods=['POST'])

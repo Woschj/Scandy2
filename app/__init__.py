@@ -268,18 +268,35 @@ def create_app(test_config=None):
     app.config.setdefault('SESSION_TYPE', 'filesystem')
     app.config.setdefault('SESSION_FILE_DIR', os.path.join(app.root_path, 'flask_session'))
     app.config.setdefault('SESSION_FILE_THRESHOLD', 500)
-    app.config.setdefault('SESSION_FILE_MODE', 384)
+    app.config.setdefault('SESSION_FILE_MODE', 0o644)  # Berechtigungen für Session-Dateien (rw-r--r--)
     
     # Session-Cookie-Einstellungen für HTTP (Port 80) korrekt setzen
     # Diese überschreiben die Config-Klasse für HTTP-Umgebungen
     if not app.config.get('SESSION_COOKIE_SECURE', False):
         app.config['SESSION_COOKIE_SECURE'] = False
         app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        app.config['SESSION_COOKIE_DOMAIN'] = None  # Keine Domain-Beschränkung für Intranet
         app.config['REMEMBER_COOKIE_SECURE'] = False
         app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
+        app.config['REMEMBER_COOKIE_DOMAIN'] = None  # Keine Domain-Beschränkung für Intranet
         app.logger.info("Session-Konfiguration für HTTP angepasst")
     
-    app.config.setdefault('PERMANENT_SESSION_LIFETIME', timedelta(days=7))
+    app.config.setdefault('PERMANENT_SESSION_LIFETIME', timedelta(days=7))  # 7 Tage für Intranet
+    
+    # Session-Verzeichnis-Berechtigungen sicherstellen
+    session_dir = app.config['SESSION_FILE_DIR']
+    if os.path.exists(session_dir):
+        try:
+            # Setze Berechtigungen für Session-Verzeichnis
+            os.chmod(session_dir, 0o755)  # rwxr-xr-x
+            # Stelle sicher, dass das Verzeichnis dem root-Benutzer gehört (für Gunicorn)
+            import pwd
+            root_uid = pwd.getpwnam('root').pw_uid
+            root_gid = pwd.getpwnam('root').pw_gid
+            os.chown(session_dir, root_uid, root_gid)
+            app.logger.info(f"Session-Verzeichnis-Berechtigungen und Besitzer gesetzt: {session_dir}")
+        except Exception as e:
+            app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: {e}")
     
     # Debug: Zeige aktuelle Session-Konfiguration
     app.logger.info(f"Session-Konfiguration: SECURE={app.config.get('SESSION_COOKIE_SECURE')}, "
@@ -287,6 +304,50 @@ def create_app(test_config=None):
                    f"HTTPONLY={app.config.get('SESSION_COOKIE_HTTPONLY')}")
     
     Session(app)
+    
+    # Session-Bereinigung: Lösche alte Session-Dateien beim Start
+    def cleanup_old_sessions():
+        """Bereinigt alte Session-Dateien"""
+        try:
+            session_dir = app.config['SESSION_FILE_DIR']
+            if os.path.exists(session_dir):
+                current_time = datetime.now()
+                session_lifetime = app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(days=7))
+                cutoff_time = current_time - session_lifetime
+                
+                cleaned_count = 0
+                for filename in os.listdir(session_dir):
+                    file_path = os.path.join(session_dir, filename)
+                    if os.path.isfile(file_path):
+                        try:
+                            file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                            if file_mtime < cutoff_time:
+                                os.remove(file_path)
+                                cleaned_count += 1
+                        except Exception:
+                            pass
+                
+                if cleaned_count > 0:
+                    app.logger.info(f"Session-Bereinigung: {cleaned_count} alte Session-Dateien gelöscht")
+                
+                # Stelle sicher, dass alle verbleibenden Session-Dateien die richtigen Berechtigungen haben
+                for filename in os.listdir(session_dir):
+                    file_path = os.path.join(session_dir, filename)
+                    if os.path.isfile(file_path):
+                        try:
+                            os.chmod(file_path, 0o644)  # rw-r--r--
+                            # Setze Besitzer auf root für Gunicorn
+                            import pwd
+                            root_uid = pwd.getpwnam('root').pw_uid
+                            root_gid = pwd.getpwnam('root').pw_gid
+                            os.chown(file_path, root_uid, root_gid)
+                        except Exception:
+                            pass
+        except Exception as e:
+            app.logger.warning(f"Fehler bei Session-Bereinigung: {e}")
+    
+    # Führe Session-Bereinigung beim Start aus
+    cleanup_old_sessions()
     
     # Debug: Zeige Session-Status nach dem Login
     @app.after_request
@@ -322,10 +383,13 @@ def create_app(test_config=None):
                     if getattr(current_user, 'role', None) == 'admin':
                         depts_setting = mongodb.find_one('settings', {'key': 'departments'})
                         all_departments = depts_setting.get('value', []) if depts_setting else []
-                        if isinstance(all_departments, list) and all_departments:
+                        # Admin: bevorzuge Benutzer-Default falls gesetzt, sonst erste globale
+                        if user and user.get('default_department'):
+                            dept = user.get('default_department')
+                        elif isinstance(all_departments, list) and all_departments:
                             dept = all_departments[0]
                         else:
-                            dept = user.get('default_department') or (user.get('allowed_departments') or [None])[0]
+                            dept = (user.get('allowed_departments') or [None])[0] if user else None
                     else:
                         if user:
                             dept = user.get('default_department') or (user.get('allowed_departments') or [None])[0]

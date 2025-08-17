@@ -68,6 +68,25 @@
                 </div>
 
                 {% if template %}
+                <div class="mt-6">
+                    <label class="label"><span class="label-text text-lg">Live-Vorschau</span></label>
+                    <div class="border rounded-lg overflow-hidden">
+                        <iframe id="emailPreview" class="w-full" style="height: 360px; background: white;"></iframe>
+                    </div>
+                    <div class="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                        <div class="flex gap-2 items-center">
+                            <button type="button" id="refreshPreviewBtn" class="btn btn-sm">Vorschau aktualisieren</button>
+                        </div>
+                        <label class="cursor-pointer flex items-center gap-2">
+                            <input id="editInPreviewToggle" type="checkbox" class="toggle toggle-sm">
+                            <span class="text-sm">Im Vorschau-Fenster bearbeiten (WYSIWYG auf vollständigem HTML)</span>
+                        </label>
+                        <span class="text-sm opacity-70">Tipp: Bei aktivem Vorschau-Editor wird der Quill-Editor ausgeblendet.</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if template %}
                 <div class="mt-4">
                     <div class="alert alert-info">
                         <div>
@@ -99,17 +118,36 @@
                 </div>
                 {% endif %}
 
+                {% if template %}
+                <div class="form-control mt-2">
+                    <label class="label"><span class="label-text">Test-Empfänger</span></label>
+                    <input type="email" id="testRecipientInput" class="input input-bordered" placeholder="name@example.com" value="{{ (current_user and current_user.email) or '' }}">
+                    <label class="label"><span class="label-text-alt">Adresse für die Test-E-Mail. Standard: Ihre eigene E-Mail-Adresse.</span></label>
+                </div>
+                {% endif %}
+
                 <div class="flex gap-3">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-2"></i>Speichern
                     </button>
                     {% if template %}
-                    <form method="POST" action="{{ url_for('admin_email_templates.send_test', template_id=template._id) }}">
-                        <input type="hidden" name="recipient" value="{{ current_user.email }}">
-                        <button class="btn btn-info" type="submit"><i class="fas fa-paper-plane mr-2"></i>Test an mich</button>
-                    </form>
+                    <button type="button" class="btn btn-info" id="testEmailBtn">
+                        <i class="fas fa-paper-plane mr-2"></i>Test senden
+                    </button>
                     {% endif %}
                 </div>
+                
+                <!-- Test-Status-Anzeige -->
+                {% if template %}
+                <div id="testStatus" class="mt-4 hidden">
+                    <div class="alert" id="testAlert">
+                        <div>
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="testMessage">Test wird vorbereitet...</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
@@ -121,29 +159,270 @@
 <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
+    // Quill-Editor sicher initialisieren
     var htmlField = document.getElementById('htmlContentField');
-    var quill = new Quill('#quillEditor', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['link'],
-                [{ 'align': [] }],
-                ['clean']
-            ]
+    var quillEditor = document.getElementById('quillEditor');
+    var quill = null;
+    
+    try {
+        if (quillEditor && typeof Quill !== 'undefined') {
+            quill = new Quill('#quillEditor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+            
+            // Startinhalt setzen (wenn vollständiges HTML-Dokument vorhanden, nur Body-Inhalt für Editor verwenden)
+            if (htmlField && typeof htmlField.value === 'string' && quill) {
+                var initialHtml = htmlField.value;
+                try {
+                    if (/<html|<!DOCTYPE|<body/i.test(initialHtml)) {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(initialHtml, 'text/html');
+                        var bodyHtml = (doc && doc.body) ? doc.body.innerHTML : initialHtml;
+                        quill.root.innerHTML = bodyHtml || '';
+                    } else {
+                        quill.root.innerHTML = initialHtml;
+                    }
+                } catch (e) {
+                    quill.root.innerHTML = initialHtml;
+                }
+            }
+            
+            // Beim Absenden Inhalt in verstecktes Feld schreiben
+            var form = htmlField ? htmlField.closest('form') : null;
+            if (form && quill) {
+                form.addEventListener('submit', function() {
+                    if (htmlField && quill) {
+                        htmlField.value = quill.root.innerHTML;
+                    }
+                });
+            }
+        } else {
+            console.warn('Quill-Editor konnte nicht initialisiert werden');
         }
-    });
-    // Startinhalt setzen
-    if (htmlField && htmlField.value) {
-        quill.root.innerHTML = htmlField.value;
+    } catch (error) {
+        console.error('Fehler bei der Quill-Editor-Initialisierung:', error);
     }
-    // Beim Absenden Inhalt in verstecktes Feld schreiben
-    var form = htmlField.closest('form');
-    if (form) {
+    
+    // Test-E-Mail-Button verbessern
+    var testEmailBtn = document.getElementById('testEmailBtn');
+    var testStatus = document.getElementById('testStatus');
+    var testAlert = document.getElementById('testAlert');
+    var testMessage = document.getElementById('testMessage');
+    var testRecipientInput = document.getElementById('testRecipientInput');
+    var previewIframe = document.getElementById('emailPreview');
+    var refreshPreviewBtn = document.getElementById('refreshPreviewBtn');
+    var editInPreviewToggle = document.getElementById('editInPreviewToggle');
+
+    function updatePreview() {
+        if (!previewIframe) return;
+        var fullHtml = htmlField && typeof htmlField.value === 'string' ? htmlField.value : '';
+        var editorHtml = quill ? quill.root.innerHTML : '';
+        // Wenn vollständiges HTML-Dokument vorhanden, direkt verwenden, sonst Editor-Inhalt in ein minimales Dokument einbetten
+        var srcdocHtml = /<html|<!DOCTYPE|<body/i.test(fullHtml)
+            ? fullHtml
+            : "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" + (editorHtml || fullHtml || '') + "</body></html>";
+        previewIframe.srcdoc = srcdocHtml;
+    }
+
+    if (refreshPreviewBtn) {
+        refreshPreviewBtn.addEventListener('click', function() {
+            updatePreview();
+        });
+    }
+    // Initiale Vorschau laden
+    updatePreview();
+    // Vorschau bei Editor-Änderungen aktualisieren (debounced)
+    if (quill) {
+        var debounceTimer = null;
+        quill.on('text-change', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updatePreview, 400);
+        });
+    }
+
+    function getIframeDocument() {
+        return previewIframe ? (previewIframe.contentDocument || previewIframe.contentWindow.document) : null;
+    }
+
+    function setPreviewEditMode(enabled) {
+        var doc = getIframeDocument();
+        if (!doc) return;
+        try {
+            if (enabled) {
+                // Quill-Editor ausblenden, vollständiges Dokument im iFrame bearbeiten
+                var quillContainer = document.getElementById('quillEditor');
+                if (quillContainer) {
+                    quillContainer.parentElement.style.display = 'none';
+                }
+                // Sicherstellen, dass die Vorschau das vollständige HTML-Dokument enthält
+                updatePreview();
+                // DesignMode aktivieren
+                doc.designMode = 'on';
+                // Änderungen im iFrame zurück in das versteckte Feld schreiben (vollständiges Dokument)
+                var writeBack = function() {
+                    if (!htmlField) return;
+                    var htmlOuter = doc.documentElement ? doc.documentElement.outerHTML : doc.body.innerHTML;
+                    var withDoctype = '<!DOCTYPE html>' + htmlOuter;
+                    htmlField.value = withDoctype;
+                };
+                doc.removeEventListener('input', writeBack);
+                doc.addEventListener('input', writeBack);
+                // Initial synchronisieren
+                writeBack();
+            } else {
+                // DesignMode aus, Quill-Editor wieder anzeigen und mit Body-Inhalt füllen
+                doc.designMode = 'off';
+                var quillContainer = document.getElementById('quillEditor');
+                if (quillContainer) {
+                    quillContainer.parentElement.style.display = '';
+                }
+                if (quill && doc && doc.body) {
+                    quill.root.innerHTML = doc.body.innerHTML || '';
+                    if (htmlField) {
+                        htmlField.value = quill.root.innerHTML;
+                    }
+                }
+                updatePreview();
+            }
+        } catch (e) {
+            console.warn('Konnte Vorschau-Bearbeitungsmodus nicht setzen:', e);
+        }
+    }
+
+    if (editInPreviewToggle) {
+        editInPreviewToggle.addEventListener('change', function(ev) {
+            setPreviewEditMode(ev.target.checked);
+        });
+    }
+
+    // Beim Absenden sicherstellen, dass der richtige Inhalt gespeichert wird
+    (function ensureSubmitWritesCorrectContent() {
+        var form = htmlField ? htmlField.closest('form') : null;
+        if (!form) return;
         form.addEventListener('submit', function() {
-            htmlField.value = quill.root.innerHTML;
+            if (editInPreviewToggle && editInPreviewToggle.checked) {
+                var doc = getIframeDocument();
+                if (doc && htmlField) {
+                    var htmlOuter = doc.documentElement ? doc.documentElement.outerHTML : doc.body.innerHTML;
+                    htmlField.value = '<!DOCTYPE html>' + htmlOuter;
+                }
+            } else if (quill && htmlField) {
+                htmlField.value = quill.root.innerHTML;
+            }
+        });
+    })();
+    
+    if (testEmailBtn) {
+        testEmailBtn.addEventListener('click', function() {
+            // Button deaktivieren und Status anzeigen
+            testEmailBtn.disabled = true;
+            testEmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Test läuft...';
+            
+            // Status anzeigen
+            if (testStatus) testStatus.classList.remove('hidden');
+            if (testAlert) testAlert.className = 'alert alert-info';
+            if (testMessage) testMessage.innerHTML = 'Test-E-Mail wird gesendet...';
+            
+            // E-Mail-Test-URL - Direkte URL-Generierung um Formatierungsfehler zu vermeiden
+            var templateId = '{{ template._id }}';
+            var testUrl = '/admin/email-templates/' + templateId + '/send-test';
+            
+            // Debug: Template-ID und generierte URL ausgeben
+            console.log('Template ID:', templateId);
+            console.log('Test-URL:', testUrl);
+            
+            // Formular-Daten für den Test
+            var formData = new FormData();
+            var enteredEmail = (testRecipientInput && testRecipientInput.value) ? testRecipientInput.value.trim() : '';
+            var recipientEmail = enteredEmail;
+
+            if (!recipientEmail) {
+                if (testAlert) testAlert.className = 'alert alert-error';
+                if (testMessage) testMessage.innerHTML = '❌ Bitte geben Sie eine Empfänger-E-Mail-Adresse ein.';
+                testEmailBtn.disabled = false;
+                testEmailBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Test senden';
+                return;
+            }
+
+            formData.append('recipient', recipientEmail);
+            
+            // E-Mail-Test senden
+            fetch(testUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Response Status:', response.status);
+                console.log('Response Headers:', response.headers);
+                
+                if (response.redirected) {
+                    // Bei Weiterleitung (Flash-Message) den neuen Inhalt laden
+                    return response.text();
+                } else {
+                    return response.text();
+                }
+            })
+            .then(data => {
+                console.log('Response Data:', data);
+                
+                // Prüfe ob es eine JSON-Antwort ist
+                try {
+                    var jsonResponse = JSON.parse(data);
+                    if (jsonResponse.success) {
+                        if (testAlert) testAlert.className = 'alert alert-success';
+                        if (testMessage) testMessage.innerHTML = '✅ ' + jsonResponse.message;
+                    } else {
+                        if (testAlert) testAlert.className = 'alert alert-error';
+                        if (testMessage) testMessage.innerHTML = '❌ ' + jsonResponse.message;
+                    }
+                    return;
+                } catch (e) {
+                    // Keine JSON-Antwort, behandle als HTML
+                    console.log('Keine JSON-Antwort, behandle als HTML');
+                }
+                
+                // Prüfe ob die HTML-Antwort eine Erfolgs- oder Fehlermeldung enthält
+                if (data.includes('alert-success') || data.includes('Test-E-Mail erfolgreich') || data.includes('gesendet an') || data.includes('erfolgreich')) {
+                    if (testAlert) testAlert.className = 'alert alert-success';
+                    if (testMessage) testMessage.innerHTML = '✅ Test-E-Mail erfolgreich gesendet!';
+                } else if (data.includes('alert-error') || data.includes('fehlgeschlagen') || data.includes('Fehler') || data.includes('nicht')) {
+                    if (testAlert) testAlert.className = 'alert alert-error';
+                    if (testMessage) testMessage.innerHTML = '❌ Test-E-Mail fehlgeschlagen. Prüfen Sie die E-Mail-Konfiguration.';
+                } else {
+                    if (testAlert) testAlert.className = 'alert alert-warning';
+                    if (testMessage) testMessage.innerHTML = '⚠️ Unbekannter Status. Antwort: ' + data.substring(0, 100) + '...';
+                }
+            })
+            .catch(error => {
+                console.error('Fehler beim Testen:', error);
+                if (testAlert) testAlert.className = 'alert alert-error';
+                if (testMessage) testMessage.innerHTML = '❌ Fehler beim Testen: ' + error.message;
+            })
+            .finally(() => {
+                // Button wieder aktivieren
+                testEmailBtn.disabled = false;
+                testEmailBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Test senden';
+                
+                // Status nach 8 Sekunden ausblenden
+                if (testStatus) {
+                    setTimeout(() => {
+                        testStatus.classList.add('hidden');
+                    }, 8000);
+                }
+            });
         });
     }
 });

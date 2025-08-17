@@ -54,7 +54,9 @@ class Config:
     SESSION_TYPE = os.environ.get('SESSION_TYPE', 'filesystem')
     SESSION_FILE_DIR = os.environ.get('SESSION_FILE_DIR', os.path.join(BASE_DIR, 'app', 'flask_session'))
     SESSION_PERMANENT = os.environ.get('SESSION_PERMANENT', 'True').lower() == 'true'
-    PERMANENT_SESSION_LIFETIME = int(os.environ.get('PERMANENT_SESSION_LIFETIME', '3600'))  # 1 Stunde (sicherer)
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get('PERMANENT_SESSION_LIFETIME', '604800'))  # 7 Tage (für Intranet)
+    SESSION_FILE_MODE = 0o644  # Berechtigungen für Session-Dateien (rw-r--r--)
+    SESSION_FILE_THRESHOLD = 500  # Maximale Anzahl Session-Dateien
     
     # Sicherheit
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -108,9 +110,11 @@ class Config:
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'  # Erlaubt Cross-Site-Requests für Login
+    SESSION_COOKIE_DOMAIN = None  # Keine Domain-Beschränkung für Intranet
     REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'False').lower() == 'true'
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = 'Lax'  # Erlaubt Cross-Site-Requests für Login
+    REMEMBER_COOKIE_DOMAIN = None  # Keine Domain-Beschränkung für Intranet
     
     # Debug: Zeige aktuelle Cookie-Konfiguration
     print(f"DEBUG: Session-Cookies - SECURE: {SESSION_COOKIE_SECURE}, SAMESITE: {SESSION_COOKIE_SAMESITE}")
@@ -203,8 +207,10 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'False').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'  # Erlaubt Cross-Site-Requests für HTTP
+    SESSION_COOKIE_DOMAIN = None  # Keine Domain-Beschränkung für Intranet
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = 'Lax'  # Erlaubt Cross-Site-Requests für HTTP
+    REMEMBER_COOKIE_DOMAIN = None  # Keine Domain-Beschränkung für Intranet
     
     # Security Headers
     SECURITY_HEADERS = {
@@ -233,6 +239,17 @@ class ProductionConfig(Config):
         if not enable_https:
             app.config['SESSION_COOKIE_SECURE'] = False
             app.config['REMEMBER_COOKIE_SECURE'] = False
+            app.config['SESSION_COOKIE_DOMAIN'] = None
+            app.config['REMEMBER_COOKIE_DOMAIN'] = None
+        
+        # Session-Verzeichnis-Berechtigungen sicherstellen
+        session_dir = app.config.get('SESSION_FILE_DIR')
+        if session_dir and os.path.exists(session_dir):
+            try:
+                os.chmod(session_dir, 0o755)  # rwxr-xr-x
+                app.logger.info(f"Session-Verzeichnis-Berechtigungen gesetzt: {session_dir}")
+            except Exception as e:
+                app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: {e}")
         
         # Security Headers hinzufügen (CSP Nonce einsetzen)
         @app.after_request

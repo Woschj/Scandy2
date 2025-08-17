@@ -1345,8 +1345,9 @@ def ticket_detail(ticket_id):
     # Hole alle zugewiesenen Nutzer (Mehrfachzuweisung)
     assigned_users = mongodb.find('ticket_assignments', {'ticket_id': convert_id_for_query(ticket_id)})
 
-    # Hole alle Kategorien aus der settings Collection
-    categories = get_ticket_categories_from_settings()
+    # Hole Kategorien der aktuellen Abteilung
+    from app.services.ticket_category_service import ticket_category_service
+    categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
 
     # Hole Arbeitszeiten
     arbeit_list = list(mongodb.find('auftrag_arbeit', {'ticket_id': convert_id_for_query(ticket_id)}))
@@ -1779,7 +1780,7 @@ def add_user():
                                  departments=departments,
                                  user_allowed_departments=allowed_departments,
                                  user_default_department=default_department,
-                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')) if session.get('department') else get_ticket_categories_from_settings(),
+                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')),
                                  user_handlungsfelder=request.form.getlist('handlungsfelder'))
         
         # Automatische Passwort-Generierung wenn keines eingegeben wurde
@@ -1862,17 +1863,13 @@ def add_user():
                                  departments=departments,
                                  user_allowed_departments=allowed_departments,
                                  user_default_department=default_department,
-                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')) if session.get('department') else get_ticket_categories_from_settings(),
+                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')),
                                  user_handlungsfelder=handlungsfelder)
     
     # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
     from app.services.handlungsfeld_service import handlungsfeld_service
     current_department = session.get('department')
-    if current_department:
-        handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-    else:
-        # Fallback zu globalen Kategorien
-        handlungsfelder = get_ticket_categories_from_settings()
+    handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
     
     # Abteilungen aus Settings
     from app.services.admin_system_settings_service import AdminSystemSettingsService
@@ -1911,11 +1908,7 @@ def edit_user(user_id):
         # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
         from app.services.handlungsfeld_service import handlungsfeld_service
         current_department = session.get('department')
-        if current_department:
-            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-        else:
-            # Fallback zu globalen Kategorien
-            handlungsfelder = get_ticket_categories_from_settings()
+        handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
         
         user_handlungsfelder = user.get('handlungsfelder', [])
         
@@ -1947,11 +1940,7 @@ def edit_user(user_id):
             # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
             from app.services.handlungsfeld_service import handlungsfeld_service
             current_department = session.get('department')
-            if current_department:
-                handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-            else:
-                # Fallback zu globalen Kategorien
-                handlungsfelder = get_ticket_categories_from_settings()
+            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
             
             user_handlungsfelder = user.get('handlungsfelder', [])
             
@@ -1992,10 +1981,14 @@ def edit_user(user_id):
         if processed_data['password']:
             user_data['password'] = processed_data['password']
         
-        # Abteilungsrechte
-        default_department = request.form.get('default_department') or None
-        user_data['allowed_departments'] = [default_department] if default_department else []
-        user_data['default_department'] = default_department if default_department else None
+        # Abteilungsrechte (Mehrfachauswahl + Default)
+        form_allowed = request.form.getlist('allowed_departments')
+        default_department = (request.form.get('default_department') or '').strip() or None
+        # Konsistenz herstellen: Default muss in allowed enthalten sein
+        if default_department and default_department not in form_allowed:
+            form_allowed.append(default_department)
+        user_data['allowed_departments'] = [d for d in form_allowed if d]
+        user_data['default_department'] = default_department
 
         success, message = AdminUserService.update_user(user_id, user_data)
         
@@ -2007,11 +2000,7 @@ def edit_user(user_id):
             # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
             from app.services.handlungsfeld_service import handlungsfeld_service
             current_department = session.get('department')
-            if current_department:
-                handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-            else:
-                # Fallback zu globalen Kategorien
-                handlungsfelder = get_ticket_categories_from_settings()
+            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
             
             user_handlungsfelder = user.get('handlungsfelder', [])
             
@@ -2044,11 +2033,7 @@ def edit_user(user_id):
     # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
     from app.services.handlungsfeld_service import handlungsfeld_service
     current_department = session.get('department')
-    if current_department:
-        handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-    else:
-        # Fallback zu globalen Kategorien
-        handlungsfelder = get_ticket_categories_from_settings()
+    handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
     
     user_handlungsfelder = user.get('handlungsfelder', [])
     
@@ -4884,6 +4869,30 @@ def auto_backup():
                              weekly_backup_time='17:00',
                              weekly_backup_email='')
 
+@bp.route('/email_debug')
+@admin_required
+def email_debug():
+    """E-Mail-System debuggen"""
+    try:
+        from app.utils.email_debug import debug_email_status, test_simple_email
+        
+        # E-Mail-Status prüfen
+        status = debug_email_status()
+        
+        # Test-E-Mail senden (optional)
+        test_result = None
+        if request.args.get('test') == '1':
+            test_result = test_simple_email()
+        
+        return render_template('admin/email_debug.html', 
+                             status=status, 
+                             test_result=test_result)
+                             
+    except Exception as e:
+        logger.error(f"Fehler beim E-Mail-Debug: {e}")
+        flash(f'Fehler beim Debuggen des E-Mail-Systems: {str(e)}', 'error')
+        return redirect(url_for('admin.system'))
+
 @bp.route('/email_settings', methods=['GET', 'POST'])
 @admin_required
 def email_settings():
@@ -5127,15 +5136,11 @@ def test_email_simple():
                 if decrypted_password:
                     test_config['mail_password'] = decrypted_password
                 else:
-                    return jsonify({
-                        'success': False,
-                        'message': 'Passwort konnte nicht entschlüsselt werden'
-                    })
+                    logger.warning("Passwort konnte nicht entschlüsselt werden - verwende verschlüsseltes Passwort")
+                    # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
             except Exception as e:
-                return jsonify({
-                    'success': False,
-                    'message': f'Fehler beim Entschlüsseln des Passworts: {str(e)}'
-                })
+                logger.warning(f"Fehler beim Entschlüsseln des Passworts: {e} - verwende verschlüsseltes Passwort")
+                # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
         
         # Verwende die test_email_config aus email_utils direkt
         from app.utils.email_utils import test_email_config

@@ -14,6 +14,7 @@ import subprocess
 import zipfile
 import tempfile
 from datetime import datetime
+import hashlib
 import threading
 import uuid
 from pathlib import Path
@@ -138,31 +139,34 @@ class UnifiedBackupManager:
                     '--out', str(backup_path),
                     '--gzip'
                 ]
-                
+                # Primary bevorzugen, wenn Replikaset
+                cmd.extend(['--readPreference', 'primary'])
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-                
                 if result.returncode == 0:
                     print(f"  ✅ MongoDB-Backup mit mongodump erstellt")
                     return backup_path
                 else:
                     print(f"  ⚠️  mongodump fehlgeschlagen, verwende Python-Backup: {result.stderr}")
                     raise Exception("mongodump nicht verfügbar")
-                    
             except (FileNotFoundError, Exception):
                 # Fallback: Python-basiertes Backup
                 print(f"  🔄 Verwende Python-basiertes MongoDB-Backup...")
                 
                 from app.models.mongodb_database import mongodb
-                from datetime import datetime
+                from bson import json_util
                 
-                # Collections die gesichert werden sollen
-                collections = [
-                    'tools', 'workers', 'consumables', 'lendings', 
-                    'consumable_usages', 'tickets', 'users', 'settings',
-                    'homepage_notices', 'work_times', 'jobs', 'timesheets',
-                    'auftrag_details', 'auftrag_material', 'email_config', 
-                    'email_settings', 'system_logs'
-                ]
+                # Collections dynamisch ermitteln (alle außer System-Collections)
+                try:
+                    db = mongodb.db
+                    collections = [name for name in db.list_collection_names() if not name.startswith('system.')]
+                except Exception:
+                    collections = [
+                        'tools', 'workers', 'consumables', 'lendings', 
+                        'consumable_usages', 'tickets', 'users', 'settings',
+                        'homepage_notices', 'work_times', 'jobs', 'timesheets',
+                        'auftrag_details', 'auftrag_material', 'email_config', 
+                        'email_settings', 'system_logs'
+                    ]
                 
                 backup_data = {
                     'metadata': {
@@ -203,7 +207,7 @@ class UnifiedBackupManager:
                 # Backup-Datei speichern
                 backup_file = backup_path / f"{backup_name}.json"
                 with open(backup_file, 'w', encoding='utf-8') as f:
-                    json.dump(backup_data, f, ensure_ascii=False, indent=2, default=str)
+                    f.write(json_util.dumps(backup_data, ensure_ascii=False, indent=2))
                 
                 print(f"  ✅ Python-basiertes MongoDB-Backup erstellt")
                 return backup_path
@@ -280,12 +284,26 @@ class UnifiedBackupManager:
                 Path("requirements.txt"),
                 Path("package.json")
             ]
+            optional_system_files = [
+                Path("/etc/systemd/system/scandy.service"),
+                Path("/etc/cron.d/scandy-session-cleanup"),
+            ]
             
             copied_files = 0
             for config_file in config_files:
                 if config_file.exists():
                     shutil.copy2(config_file, config_backup_path / config_file.name)
                     copied_files += 1
+            # Versuche Systemdateien (optional)
+            try:
+                system_dir = config_backup_path / 'system'
+                for sysf in optional_system_files:
+                    if sysf.exists():
+                        system_dir.mkdir(exist_ok=True)
+                        shutil.copy2(sysf, system_dir / sysf.name)
+                        copied_files += 1
+            except Exception:
+                pass
             
             if copied_files > 0:
                 print(f"  ✅ {copied_files} Konfigurationsdateien kopiert")
@@ -307,6 +325,18 @@ class UnifiedBackupManager:
             
             print(f"  📦 Erstelle finales Backup-Paket...")
             
+            checksums: Dict[str, str] = {}
+            def _add_file_with_checksum(zipf: zipfile.ZipFile, file_path: Path, arcname: str):
+                try:
+                    h = hashlib.sha256()
+                    with open(file_path, 'rb') as rf:
+                        for chunk in iter(lambda: rf.read(1024 * 1024), b''):
+                            h.update(chunk)
+                    checksums[arcname] = h.hexdigest()
+                    zipf.write(file_path, arcname)
+                except Exception as e:
+                    print(f"  ⚠️  Konnte Datei nicht hinzufügen ({arcname}): {e}")
+
             with zipfile.ZipFile(final_backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 # MongoDB-Backup hinzufügen
                 if db_path and db_path.exists():
@@ -314,7 +344,7 @@ class UnifiedBackupManager:
                         for file in files:
                             file_path = Path(root) / file
                             arcname = f"mongodb/{file_path.relative_to(db_path)}"
-                            zipf.write(file_path, arcname)
+                            _add_file_with_checksum(zipf, file_path, arcname)
                 
                 # Medien-Backup hinzufügen
                 if media_path and media_path.exists():
@@ -322,7 +352,7 @@ class UnifiedBackupManager:
                         for file in files:
                             file_path = Path(root) / file
                             arcname = f"media/{file_path.relative_to(media_path)}"
-                            zipf.write(file_path, arcname)
+                            _add_file_with_checksum(zipf, file_path, arcname)
                 
                 # Konfigurations-Backup hinzufügen
                 if config_path and config_path.exists():
@@ -330,7 +360,7 @@ class UnifiedBackupManager:
                         for file in files:
                             file_path = Path(root) / file
                             arcname = f"config/{file_path.relative_to(config_path)}"
-                            zipf.write(file_path, arcname)
+                            _add_file_with_checksum(zipf, file_path, arcname)
                 
                 # Backup-Metadaten hinzufügen
                 metadata = {
@@ -343,6 +373,7 @@ class UnifiedBackupManager:
                 }
                 
                 zipf.writestr('backup_metadata.json', json.dumps(metadata, indent=2))
+                zipf.writestr('checksums.json', json.dumps(checksums, indent=2))
             
             backup_size = final_backup_path.stat().st_size
             print(f"  ✅ Finales Backup erstellt: {self._format_size(backup_size)}")
@@ -381,6 +412,25 @@ class UnifiedBackupManager:
                 print(f"  📦 Extrahiere Backup...")
                 with zipfile.ZipFile(backup_path, 'r') as zipf:
                     zipf.extractall(temp_path)
+                    try:
+                        manifest_path = temp_path / 'checksums.json'
+                        if manifest_path.exists():
+                            manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+                            for rel, expected_hash in manifest.items():
+                                target = temp_path / rel
+                                if not target.exists():
+                                    print(f"  ❌ Fehlende Datei im Backup: {rel}")
+                                    return False
+                                h = hashlib.sha256()
+                                with open(target, 'rb') as rf:
+                                    for chunk in iter(lambda: rf.read(1024 * 1024), b''):
+                                        h.update(chunk)
+                                if h.hexdigest() != expected_hash:
+                                    print(f"  ❌ Integritätsfehler: {rel}")
+                                    return False
+                            print("  ✅ Integritätsprüfung bestanden")
+                    except Exception as e:
+                        print(f"  ⚠️  Konnte Checksummen nicht prüfen: {e}")
                 
                 # Metadaten lesen
                 metadata_path = temp_path / 'backup_metadata.json'
@@ -428,8 +478,17 @@ class UnifiedBackupManager:
             db_name = os.environ.get("MONGO_INITDB_DATABASE", "scandy")
             
             # mongorestore ausführen
+            # mongorestore Binärdatei robust ermitteln
+            mongorestore_bin = '/usr/bin/mongorestore'
+            try:
+                from shutil import which
+                w = which('mongorestore')
+                if w:
+                    mongorestore_bin = w
+            except Exception:
+                pass
             cmd = [
-                '/usr/bin/mongorestore',
+                mongorestore_bin,
                 '--uri', mongo_uri,
                 '--gzip',
                 '--drop',  # Bestehende Collections löschen

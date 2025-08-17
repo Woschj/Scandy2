@@ -51,13 +51,20 @@ case $PORT_CHOICE in
         ;;
 esac
 
-# Prüfe ob Port verfügbar ist
+# Prüfe ob Port verfügbar ist; wenn belegt, versuche Scandy zu stoppen und erneut zu prüfen
 if [ "$WEB_PORT" = "80" ] || [ "$WEB_PORT" = "443" ]; then
     if ss -H -ltn 2>/dev/null | grep -q ":$WEB_PORT "; then
-        error "Port $WEB_PORT ist bereits belegt!"
-        info "Verwende stattdessen Port 5001"
-        WEB_PORT=5001
-        PORT_NAME="Standard-Scandy (Port 80/443 belegt)"
+        info "Port $WEB_PORT ist belegt – stoppe Scandy-Service, um den Port freizumachen..."
+        systemctl stop scandy 2>/dev/null || true
+        systemctl stop scandy.service 2>/dev/null || true
+        sleep 3
+        if ss -H -ltn 2>/dev/null | grep -q ":$WEB_PORT "; then
+            error "Port $WEB_PORT ist weiterhin belegt. Weiche auf Port 5001 aus."
+            WEB_PORT=5001
+            PORT_NAME="Standard-Scandy (Port 80/443 belegt)"
+        else
+            success "Port $WEB_PORT freigemacht. Bleibe auf $WEB_PORT."
+        fi
     fi
 fi
 
@@ -267,7 +274,7 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/opt/scandy
-Environment=PATH=/opt/scandy/venv/bin
+Environment=PATH=/opt/scandy/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONPATH=/opt/scandy
 EnvironmentFile=/opt/scandy/.env
 ExecStart=$EXEC_START

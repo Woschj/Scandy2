@@ -417,7 +417,6 @@ create_backup() {
         # Konfiguration sichern
         [ -f ".env" ] && cp .env "$BACKUP_DIR/"
         [ -f "docker-compose.yml" ] && cp docker-compose.yml "$BACKUP_DIR/"
-.        
         # Daten sichern (je nach Modus)
         case $UPDATE_MODE in
             docker)

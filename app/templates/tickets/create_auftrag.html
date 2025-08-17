@@ -206,11 +206,12 @@ document.addEventListener('DOMContentLoaded', function(){
       const selected = catSelect.value;
       catSelect.innerHTML = '<option value="">Handlungsfeld auswählen</option>' +
         data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-      // Versuche Auswahl zu erhalten, falls vorhanden
       if ([...catSelect.options].some(o => o.value === selected)) catSelect.value = selected;
     } catch(e) { /* ignore */ }
   }
   deptSelect.addEventListener('change', refreshCategories);
+  // Initial laden falls eine Abteilung vorausgewählt ist
+  if (deptSelect.value) { refreshCategories(); }
 });
 </script>
 <script src="{{ url_for('static', filename='js/tickets.js') }}"></script>

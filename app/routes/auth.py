@@ -580,14 +580,14 @@ def profile():
                     flash('Aktuelles Passwort ist falsch.', 'error')
                     return render_template('auth/profile.html', user=user)
                 
-                # Validierung mit ValidationService
-                validation_data = {
-                    'password': new_password,
-                    'password_confirm': new_password_confirm
-                }
-                is_valid, errors = ValidationService.validate_user_form(validation_data, is_edit=True)
+                # Einfache Passwort-Validierung für Profil
+                errors = []
+                if new_password != new_password_confirm:
+                    errors.append('Passwörter stimmen nicht überein')
+                elif len(new_password) < 8:
+                    errors.append('Passwort muss mindestens 8 Zeichen lang sein')
                 
-                if not is_valid:
+                if errors:
                     for error in errors:
                         flash(error, 'error')
                     return render_template('auth/profile.html', user=user)

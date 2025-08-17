@@ -1,322 +1,139 @@
 {% extends "base.html" %}
 
-{% block title %}E-Mail Debug{% endblock %}
+{% block title %}E-Mail-System Debug{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">
-                <i class="fas fa-envelope"></i> E-Mail Debug & Reparatur
-            </h1>
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">E-Mail-System Debug</h1>
+        <a href="{{ url_for('admin.system') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Zurück
+        </a>
+    </div>
+
+    <!-- E-Mail-Status -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title">
+                <i class="fas fa-info-circle mr-2"></i>
+                E-Mail-Status
+            </h2>
             
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                Diese Seite hilft bei der Diagnose und Reparatur von E-Mail-Problemen nach Backup-Restores.
+            {% if status.status == 'ok' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ status.message }}</span>
+                </div>
+            {% elif status.status == 'error' %}
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>{{ status.message }}</span>
+                </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <h3 class="font-semibold mb-2">Details:</h3>
+                <p class="text-gray-600">{{ status.details }}</p>
             </div>
+            
+            {% if status.config %}
+            <div class="mt-4">
+                <h3 class="font-semibold mb-2">Konfiguration:</h3>
+                <div class="bg-gray-100 p-4 rounded">
+                    {% for key, value in status.config.items() %}
+                    <div class="flex justify-between py-1">
+                        <span class="font-mono text-sm">{{ key }}:</span>
+                        <span class="font-mono text-sm">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-tools"></i> Reparatur-Tools</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <button id="fixEmailConfig" class="btn btn-primary btn-block">
-                            <i class="fas fa-wrench"></i> E-Mail-Konfiguration reparieren
-                        </button>
-                        <small class="text-muted">Korrigiert E-Mail-Einstellungen nach Backup-Restore</small>
+    <!-- Test-E-Mail -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title">
+                <i class="fas fa-paper-plane mr-2"></i>
+                Test-E-Mail senden
+            </h2>
+            
+            <p class="text-gray-600 mb-4">
+                Klicken Sie auf den Button unten, um eine Test-E-Mail zu senden und das E-Mail-System zu testen.
+            </p>
+            
+            <div class="card-actions">
+                <a href="{{ url_for('admin.email_debug', test='1') }}" class="btn btn-primary">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Test-E-Mail senden
+                </a>
+            </div>
+            
+            {% if test_result %}
+            <div class="mt-4">
+                {% if test_result.status == 'success' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{{ test_result.message }}</span>
                     </div>
-                    
-                    <div class="mb-3">
-                        <button id="testEmailConfig" class="btn btn-info btn-block">
-                            <i class="fas fa-envelope"></i> E-Mail-Konfiguration testen
-                        </button>
-                        <small class="text-muted">Testet die aktuelle E-Mail-Konfiguration mit Passwort-Entschlüsselung</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <button id="testEmailSystem" class="btn btn-secondary btn-block">
-                            <i class="fas fa-server"></i> E-Mail-System-Status
-                        </button>
-                        <small class="text-muted">Prüft ob E-Mail-Einstellungsseite erreichbar ist</small>
-                    </div>
-                    
-                    <div class="alert alert-warning">
+                {% elif test_result.status == 'error' %}
+                    <div class="alert alert-error">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Hinweise:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>E-Mail-Konfiguration wird automatisch migriert</li>
-                            <li>Admin-Benutzer ohne E-Mail-Adresse werden korrigiert</li>
-                            <li>Alte und neue E-Mail-Formate werden unterstützt</li>
-                        </ul>
+                        <span>{{ test_result.message }}</span>
                     </div>
+                {% endif %}
+                
+                <div class="mt-2">
+                    <p class="text-gray-600">{{ test_result.details }}</p>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-info-circle"></i> Status & Informationen</h5>
-                </div>
-                <div class="card-body">
-                    <div id="emailStatus">
-                        <div class="text-center">
-                            <i class="fas fa-spinner fa-spin"></i> Lade Status...
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-list"></i> Debug-Ergebnisse</h5>
+    <!-- Häufige Probleme -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                <i class="fas fa-question-circle mr-2"></i>
+                Häufige E-Mail-Probleme
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="border-l-4 border-yellow-400 pl-4">
+                    <h3 class="font-semibold text-yellow-800">Gmail-App-Passwort</h3>
+                    <p class="text-gray-600">
+                        Bei Gmail müssen Sie ein App-Passwort verwenden, nicht Ihr normales Passwort. 
+                        Aktivieren Sie 2FA und generieren Sie ein App-Passwort.
+                    </p>
                 </div>
-                <div class="card-body">
-                    <div id="debugResults">
-                        <p class="text-muted">Hier werden die Debug-Ergebnisse angezeigt.</p>
-                    </div>
+                
+                <div class="border-l-4 border-blue-400 pl-4">
+                    <h3 class="font-semibold text-blue-800">Port-Einstellungen</h3>
+                    <p class="text-gray-600">
+                        Gmail: Port 587 mit TLS, Port 465 mit SSL. 
+                        Stellen Sie sicher, dass der richtige Port konfiguriert ist.
+                    </p>
                 </div>
+                
+                <div class="border-l-4 border-red-400 pl-4">
+                    <h3 class="font-semibold text-red-800">Firewall/ISP</h3>
+                    <p class="text-gray-600">
+                        Einige ISPs blockieren SMTP-Verbindungen. 
+                        Versuchen Sie es mit einem anderen SMTP-Server oder kontaktieren Sie Ihren ISP.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card-actions mt-4">
+                <a href="{{ url_for('admin.email_settings') }}" class="btn btn-secondary">
+                    <i class="fas fa-cog mr-2"></i>
+                    E-Mail-Einstellungen bearbeiten
+                </a>
             </div>
         </div>
     </div>
 </div>
-
-<script nonce="{{ csp_nonce }}">
-document.addEventListener('DOMContentLoaded', function() {
-    const fixEmailConfigBtn = document.getElementById('fixEmailConfig');
-    const testEmailConfigBtn = document.getElementById('testEmailConfig');
-    const testEmailSystemBtn = document.getElementById('testEmailSystem');
-    const emailStatusDiv = document.getElementById('emailStatus');
-    const debugResultsDiv = document.getElementById('debugResults');
-
-    function showLoading(element, text = 'Lade...') {
-        element.innerHTML = `<div class="text-center"><i class="fas fa-spinner fa-spin"></i> ${text}</div>`;
-    }
-
-    function showError(element, message) {
-        element.innerHTML = `<div class="alert alert-danger"><i class="fas fa-times"></i> ${message}</div>`;
-    }
-
-    async function fixEmailConfig() {
-        const originalText = fixEmailConfigBtn.innerHTML;
-        fixEmailConfigBtn.disabled = true;
-        fixEmailConfigBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Repariere...';
-        
-        showLoading(debugResultsDiv, 'E-Mail-Konfiguration wird repariert...');
-        
-        try {
-            const response = await fetch('/admin/debug/fix-email-config', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            const data = await response.json();
-            
-            let resultHtml = '';
-            
-            if (data.success) {
-                resultHtml = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i> <strong>Erfolgreich!</strong>
-                        <br><small>${data.message}</small>
-                    </div>
-                `;
-            } else {
-                resultHtml = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-times"></i> <strong>Fehler!</strong>
-                        <br><small>${data.message}</small>
-                    </div>
-                `;
-            }
-            
-            if (data.old_settings && Object.keys(data.old_settings).length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-history"></i> Alte E-Mail-Einstellungen:</h6>
-                        <pre class="bg-light p-2 rounded">${JSON.stringify(data.old_settings, null, 2)}</pre>
-                    </div>
-                `;
-            }
-            
-            if (data.new_config && Object.keys(data.new_config).length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-check"></i> Neue E-Mail-Konfiguration:</h6>
-                        <pre class="bg-light p-2 rounded">${JSON.stringify(data.new_config, null, 2)}</pre>
-                    </div>
-                `;
-            }
-            
-            if (data.errors && data.errors.length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-exclamation-triangle"></i> Fehler:</h6>
-                        <ul class="text-danger">
-                            ${data.errors.map(error => `<li>${error}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-            
-            debugResultsDiv.innerHTML = resultHtml;
-            
-        } catch (error) {
-            debugResultsDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-times"></i> <strong>Netzwerkfehler!</strong>
-                    <br><small>${error.message}</small>
-                </div>
-            `;
-        } finally {
-            fixEmailConfigBtn.disabled = false;
-            fixEmailConfigBtn.innerHTML = originalText;
-        }
-    }
-
-    async function testEmailConfig() {
-        const originalText = testEmailConfigBtn.innerHTML;
-        testEmailConfigBtn.disabled = true;
-        testEmailConfigBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Teste...';
-        
-        showLoading(debugResultsDiv, 'E-Mail-Konfiguration wird getestet...');
-        
-        try {
-            const response = await fetch('/admin/debug/test-email-config', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            const data = await response.json();
-            
-            let resultHtml = '';
-            
-            if (data.success) {
-                resultHtml = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i> <strong>E-Mail-Konfiguration funktioniert!</strong>
-                        <br><small>${data.message}</small>
-                    </div>
-                `;
-            } else {
-                resultHtml = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-times"></i> <strong>E-Mail-Konfiguration hat Probleme!</strong>
-                        <br><small>${data.message}</small>
-                    </div>
-                `;
-            }
-            
-            if (data.config_details && Object.keys(data.config_details).length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-cog"></i> Konfigurations-Details:</h6>
-                        <pre class="bg-light p-2 rounded">${JSON.stringify(data.config_details, null, 2)}</pre>
-                    </div>
-                `;
-            }
-            
-            if (data.test_result && Object.keys(data.test_result).length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-vial"></i> Test-Ergebnis:</h6>
-                        <pre class="bg-light p-2 rounded">${JSON.stringify(data.test_result, null, 2)}</pre>
-                    </div>
-                `;
-            }
-            
-            if (data.errors && data.errors.length > 0) {
-                resultHtml += `
-                    <div class="mt-3">
-                        <h6><i class="fas fa-exclamation-triangle"></i> Fehler:</h6>
-                        <ul class="text-danger">
-                            ${data.errors.map(error => `<li>${error}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-            
-            debugResultsDiv.innerHTML = resultHtml;
-            
-        } catch (error) {
-            debugResultsDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-times"></i> <strong>Netzwerkfehler!</strong>
-                    <br><small>${error.message}</small>
-                </div>
-            `;
-        } finally {
-            testEmailConfigBtn.disabled = false;
-            testEmailConfigBtn.innerHTML = originalText;
-        }
-    }
-
-    async function testEmailSystem() {
-        const originalText = testEmailSystemBtn.innerHTML;
-        testEmailSystemBtn.disabled = true;
-        testEmailSystemBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Teste...';
-        
-        showLoading(debugResultsDiv, 'E-Mail-System wird getestet...');
-        
-        try {
-            const response = await fetch('/admin/email_settings', {
-                method: 'GET'
-            });
-            
-            if (response.ok) {
-                debugResultsDiv.innerHTML = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i> <strong>E-Mail-Einstellungen verfügbar!</strong>
-                        <br><small>Die E-Mail-Einstellungsseite ist erreichbar.</small>
-                    </div>
-                `;
-            } else {
-                debugResultsDiv.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-times"></i> <strong>E-Mail-Einstellungen nicht verfügbar!</strong>
-                        <br><small>Status: ${response.status} ${response.statusText}</small>
-                    </div>
-                `;
-            }
-            
-        } catch (error) {
-            debugResultsDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-times"></i> <strong>Netzwerkfehler!</strong>
-                    <br><small>${error.message}</small>
-                </div>
-            `;
-        } finally {
-            testEmailSystemBtn.disabled = false;
-            testEmailSystemBtn.innerHTML = originalText;
-        }
-    }
-
-    // Event Listeners
-    fixEmailConfigBtn.addEventListener('click', fixEmailConfig);
-    testEmailConfigBtn.addEventListener('click', testEmailConfig);
-    testEmailSystemBtn.addEventListener('click', testEmailSystem);
-
-    // Initial Status laden
-    emailStatusDiv.innerHTML = `
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> <strong>E-Mail Debug bereit</strong>
-            <br><small>Klicken Sie auf "E-Mail-Konfiguration reparieren" um Probleme zu beheben.</small>
-        </div>
-    `;
-});
-</script>
 {% endblock %} 

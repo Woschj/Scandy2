@@ -441,6 +441,11 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{{ url_for('admin.email_debug') }}" class="{% if request.endpoint and 'admin.email_debug' in request.endpoint %}active{% endif %}">
+                                <i class="fas fa-bug mr-2"></i>E-Mail Debug
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ url_for('admin.email_settings') }}" class="{% if request.endpoint and 'admin.email_settings' in request.endpoint %}active{% endif %}">
                                 <i class="fas fa-envelope mr-2"></i>E-Mail-Einstellungen
                             </a>

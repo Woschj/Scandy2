@@ -8,7 +8,8 @@ from flask import current_app, g
 from app.models.mongodb_database import mongodb
 from app.services.notification_service import NotificationService
 from app.services.utility_service import UtilityService
-from app.utils.database_helpers import get_ticket_categories_from_settings, get_next_ticket_number
+from app.utils.database_helpers import get_next_ticket_number
+from app.services.ticket_category_service import ticket_category_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,18 +37,13 @@ class TicketService:
             if not ticket_data.get('title'):
                 return False, 'Titel ist erforderlich', None
             
-            # Kategorie validieren/erstellen
+            # Kategorie validieren: strikt gegen department-spezifische Kategorien
             category = ticket_data.get('category')
+            current_department = getattr(g, 'current_department', None)
             if category:
-                ticket_categories = get_ticket_categories_from_settings()
-                if category not in ticket_categories:
-                    # Füge die neue Kategorie zu den Settings hinzu
-                    mongodb.update_one_array(
-                        'settings',
-                        {'key': 'ticket_categories'},
-                        {'$push': {'value': category}},
-                        upsert=True
-                    )
+                allowed = set(ticket_category_service.get_ticket_categories_for_department(current_department))
+                if category not in allowed:
+                    return False, 'Kategorie ist für diese Abteilung nicht zulässig', None
             
             # Fälligkeitsdatum formatieren
             due_date = ticket_data.get('due_date')
@@ -67,7 +63,7 @@ class TicketService:
                 'due_date': due_date,
                 'estimated_time': ticket_data.get('estimated_time'),
                 'status': 'offen',
-                'department': getattr(g, 'current_department', None),
+                'department': current_department,
                 'created_at': datetime.now(),
                 'updated_at': datetime.now(),
                 'ticket_number': get_next_ticket_number()
