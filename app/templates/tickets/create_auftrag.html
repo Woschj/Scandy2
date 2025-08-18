@@ -70,7 +70,7 @@
                             <select id="target_department" name="target_department" class="select select-bordered w-full">
                                 <option value="">(Aktuelle Abteilung verwenden)</option>
                                 {% for dep in (departments_ctx.allowed or departments.allowed) %}
-                                <option value="{{ dep }}" {% if departments_ctx.current == dep %}selected{% endif %}>{{ dep }}</option>
+                                <option value="{{ dep }}" {% if (selected_department and selected_department == dep) or (not selected_department and departments_ctx.current == dep) %}selected{% endif %}>{{ dep }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -189,29 +189,79 @@
 </html>
 {% endif %}
 
-<!-- Tickets JavaScript -->
+{% if not current_user.is_authenticated %}
+<!-- Tickets JavaScript (Standalone) -->
 <script nonce="{{ csp_nonce }}">
-// Dynamisches Nachladen der Handlungsfelder nach Abteilung
 document.addEventListener('DOMContentLoaded', function(){
   const deptSelect = document.getElementById('target_department');
   const catSelect = document.getElementById('category');
   if (!deptSelect || !catSelect) return;
+  console.log('[Auftrag] Init dynamic categories');
   async function refreshCategories(){
     const dept = deptSelect.value || '';
+    console.log('[Auftrag] refreshCategories dept=', dept);
     try {
-      const resp = await fetch(`/admin/ticket_categories?dept=${encodeURIComponent(dept)}`, {headers: {'X-Requested-With':'fetch'}});
-      if (!resp.ok) return;
+      const resp = await fetch(`/admin/ticket_categories?dept=${encodeURIComponent(dept)}`, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resp.ok) {
+        console.warn('[Auftrag] categories fetch failed', resp.status);
+        return;
+      }
       const data = await resp.json();
-      if (!data || !Array.isArray(data.categories)) return;
+      console.log('[Auftrag] categories response', data);
+      if (!data || !Array.isArray(data.categories)) {
+        console.warn('[Auftrag] invalid categories payload');
+        return;
+      }
       const selected = catSelect.value;
       catSelect.innerHTML = '<option value="">Handlungsfeld auswählen</option>' +
         data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
       if ([...catSelect.options].some(o => o.value === selected)) catSelect.value = selected;
     } catch(e) { /* ignore */ }
   }
-  deptSelect.addEventListener('change', refreshCategories);
-  // Initial laden falls eine Abteilung vorausgewählt ist
+  deptSelect.addEventListener('change', ()=>{ console.log('[Auftrag] dept changed'); refreshCategories(); });
   if (deptSelect.value) { refreshCategories(); }
 });
 </script>
-<script src="{{ url_for('static', filename='js/tickets.js') }}"></script>
+{% else %}
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function(){
+  const deptSelect = document.getElementById('target_department');
+  const catSelect = document.getElementById('category');
+  if (!deptSelect || !catSelect) return;
+  console.log('[Auftrag] Init dynamic categories');
+  async function refreshCategories(){
+    const dept = deptSelect.value || '';
+    console.log('[Auftrag] refreshCategories dept=', dept);
+    try {
+      const resp = await fetch(`/admin/ticket_categories?dept=${encodeURIComponent(dept)}`, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resp.ok) {
+        console.warn('[Auftrag] categories fetch failed', resp.status);
+        return;
+      }
+      const data = await resp.json();
+      console.log('[Auftrag] categories response', data);
+      if (!data || !Array.isArray(data.categories)) {
+        console.warn('[Auftrag] invalid categories payload');
+        return;
+      }
+      const selected = catSelect.value;
+      catSelect.innerHTML = '<option value="">Handlungsfeld auswählen</option>' +
+        data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      if ([...catSelect.options].some(o => o.value === selected)) catSelect.value = selected;
+    } catch(e) { /* ignore */ }
+  }
+  deptSelect.addEventListener('change', ()=>{ console.log('[Auftrag] dept changed'); refreshCategories(); });
+  if (deptSelect.value) { refreshCategories(); }
+});
+</script>
+{% endblock %}
+{% endif %}

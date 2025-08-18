@@ -1925,9 +1925,14 @@ def public_create_order():
     """Interne Auftragserstellung für eingeloggte Benutzer."""
     if request.method == 'GET':
         from app.services.ticket_category_service import ticket_category_service
-        categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
+        selected_department = request.args.get('target_department')
+        if selected_department:
+            categories = ticket_category_service.get_ticket_categories_for_department(selected_department)
+        else:
+            categories = []  # initial leer, bis im Formular eine Abteilung gewählt wird
         return render_template('tickets/create_auftrag.html', 
                              categories=categories,
+                             selected_department=selected_department,
                              error=None)
     return _handle_auftrag_creation()
 
@@ -1937,9 +1942,14 @@ def external_create_order():
     if request.method == 'POST':
         return _handle_auftrag_creation(external=True)
     from app.services.ticket_category_service import ticket_category_service
-    categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
+    selected_department = request.args.get('target_department')
+    if selected_department:
+        categories = ticket_category_service.get_ticket_categories_for_department(selected_department)
+    else:
+        categories = []
     return render_template('tickets/auftrag_external_embed.html', 
                          categories=categories,
+                         selected_department=selected_department,
                          error=None)
 
 def _handle_auftrag_creation(external=False):
@@ -1962,6 +1972,25 @@ def _handle_auftrag_creation(external=False):
             current_dept = getattr(g, 'current_department', None)
             if target_department == '':
                 target_department = None
+            # Verifiziere, dass die gewählte Kategorie zur gewählten Abteilung gehört
+            try:
+                from app.services.ticket_category_service import ticket_category_service
+                effective_dept = target_department or current_dept
+                valid_categories = ticket_category_service.get_ticket_categories_for_department(effective_dept)
+                if category and category not in valid_categories:
+                    # Ungültige Kategorie für die gewählte Abteilung -> Fehlermeldung und aktuelle Kategorien der gewählten Abteilung laden
+                    categories = valid_categories
+                    error_msg = 'Das gewählte Handlungsfeld gehört nicht zur ausgewählten Abteilung.'
+                    if external or not current_user.is_authenticated:
+                        return render_template('tickets/auftrag_external_embed.html', 
+                                             categories=categories,
+                                             error=error_msg)
+                    else:
+                        return render_template('tickets/create_auftrag.html', 
+                                             categories=categories,
+                                             error=error_msg)
+            except Exception:
+                pass
             
             # Validiere die Pflichtfelder
             if not title:

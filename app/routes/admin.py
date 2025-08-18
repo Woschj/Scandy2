@@ -3113,12 +3113,12 @@ def get_ticket_categories():
         from flask import g
         current_dept = req_dept or getattr(g, 'current_department', None)
         if not current_dept:
-            return jsonify({'success': True, 'categories': []})
+            return jsonify({'success': True, 'categories': [], 'department': None})
         
         # Verwende den neuen HandlungsfeldService
         from app.services.handlungsfeld_service import handlungsfeld_service
         categories = handlungsfeld_service.get_handlungsfelder_for_department(current_dept)
-        return jsonify({'success': True, 'categories': [{'name': n} for n in categories]})
+        return jsonify({'success': True, 'department': current_dept, 'categories': [{'name': n} for n in categories]})
     except Exception as e:
         logger.error(f"Fehler beim Abrufen der Ticket-Kategorien: {str(e)}")
         return jsonify({'success': False, 'message': 'Fehler beim Laden der Ticket-Kategorien'})
