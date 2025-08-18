@@ -48,31 +48,13 @@ class HandlungsfeldService:
                 'deleted': {'$ne': True}
             })
             
-            handlungsfelder = []
+            # Nur strikt abteilungsgebundene Felder, keine Fallbacks
+            handlungsfelder_set = set()
             for category in categories:
-                name = category.get('name', '').strip()
+                name = (category.get('name') or '').strip()
                 if name:
-                    handlungsfelder.append(name)
-            
-            # Fallback: Lade aus der dedizierten categories Collection
-            if not handlungsfelder:
-                categories = mongodb.find('categories', {
-                    'department': department,
-                    'deleted': {'$ne': True}
-                })
-                
-                for category in categories:
-                    name = category.get('name', '').strip()
-                    if name:
-                        handlungsfelder.append(name)
-            
-            # Fallback: Lade aus settings (Legacy)
-            if not handlungsfelder:
-                from app.utils.database_helpers import get_ticket_categories_from_settings
-                handlungsfelder = get_ticket_categories_from_settings()
-                logger.info(f"Fallback zu Legacy-Handlungsfeldern für {department}: {len(handlungsfelder)}")
-            
-            return sorted(handlungsfelder, key=str.casefold)
+                    handlungsfelder_set.add(name)
+            return sorted(handlungsfelder_set, key=str.casefold)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Handlungsfelder für {department}: {e}")
