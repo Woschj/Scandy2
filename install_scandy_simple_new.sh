@@ -535,6 +535,23 @@ PERMANENT_SESSION_LIFETIME=604800
 EOF
 success ".env-Datei erstellt"
 
+# 6.1 Wrapper-Skripte für robusten Start erstellen
+log "Erzeuge Wrapper-Skripte..."
+install -d -m 755 /opt/scandy/bin
+
+# Platzhalter – wird nach Bestimmung von APP_FILE/MODULE_NAME unten überschrieben
+cat > /opt/scandy/bin/prestart.sh << 'EOF'
+#!/usr/bin/env bash
+set -e
+DIR=/opt/scandy/app/flask_session
+mkdir -p "$DIR"
+chown -R root:root "$DIR" || true
+chmod 755 "$DIR" || true
+find "$DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
+exit 0
+EOF
+chmod +x /opt/scandy/bin/prestart.sh
+
 # 7. Systemd-Service erstellen
 log "Erstelle Systemd-Service..."
 
@@ -614,6 +631,25 @@ else
     log "Verwende Python direkt für App"
 fi
 
+# Wrapper-Startkommando (Shell löst WEB_PORT zur Laufzeit auf)
+if [[ "$APP_FILE" == *"wsgi.py" ]]; then
+    WRAP_CMD="/opt/scandy/venv/bin/gunicorn --bind \"0.0.0.0:\${WEB_PORT:-$WEB_PORT}\" --workers 2 --timeout 120 --chdir /opt/scandy $MODULE_NAME:app"
+else
+    WRAP_CMD="/opt/scandy/venv/bin/python3 $APP_FILE"
+fi
+
+# Start-Wrapper erzeugen
+cat > /opt/scandy/bin/start_scandy.sh << EOF
+#!/usr/bin/env bash
+set -e
+cd /opt/scandy
+set -a
+[ -f /opt/scandy/.env ] && . /opt/scandy/.env
+set +a
+exec $WRAP_CMD
+EOF
+chmod +x /opt/scandy/bin/start_scandy.sh
+
 cat > /etc/systemd/system/scandy.service << EOF
 [Unit]
 Description=Scandy Application
@@ -627,9 +663,9 @@ WorkingDirectory=/opt/scandy
 Environment=PATH=/opt/scandy/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONPATH=/opt/scandy
 EnvironmentFile=/opt/scandy/.env
-ExecStart=$EXEC_START
-ExecStartPre=/bin/bash -c 'mkdir -p /opt/scandy/app/flask_session && chown -R root:root /opt/scandy/app/flask_session && chmod 755 /opt/scandy/app/flask_session && find /opt/scandy/app/flask_session -type f -exec chmod 644 {} \; 2>/dev/null || true'
-ExecStartPost=/bin/bash -c 'sleep 3 && chown -R root:root /opt/scandy/app/flask_session 2>/dev/null || true && chmod 755 /opt/scandy/app/flask_session 2>/dev/null || true && find /opt/scandy/app/flask_session -type f -exec chmod 644 {} \; 2>/dev/null || true'
+ExecStart=/opt/scandy/bin/start_scandy.sh
+ExecStartPre=/opt/scandy/bin/prestart.sh
+ExecStartPost=/opt/scandy/bin/prestart.sh
 Restart=always
 RestartSec=5
 StandardOutput=journal
