@@ -18,10 +18,30 @@ def reset_password():
         if not user:
             flash('Kein Benutzer gefunden', 'error')
             return render_template('auth/reset_password.html')
+        # E-Mail-Adresse prüfen
+        recipient_email = (user.get('email') or '').strip()
+        if not recipient_email:
+            flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
+            return render_template('auth/reset_password.html')
+
         # Temporäres Passwort generieren
         temp_pw = secrets.token_urlsafe(10)
+
+        # E-Mail mit neuem Passwort senden (nur per E-Mail, niemals im UI anzeigen)
+        try:
+            from app.utils.email_utils import send_password_reset_mail
+            email_sent = send_password_reset_mail(recipient_email, password=temp_pw)
+        except Exception:
+            email_sent = False
+
+        if not email_sent:
+            # Sicherheit: Passwort nicht ändern, wenn E-Mail nicht versendet werden konnte
+            flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.', 'error')
+            return render_template('auth/reset_password.html')
+
+        # Nur wenn E-Mail erfolgreich versendet wurde: Passwort aktualisieren
         mongodb.update_one('users', {'_id': user['_id']}, {'$set': {'password_hash': generate_password_hash(temp_pw)}})
-        flash(f'Das Passwort wurde zurückgesetzt. Neues Passwort: {temp_pw}', 'success')
+        flash('Ein neues Passwort wurde an Ihre E-Mail-Adresse gesendet.', 'success')
         return redirect(url_for('auth.login'))
     return render_template('auth/reset_password.html')
 """

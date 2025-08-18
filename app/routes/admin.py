@@ -4641,16 +4641,23 @@ def import_all_data():
 def reset_password():
     """Passwort-Reset per E-Mail"""
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
+        # Unterstütze sowohl "username" als auch "email" aus dem Formular
+        username_or_email = (request.form.get('username') or request.form.get('email') or '').strip()
         
-        if not email:
-            flash('Bitte geben Sie eine E-Mail-Adresse ein.', 'error')
+        if not username_or_email:
+            flash('Bitte Benutzername oder E-Mail eingeben', 'error')
             return render_template('auth/reset_password.html')
         
-        # Prüfe ob Benutzer mit dieser E-Mail existiert
-        user = mongodb.find_one('users', {'email': email})
+        # Benutzer per username oder email finden
+        user = mongodb.find_one('users', {'username': username_or_email}) or mongodb.find_one('users', {'email': username_or_email})
         if not user:
             flash('Kein Benutzer mit dieser E-Mail-Adresse gefunden.', 'error')
+            return render_template('auth/reset_password.html')
+        
+        # Empfänger-E-Mail prüfen
+        email = (user.get('email') or '').strip()
+        if not email:
+            flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
             return render_template('auth/reset_password.html')
         
         # Generiere sicheres neues Passwort (wie bei add_user)
@@ -4669,42 +4676,36 @@ def reset_password():
         secrets.SystemRandom().shuffle(password_list)
         password = ''.join(password_list)
         
-        # Hash das neue Passwort
+        # Sende E-Mail mit neuem Passwort (zuerst E-Mail, dann DB-Update)
+        try:
+            from app.utils.email_utils import send_password_reset_mail
+            send_result = send_password_reset_mail(email, password=password)
+            if not send_result:
+                flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.', 'error')
+                return render_template('auth/reset_password.html')
+        except Exception as e:
+            logger.error(f"Fehler beim Versenden der E-Mail: {e}")
+            flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden.', 'error')
+            return render_template('auth/reset_password.html')
+        
+        # Nur wenn E-Mail erfolgreich gesendet wurde: Passwort in der DB aktualisieren
         from werkzeug.security import generate_password_hash
         password_hash = generate_password_hash(password)
-        
-        # Aktualisiere das Passwort in der Datenbank
         try:
             result = mongodb.update_one('users', 
                                      {'_id': convert_id_for_query(user['_id'])}, 
                                      {'$set': {'password_hash': password_hash, 'updated_at': datetime.now()}})
-            
-            # Prüfe ob das Update erfolgreich war (result ist ein bool)
             if not result:
                 logger.error(f"Fehler beim Aktualisieren des Passworts für Benutzer {user['username']} - Update fehlgeschlagen")
                 flash('Fehler beim Zurücksetzen des Passworts.', 'error')
                 return render_template('auth/reset_password.html')
-            
             logger.info(f"Passwort erfolgreich zurückgesetzt für Benutzer {user['username']} ({email})")
-            
         except Exception as e:
             logger.error(f"Fehler beim Aktualisieren des Passworts in der Datenbank: {e}")
             flash('Fehler beim Zurücksetzen des Passworts.', 'error')
             return render_template('auth/reset_password.html')
         
-        # Sende E-Mail mit neuem Passwort
-        try:
-            from app.utils.email_utils import send_password_reset_mail
-            send_result = send_password_reset_mail(email, password=password)
-            if send_result:
-                flash('Ein neues Passwort wurde an Ihre E-Mail-Adresse gesendet.', 'success')
-                logger.info(f"Passwort-Reset-E-Mail erfolgreich an {email} gesendet")
-            else:
-                flash('Passwort wurde zurückgesetzt, aber E-Mail konnte nicht versendet werden.', 'warning')
-                logger.warning(f"Passwort-Reset-E-Mail konnte nicht an {email} gesendet werden")
-        except Exception as e:
-            logger.error(f"Fehler beim Versenden der E-Mail: {e}")
-            flash('Passwort wurde zurückgesetzt, aber E-Mail konnte nicht versendet werden.', 'warning')
+        flash('Ein neues Passwort wurde an Ihre E-Mail-Adresse gesendet.', 'success')
         
         return redirect(url_for('auth.login'))
     

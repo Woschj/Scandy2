@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kantinenplan – Heute</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;padding:0;background:#fff;color:#111}
+    .canteen-plan{max-width:760px;margin:0 auto;padding:16px}
+    .title{font-size:20px;font-weight:700;margin:8px 0 16px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #e5e7eb;padding:10px;text-align:left;vertical-align:top}
+    th{background:#f3f4f6}
+    .meta{color:#374151}
+    .meta .date{color:#6b7280;font-size:13px;margin-top:2px}
+    .footer{margin-top:8px;color:#6b7280;font-size:12px}
+  </style>
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+</head>
+<body>
+  <div class="canteen-plan" id="canteen-root">
+    <div class="title">Kantinenplan – Heute</div>
+    <div id="canteen-loading">Lade…</div>
+    <div id="canteen-error" style="display:none;color:#b91c1c">Fehler beim Laden.</div>
+    <div id="canteen-table-wrap" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:34%">Tag, Datum</th>
+            <th style="width:33%">Menü 1 (Fleisch)</th>
+            <th style="width:33%">Menü 2 (Vegan)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="meta">
+                <div id="weekday"></div>
+                <div id="date" class="date"></div>
+              </div>
+            </td>
+            <td id="meat"></td>
+            <td id="vegan"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="footer" id="canteen-generated"></div>
+  </div>
+
+  <script>
+    (function(){
+      const apiUrl='{{ api_today or url_for("canteen.api_today", _external=True) }}';
+      const loading=document.getElementById('canteen-loading');
+      const errorEl=document.getElementById('canteen-error');
+      const tableWrap=document.getElementById('canteen-table-wrap');
+      const gen=document.getElementById('canteen-generated');
+      const elWeekday=document.getElementById('weekday');
+      const elDate=document.getElementById('date');
+      const elMeat=document.getElementById('meat');
+      const elVegan=document.getElementById('vegan');
+
+      fetch(apiUrl, {cache:'no-store'})
+        .then(r=>r.json())
+        .then(data=>{
+          loading.style.display='none';
+          if(!data||!data.success){ errorEl.style.display='block'; return; }
+          elWeekday.textContent=data.weekday||'';
+          elDate.textContent=data.date||'';
+          elMeat.textContent=data.meat_dish||'';
+          elVegan.textContent=data.vegan_dish||'';
+          tableWrap.style.display='block';
+          gen.textContent=data.generated_at?`Stand: ${new Date(data.generated_at).toLocaleString('de-DE')}`:'';
+        })
+        .catch(()=>{ loading.style.display='none'; errorEl.style.display='block'; });
+    })();
+  </script>
+</body>
+</html>
+
+

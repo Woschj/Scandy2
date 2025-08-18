@@ -148,6 +148,42 @@ class CanteenService:
         except Exception as e:
             logger.error(f"Fehler beim Laden der Mahlzeiten: {e}")
             return []
+
+    def get_today_meal(self) -> Dict:
+        """Holt die Mahlzeit für den aktuellen Tag.
+
+        Returns ein Dict mit Schlüsseln: date (YYYY-MM-DD), meat_dish, vegan_dish, dessert.
+        Wenn kein Eintrag vorhanden ist, werden leere Felder zurückgegeben.
+        """
+        try:
+            from app.models.mongodb_database import mongodb
+
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            date_str = today.strftime('%Y-%m-%d')
+
+            meal = mongodb.find_one('canteen_meals', {'date': date_str})
+            if meal:
+                return {
+                    'date': meal.get('date', date_str),
+                    'meat_dish': (meal.get('meat_dish') or '').strip(),
+                    'vegan_dish': (meal.get('vegan_dish') or '').strip(),
+                    'dessert': (meal.get('dessert') or '').strip(),
+                }
+            else:
+                return {
+                    'date': date_str,
+                    'meat_dish': '',
+                    'vegan_dish': '',
+                    'dessert': ''
+                }
+        except Exception as e:
+            logger.error(f"Fehler beim Laden der Tagesmahlzeit: {e}")
+            return {
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'meat_dish': '',
+                'vegan_dish': '',
+                'dessert': ''
+            }
     
     def save_meals(self, meals_data: List[Dict]) -> Tuple[bool, str]:
         """Speichert Mahlzeiten in der Datenbank"""

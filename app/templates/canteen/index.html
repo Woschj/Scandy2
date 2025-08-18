@@ -155,18 +155,25 @@
                 <p><strong>Sofortige Anzeige:</strong> Die Daten sind sofort im WordPress-Kantinenplan sichtbar</p>
                 <div class="mt-4 p-3 bg-base-200 rounded space-y-2">
                     <p class="font-semibold"><i class="fas fa-link mr-2"></i>API-URLs</p>
+                    <p class="text-xs break-all">Heute: <code>{{ api_today }}</code></p>
                     <p class="text-xs break-all">Aktuelle Woche: <code>{{ api_current }}</code></p>
                     <p class="text-xs break-all">Zwei Wochen: <code>{{ api_two_weeks }}</code></p>
                     <p class="text-xs break-all">Status: <code>{{ api_status }}</code></p>
 
                     <p class="font-semibold mt-2"><i class="fas fa-code mr-2"></i>Embed/iframe</p>
                     <p class="text-xs break-all">Embed-URL: <code>{{ embed_url }}</code></p>
+                    <p class="text-xs break-all">Embed-URL (Heute): <code>{{ embed_today_url }}</code></p>
                     {% if canteen_api_key %}
                     <p class="text-xs break-all">Embed-URL (mit api_key): <code>{{ embed_url }}?api_key={{ canteen_api_key }}</code></p>
+                    <p class="text-xs break-all">Embed-URL (Heute, mit api_key): <code>{{ embed_today_url }}?api_key={{ canteen_api_key }}</code></p>
                     {% endif %}
                     <details class="mt-1">
                       <summary class="cursor-pointer text-xs opacity-80">iframe Beispiel</summary>
                       <pre class="text-xs bg-base-300 p-2 rounded overflow-auto">&lt;iframe src="{{ embed_url }}{% if canteen_api_key %}?api_key={{ canteen_api_key }}{% endif %}" style="width:100%;max-width:900px;height:460px;border:0;overflow:hidden;"&gt;&lt;/iframe&gt;</pre>
+                    </details>
+                    <details class="mt-1">
+                      <summary class="cursor-pointer text-xs opacity-80">iframe Beispiel (Heute)</summary>
+                      <pre class="text-xs bg-base-300 p-2 rounded overflow-auto">&lt;iframe src="{{ embed_today_url }}{% if canteen_api_key %}?api_key={{ canteen_api_key }}{% endif %}" style="width:100%;max-width:600px;height:260px;border:0;overflow:hidden;"&gt;&lt;/iframe&gt;</pre>
                     </details>
                 </div>
             </div>

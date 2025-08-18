@@ -30,17 +30,21 @@ def index():
         
         meals = service.get_two_weeks_meals()  # Hole 2 Wochen Daten
         api_current = url_for('canteen.api_current_week', _external=True)
+        api_today = url_for('canteen.api_today', _external=True)
         api_two_weeks = url_for('canteen.api_two_weeks', _external=True)
         api_status = url_for('canteen.api_status', _external=True)
         embed_url = url_for('canteen.embed', _external=True)
+        embed_today_url = url_for('canteen.embed_today', _external=True)
         api_key_value = config.get('CANTEEN_API_KEY')
         return render_template('canteen/index.html', 
                              meals=meals, 
                              credentials_status=credentials_status,
                              api_current=api_current,
+                             api_today=api_today,
                              api_two_weeks=api_two_weeks,
                              api_status=api_status,
                              embed_url=embed_url,
+                             embed_today_url=embed_today_url,
                              canteen_api_key=api_key_value)
     except Exception as e:
         logger.error(f"Fehler beim Laden der Kantinenplan-Seite: {e}")
@@ -62,6 +66,20 @@ def embed():
     except Exception as e:
         logger.error(f"Fehler beim Rendern der Canteen-Embed-Ansicht: {e}")
         return jsonify({'success': False, 'error': 'Embed nicht verfügbar'}), 500
+
+@bp.route('/canteen/embed/today')
+def embed_today():
+    """Schlanke Einbettungsansicht nur für den aktuellen Tag (iframe). Optionaler api_key via Querystring."""
+    try:
+        api_today = url_for('canteen.api_today', _external=True)
+        api_key = request.args.get('api_key', '').strip()
+        if api_key:
+            sep = '&' if '?' in api_today else '?'
+            api_today = f"{api_today}{sep}api_key={api_key}"
+        return render_template('canteen/embed_today.html', api_today=api_today)
+    except Exception as e:
+        logger.error(f"Fehler beim Rendern der Canteen-Embed-Today-Ansicht: {e}")
+        return jsonify({'success': False, 'error': 'Embed Today nicht verfügbar'}), 500
 
 @bp.route('/canteen/update', methods=['POST'])
 def update_canteen_plan():
@@ -199,6 +217,41 @@ def api_current_week():
         
     except Exception as e:
         logger.error(f"API-Fehler: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/canteen/today', methods=['GET'])
+def api_today():
+    """API-Endpunkt für den aktuellen Tag"""
+    try:
+        # Optional API Key Check
+        api_key = request.args.get('api_key')
+        if config.get('CANTEEN_API_KEY') and api_key != config.get('CANTEEN_API_KEY'):
+            return jsonify({'success': False, 'error': 'Invalid API key'}), 401
+
+        service = CanteenService()
+        meal = service.get_today_meal()
+
+        # Wochentag ermitteln
+        weekday_map = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+        try:
+            date_obj = datetime.strptime(meal.get('date'), '%Y-%m-%d')
+            weekday_label = weekday_map[date_obj.weekday()]
+            date_label = date_obj.strftime('%d.%m.%Y')
+        except Exception:
+            weekday_label = ''
+            date_label = meal.get('date')
+
+        return jsonify({
+            'success': True,
+            'date': date_label,
+            'weekday': weekday_label,
+            'meat_dish': meal.get('meat_dish', ''),
+            'vegan_dish': meal.get('vegan_dish', ''),
+            'dessert': meal.get('dessert', '') or 'Tagesdessert',
+            'generated_at': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"API-Fehler (today): {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/canteen/two_weeks', methods=['GET'])
