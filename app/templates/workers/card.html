@@ -38,7 +38,19 @@
       body { background: #fff !important; margin: 0 !important; }
       body * { visibility: hidden !important; }
       #card-container, #card-container * { visibility: visible !important; }
-      #card-container { position: absolute; top: 0; left: 0; box-shadow: none !important; }
+      #card-container {
+        position: absolute;
+        top: 1.5mm; /* leicht nach unten schieben, damit der obere Rand nicht abgeschnitten wird */
+        left: 0;
+        box-shadow: none !important; /* Schatten vermeiden, da Druck oft ungleichmäßig */
+        border: 0.6mm solid #222 !important; /* Sichtbarer Rahmen im Druck */
+        border-radius: 4mm !important;      /* Abgerundete Ecken im Druck */
+        overflow: hidden;                   /* Rundung sauber halten */
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        height: 52.5mm !important; /* Höhe anpassen, damit durch das Verschieben nichts unten abgeschnitten wird */
+      }
     }
   </style>
 
