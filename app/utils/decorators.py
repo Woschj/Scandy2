@@ -93,7 +93,7 @@ def admin_required(f):
     return decorated_function
 
 def mitarbeiter_required(f):
-    """Decorator für Routen, die allen authentifizierten Benutzern außer Teilnehmern zugänglich sind."""
+    """Decorator: erlaubt admin, mitarbeiter, anwender; verbietet nur teilnehmer."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         logger.debug(f"[DECORATOR] mitarbeiter_required: Checking user {getattr(current_user, 'id', 'Guest')}")

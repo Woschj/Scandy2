@@ -231,8 +231,8 @@
             </a>
             {% endif %}
             
-            {# Mitarbeiter Link nur für Mitarbeiter und Admins #}
-            {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
+            {# Mitarbeiter-Link: für alle außer Teilnehmer (Benutzer dürfen ihn sehen) #}
+            {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
             <a href="{{ url_for('workers.index') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'workers.index' %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
@@ -440,11 +440,7 @@
                                 <i class="fas fa-users-cog mr-2"></i>Benutzerverwaltung
                             </a>
                         </li>
-                        <li>
-                            <a href="{{ url_for('admin.email_debug') }}" class="{% if request.endpoint and 'admin.email_debug' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-bug mr-2"></i>E-Mail Debug
-                            </a>
-                        </li>
+                        {# E-Mail-Debug entfernt #}
                         <li>
                             <a href="{{ url_for('admin.email_settings') }}" class="{% if request.endpoint and 'admin.email_settings' in request.endpoint %}active{% endif %}">
                                 <i class="fas fa-envelope mr-2"></i>E-Mail-Einstellungen

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Nicht angemeldet (401){% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+  <div class="max-w-2xl mx-auto card bg-base-100 shadow-xl">
+    <div class="card-body text-center">
+      <h1 class="text-3xl font-bold mb-2">Nicht angemeldet</h1>
+      <p class="mb-4">Bitte melden Sie sich an, um diese Seite zu sehen.</p>
+      <div class="card-actions justify-center">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt mr-2"></i>Zum Login
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="text-center mt-6">
+    <a href="{{ url_for('main.index') }}" class="link">Zur Startseite</a>
+  </div>
+  </div>
+{% endblock %}
+
+

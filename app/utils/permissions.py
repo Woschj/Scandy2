@@ -40,6 +40,7 @@ def normalize_permissions(permissions: Dict[str, Dict[str, List[str]]]) -> Dict[
     return normalized
 
 DEFAULT_ROLE_PERMISSIONS: Dict[str, Dict[str, List[str]]] = {
+    # Admin: Vollzugriff ohne Einschränkungen
     "admin": {
         "tools": ["view", "create", "edit", "delete", "export"],
         "consumables": ["view", "create", "edit", "delete", "export"],
@@ -48,20 +49,25 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, Dict[str, List[str]]] = {
         "jobs": ["view", "create", "edit", "delete"],
         "settings": ["manage"],
     },
+    # Mitarbeiter: Vollzugriff wie Admin, jedoch nur innerhalb der eigenen Abteilung (durch Scoping erzwungen)
     "mitarbeiter": {
-        "tools": ["view", "create", "edit"],
-        "consumables": ["view", "create", "edit"],
-        "workers": ["view", "edit"],
-        "tickets": ["view", "create", "edit", "assign"],
-        "jobs": ["view", "create"],
+        "tools": ["view", "create", "edit", "delete", "export"],
+        "consumables": ["view", "create", "edit", "delete", "export"],
+        "workers": ["view", "create", "edit", "delete"],
+        "tickets": ["view", "create", "edit", "assign", "delete", "export"],
+        "jobs": ["view", "create", "edit", "delete"],
+        # kein Zugriff auf settings
     },
-    "benutzer": {
-        "tools": ["view"],
-        "consumables": ["view"],
-        "workers": ["view"],
-        "tickets": ["view", "create"],
-        "jobs": ["view"],
+    # Anwender: Vollzugriff innerhalb der eigenen Abteilung, keine Einstellungen
+    "anwender": {
+        "tools": ["view", "create", "edit", "delete", "export"],
+        "consumables": ["view", "create", "edit", "delete", "export"],
+        "workers": ["view", "create", "edit", "delete"],
+        "tickets": ["view", "create", "edit", "assign", "delete", "export"],
+        "jobs": ["view", "create", "edit", "delete"],
+        # kein Zugriff auf settings
     },
+    # Teilnehmer: Zugriff auf Tickets (view/create) und Jobbörse (view)
     "teilnehmer": {
         "tickets": ["view", "create"],
         "jobs": ["view"],
@@ -70,10 +76,7 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, Dict[str, List[str]]] = {
 
 
 def get_role_permissions() -> Dict[str, Dict[str, List[str]]]:
-    """Liest die Rollenrechte aus der Settings-Collection. Fallback: Defaults."""
-    setting = mongodb.find_one("settings", {"key": "role_permissions"})
-    if setting and isinstance(setting.get("value"), dict):
-        return setting["value"]
+    """Gibt die festen Rollenrechte zurück (DB wird ignoriert)."""
     return DEFAULT_ROLE_PERMISSIONS
 
 

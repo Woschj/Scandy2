@@ -4873,26 +4873,9 @@ def auto_backup():
 @bp.route('/email_debug')
 @admin_required
 def email_debug():
-    """E-Mail-System debuggen"""
-    try:
-        from app.utils.email_debug import debug_email_status, test_simple_email
-        
-        # E-Mail-Status prüfen
-        status = debug_email_status()
-        
-        # Test-E-Mail senden (optional)
-        test_result = None
-        if request.args.get('test') == '1':
-            test_result = test_simple_email()
-        
-        return render_template('admin/email_debug.html', 
-                             status=status, 
-                             test_result=test_result)
-                             
-    except Exception as e:
-        logger.error(f"Fehler beim E-Mail-Debug: {e}")
-        flash(f'Fehler beim Debuggen des E-Mail-Systems: {str(e)}', 'error')
-        return redirect(url_for('admin.system'))
+    """E-Mail-Debug wurde entfernt."""
+    from flask import abort
+    return abort(404)
 
 @bp.route('/email_settings', methods=['GET', 'POST'])
 @admin_required

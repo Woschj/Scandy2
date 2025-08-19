@@ -7,13 +7,7 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Benutzerverwaltung</h1>
         <div class="flex gap-2">
-            {% if has_permission(current_user.role, 'settings', 'manage') %}
-            <a href="{{ url_for('admin.role_permissions') }}" class="btn btn-outline">
-                <i class="fas fa-user-shield mr-2"></i>Rollen & Rechte
-            </a>
-            {% endif %}
-
-            {# Migration-Button entfernt (nicht mehr benötigt) #}
+            {# Button Rollen & Rechte entfernt (Rechte sind fest im System) #}
             <a href="{{ url_for('admin.add_user') }}" class="btn btn-primary">
                 <i class="fas fa-plus mr-2"></i>Neuen Benutzer hinzufügen
             </a>
@@ -35,65 +29,29 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Rollenübersicht -->
+    <!-- Rollenübersicht (vereinfachte Erklärung in einfacher Sprache) -->
     <div class="card bg-base-100 shadow-lg mb-6">
         <div class="card-body">
             <h2 class="card-title text-lg mb-4">
                 <i class="fas fa-users-cog mr-2"></i>
-                Rollenübersicht
+                Rollen und Rechte (kurz erklärt)
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Admin -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2 flex items-center">
-                        <span class="badge badge-error mr-2">Admin</span>
-                        <span>Administrator</span>
-                    </h3>
-                    {% set admin_perms = role_permissions.get('admin', {}) %}
-                    <ul class="text-sm space-y-1">
-                        {% for area, actions in admin_perms.items() %}
-                        <li><i class="fas fa-check text-success mr-1"></i>{{ area }}: {{ actions|join(', ') }}</li>
-                        {% endfor %}
-                    </ul>
+                    <h3 class="font-bold mb-2">Admin</h3>
+                    <p class="text-sm">Darf alles im System. Keine Einschränkungen.</p>
                 </div>
-                <!-- Mitarbeiter -->
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2 flex items-center">
-                        <span class="badge badge-warning mr-2">Mitarbeiter</span>
-                        <span>Mitarbeiter</span>
-                    </h3>
-                    {% set mit_perms = role_permissions.get('mitarbeiter', {}) %}
-                    <ul class="text-sm space-y-1">
-                        {% for area, actions in mit_perms.items() %}
-                        <li><i class="fas fa-check text-success mr-1"></i>{{ area }}: {{ actions|join(', ') }}</li>
-                        {% endfor %}
-                    </ul>
+                    <h3 class="font-bold mb-2">Mitarbeiter</h3>
+                    <p class="text-sm">Darf fast alles, aber nur in der eigenen Abteilung. Kein Zugriff auf die Systemeinstellungen.</p>
                 </div>
-                <!-- Anwender -->
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2 flex items-center">
-                        <span class="badge badge-info mr-2">Anwender</span>
-                        <span>Benutzer</span>
-                    </h3>
-                    {% set ben_perms = role_permissions.get('benutzer', {}) %}
-                    <ul class="text-sm space-y-1">
-                        {% for area, actions in ben_perms.items() %}
-                        <li><i class="fas fa-check text-success mr-1"></i>{{ area }}: {{ actions|join(', ') }}</li>
-                        {% endfor %}
-                    </ul>
+                    <h3 class="font-bold mb-2">Benutzer</h3>
+                    <p class="text-sm">Darf Werkzeuge, Verbrauchsmaterial, Mitarbeiter und Tickets in der eigenen Abteilung sehen und bearbeiten. Kein Zugriff auf die Systemeinstellungen.</p>
                 </div>
-                <!-- Teilnehmer -->
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2 flex items-center">
-                        <span class="badge badge-secondary mr-2">Teilnehmer</span>
-                        <span>Teilnehmer</span>
-                    </h3>
-                    {% set teil_perms = role_permissions.get('teilnehmer', {}) %}
-                    <ul class="text-sm space-y-1">
-                        {% for area, actions in teil_perms.items() %}
-                        <li><i class="fas fa-check text-success mr-1"></i>{{ area }}: {{ actions|join(', ') }}</li>
-                        {% endfor %}
-                    </ul>
+                    <h3 class="font-bold mb-2">Teilnehmer</h3>
+                    <p class="text-sm">Darf eigene Tickets sehen und erstellen. Darf die Jobbörse sehen.</p>
                 </div>
             </div>
         </div>
