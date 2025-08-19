@@ -61,7 +61,8 @@
     }
   </style>
 
-  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/JsBarcode.all.min.js') }}"></script>
+  <!-- Offizielle JsBarcode-Bibliothek für zuverlässiges Rendering -->
+  <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function(){
@@ -83,7 +84,13 @@
       const name = {{ (worker.firstname ~ ' ' ~ worker.lastname)|trim|tojson }};
       const department = {{ (worker.department or '')|tojson }};
       const barcodeTxt = {{ worker.barcode|tojson }};
+      // Render sicherstellen (auch im Export)
       const svgEl = document.getElementById('barcode');
+      try {
+        if (svgEl && svgEl.childNodes.length === 0) {
+          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, height:36, margin:0, lineColor:'#000'});
+        }
+      } catch(e) {}
       const svgMarkup = svgEl ? svgEl.outerHTML : '';
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -95,8 +102,9 @@
           .logo img{height:12mm}
           .name{font-weight:700;line-height:1.1;font-size:11pt}
           .dept{font-size:9pt;color:#666}
-          .bc{margin-top:2mm}
-          .bcnum{text-align:center;font-size:9pt;letter-spacing:2px}
+          .bc{margin-top:1mm}
+          .bc svg{display:block;width:100%}
+          .bcnum{text-align:center;font-size:9pt;letter-spacing:2px;margin-top:0.5mm}
         </style>
       </head><body>
         <div id="card-export">

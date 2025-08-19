@@ -286,10 +286,17 @@ class AdminSystemSettingsService:
             except Exception as fe:
                 logger.warning(f"Konnte feature_settings nicht migrieren: {fe}")
 
+            # 3b) Settings-Einträge mit department migrieren (alle keys außer 'departments')
+            try:
+                res = mongodb.db.settings.update_many({'department': old_name}, {'$set': {'department': new_name}})
+                changed_total += getattr(res, 'modified_count', 0)
+            except Exception as se:
+                logger.warning(f"Konnte settings nicht migrieren: {se}")
+
             # 4) Referenzen in Messages/History nach ticket_id und/oder department
             ref_collections = ['messages', 'ticket_history', 'ticket_messages', 'ticket_notes']
-            # Ermittle betroffene Tickets
-            ticket_ids = [t['_id'] for t in mongodb.db.tickets.find({'department': new_name}, {'_id': 1})]
+            # Ermittle betroffene Tickets (mit altem Namen!)
+            ticket_ids = [t['_id'] for t in mongodb.db.tickets.find({'department': old_name}, {'_id': 1})]
             for coll in ref_collections:
                 try:
                     # Setze department-Feld, falls vorhanden

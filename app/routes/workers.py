@@ -126,9 +126,9 @@ def add():
     departments = get_departments_from_settings()
     
     if request.method == 'POST':
-        barcode = request.form['barcode']
-        firstname = request.form['firstname']
-        lastname = request.form['lastname']
+        barcode = (request.form.get('barcode') or '').strip()
+        firstname = request.form.get('firstname')
+        lastname = request.form.get('lastname')
         from flask import g
         current_dept = getattr(g, 'current_department', None)
         if not current_dept:
@@ -138,6 +138,21 @@ def add():
         email = request.form.get('email', '')
         
         try:
+            # Automatischen Barcode erzeugen, wenn leer
+            if not barcode:
+                base = f"WRK_{(lastname or '').strip().upper()}_{(firstname or '').strip().upper()}" if (firstname or lastname) else "WRK"
+                base = ''.join(ch for ch in base if ch.isalnum() or ch == '_')[:40]
+                candidate = base or 'WRK'
+                counter = 1
+                while True:
+                    exists_tool = mongodb.find_one('tools', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
+                    exists_cons = mongodb.find_one('consumables', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
+                    exists_work = mongodb.find_one('workers', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
+                    if not (exists_tool or exists_cons or exists_work):
+                        barcode = candidate
+                        break
+                    counter += 1
+                    candidate = f"{base}_{counter}"
             # Prüfe ob der Barcode bereits existiert
             existing_tool = mongodb.find_one('tools', {'barcode': barcode, 'deleted': {'$ne': True}, 'department': department})
             existing_consumable = mongodb.find_one('consumables', {'barcode': barcode, 'deleted': {'$ne': True}, 'department': department})
