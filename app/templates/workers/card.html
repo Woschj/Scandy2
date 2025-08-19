@@ -14,7 +14,7 @@
   </div>
 
   <div class="flex justify-center">
-    <div class="card bg-white shadow-xl" style="width: 86mm; height: 54mm;">
+    <div id="card-container" class="card bg-white shadow-xl" style="width: 86mm; height: 54mm;">
       <div class="card-body p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <img src="{{ url_for('static', filename='images/scandy-logo.png') }}" alt="Logo" style="height: 14mm;">
@@ -22,9 +22,6 @@
         </div>
         <div>
           <div class="text-sm font-bold leading-tight">{{ worker.firstname }} {{ worker.lastname }}</div>
-          {% if worker.username %}
-          <div class="text-xs text-gray-600">{{ worker.username }}</div>
-          {% endif %}
         </div>
         <div class="mt-1">
           <svg id="barcode" class="w-full"></svg>
@@ -36,8 +33,12 @@
 
   <style>
     @media print {
-      .no-print { display: none !important; }
-      body { background: #fff !important; }
+      @page { size: 86mm 54mm; margin: 0; }
+      .no-print, .navbar, .sidebar-permanent { display: none !important; }
+      body { background: #fff !important; margin: 0 !important; }
+      body * { visibility: hidden !important; }
+      #card-container, #card-container * { visibility: visible !important; }
+      #card-container { position: absolute; top: 0; left: 0; box-shadow: none !important; }
     }
   </style>
 
