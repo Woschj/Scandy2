@@ -138,6 +138,13 @@ def add():
         email = request.form.get('email', '')
         
         try:
+            # Validierung: erlauben nur ASCII-Barcodes, sonst automatisch generieren
+            if barcode:
+                try:
+                    barcode.encode('ascii')
+                except Exception:
+                    flash('Barcode enthält nicht unterstützte Zeichen (nur A-Z, a-z, 0-9 und gängige ASCII-Zeichen erlaubt). Bitte anpassen oder Feld leer lassen für automatische Vergabe.', 'error')
+                    return render_template('workers/add.html', departments=departments, form_data=request.form)
             # Automatischen Barcode erzeugen, wenn leer
             if not barcode:
                 base = f"WRK_{(lastname or '').strip().upper()}_{(firstname or '').strip().upper()}" if (firstname or lastname) else "WRK"
@@ -440,7 +447,7 @@ def edit(barcode):
         lastname = request.form.get('lastname')
         department = request.form.get('department')
         email = request.form.get('email')
-        new_barcode = request.form.get('barcode')
+        new_barcode = (request.form.get('barcode') or '').strip()
         
         if not all([firstname, lastname]):
             return jsonify({'success': False, 'message': 'Vor- und Nachname sind erforderlich'}), 400
@@ -453,6 +460,11 @@ def edit(barcode):
         # Barcode-Änderung prüfen
         barcode_changed = (new_barcode != barcode)
         if barcode_changed:
+            # ASCII-Validierung (Umlaute/Sonderzeichen verbieten)
+            try:
+                new_barcode.encode('ascii')
+            except Exception:
+                return jsonify({'success': False, 'message': 'Barcode enthält nicht erlaubte Zeichen (nur ASCII).'}), 400
             # Prüfen, ob der neue Barcode bereits existiert
             existing_tool = mongodb.find_one('tools', {'barcode': new_barcode, 'deleted': {'$ne': True}})
             existing_consumable = mongodb.find_one('consumables', {'barcode': new_barcode, 'deleted': {'$ne': True}})
