@@ -405,6 +405,16 @@ def details(original_barcode):
         flash('Fehler beim Laden der Mitarbeiterdetails', 'error')
         return redirect(url_for('workers.index'))
 
+@bp.route('/<string:barcode>/card')
+@mitarbeiter_required
+@permission_required('workers', 'view')
+def worker_card(barcode: str):
+    """Druckbare Ausweis-Ansicht (HTML) mit clientseitigem Barcode."""
+    worker = mongodb.find_one('workers', {'barcode': barcode, 'deleted': {'$ne': True}})
+    if not worker:
+        return render_template('errors/404.html'), 404
+    return render_template('workers/card.html', worker=worker)
+
 @bp.route('/<barcode>/edit', methods=['POST'])
 @mitarbeiter_required
 @permission_required('workers', 'edit')

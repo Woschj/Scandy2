@@ -60,6 +60,9 @@
             
             <!-- Aktionen -->
             <div class="card-actions justify-end mt-4">
+                <a class="btn btn-outline" href="{{ url_for('workers.worker_card', barcode=worker.barcode) }}" target="_blank">
+                    <i class="fas fa-id-card mr-2"></i>Ausweis
+                </a>
                 <button class="btn btn-primary" onclick="showEditModal()">
                     <i class="fas fa-edit mr-2"></i>Bearbeiten
                 </button>

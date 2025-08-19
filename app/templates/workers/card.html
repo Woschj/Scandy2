@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Ausweis – {{ worker.firstname }} {{ worker.lastname }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 print:p-0">
+  <div class="flex justify-between items-center mb-4 no-print">
+    <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-ghost">
+      <i class="fas fa-arrow-left mr-2"></i>Zurück
+    </a>
+    <button class="btn btn-primary" onclick="window.print()">
+      <i class="fas fa-print mr-2"></i>Drucken
+    </button>
+  </div>
+
+  <div class="flex justify-center">
+    <div class="card bg-white shadow-xl" style="width: 86mm; height: 54mm;">
+      <div class="card-body p-3 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <img src="{{ url_for('static', filename='images/scandy-logo.png') }}" alt="Logo" style="height: 14mm;">
+          <span class="text-xs text-gray-500">{{ worker.department or '' }}</span>
+        </div>
+        <div>
+          <div class="text-sm font-bold leading-tight">{{ worker.firstname }} {{ worker.lastname }}</div>
+          {% if worker.username %}
+          <div class="text-xs text-gray-600">{{ worker.username }}</div>
+          {% endif %}
+        </div>
+        <div class="mt-1">
+          <svg id="barcode" class="w-full"></svg>
+          <div class="text-center text-[9pt] tracking-widest">{{ worker.barcode }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; }
+    }
+  </style>
+
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/JsBarcode.all.min.js') }}"></script>
+  <script nonce="{{ csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function(){
+      try {
+        var value = {{ worker.barcode|tojson }} || '';
+        JsBarcode('#barcode', value, {
+          format: 'code128',
+          displayValue: false,
+          height: 36,
+          margin: 0,
+          lineColor: '#000'
+        });
+      } catch(e) {}
+    });
+  </script>
+</div>
+{% endblock %}
+
+
