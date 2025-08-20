@@ -1,42 +1,85 @@
-<div class="flex flex-col gap-4">
-    <div class="grid grid-cols-2 gap-4 w-full">
-        <!-- Karte: Werkzeug/Verbrauchsgut -->
-        <button type="button" id="scanItemBtn" class="card w-full h-[300px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] border-2 border-transparent">
-            <div class="card-body flex flex-col items-center justify-center h-full">
-                <i class="fas fa-tools text-2xl text-primary mb-1"></i>
-                <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
-                <div id="itemCardContent" class="text-center">
-                    <p class="text-sm opacity-50">Tippen &amp; mit Kamera scannen</p>
-                    <div id="itemSummary" class="sr-only">Tippen zum Scannen</div>
-                </div>
-            </div>
-        </button>
+<div class="flex flex-col gap-6">
+  <!-- Zwei große Buttons / Kacheln -->
+  <div class="grid grid-cols-2 gap-4 w-full">
+    <button type="button" id="scanItemBtn" class="h-[220px] md:h-[280px] rounded-2xl bg-base-200 border border-base-300 active:scale-95 focus:outline-none">
+      <div class="h-full w-full flex flex-col items-center justify-center">
+        <i class="fas fa-tools text-4xl md:text-5xl text-primary mb-3"></i>
+        <div class="text-base md:text-lg font-semibold">Werkzeug / Verbrauch</div>
+        <div class="text-xs opacity-60 mt-1">Tippen zum Scannen</div>
+      </div>
+    </button>
+    <button type="button" id="scanWorkerBtn" class="h-[220px] md:h-[280px] rounded-2xl bg-base-200 border border-base-300 active:scale-95 focus:outline-none">
+      <div class="h-full w-full flex flex-col items-center justify-center">
+        <i class="fas fa-id-badge text-4xl md:text-5xl text-secondary mb-3"></i>
+        <div class="text-base md:text-lg font-semibold">Mitarbeiter</div>
+        <div class="text-xs opacity-60 mt-1">Tippen zum Scannen</div>
+      </div>
+    </button>
+  </div>
 
-        <!-- Karte: Mitarbeiter -->
-        <button type="button" id="scanWorkerBtn" class="card w-full h-[300px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] border-2 border-transparent">
-            <div class="card-body flex flex-col items-center justify-center h-full">
-                <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
-                <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
-                <div id="workerCardContent" class="text-center">
-                    <p class="text-sm opacity-50">Tippen &amp; mit Kamera scannen</p>
-                    <div id="workerSummary" class="sr-only">Tippen zum Scannen</div>
-                </div>
-            </div>
-        </button>
+  <!-- Kamera-Vorschau: kompakter, begrenzte Höhe, objekt "contain" -->
+  <div id="cameraContainer" class="relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow bg-black h-[150px] md:h-[200px]">
+    <video id="cameraPreview" class="absolute inset-0 w-full h-full object-contain bg-black" autoplay playsinline muted></video>
+    <!-- Container für html5-qrcode Fallback (muss ein DIV sein) -->
+    <div id="html5qrcode" class="absolute inset-0 w-full h-full hidden"></div>
+    <canvas id="scanOverlay" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+    <div id="scanStatus" class="absolute top-2 left-2 bg-black/60 text-white text-xs md:text-sm px-2 py-1 rounded">Scanne…</div>
+    <div class="absolute bottom-2 left-0 right-0 flex items-center justify-between px-3">
+      <button id="toggleTorchBtn" class="btn btn-sm md:btn-md btn-ghost text-white"><i class="fas fa-bolt mr-2"></i>Licht</button>
+      <div id="scanHint" class="text-white text-sm md:text-base opacity-80">Tippe auf eine Kachel zum Scannen</div>
+      <div class="flex gap-2">
+        <button id="fallbackScannerBtn" class="btn btn-sm md:btn-md btn-ghost text-white hidden md:inline-flex"><i class="fas fa-shield-alt mr-2"></i>Stabil</button>
+        <button id="switchCameraBtn" class="btn btn-sm md:btn-md btn-ghost text-white"><i class="fas fa-camera-rotate mr-2"></i>Kamera</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Kamera-Vorschau -->
-    <div class="relative w-full max-w-md mx-auto overflow-hidden rounded-xl shadow bg-black">
-        <video id="cameraPreview" class="w-full h-40 object-cover" autoplay playsinline muted></video>
-        <div class="absolute bottom-2 left-0 right-0 flex items-center justify-between px-3">
-            <button id="toggleTorchBtn" class="btn btn-xs btn-ghost text-white"><i class="fas fa-bolt mr-1"></i>Licht</button>
-            <div id="scanHint" class="text-white text-xs opacity-80">Tippe auf eine Karte zum Scannen</div>
-            <button id="switchCameraBtn" class="btn btn-xs btn-ghost text-white"><i class="fas fa-camera-rotate mr-1"></i>Kamera</button>
+  <!-- Optional: Debug-Ausgaben (einklappbar) -->
+  <details class="mt-2 text-xs opacity-80">
+    <summary class="cursor-pointer select-none">Debug</summary>
+    <pre id="debugPanel" class="p-2 bg-base-200 rounded max-h-40 overflow-auto whitespace-pre-wrap"></pre>
+  </details>
+
+  <!-- Aktuelle Auswahl / Aktionen -->
+  <div class="mt-4 space-y-3">
+    <div class="text-xs uppercase tracking-wide text-gray-500">Aktuelle Auswahl</div>
+    <div class="grid grid-cols-1 gap-2">
+      <div class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 px-3 py-2">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-box-open text-primary"></i>
+          <div class="text-sm"><span id="itemSummary">Tippen zum Scannen</span></div>
         </div>
+        <button id="reScanItemBtn" class="btn btn-xs">Neu scannen</button>
+      </div>
+      <div class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 px-3 py-2">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-user-check text-secondary"></i>
+          <div class="text-sm"><span id="workerSummary">Tippen zum Scannen</span></div>
+        </div>
+        <button id="reScanWorkerBtn" class="btn btn-xs">Neu scannen</button>
+      </div>
     </div>
+    <div class="flex items-center gap-2">
+      <button id="confirmMobileQuickscan" class="btn btn-primary btn-sm flex-1">
+        <i class="fas fa-check mr-2"></i>Bestätigen
+      </button>
+      <button id="resetMobileQuickscan" class="btn btn-ghost btn-sm">
+        <i class="fas fa-undo mr-2"></i>Zurücksetzen
+      </button>
+    </div>
+  </div>
 
-    <div class="divider text-xs">Angemeldet als {{ current_user.username }}</div>
-    <a href="{{ url_for('mobile.logout') }}" class="btn btn-error btn-sm w-full"><i class="fas fa-sign-out-alt mr-2"></i>Abmelden</a>
+  <!-- Letzte erfolgreiche Scans -->
+  <details class="mt-3">
+    <summary class="text-sm cursor-pointer">Letzte Scans</summary>
+    <ul id="scanLog" class="mt-2 space-y-1 text-sm"></ul>
+  </details>
+
+  <!-- Login/Logout / Info -->
+  <div class="flex items-center justify-between text-xs opacity-70">
+    <div>Angemeldet als {{ current_user.username }}</div>
+    <a href="{{ url_for('mobile.logout') }}" class="btn btn-error btn-xs"><i class="fas fa-sign-out-alt mr-2"></i>Abmelden</a>
+  </div>
 </div>
 
 

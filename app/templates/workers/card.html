@@ -73,8 +73,8 @@
         JsBarcode('#barcode', value, {
           format: 'code128',
           displayValue: false,
-          height: mmToPx(18), // ~18mm Balkenhöhe
-          margin: 0,
+          height: mmToPx(24), // höhere Balken für bessere Erkennung
+          margin: mmToPx(3),  // großzügige Ruhezone links/rechts
           lineColor: '#000'
         });
       } catch(e) {}
@@ -90,7 +90,7 @@
       const svgEl = document.getElementById('barcode');
       try {
         if (svgEl && svgEl.childNodes.length === 0) {
-          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, height: mmToPx(18), margin:0, lineColor:'#000'});
+          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, height: mmToPx(24), margin: mmToPx(3), lineColor:'#000'});
         }
       } catch(e) {}
       const svgMarkup = svgEl ? svgEl.outerHTML : '';
