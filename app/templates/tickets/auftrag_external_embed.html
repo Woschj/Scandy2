@@ -30,8 +30,20 @@
                 {% endif %}
                 <form method="POST" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <!-- Titel und Kategorie -->
+                    <!-- Abteilung, Titel und Kategorie -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="form-control md:col-span-2">
+                            <label class="label">
+                                <span class="label-text font-semibold">Abteilung</span>
+                            </label>
+                            <select id="target_department" name="target_department" class="select select-bordered w-full">
+                                <option value="">Abteilung wählen</option>
+                                {% set all_deps = departments_all or [] %}
+                                {% for dep in all_deps %}
+                                <option value="{{ dep }}" {% if selected_department and selected_department == dep %}selected{% endif %}>{{ dep }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text font-semibold">Auftragstitel *</span>
@@ -43,7 +55,7 @@
                             <label class="label">
                                 <span class="label-text font-semibold">Handlungsfeld *</span>
                             </label>
-                            <select name="category" class="select select-bordered w-full" required>
+                            <select id="category" name="category" class="select select-bordered w-full" required>
                                 <option value="">Handlungsfeld auswählen</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat }}">{{ cat }}</option>
@@ -132,6 +144,30 @@
     </div>
 </div>
 
-<!-- Tickets JavaScript -->
-<script src="{{ url_for('static', filename='js/tickets.js') }}"></script>
+<!-- Dynamische Handlungsfelder -->
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function(){
+  const deptSelect = document.getElementById('target_department');
+  const catSelect = document.getElementById('category');
+  if (!deptSelect || !catSelect) return;
+  async function refreshCategories(){
+    const dept = deptSelect.value || '';
+    try {
+      const resp = await fetch(`/tickets/ticket_categories?dept=${encodeURIComponent(dept)}`, {
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data || !Array.isArray(data.categories)) return;
+      const selected = catSelect.value;
+      catSelect.innerHTML = '<option value="">Handlungsfeld auswählen</option>' +
+        data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      if ([...catSelect.options].some(o => o.value === selected)) catSelect.value = selected;
+    } catch(e) {}
+  }
+  deptSelect.addEventListener('change', refreshCategories);
+  if (deptSelect.value) { refreshCategories(); }
+});
+</script>
 {% endblock %} 

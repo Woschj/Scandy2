@@ -173,6 +173,18 @@
                             </select>
                         </div>
                         <div>
+                            <p class="text-sm opacity-70">Verantwortliche Person</p>
+                            <div class="flex gap-2">
+                                <select id="responsibleSelect" class="select select-bordered w-full">
+                                    <option value="">Nicht gesetzt</option>
+                                    {% for worker in workers %}
+                                    <option value="{{ worker.username }}" {% if ticket.responsible == worker.username %}selected{% endif %}>{{ worker.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="updateTicketResponsible()">Speichern</button>
+                            </div>
+                        </div>
+                        <div>
                             <p class="text-sm opacity-70">Letzte Aktualisierung</p>
                             <p class="font-medium">{{ ticket.updated_at|datetime if ticket.updated_at else '-' }}</p>
                         </div>
@@ -332,6 +344,25 @@ function updateTicketAssignment(newAssignee) {
         console.error('Fehler:', error);
         alert('Ein Fehler ist aufgetreten beim Aktualisieren der Zuweisung.');
     });
+}
+
+function updateTicketResponsible() {
+    const sel = document.getElementById('responsibleSelect');
+    const responsible = sel ? sel.value : '';
+    fetch(`/admin/tickets/{{ ticket.id }}/update-responsible`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responsible: responsible || null })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Fehler beim Aktualisieren der verantwortlichen Person');
+        }
+    })
+    .catch(() => alert('Ein Fehler ist aufgetreten beim Aktualisieren der verantwortlichen Person.'));
 }
 
 function updateTicketCategory(newCategory) {

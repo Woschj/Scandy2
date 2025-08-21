@@ -309,6 +309,28 @@ function updateTicketAssignments() {
     });
 }
 
+function updateTicketResponsible() {
+    const sel = document.getElementById('responsibleSelect');
+    const responsible = sel ? sel.value : '';
+    fetch(`/tickets/{{ ticket.id }}/update-responsible`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responsible: responsible || null })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Verantwortliche Person aktualisiert', 'success');
+            }
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            alert(data.message || 'Fehler beim Aktualisieren der verantwortlichen Person');
+        }
+    })
+    .catch(() => alert('Ein Fehler ist aufgetreten beim Aktualisieren der verantwortlichen Person.'));
+}
+
 function saveTicketChanges() {
     console.log('saveTicketChanges aufgerufen');
     
@@ -404,6 +426,11 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                     {% else %}bg-red-100 text-red-800{% endif %}">
                     {{ ticket.status|title }}
                 </span>
+                {% if ticket.responsible %}
+                <div class="mt-2 text-sm text-gray-700">
+                    Verantwortlich: <strong>{{ ticket.responsible }}</strong>
+                </div>
+                {% endif %}
             </div>
         </div>
         
@@ -442,7 +469,7 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                 <!-- Status ändern -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status ändern</label>
-                    <select onchange="updateTicketStatus(this.value)" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                    <select onchange="updateTicketStatus(this.value)" class="w-full border border-gray-300 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                         <option value="offen" {% if ticket.status == 'offen' %}selected{% endif %}>Offen</option>
                         <option value="in_arbeit" {% if ticket.status == 'in_arbeit' %}selected{% endif %}>In Arbeit</option>
                         <option value="wartend" {% if ticket.status == 'wartend' %}selected{% endif %}>Wartend</option>
@@ -459,14 +486,28 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                         <label class="flex items-center">
                             <input type="checkbox" name="assigned_users" value="{{ user.username }}"
                                    {% if user.username in assigned_users %}checked{% endif %}
-                                   class="rounded border-gray-300 text-blue-600">
+                                   class="rounded border-gray-300 text-blue-600" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                             <span class="ml-2 text-sm">{{ user.firstname }} {{ user.lastname }} ({{ user.username }})</span>
                         </label>
                         {% endfor %}
                     </div>
-                    <button onclick="updateTicketAssignments()" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    <button onclick="updateTicketAssignments()" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                         Zuweisung speichern
                     </button>
+                </div>
+
+                <!-- Verantwortliche Person -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Verantwortliche Person</label>
+                    <div class="flex gap-2">
+                        <select id="responsibleSelect" class="w-full border border-gray-300 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
+                            <option value="">Nicht gesetzt</option>
+                            {% for user in workers %}
+                                <option value="{{ user.username }}" {% if ticket.responsible == user.username %}selected{% endif %}>{{ user.firstname or '' }} {{ user.lastname or '' }} ({{ user.username }})</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700" onclick="updateTicketResponsible()" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>Speichern</button>
+                    </div>
                 </div>
 
                 <!-- Ticket-Details bearbeiten -->

@@ -189,9 +189,20 @@ class TicketService:
                 logger.error(f"Fehler beim Laden der Mehrfachzuweisungen: {assign_err}")
                 assigned_tickets_multi = []
 
-            # 3) Zusammenführen und Duplikate entfernen
+            # 3) Tickets, für die der Nutzer verantwortlich ist, ergänzen
+            responsible_query = {
+                '$and': [
+                    {'responsible': username},
+                    {'deleted': {'$ne': True}}
+                ]
+            }
+            if getattr(g, 'current_department', None):
+                responsible_query['$and'].append({'department': g.current_department})
+            responsible_tickets = list(mongodb.find('tickets', responsible_query))
+
+            # 4) Zusammenführen und Duplikate entfernen
             assigned_tickets_map = {}
-            for t in assigned_tickets_legacy + assigned_tickets_multi:
+            for t in assigned_tickets_legacy + assigned_tickets_multi + responsible_tickets:
                 try:
                     key = str(t.get('_id') or t.get('id'))
                     assigned_tickets_map[key] = t
@@ -614,6 +625,81 @@ class TicketService:
         except Exception as e:
             logger.error(f"Fehler beim Zählen der nicht zugewiesenen Tickets: {str(e)}")
             return 0
+
+    def update_responsible(self, ticket_id: str, responsible_username: Optional[str], updated_by: str) -> Tuple[bool, str]:
+        """
+        Setzt oder entfernt die verantwortliche Person (Ticket-Leitung)
+        
+        Args:
+            ticket_id: Ticket-ID
+            responsible_username: Benutzername der verantwortlichen Person oder None zum Entfernen
+            updated_by: Benutzername der ändernden Person
+        
+        Returns:
+            Tuple: (success, message)
+        """
+        try:
+            ticket = self.get_ticket_by_id(ticket_id)
+            if not ticket:
+                return False, 'Ticket nicht gefunden'
+
+            # Optional: Validierung des Users, falls gesetzt
+            if responsible_username:
+                user = mongodb.find_one('users', {'username': responsible_username})
+                if not user:
+                    return False, 'Verantwortliche Person nicht gefunden'
+
+            mongodb.update_one('tickets',
+                             {'_id': self.utility_service.convert_id_for_query(ticket_id)},
+                             {'$set': {
+                                 'responsible': responsible_username or None,
+                                 'updated_at': datetime.now(),
+                                 'updated_by': updated_by
+                             }})
+
+            # Wenn eine verantwortliche Person gesetzt wurde, stelle sicher, dass sie zugewiesen ist
+            if responsible_username:
+                try:
+                    # Legacy-Feld setzen
+                    mongodb.update_one('tickets',
+                                     {'_id': self.utility_service.convert_id_for_query(ticket_id)},
+                                     {'$set': {
+                                         'assigned_to': responsible_username,
+                                         'updated_at': datetime.now(),
+                                         'updated_by': updated_by
+                                     }})
+                    # In Mehrfachzuweisungen hinzufügen, falls noch nicht vorhanden
+                    ticket_id_for_assign = str(self.utility_service.convert_id_for_query(ticket_id))
+                    existing = mongodb.find_one('ticket_assignments', {
+                        'ticket_id': ticket_id_for_assign,
+                        'assigned_to': responsible_username
+                    })
+                    if not existing:
+                        mongodb.insert_one('ticket_assignments', {
+                            'ticket_id': ticket_id_for_assign,
+                            'assigned_to': responsible_username,
+                            'assigned_by': updated_by,
+                            'assigned_at': datetime.now()
+                        })
+                except Exception as assign_err:
+                    logger.error(f"Fehler beim automatischen Zuweisen der verantwortlichen Person: {assign_err}")
+
+            # History-Logging
+            try:
+                from app.services.ticket_history_service import ticket_history_service
+                ticket_history_service.log_assignment(
+                    ticket_id=str(ticket_id),
+                    old_assignee=ticket.get('responsible') or 'Nicht gesetzt',
+                    new_assignee=responsible_username or 'Nicht gesetzt',
+                    changed_by=updated_by
+                )
+            except Exception as history_error:
+                logger.error(f"Fehler beim History-Logging für Verantwortliche: {history_error}")
+
+            return True, 'Verantwortliche Person wurde aktualisiert'
+        except Exception as e:
+            logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
+            return False, f'Fehler beim Aktualisieren: {str(e)}'
     
     def _convert_datetime_fields(self, ticket: Dict[str, Any]) -> Dict[str, Any]:
         """

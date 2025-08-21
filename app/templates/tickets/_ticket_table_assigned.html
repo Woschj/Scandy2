@@ -12,6 +12,7 @@
                 <th>Abteilung</th>
                 <th>Kontakt</th>
                 <th>Erstellt am</th>
+                <th>Verantwortlich</th>
                 <th>Fällig am</th>
                 <th>Geschätzte Zeit</th>
                 <th>Tatsächliche Zeit</th>
@@ -74,6 +75,7 @@
                         -
                     {% endif %}
                 </td>
+                <td>{{ ticket.responsible or '-' }}</td>
                 <td>
                     {% if ticket.due_date %}
                         {% if ticket.due_date is string %}

@@ -47,6 +47,10 @@ def check_ticket_permission(ticket, username, role):
     if ticket.get('created_by') == username:
         return True
     
+    # Verantwortliche Person hat Zugriff (volle Rechte für Micro-Administration)
+    if ticket.get('responsible') == username:
+        return True
+
     # Zugewiesen an den Benutzer (Legacy + Mehrfachzuweisung)
     # Prüfe Legacy-Zuweisung
     if ticket.get('assigned_to') == username:
@@ -1255,11 +1259,9 @@ def update_status(id):
         if not ticket:
             return jsonify({'success': False, 'message': 'Ticket nicht gefunden'}), 404
 
-        # Prüfe Berechtigungen
-        has_permission = check_ticket_permission(ticket, current_user.username, current_user.role)
-        
-        if not has_permission:
-            return jsonify({'success': False, 'message': 'Sie haben keine Berechtigung, dieses Ticket zu bearbeiten'}), 403
+        # Prüfe Berechtigungen: Admin oder verantwortliche Person
+        if not (current_user.role == 'admin' or ticket.get('responsible') == current_user.username):
+            return jsonify({'success': False, 'message': 'Nur Admins oder die verantwortliche Person dürfen den Status ändern'}), 403
 
         # Speichere alten Status für History
         old_status = ticket.get('status', 'unbekannt')
@@ -1344,11 +1346,9 @@ def update_assignment(id):
         if not ticket:
             return jsonify({'success': False, 'message': 'Ticket nicht gefunden'}), 404
 
-        # Prüfe Berechtigungen
-        has_permission = check_ticket_permission(ticket, current_user.username, current_user.role)
-        
-        if not has_permission:
-            return jsonify({'success': False, 'message': 'Sie haben keine Berechtigung, dieses Ticket zu bearbeiten'}), 403
+        # Prüfe Berechtigungen: Admin oder verantwortliche Person
+        if not (current_user.role == 'admin' or ticket.get('responsible') == current_user.username):
+            return jsonify({'success': False, 'message': 'Nur Admins oder die verantwortliche Person dürfen Zuweisungen ändern'}), 403
 
         # Speichere alte Zuweisungen für History
         old_assigned_users = []
@@ -1389,6 +1389,46 @@ def update_assignment(id):
 
     except Exception as e:
         logging.error(f"Fehler beim Aktualisieren der Zuweisung: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@bp.route('/<id>/update-responsible', methods=['POST'])
+@login_required
+@permission_required('tickets', 'assign')
+def update_responsible(id):
+    """Setzt oder entfernt die verantwortliche Person (Ticket-Leitung)"""
+    try:
+        if not request.is_json:
+            return jsonify({'success': False, 'message': 'Ungültiges Anfrageformat'}), 400
+
+        data = request.get_json()
+        responsible = data.get('responsible')  # username oder None
+
+        # Verwende die ursprüngliche ID direkt für das Update
+        from bson import ObjectId
+        try:
+            ticket_id_for_update = ObjectId(id)
+        except Exception:
+            ticket_id_for_update = id
+
+        # Prüfe ob das Ticket existiert
+        ticket = mongodb.find_one('tickets', {'_id': ticket_id_for_update})
+        if not ticket:
+            return jsonify({'success': False, 'message': 'Ticket nicht gefunden'}), 404
+
+        # Prüfe Berechtigungen: Nur Admin oder aktuelle verantwortliche Person dürfen die Hauptverantwortung ändern
+        current_responsible = ticket.get('responsible')
+        if not (current_user.role == 'admin' or current_responsible == current_user.username):
+            return jsonify({'success': False, 'message': 'Nur Admins oder die aktuelle verantwortliche Person dürfen dies ändern'}), 403
+
+        # Service verwenden
+        ticket_service = TicketService()
+        success, message = ticket_service.update_responsible(str(ticket_id_for_update), responsible, current_user.username)
+        if success:
+            return jsonify({'success': True, 'message': message})
+        else:
+            return jsonify({'success': False, 'message': message})
+    except Exception as e:
+        logging.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @bp.route('/<id>/update-due-date', methods=['POST'])
@@ -1925,6 +1965,8 @@ def public_create_order():
     """Interne Auftragserstellung für eingeloggte Benutzer."""
     if request.method == 'GET':
         from app.services.ticket_category_service import ticket_category_service
+        # Alle Abteilungen für die Auswahl (nicht nur erlaubte)
+        departments_all = get_departments_from_settings() or []
         selected_department = request.args.get('target_department')
         if selected_department:
             categories = ticket_category_service.get_ticket_categories_for_department(selected_department)
@@ -1933,6 +1975,7 @@ def public_create_order():
         return render_template('tickets/create_auftrag.html', 
                              categories=categories,
                              selected_department=selected_department,
+                             departments_all=departments_all,
                              error=None)
     return _handle_auftrag_creation()
 
@@ -1986,8 +2029,12 @@ def _handle_auftrag_creation(external=False):
                                              categories=categories,
                                              error=error_msg)
                     else:
+                        # Alle Abteilungen erneut bereitstellen
+                        departments_all = get_departments_from_settings() or []
                         return render_template('tickets/create_auftrag.html', 
                                              categories=categories,
+                                             departments_all=departments_all,
+                                             selected_department=effective_dept,
                                              error=error_msg)
             except Exception:
                 pass
@@ -2001,8 +2048,10 @@ def _handle_auftrag_creation(external=False):
                                          categories=categories,
                                          error='Titel ist erforderlich.')
                 else:
+                    departments_all = get_departments_from_settings() or []
                     return render_template('tickets/create_auftrag.html', 
                                          categories=categories,
+                                         departments_all=departments_all,
                                          error='Titel ist erforderlich.')
                 
             if not description:
@@ -2013,8 +2062,10 @@ def _handle_auftrag_creation(external=False):
                                          categories=categories,
                                          error='Beschreibung ist erforderlich.')
                 else:
+                    departments_all = get_departments_from_settings() or []
                     return render_template('tickets/create_auftrag.html', 
                                          categories=categories,
+                                         departments_all=departments_all,
                                          error='Beschreibung ist erforderlich.')
                 
             # Kategorie ist optional, daher entfernen wir die Validierung
@@ -2095,6 +2146,7 @@ def _handle_auftrag_creation(external=False):
     # Hole die Kategorien für das Formular (abteilungsgebunden)
     from app.services.ticket_category_service import ticket_category_service
     categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
+    departments_all = get_departments_from_settings() or []
     
     if external or not current_user.is_authenticated:
         return render_template('tickets/auftrag_external_embed.html', 
@@ -2102,12 +2154,28 @@ def _handle_auftrag_creation(external=False):
                              error=None)
     return render_template('tickets/create_auftrag.html', 
                          categories=categories,
+                         departments_all=departments_all,
                          priority_colors={
                              'niedrig': 'secondary',
                              'normal': 'primary',
                              'hoch': 'error',
                              'dringend': 'error'
                          })
+
+@bp.route('/ticket_categories')
+def public_ticket_categories():
+    """Gibt Ticket-Kategorien (Handlungsfelder) für eine angegebene Abteilung zurück.
+    Öffentlich nutzbar für Formular-UI (kein Login erforderlich)."""
+    try:
+        req_dept = request.args.get('dept')
+        if not req_dept:
+            return jsonify({'success': True, 'categories': [], 'department': None})
+        from app.services.handlungsfeld_service import handlungsfeld_service
+        categories = handlungsfeld_service.get_handlungsfelder_for_department(req_dept)
+        return jsonify({'success': True, 'department': req_dept, 'categories': [{'name': n} for n in categories]})
+    except Exception as e:
+        logger.error(f"Fehler beim Abrufen der Ticket-Kategorien (public): {str(e)}")
+        return jsonify({'success': False, 'message': 'Fehler beim Laden der Ticket-Kategorien'})
 
 @bp.route('/<id>/auftrag-details')
 @login_required

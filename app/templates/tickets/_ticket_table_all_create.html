@@ -8,6 +8,7 @@
                 <th>Status</th>
                 <th>Priorität</th>
                 <th>Zugewiesen an</th>
+                <th>Verantwortlich</th>
                 <th>Erstellt von</th>
                 <th>Abteilung</th>
                 <th>Kontakt</th>
@@ -58,6 +59,7 @@
                         -
                     {% endif %}
                 </td>
+                <td>{{ ticket.responsible or '-' }}</td>
                 <td>{{ ticket.created_by }}</td>
                 <td>{{ ticket.department or '-' }}</td>
                 <td>

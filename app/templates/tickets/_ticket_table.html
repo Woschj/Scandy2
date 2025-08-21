@@ -8,6 +8,7 @@
                 <th>Status</th>
                 <th>Priorität</th>
                 <th>Handlungsfeld</th>
+                <th>Verantwortlich</th>
                 <th>Abteilung</th>
                 <th>Fällig am</th>
                 <th>Geschätzte Zeit</th>
@@ -35,6 +36,7 @@
                     </span>
                 </td>
                 <td>{{ ticket.category or '-' }}</td>
+                <td>{{ ticket.responsible or '-' }}</td>
                 <td>{{ ticket.department or '-' }}</td>
                 <td>{{ ticket.due_date|datetime if ticket.due_date else '-' }}</td>
                 <td>{{ ticket.estimated_time|int if ticket.estimated_time else '-' }} Min.</td>

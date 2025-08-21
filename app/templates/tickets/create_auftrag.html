@@ -69,7 +69,8 @@
                             </label>
                             <select id="target_department" name="target_department" class="select select-bordered w-full">
                                 <option value="">(Aktuelle Abteilung verwenden)</option>
-                                {% for dep in (departments_ctx.allowed or departments.allowed) %}
+                                {% set all_deps = departments_all or (departments_ctx.allowed or departments.allowed) %}
+                                {% for dep in all_deps %}
                                 <option value="{{ dep }}" {% if (selected_department and selected_department == dep) or (not selected_department and departments_ctx.current == dep) %}selected{% endif %}>{{ dep }}</option>
                                 {% endfor %}
                             </select>
@@ -201,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const dept = deptSelect.value || '';
     console.log('[Auftrag] refreshCategories dept=', dept);
     try {
-      const resp = await fetch(`/admin/ticket_categories?dept=${encodeURIComponent(dept)}`, {
+      const resp = await fetch(`/tickets/ticket_categories?dept=${encodeURIComponent(dept)}`, {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -238,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const dept = deptSelect.value || '';
     console.log('[Auftrag] refreshCategories dept=', dept);
     try {
-      const resp = await fetch(`/admin/ticket_categories?dept=${encodeURIComponent(dept)}`, {
+      const resp = await fetch(`/tickets/ticket_categories?dept=${encodeURIComponent(dept)}`, {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }

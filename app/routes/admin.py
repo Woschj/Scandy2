@@ -4233,6 +4233,43 @@ def update_ticket_assignment(ticket_id):
         logger.error(f"Fehler beim Aktualisieren der Zuweisung: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@bp.route('/tickets/<ticket_id>/update-responsible', methods=['POST'])
+@login_required
+@admin_required
+def update_ticket_responsible(ticket_id):
+    """Setzt oder entfernt die verantwortliche Person (Ticket-Leitung)"""
+    try:
+        if not request.is_json:
+            return jsonify({'success': False, 'message': 'Ungültiges Anfrageformat'}), 400
+
+        data = request.get_json()
+        responsible = data.get('responsible')
+
+        from bson import ObjectId
+        try:
+            ticket_id_for_update = ObjectId(ticket_id)
+        except Exception:
+            ticket_id_for_update = ticket_id
+
+        ticket = mongodb.find_one('tickets', {'_id': ticket_id_for_update})
+        if not ticket:
+            return jsonify({'success': False, 'message': 'Ticket nicht gefunden'}), 404
+
+        # Optional: Validierung Nutzer
+        if responsible:
+            user = mongodb.find_one('users', {'username': responsible})
+            if not user:
+                return jsonify({'success': False, 'message': 'Benutzer nicht gefunden'}), 400
+
+        # Update durchführen
+        if not mongodb.update_one('tickets', {'_id': ticket_id_for_update}, {'$set': {'responsible': responsible or None, 'updated_at': datetime.now()}}):
+            return jsonify({'success': False, 'message': 'Fehler beim Aktualisieren der Verantwortlichen-Information'})
+
+        return jsonify({'success': True, 'message': 'Verantwortliche Person aktualisiert'})
+    except Exception as e:
+        logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @bp.route('/tickets/<ticket_id>/update-status', methods=['POST'])
 @login_required
 @admin_required

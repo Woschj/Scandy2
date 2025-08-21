@@ -13,6 +13,7 @@
                 <th>Fällig am</th>
                 <th>Geschätzte Zeit</th>
                 <th>Nachrichten</th>
+                <th>Verantwortlich</th>
                 <th>Aktionen</th>
             </tr>
         </thead>
@@ -57,6 +58,7 @@
                     <span class="text-base-content/60">-</span>
                     {% endif %}
                 </td>
+                <td>{{ ticket.responsible or '-' }}</td>
                 <td>
                     <a href="{{ url_for('tickets.view', ticket_id=ticket.id) }}" 
                        class="btn btn-sm btn-primary">

@@ -199,6 +199,26 @@
                             {% endif %}
                         </div>
                         <div>
+                            <p class="text-sm opacity-70">Verantwortliche Person</p>
+                            {% if current_user.is_admin %}
+                                <div class="flex gap-2 mb-2">
+                                    <select id="responsibleSelect" class="select select-bordered w-full">
+                                        <option value="">Nicht gesetzt</option>
+                                        {% for user in users %}
+                                            <option value="{{ user['username'] }}" {% if ticket.responsible == user['username'] %}selected{% endif %}>{{ user['username'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="updateTicketResponsible()">
+                                        Speichern
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="font-medium">
+                                    {{ ticket.responsible or 'Nicht gesetzt' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
                             <p class="text-sm opacity-70">Letzte Aktualisierung</p>
                             <p class="font-medium">{{ ticket.updated_at }}</p>
                         </div>
@@ -284,6 +304,28 @@ document.addEventListener('DOMContentLoaded', function() {
             button.disabled = false;
             button.innerHTML = originalText;
         });
+    }
+
+    // Verantwortliche Person setzen/entfernen
+    window.updateTicketResponsible = function() {
+        const select = document.getElementById('responsibleSelect');
+        const responsible = select ? select.value : '';
+
+        fetch(`/tickets/{{ ticket.id }}/update-responsible`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ responsible: responsible || null })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Verantwortliche Person aktualisiert', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showToast(data.message || 'Fehler beim Aktualisieren', 'error');
+            }
+        })
+        .catch(() => showToast('Fehler beim Aktualisieren', 'error'));
     }
 
     // Nachrichten-Formular
