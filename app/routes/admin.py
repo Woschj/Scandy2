@@ -1737,11 +1737,24 @@ def manage_users():
         # Rollenrechte für Anzeige in der Rollenübersicht
         from app.utils.permissions import get_role_permissions
         role_permissions = get_role_permissions()
-        return render_template('admin/users.html', users=users, expired_users=expired_users, role_permissions=role_permissions)
+
+        # Abteilungen für Filter/Anzeige der Hauptabteilung
+        from app.services.admin_system_settings_service import AdminSystemSettingsService
+        departments = AdminSystemSettingsService.get_departments_from_settings()
+
+        return render_template(
+            'admin/users.html',
+            users=users,
+            expired_users=expired_users,
+            role_permissions=role_permissions,
+            departments=departments
+        )
     except Exception as e:
         logger.error(f"Fehler beim Laden der Benutzer: {e}")
         flash('Fehler beim Laden der Benutzer', 'error')
-        return render_template('admin/users.html', users=[], expired_users=[], role_permissions={})
+        from app.services.admin_system_settings_service import AdminSystemSettingsService
+        departments = AdminSystemSettingsService.get_departments_from_settings()
+        return render_template('admin/users.html', users=[], expired_users=[], role_permissions={}, departments=departments)
 
 @bp.route('/add_user', methods=['GET', 'POST'])
 @mitarbeiter_required

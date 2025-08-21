@@ -1,6 +1,9 @@
 /* iOS Viewport-Fallbacks für Kamera-Container */
 .camera-container {
   height: 45dvh;
+  min-height: 200px;
+  display: block;
+  visibility: visible;
 }
 @supports not (height: 1dvh) {
   .camera-container { height: calc(45vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }

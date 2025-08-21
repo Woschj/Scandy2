@@ -1,24 +1,17 @@
 <div class="flex flex-col gap-6">
-  <!-- Zwei große Buttons / Kacheln -->
-  <div class="grid grid-cols-2 gap-4 w-full">
-    <button type="button" id="scanItemBtn" class="h-[220px] md:h-[280px] rounded-2xl bg-base-200 border border-base-300 active:scale-95 focus:outline-none">
+  <!-- Ein Button für alles -->
+  <div class="w-full">
+    <button type="button" id="scanUnifiedBtn" class="w-full h-[220px] md:h-[260px] rounded-2xl bg-base-200 border border-base-300 active:scale-95 focus:outline-none">
       <div class="h-full w-full flex flex-col items-center justify-center">
-        <i class="fas fa-tools text-4xl md:text-5xl text-primary mb-3"></i>
-        <div class="text-base md:text-lg font-semibold">Werkzeug / Verbrauch</div>
-        <div class="text-xs opacity-60 mt-1">Tippen zum Scannen</div>
-      </div>
-    </button>
-    <button type="button" id="scanWorkerBtn" class="h-[220px] md:h-[280px] rounded-2xl bg-base-200 border border-base-300 active:scale-95 focus:outline-none">
-      <div class="h-full w-full flex flex-col items-center justify-center">
-        <i class="fas fa-id-badge text-4xl md:text-5xl text-secondary mb-3"></i>
-        <div class="text-base md:text-lg font-semibold">Mitarbeiter</div>
-        <div class="text-xs opacity-60 mt-1">Tippen zum Scannen</div>
+        <i class="fas fa-barcode text-4xl md:text-5xl text-primary mb-3"></i>
+        <div class="text-base md:text-lg font-semibold">Scannen</div>
+        <div class="text-xs opacity-60 mt-1">Für Mitarbeiter, Werkzeuge und Verbrauch</div>
       </div>
     </button>
   </div>
 
   <!-- Kamera-Vorschau: kompakter, begrenzte Höhe, objekt "contain" -->
-  <div id="cameraContainer" class="relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow bg-black h-[150px] md:h-[200px]">
+  <div id="cameraContainer" class="camera-container relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow bg-black" style="min-height: 180px;">
     <video id="cameraPreview" class="absolute inset-0 w-full h-full object-contain bg-black" autoplay playsinline muted></video>
     <!-- Container für html5-qrcode Fallback (muss ein DIV sein) -->
     <div id="html5qrcode" class="absolute inset-0 w-full h-full hidden"></div>
@@ -49,14 +42,14 @@
           <i class="fas fa-box-open text-primary"></i>
           <div class="text-sm"><span id="itemSummary">Tippen zum Scannen</span></div>
         </div>
-        <button id="reScanItemBtn" class="btn btn-xs">Neu scannen</button>
+        <div class="text-xs opacity-60">Artikel</div>
       </div>
       <div class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 px-3 py-2">
         <div class="flex items-center gap-3">
           <i class="fas fa-user-check text-secondary"></i>
           <div class="text-sm"><span id="workerSummary">Tippen zum Scannen</span></div>
         </div>
-        <button id="reScanWorkerBtn" class="btn btn-xs">Neu scannen</button>
+        <div class="text-xs opacity-60">Mitarbeiter</div>
       </div>
     </div>
     <div class="flex items-center gap-2">

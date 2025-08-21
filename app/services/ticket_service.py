@@ -138,27 +138,67 @@ class TicketService:
             open_tickets = list(open_tickets)
             logger.debug(f"Offene Tickets gefunden: {len(open_tickets)}")
             
-            # Zugewiesene Tickets (dem Benutzer zugewiesene, offene Tickets)
-            assigned_query = {
+            # Zugewiesene Tickets (alle Stati, inkl. abgeschlossene)
+            # 1) Legacy-Zuweisung über Feld "assigned_to"
+            assigned_tickets_legacy_query = {
                 '$and': [
                     {'assigned_to': username},
-                    {'status': 'offen'},
                     {'deleted': {'$ne': True}}
                 ]
             }
             if getattr(g, 'current_department', None):
-                assigned_query['$and'].append({'department': g.current_department})
-            
+                assigned_tickets_legacy_query['$and'].append({'department': g.current_department})
+
             # Handlungsfeld-Filter für alle Rollen außer Admin
-            if role != 'admin' and handlungsfelder:
-                # Für alle Rollen außer Admin: Nur zugewiesene Tickets aus zugewiesenen Handlungsfeldern
-                assigned_query['$and'].append({'category': {'$in': handlungsfelder}})
-                logger.debug(f"Zugewiesene Tickets mit Handlungsfeld-Filter: {handlungsfelder}")
-            
-            logger.debug(f"Zugewiesene Tickets Query: {assigned_query}")
-            assigned_tickets = mongodb.find('tickets', assigned_query)
-            assigned_tickets = list(assigned_tickets)
-            logger.debug(f"Zugewiesene Tickets gefunden: {len(assigned_tickets)}")
+            # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern –
+            # ein Nutzer muss alle ihm zugewiesenen Tickets sehen, unabhängig vom Handlungsfeld
+
+            logger.debug(f"Zugewiesene (Legacy) Tickets Query: {assigned_tickets_legacy_query}")
+            assigned_tickets_legacy = list(mongodb.find('tickets', assigned_tickets_legacy_query))
+            logger.debug(f"Zugewiesene (Legacy) Tickets gefunden: {len(assigned_tickets_legacy)}")
+
+            # 2) Mehrfachzuweisungen über Collection "ticket_assignments"
+            try:
+                user_assignments = list(mongodb.find('ticket_assignments', {'assigned_to': username}))
+                assignment_ticket_ids_raw = [ua.get('ticket_id') for ua in user_assignments if ua.get('ticket_id')]
+                # Konvertiere IDs für die Ticketsuche
+                assignment_ticket_ids = []
+                for raw_id in assignment_ticket_ids_raw:
+                    try:
+                        assignment_ticket_ids.append(self.utility_service.convert_id_for_query(str(raw_id)))
+                    except Exception:
+                        assignment_ticket_ids.append(str(raw_id))
+
+                assigned_tickets_multi = []
+                if assignment_ticket_ids:
+                    assigned_tickets_multi_query = {
+                        '$and': [
+                            {'_id': {'$in': assignment_ticket_ids}},
+                            {'deleted': {'$ne': True}}
+                        ]
+                    }
+                    if getattr(g, 'current_department', None):
+                        assigned_tickets_multi_query['$and'].append({'department': g.current_department})
+                    # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern
+
+                    logger.debug(f"Zugewiesene (Multi) Tickets Query: {assigned_tickets_multi_query}")
+                    assigned_tickets_multi = list(mongodb.find('tickets', assigned_tickets_multi_query))
+                else:
+                    logger.debug("Keine Mehrfachzuweisungen für Benutzer gefunden.")
+            except Exception as assign_err:
+                logger.error(f"Fehler beim Laden der Mehrfachzuweisungen: {assign_err}")
+                assigned_tickets_multi = []
+
+            # 3) Zusammenführen und Duplikate entfernen
+            assigned_tickets_map = {}
+            for t in assigned_tickets_legacy + assigned_tickets_multi:
+                try:
+                    key = str(t.get('_id') or t.get('id'))
+                    assigned_tickets_map[key] = t
+                except Exception:
+                    continue
+            assigned_tickets = list(assigned_tickets_map.values())
+            logger.debug(f"Zugewiesene Tickets gesamt (dedupliziert): {len(assigned_tickets)}")
             
             # Alle Tickets (nur für Admin)
             all_tickets = []
@@ -181,8 +221,8 @@ class TicketService:
                     # ID-Feld für Template-Kompatibilität
                     ticket['id'] = str(ticket['_id'])
                     
-                    # Nachrichtenanzahl laden
-                    messages = mongodb.find('messages', {'ticket_id': str(ticket['_id'])})
+                    # Nachrichtenanzahl laden (korrekte Collection)
+                    messages = mongodb.find('ticket_messages', {'ticket_id': str(ticket['_id'])})
                     ticket['message_count'] = len(list(messages))
                     
                     # Auftragsdetails laden (falls vorhanden)

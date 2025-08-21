@@ -18,6 +18,11 @@
   let captureCanvas = null;
   let captureCtx = null;
   let detectionBuffer = new Map(); // normCode -> { count, lastTs }
+  let html5qrcodeInstance = null;
+  let isStartingCamera = false;
+  const USE_HTML5_QR = true; // Standardmäßig aktivieren: robust auf Mobilgeräten
+  const USE_QUAGGA = false;   // Temporär deaktivieren, erzeugt zu viele Geistertreffer
+  const USE_ZXING = false;    // Vorläufig deaktivieren, um Video-Play-Warnungen zu vermeiden
 
   const els = {};
 
@@ -34,6 +39,28 @@
         panel.textContent = `[${ts}] ${line}\n` + panel.textContent;
       }
     } catch (e) {}
+  }
+
+  function ensureVideoVisible() {
+    try {
+      const fb = document.getElementById('html5qrcode');
+      if (fb) fb.classList.add('hidden');
+      const cam = document.getElementById('cameraContainer');
+      if (cam) { cam.classList.remove('hidden'); cam.style.display = 'block'; cam.style.opacity = '1'; }
+      if (!els.video) return;
+      els.video.classList.remove('hidden');
+      els.video.style.display = 'block';
+      els.video.style.visibility = 'visible';
+      els.video.style.opacity = '1';
+      els.video.setAttribute('playsinline', 'true');
+      els.video.setAttribute('autoplay', 'true');
+      // Debug Events
+      const once = (ev) => {
+        const h = () => { dbg('video event', ev, { rs: els.video.readyState, w: els.video.videoWidth, h: els.video.videoHeight }); els.video.removeEventListener(ev, h); };
+        els.video.addEventListener(ev, h);
+      };
+      ['loadedmetadata','loadeddata','canplay','playing'].forEach(once);
+    } catch(_) {}
   }
 
   function appendScanLog(entry) {
@@ -106,15 +133,8 @@
     detectionBuffer = new Map();
     lastScan = { code: null, codeNorm: null, ts: 0 };
     pureReader = null; // erzwinge Neu-Initialisierung mit passenden Hints
-    // UI-Karten hervorheben
-    const itemBtn = $('scanItemBtn');
-    const workerBtn = $('scanWorkerBtn');
-    itemBtn.classList.remove('border-primary');
-    workerBtn.classList.remove('border-primary');
-    if (step === 'item') itemBtn.classList.add('border-primary');
-    if (step === 'worker') workerBtn.classList.add('border-primary');
     const hint = $('scanHint');
-    if (hint) hint.textContent = step === 'item' ? 'Scanne Artikel-Barcode…' : 'Scanne Mitarbeiter-Barcode…';
+    if (hint) hint.textContent = 'Scannen…';
   }
 
   function resizeOverlay() {
@@ -254,10 +274,49 @@
   }
 
   async function startCamera() {
+    if (isStartingCamera) { dbg('startCamera ignored (already starting)'); return; }
+    isStartingCamera = true;
     try {
+      dbg('startCamera invoked', { step: currentStep });
       stopCamera();
-      // Wenn Quagga verfügbar ist und wir NICHT im Worker-Schritt sind, überlassen wir Quagga den Stream
-      if (window.Quagga && currentStep !== 'worker') {
+      // Optional: html5-qrcode (deaktiviert)
+      if (USE_HTML5_QR && window.Html5Qrcode) {
+        try {
+          els.video.classList.add('hidden');
+          const fb = document.getElementById('html5qrcode');
+          if (fb) fb.classList.remove('hidden');
+          html5qrcodeInstance = new Html5Qrcode('html5qrcode');
+          const formatsToSupport = [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.ITF
+          ];
+          await html5qrcodeInstance.start(
+            { facingMode: useEnvironment ? 'environment' : 'user' },
+            { fps: 20, qrbox: 280, formatsToSupport },
+            (decodedText) => {
+              const raw = String(decodedText || '').trim();
+              const norm = normalizeCode(raw);
+              if (isPaused() || handling) return;
+              if (!shouldAcceptDetection(norm)) return;
+              dbg('html5-qrcode result', { raw, norm });
+              setScanStatus(false);
+              handleBarcode(raw);
+            }
+          );
+          detectionActive = true;
+          try { toast('info', 'Scanner aktiv'); } catch(_) {}
+          return; // kein weiteres Setup nötig
+        } catch (e0) {
+          dbg('html5-qrcode failed, fallback to browser', e0);
+        }
+      }
+      // Optional: Quagga (deaktiviert)
+      if (USE_QUAGGA && window.Quagga && currentStep !== 'worker') {
         try {
           const constraints = { facingMode: useEnvironment ? 'environment' : 'user' };
           await new Promise((resolve, reject) => {
@@ -324,20 +383,46 @@
       };
       // Browser-API
       mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      dbg('getUserMedia success', { facing: useEnvironment ? 'environment' : 'user' });
       // Sicherstellen, dass der Video-Container sichtbar ist und Fallback versteckt
-      const fb = document.getElementById('html5qrcode');
-      if (fb) fb.classList.add('hidden');
-      els.video.classList.remove('hidden');
+      ensureVideoVisible();
+      // Erzwinge sichtbare Größe (Safari-Layout-Fix)
+      try {
+        els.video.style.width = '100%';
+        els.video.style.height = '100%';
+        els.video.style.objectFit = 'contain';
+      } catch(_) {}
+      try { els.video.pause && els.video.pause(); } catch(_) {}
       els.video.srcObject = mediaStream;
       els.video.muted = true;
       els.video.setAttribute('playsinline', 'true');
-      els.video.play().catch(() => {});
+      els.video.setAttribute('autoplay', 'true');
+      // Warten bis Metadaten geladen sind, dann abspielen (wichtig für iOS)
+      await new Promise((resolve) => {
+        try {
+          if (els.video.readyState >= 2) return resolve();
+          const handler = () => { els.video.removeEventListener('loadedmetadata', handler); resolve(); };
+          els.video.addEventListener('loadedmetadata', handler, { once: true });
+        } catch(_) { resolve(); }
+      });
+      await els.video.play().catch(() => {});
+      // Falls Safari Autoplay blockiert, starte nach User-Gesture nochmals
+      if (els.video.paused) {
+        dbg('video paused after play, waiting for user gesture');
+      }
+      // Falls dennoch kein Bild: zweiter Versuch nach kleinem Delay
+      if (!els.video.videoWidth || !els.video.videoHeight) {
+        await new Promise(r => setTimeout(r, 150));
+        ensureVideoVisible();
+        try { await els.video.play(); } catch(_) {}
+      }
       resizeOverlay();
       // Versuche Torch (Blitz) zu setzen falls verfügbar
       await applyTorch(torchOn);
       startDetectLoop();
     } catch (e) {
       console.warn('Kamera konnte nicht gestartet werden:', e);
+      try { toast('warning', 'Kamera konnte nicht gestartet werden. Versuche stabilen Scanner…'); } catch(_) {}
       // Als Fallback: html5-qrcode verwenden, wenn verfügbar
       try {
         if (window.Html5Qrcode) {
@@ -369,10 +454,15 @@
           );
           // Markiere Detection-Loop als aktiv, damit UI-Guide weiterläuft
           detectionActive = true;
+          try { toast('info', 'Stabiler Scanner aktiv'); } catch(_) {}
         }
       } catch (e2) {
         console.warn('Fallback html5-qrcode Start fehlgeschlagen:', e2);
+        try { toast('error', 'Scanner konnte nicht gestartet werden'); } catch(_) {}
       }
+    }
+    finally {
+      isStartingCamera = false;
     }
   }
 
@@ -380,6 +470,15 @@
     if (mediaStream) {
       mediaStream.getTracks().forEach(t => t.stop());
       mediaStream = null;
+    }
+    // Video sauber anhalten und Quelle lösen, um Race-Conditions beim erneuten play() zu vermeiden
+    try { if (els.video) { els.video.pause && els.video.pause(); els.video.srcObject = null; } } catch(e) {}
+    if (html5qrcodeInstance && typeof html5qrcodeInstance.stop === 'function') {
+      try { html5qrcodeInstance.stop().catch(()=>{}); } catch(e) {}
+      html5qrcodeInstance = null;
+      const fb = document.getElementById('html5qrcode');
+      if (fb) fb.classList.add('hidden');
+      if (els.video) els.video.classList.remove('hidden');
     }
     detectionActive = false;
     if (quaggaActive && window.Quagga) {
@@ -413,7 +512,7 @@
     if (Date.now() < pauseUntilTs) { setScanStatus(true); return; }
     try {
       // 1) Quagga2 bevorzugt, wenn verfügbar und noch nicht gestartet
-      if (window.Quagga && els.video && !window.__quagga_started__ && currentStep !== 'worker') {
+      if (USE_QUAGGA && window.Quagga && els.video && !window.__quagga_started__ && currentStep !== 'worker') {
         try {
           const constraints = {
             facingMode: useEnvironment ? 'environment' : 'user',
@@ -500,9 +599,7 @@
 
       // 2) Parallel: Wir nutzen BarcodeDetector und ZXing (wenn verfügbar)
       if ('BarcodeDetector' in window) {
-        const formats = (currentStep === 'worker')
-          ? ['qr_code', 'code_128', 'code_39']
-          : ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'codabar', 'upc_a', 'upc_e', 'itf'];
+        const formats = ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf'];
         const detector = new BarcodeDetector({ formats });
         const barcodes = await detector.detect(els.video);
         if (barcodes?.length) {
@@ -519,8 +616,8 @@
         // Kein Treffer: Status aktualisieren
         setScanStatus(true);
       }
-      // Verwende bevorzugt Browser-API; Fallbacks: ZXingBrowser (falls vorhanden) oder reines ZXing (library)
-      if (window.ZXingBrowser && els.video) {
+      // Verwende bevorzugt Browser-API; ZXing-Pfade optional abschaltbar
+      if (USE_ZXING && window.ZXingBrowser && els.video) {
         if (!codeReader && window.ZXingBrowser.BrowserMultiFormatReader) {
           try {
             const hints = (window.ZXingBrowser.DecodeHintType && window.ZXingBrowser.BarcodeFormat) ? new Map() : undefined;
@@ -568,8 +665,8 @@
           }
         }
       }
-      // Reines ZXing (library) Fallback: dekodiere periodisch Frames vom <video> in ein Offscreen-Canvas
-      if (!window.ZXingBrowser && window.ZXing && els.video && els.video.videoWidth) {
+      // Reines ZXing (library) Fallback: optional
+      if (USE_ZXING && !window.ZXingBrowser && window.ZXing && els.video && els.video.videoWidth) {
         if (!window.__zxing_pure__) {
           try {
             window.__zxing_pure__ = new window.ZXing.BrowserMultiFormatReader();
@@ -597,7 +694,7 @@
       }
       // Fallback: wenn keinerlei ZXing verfügbar, loggen
       if (!window.ZXingBrowser && !window.ZXing) {
-        // einmalig loggen
+        // einmalig loggen wenn tatsächlich keinerlei ZXing verfügbar ist
         if (!window.__zxing_warned__) {
           window.__zxing_warned__ = true;
           console.warn('ZXing nicht verfügbar – nutze nur BarcodeDetector');
@@ -693,46 +790,28 @@
     lastScan = { code, codeNorm: norm, ts: now };
     if (handling) return; // bereits in Verarbeitung
     handling = true;
-    // Heuristik: Wenn im Item-Schritt ein alphanumerischer Code erkannt wird (z.B. USER_...), zuerst als Worker versuchen
+    // Neue Heuristik: immer beide Typen testen (Priorität je Inhalt)
     const hasLetters = /[A-Z]/.test(norm);
     const likelyEAN = /^\d{6,14}$/.test(norm);
-    if (currentStep === 'item' && hasLetters) {
-      const workerOkH = await tryLookupWorker(code);
-      if (workerOkH) {
-        pauseDetect(1200);
-        handling = false;
-        return;
-      }
+    let ok = false;
+    if (hasLetters && !likelyEAN) {
+      // Alphanumerisch: zuerst Mitarbeiter, dann Artikel
+      ok = await tryLookupWorker(code);
+      if (!ok) ok = await tryLookupItem(code);
+      if (ok && selectedItem && selectedWorker) await confirmAction();
+    } else {
+      // Numerisch: zuerst Artikel, dann Mitarbeiter
+      ok = await tryLookupItem(code);
+      if (!ok) ok = await tryLookupWorker(code);
+      if (ok && selectedItem && selectedWorker) await confirmAction();
     }
-    if (currentStep === 'worker' && likelyEAN) {
-      const itemOkH = await tryLookupItem(code);
-      if (itemOkH) {
-        pauseDetect(1200);
-        handling = false;
-        return;
-      }
+    if (ok) {
+      // Schritt-Hinweis anpassen: wenn Artikel gewählt, wechsle auf Mitarbeiter
+      if (selectedItem && !selectedWorker) setStep('worker');
+      pauseDetect(1200);
+      handling = false;
+      return;
     }
-    // Strikt je Schritt: Worker prüft nur workers; Item prüft nur tools/consumables
-    if (currentStep === 'item') {
-      const itemOk = await tryLookupItem(code);
-      if (itemOk) {
-        setStep('worker');
-        pauseDetect(1200);
-        handling = false;
-        return;
-      }
-    } else if (currentStep === 'worker') {
-      const workerOk = await tryLookupWorker(code);
-      if (workerOk) {
-        if (selectedItem && selectedWorker) {
-          await confirmAction();
-        }
-        pauseDetect(1200);
-        handling = false;
-        return;
-      }
-    }
-    // Wenn wir hier ankommen: nichts gefunden
     toast('error', 'Nicht gefunden');
     handling = false;
   }
@@ -752,9 +831,8 @@
         };
         const itemSum = $('itemSummary');
         if (itemSum) itemSum.textContent = `${selectedItem.name}`;
-        const itemBtn = $('scanItemBtn');
-        if (itemBtn) itemBtn.classList.add('btn-primary');
         appendScanLog({ text: `Artikel: ${selectedItem.name} (${selectedItem.barcode})` });
+        setScanStatus(false);
         return true;
       }
       dbg('tryLookupItem failed');
@@ -774,9 +852,8 @@
         selectedWorker = { barcode: w.barcode, firstname: w.firstname || '', lastname: w.lastname || '' };
         const workerSum = $('workerSummary');
         if (workerSum) workerSum.textContent = `${selectedWorker.firstname} ${selectedWorker.lastname}`.trim();
-        const workerBtn = $('scanWorkerBtn');
-        if (workerBtn) workerBtn.classList.add('btn-primary');
         appendScanLog({ text: `Mitarbeiter: ${selectedWorker.firstname || ''} ${selectedWorker.lastname || ''} (${selectedWorker.barcode})`.trim() });
+        setScanStatus(false);
         return true;
       }
       dbg('tryLookupWorker failed');
@@ -934,23 +1011,10 @@
 
   function bindEvents() {
     const itemBtn = $('scanItemBtn');
-    if (itemBtn) itemBtn.addEventListener('click', async () => {
+    const unifiedBtn = $('scanUnifiedBtn');
+    if (unifiedBtn) unifiedBtn.addEventListener('click', async () => {
+      // Einheitlicher Modus: wir starten die Kamera und prüfen immer beide Typen
       setStep('item');
-      await startCamera(); // iOS: getUserMedia im User-Gesture-Kontext
-    });
-    const reScanItemBtn = $('reScanItemBtn');
-    if (reScanItemBtn) reScanItemBtn.addEventListener('click', async () => {
-      setStep('item');
-      await startCamera();
-    });
-    const workerBtn = $('scanWorkerBtn');
-    if (workerBtn) workerBtn.addEventListener('click', async () => {
-      setStep('worker');
-      await startCamera(); // iOS: getUserMedia im User-Gesture-Kontext
-    });
-    const reScanWorkerBtn = $('reScanWorkerBtn');
-    if (reScanWorkerBtn) reScanWorkerBtn.addEventListener('click', async () => {
-      setStep('worker');
       await startCamera();
     });
     const switchBtn = $('switchCameraBtn');
@@ -963,8 +1027,10 @@
       try {
         if (mediaStream) stopCamera();
         if (window.Html5Qrcode) {
-          const containerId = 'cameraPreview';
-          const html5qrcode = new Html5Qrcode(containerId);
+          const html5qrcode = new Html5Qrcode('html5qrcode');
+          els.video.classList.add('hidden');
+          const fb = document.getElementById('html5qrcode');
+          if (fb) fb.classList.remove('hidden');
           const formatsToSupport = [
             Html5QrcodeSupportedFormats.CODE_128,
             Html5QrcodeSupportedFormats.CODE_39,
@@ -982,12 +1048,19 @@
             handleBarcode(raw);
           });
           detectionActive = true;
+          try { toast('info', 'Stabiler Scanner aktiv'); } catch(_) {}
         } else {
           toast('info', 'Stabiler Scanner nicht verfügbar');
         }
       } catch (e) {
         dbg('fallback start error', e);
         toast('error', 'Stabiler Scanner konnte nicht gestartet werden');
+      }
+    });
+    const cameraTap = $('cameraContainer');
+    if (cameraTap) cameraTap.addEventListener('click', async () => {
+      if (!detectionActive) {
+        await startCamera();
       }
     });
     const torchBtn = $('toggleTorchBtn');

@@ -94,7 +94,19 @@ def scan_barcode():
         result = None
         item_type = None
         code = (barcode or '').strip()
-        variants = list({code, code.replace(' ', ''), code.replace('-', '').replace('_',''), code.upper(), code.lower()})
+        def _norm_all(c: str) -> list:
+            base = (c or '').strip()
+            s1 = base.replace(' ', '')
+            s2 = s1.replace('-', '').replace('_','')
+            s3 = s2.replace('.', '').replace('/', '').replace('\\', '')
+            out = set([base, s1, s2, s3, base.upper(), base.lower(), s3.upper(), s3.lower()])
+            try:
+                if s3.isdigit():
+                    out.add(str(int(s3)))
+            except Exception:
+                pass
+            return [v for v in out if v]
+        variants = _norm_all(code)
         # Numeric-Variante (Mongo kann auch numerisch gespeicherte Barcodes haben)
         num_variant = None
         try:

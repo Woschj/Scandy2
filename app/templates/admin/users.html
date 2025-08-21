@@ -57,12 +57,51 @@
         </div>
     </div>
 
+    <!-- Filter & Sortierung -->
+    <div class="mb-4 p-4 bg-base-100 rounded-lg shadow w-full">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="label"><span class="label-text">Suche</span></label>
+                <input type="text" id="searchInput" class="input input-bordered w-full" placeholder="Username, E-Mail...">
+            </div>
+            <div>
+                <label class="label"><span class="label-text">Rolle</span></label>
+                <select id="roleFilter" class="select select-bordered w-full">
+                    <option value="">Alle Rollen</option>
+                    <option value="admin">Admin</option>
+                    <option value="mitarbeiter">Mitarbeiter</option>
+                    <option value="anwender">Benutzer</option>
+                    <option value="teilnehmer">Teilnehmer</option>
+                </select>
+            </div>
+            <div>
+                <label class="label"><span class="label-text">Hauptabteilung</span></label>
+                <select id="departmentFilter" class="select select-bordered w-full">
+                    <option value="">Alle Abteilungen</option>
+                    {% for department in departments %}
+                    <option value="{{ department }}">{{ department }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="label"><span class="label-text">Sortieren nach</span></label>
+                <select id="sortSelect" class="select select-bordered w-full">
+                    <option value="username">Username A-Z</option>
+                    <option value="role">Rolle</option>
+                    <option value="department">Hauptabteilung</option>
+                    <option value="status">Status</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <div class="overflow-x-auto bg-base-100 rounded-lg shadow w-full">
         <table class="table w-full">
             <thead>
                 <tr>
                     <th>Username</th>
                     <th>Rolle</th>
+                    <th>Hauptabteilung</th>
                     <th>Email</th>
                     <th>Status</th>
                     <th>Ablaufdatum</th>
@@ -71,7 +110,12 @@
             </thead>
             <tbody>
                 {% for user in users %}
-                <tr class="hover {% if user.get('is_expired') %}bg-error/10{% endif %}">
+                <tr class="hover data-row {% if user.get('is_expired') %}bg-error/10{% endif %}"
+                    data-username="{{ (user.username or '')|lower }}"
+                    data-email="{{ (user.email or '')|lower }}"
+                    data-role="{{ user.role or '' }}"
+                    data-department="{{ user.default_department or '' }}"
+                    data-status="{{ 'expired' if user.get('is_expired') else ('active' if user.is_active else 'inactive') }}">
                     <td>
                         {% if user.get('is_expired') %}
                             <i class="fas fa-exclamation-triangle text-error mr-1" title="Konto abgelaufen"></i>
@@ -87,6 +131,13 @@
                             <span class="badge badge-secondary">Teilnehmer</span>
                         {% else %}
                             <span class="badge badge-info">Benutzer</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.default_department %}
+                            <div class="badge badge-outline">{{ user.default_department }}</div>
+                        {% else %}
+                            <div class="badge badge-ghost">-</div>
                         {% endif %}
                     </td>
                     <td>{{ user.email or '-' }}</td>
@@ -155,6 +206,62 @@
             </tbody>
         </table>
     </div>
+
+    <script nonce="{{ csp_nonce }}">
+    (function() {
+        const searchInput = document.getElementById('searchInput');
+        const roleFilter = document.getElementById('roleFilter');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const sortSelect = document.getElementById('sortSelect');
+
+        function applyFilters() {
+            const term = (searchInput.value || '').toLowerCase();
+            const role = roleFilter.value;
+            const dept = departmentFilter.value;
+
+            document.querySelectorAll('.data-row').forEach(row => {
+                const u = row.dataset.username;
+                const e = row.dataset.email;
+                const r = row.dataset.role;
+                const d = row.dataset.department;
+
+                let visible = true;
+                if (term && !(u.includes(term) || e.includes(term))) visible = false;
+                if (role && r !== role) visible = false;
+                if (dept && d !== dept) visible = false;
+
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function applySort() {
+            const tbody = document.querySelector('table.table tbody');
+            const rows = Array.from(tbody.querySelectorAll('.data-row'));
+            const key = sortSelect.value;
+
+            const getVal = (row) => {
+                switch (key) {
+                    case 'username': return row.dataset.username || '';
+                    case 'role': return row.dataset.role || '';
+                    case 'department': return row.dataset.department || '';
+                    case 'status': return row.dataset.status || '';
+                    default: return row.dataset.username || '';
+                }
+            };
+
+            rows.sort((a, b) => getVal(a).localeCompare(getVal(b)));
+            rows.forEach(r => tbody.appendChild(r));
+        }
+
+        [searchInput, roleFilter, departmentFilter].forEach(el => el && el.addEventListener('input', applyFilters));
+        [roleFilter, departmentFilter].forEach(el => el && el.addEventListener('change', applyFilters));
+        sortSelect && sortSelect.addEventListener('change', () => { applySort(); applyFilters(); });
+
+        // Initial anwenden
+        applySort();
+        applyFilters();
+    })();
+    </script>
 </div>
 
 

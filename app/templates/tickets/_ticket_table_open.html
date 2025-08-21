@@ -9,6 +9,7 @@
                 <th>Status</th>
                 <th>Priorität</th>
                 <th>Handlungsfeld</th>
+                <th>Abteilung</th>
                 <th>Fällig am</th>
                 <th>Geschätzte Zeit</th>
                 <th>Nachrichten</th>
@@ -36,6 +37,7 @@
                     </span>
                 </td>
                 <td>{{ ticket.category or '-' }}</td>
+                <td>{{ ticket.department or '-' }}</td>
                 <td>
                     {% if ticket.due_date %}
                         {% if ticket.due_date is string %}

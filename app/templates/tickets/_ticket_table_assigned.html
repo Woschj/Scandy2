@@ -9,6 +9,7 @@
                 <th>Status</th>
                 <th>Priorität</th>
                 <th>Erstellt von</th>
+                <th>Abteilung</th>
                 <th>Kontakt</th>
                 <th>Erstellt am</th>
                 <th>Fällig am</th>
@@ -54,6 +55,7 @@
                     </span>
                 </td>
                 <td>{{ ticket.created_by }}</td>
+                <td>{{ ticket.department or '-' }}</td>
                 <td>
                     {% if ticket.auftrag_details and ticket.auftrag_details.kontakt %}
                         <span class="text-sm text-base-content/70">{{ ticket.auftrag_details.kontakt }}</span>

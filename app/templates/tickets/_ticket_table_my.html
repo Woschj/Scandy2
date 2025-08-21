@@ -24,6 +24,7 @@
                 <th>Status</th>
                 <th>Priorität</th>
                 <th>Zugewiesen an</th>
+                <th>Abteilung</th>
                 <th>Erstellt am</th>
                 <th>Fällig am</th>
                 <th>Geschätzte Zeit</th>
@@ -68,6 +69,7 @@
                     </span>
                 </td>
                 <td>{{ ticket.assigned_to or '-' }}</td>
+                <td>{{ ticket.department or '-' }}</td>
                 <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') if ticket.created_at else '-' }}</td>
                 <td>
                     {% if ticket.due_date %}
