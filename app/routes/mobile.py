@@ -173,12 +173,21 @@ def scan_barcode():
                     result = consumable; item_type = 'consumable'; barcode = v; break
                 # Nur wenn nicht bereits als Worker priorisiert geprüft
                 if not priority_worker:
-                    cond_w = {'barcode': v, 'deleted': {'$ne': True}}
+                    # Mitarbeiter: erlaube Match auf aktuellem Barcode ODER Legacy-Barcodes
+                    cond_w = {
+                        '$and': [
+                            {'deleted': {'$ne': True}},
+                            {'$or': [
+                                {'barcode': v},
+                                {'legacy_barcodes': v}
+                            ]}
+                        ]
+                    }
                     debug_checks.append({'scope': 'scoped', 'collection': 'workers', 'query': cond_w})
                     worker = mongodb.find_one('workers', cond_w)
                     if worker:
                         logger.info(f"[mobile.scan] Worker gefunden (gescoped): {v}")
-                        result = worker; item_type = 'worker'; barcode = v; break
+                        result = worker; item_type = 'worker'; barcode = worker.get('barcode', v); break
 
         # Fallback: Zuerst Tools/Consumables global prüfen (ohne Department), inkl. numerischer Barcodes
         if not result:
@@ -209,12 +218,20 @@ def scan_barcode():
             try:
                 workers_coll = mongodb.get_collection('workers')
                 for v in variants:
-                    qw = {'barcode': v, 'deleted': {'$ne': True}}
+                    qw = {
+                        '$and': [
+                            {'deleted': {'$ne': True}},
+                            {'$or': [
+                                {'barcode': v},
+                                {'legacy_barcodes': v}
+                            ]}
+                        ]
+                    }
                     debug_checks.append({'scope': 'global', 'collection': 'workers', 'query': qw})
                     worker = workers_coll.find_one(qw)
                     if worker:
                         logger.info(f"[mobile.scan] Worker via barcode gefunden (global): {v}")
-                        result = worker; item_type = 'worker'; barcode = v; break
+                        result = worker; item_type = 'worker'; barcode = worker.get('barcode', v); break
                 # zusätzlicher Fallback: Username-Match global (case-insensitive)
                 if not result and priority_worker:
                     for v in variants:

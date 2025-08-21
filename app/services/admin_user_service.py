@@ -404,28 +404,34 @@ class AdminUserService:
                 logger.info(f"Mitarbeiter-Eintrag existiert bereits für: {user_data['username']}")
                 return True
             
-            # Generiere einen eindeutigen Barcode basierend auf dem Benutzernamen
-            barcode = f"USER_{user_data['username'].upper()}"
-            
-            # Prüfe ob der Barcode bereits existiert (auch gelöschte)
-            existing_barcode = mongodb.find_one('workers', {
-                'barcode': barcode
-            })
-            
-            if existing_barcode:
-                # Falls Barcode existiert, füge eine Nummer hinzu
+            # Kompaktes, scannerfreundliches Barcode-Format für Mitarbeiter (Code128 geeignet)
+            # Präfix 'W' + 7 Zeichen aus unmissverständlichem Alphabet
+            def _generate_compact_worker_barcode() -> str:
+                alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'  # ohne 0,1,I,O
+                return 'W' + ''.join(random.choice(alphabet) for _ in range(6))
+
+            # Eindeutigen Barcode finden
+            max_tries = 50
+            barcode = None
+            for _ in range(max_tries):
+                candidate = _generate_compact_worker_barcode()
+                existing_barcode = mongodb.find_one('workers', {'barcode': candidate})
+                if not existing_barcode:
+                    barcode = candidate
+                    break
+            if not barcode:
+                # Fallback: nutze username-basierte Variante, notfalls mit Zähler
+                base = f"W{user_data['username'][:7].upper()}".replace('_','').replace('-','')
+                if len(base) < 4:
+                    base = (base + 'XXXX')[:4]
+                candidate = base
                 counter = 1
-                while True:
-                    new_barcode = f"{barcode}_{counter}"
-                    existing = mongodb.find_one('workers', {
-                        'barcode': new_barcode
-                    })
-                    if not existing:
-                        barcode = new_barcode
-                        break
+                while mongodb.find_one('workers', {'barcode': candidate}):
+                    candidate = f"{base}{counter}"
                     counter += 1
+                barcode = candidate
             
-            # Erstelle Mitarbeiter-Daten
+            # Erstelle Mitarbeiter-Daten (mit Legacy-Kompatibilität)
             worker_data = {
                 'barcode': barcode,
                 'username': user_data['username'],  # Verknüpfung zum Benutzer
@@ -435,6 +441,7 @@ class AdminUserService:
                 'department': user_data.get('default_department') or (user_data.get('allowed_departments', [])[:1] or [''])[0],
                 'email': user_data.get('email', ''),
                 'role': user_data.get('role', 'anwender'),
+                'legacy_barcodes': [f"USER_{user_data['username'].upper()}"] ,
                 'created_at': datetime.now(),
                 'modified_at': datetime.now(),
                 'deleted': False

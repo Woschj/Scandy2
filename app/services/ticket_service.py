@@ -421,6 +421,20 @@ class TicketService:
                                  'updated_by': assigned_by
                              }})
             
+            # Wenn keine gültigen Zuweisungen existieren, Status auf 'offen' setzen (außer bei finalen Stati)
+            if not valid_users:
+                try:
+                    if ticket.get('status') not in ['gelöst', 'geschlossen']:
+                        mongodb.update_one('tickets',
+                                         {'_id': ticket_id},
+                                         {'$set': {
+                                             'status': 'offen',
+                                             'updated_at': datetime.now(),
+                                             'updated_by': assigned_by
+                                         }})
+                except Exception as status_err:
+                    logger.error(f"Fehler beim Zurücksetzen des Status für Ticket {ticket_id}: {status_err}")
+            
             # Benachrichtigungen senden
             for username in valid_users:
                 user = mongodb.find_one('users', {'username': username})

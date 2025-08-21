@@ -134,7 +134,7 @@
     lastScan = { code: null, codeNorm: null, ts: 0 };
     pureReader = null; // erzwinge Neu-Initialisierung mit passenden Hints
     const hint = $('scanHint');
-    if (hint) hint.textContent = 'Scannen…';
+    if (hint) hint.textContent = step === 'item' ? 'Artikel scannen…' : 'Mitarbeiter scannen…';
   }
 
   function resizeOverlay() {
@@ -806,7 +806,7 @@
       if (ok && selectedItem && selectedWorker) await confirmAction();
     }
     if (ok) {
-      // Schritt-Hinweis anpassen: wenn Artikel gewählt, wechsle auf Mitarbeiter
+      // Wenn Artikel erkannt wurde und Mitarbeiter noch fehlt: UI auf Mitarbeiter umschalten
       if (selectedItem && !selectedWorker) setStep('worker');
       pauseDetect(1200);
       handling = false;
@@ -958,23 +958,25 @@
 
   async function confirmAction() {
     if (!selectedItem || !selectedWorker) return;
-    const payload = {
-      item_barcode: selectedItem.barcode,
-      worker_barcode: selectedWorker.barcode,
-      action: selectedItem.type === 'consumable' ? 'use' : (selectedItem.status === 'ausgeliehen' ? 'return' : 'lend')
-    };
+    // Einheitlich wie im QuickScan-Modal: zentrale API verwenden
     try {
-      const res = await fetch('/quick_scan/process', {
+      const res = await fetch('/api/quickscan/process_lending', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          item_barcode: selectedItem.barcode,
+          worker_barcode: selectedWorker.barcode,
+          action: selectedItem.type === 'consumable' ? 'consume' : (selectedItem.status === 'ausgeliehen' ? 'return' : 'lend'),
+          item_type: selectedItem.type,
+          quantity: selectedItem.type === 'consumable' ? 1 : undefined
+        })
       });
       const data = await res.json();
-      if (res.ok && !data.error) {
+      if (res.ok && data.success) {
         toast('success', data.message || 'Vorgang erfolgreich');
         resetState(true);
       } else {
-        toast('error', data.error || 'Fehler bei der Verarbeitung');
+        toast('error', (data && (data.message || data.error)) || 'Fehler bei der Verarbeitung');
       }
     } catch (e) {
       toast('error', 'Netzwerkfehler');

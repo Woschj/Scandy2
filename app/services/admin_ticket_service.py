@@ -174,6 +174,20 @@ class AdminTicketService:
                 }
             })
             
+            # Wenn Zuweisung entfernt wurde, setze Status auf 'offen' (sofern nicht final)
+            if not assigned_to:
+                try:
+                    current = find_document_by_id('tickets', ticket_id)
+                    if current and current.get('status') not in ['gelöst', 'geschlossen']:
+                        mongodb.update_one('tickets', {'_id': ticket_id}, {
+                            '$set': {
+                                'status': 'offen',
+                                'updated_at': datetime.now()
+                            }
+                        })
+                except Exception as status_err:
+                    logger.error(f"Fehler beim Zurücksetzen des Status für Ticket {ticket_id}: {status_err}")
+            
             logger.info(f"Zuweisung von Ticket {ticket_id} auf '{assigned_to}' geändert")
             return True, f"Zuweisung erfolgreich auf '{assigned_to}' geändert"
             

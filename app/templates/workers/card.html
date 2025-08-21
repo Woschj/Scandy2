@@ -29,7 +29,7 @@
           <div class="text-sm font-bold leading-tight">{{ worker.firstname }} {{ worker.lastname }}</div>
         </div>
         <div class="mt-1">
-          <svg id="barcode" class="w-full"></svg>
+          <svg id="barcode" style="display:block;margin:0 auto;"></svg>
           <div class="text-center text-[9pt] tracking-widest">{{ worker.barcode }}</div>
         </div>
       </div>
@@ -73,8 +73,12 @@
         JsBarcode('#barcode', value, {
           format: 'code128',
           displayValue: false,
-          height: mmToPx(24), // höhere Balken für bessere Erkennung
-          margin: mmToPx(3),  // großzügige Ruhezone links/rechts
+          width: 1.2,
+          height: mmToPx(20),
+          marginTop: mmToPx(0.5),
+          marginBottom: mmToPx(0.5),
+          marginLeft: mmToPx(2),
+          marginRight: mmToPx(2),
           lineColor: '#000'
         });
       } catch(e) {}
@@ -90,7 +94,7 @@
       const svgEl = document.getElementById('barcode');
       try {
         if (svgEl && svgEl.childNodes.length === 0) {
-          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, height: mmToPx(24), margin: mmToPx(3), lineColor:'#000'});
+          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, width: 1.2, height: mmToPx(20), marginTop: mmToPx(0.5), marginBottom: mmToPx(0.5), marginLeft: mmToPx(2), marginRight: mmToPx(2), lineColor:'#000'});
         }
       } catch(e) {}
       const svgMarkup = svgEl ? svgEl.outerHTML : '';
@@ -105,7 +109,7 @@
           .name{font-weight:700;line-height:1.1;font-size:11pt}
           .dept{font-size:9pt;color:#666; white-space: pre}
           .bc{margin-top:1mm}
-          .bc svg{display:block;width:100%}
+          .bc svg{display:block;width:auto;max-width:100%;margin:0 auto}
           .bcnum{text-align:center;font-size:9pt;letter-spacing:2px;margin-top:0.5mm}
         </style>
       </head><body>

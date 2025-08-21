@@ -4218,6 +4218,15 @@ def update_ticket_assignment(ticket_id):
         if not mongodb.update_one('tickets', {'_id': ticket_id_for_update}, {'$set': {'assigned_to': assigned_to, 'updated_at': datetime.now()}}):
             return jsonify({'success': False, 'message': 'Fehler beim Aktualisieren der Zuweisung'})
 
+        # Wenn die Zuweisung entfernt wurde, setze Status auf 'offen' (sofern nicht final)
+        if assigned_to is None:
+            try:
+                ticket = mongodb.find_one('tickets', {'_id': ticket_id_for_update})
+                if ticket and ticket.get('status') not in ['gelöst', 'geschlossen']:
+                    mongodb.update_one('tickets', {'_id': ticket_id_for_update}, {'$set': {'status': 'offen', 'updated_at': datetime.now()}})
+            except Exception as _e:
+                logger.error(f"Fehler beim Setzen von Status 'offen' für Ticket {ticket_id}: {_e}")
+
         return jsonify({'success': True, 'message': 'Zuweisung erfolgreich aktualisiert'})
 
     except Exception as e:
