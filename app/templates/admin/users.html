@@ -156,22 +156,11 @@
                     </td>
                     <td>
                         {% if user.expiry_date %}
-                            {% if user.get('is_expired') %}
-                                <span class="text-error font-bold">
-                                    {% if user.expiry_date.strftime %}
-                                        {{ user.expiry_date.strftime('%d.%m.%Y') }}
-                                    {% else %}
-                                        {{ user.expiry_date }}
-                                    {% endif %}
-                                </span>
+                            {% set _exp = user.expiry_date %}
+                            {% if _exp.strftime %}
+                                {{ _exp.strftime('%d.%m.%Y') }}
                             {% else %}
-                                <span class="text-warning">
-                                    {% if user.expiry_date.strftime %}
-                                        {{ user.expiry_date.strftime('%d.%m.%Y') }}
-                                    {% else %}
-                                        {{ user.expiry_date }}
-                                    {% endif %}
-                                </span>
+                                {{ _exp }}
                             {% endif %}
                         {% else %}
                             <span class="text-base-content/60">-</span>

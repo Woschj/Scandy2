@@ -810,14 +810,29 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
         
         logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail wird vorbereitet: Empfänger={recipient}, Passwort={bool(password)}, Reset_Link={bool(reset_link)}")
         
+        # Zusätzliche Kontextdaten ermitteln (z. B. Benutzername) für bessere Template-Kompatibilität
+        username = None
+        try:
+            from app.models.mongodb_database import mongodb as _mdb
+            user_row = _mdb.find_one('users', {'email': {'$regex': f'^{recipient}$', '$options': 'i'}})
+            if user_row:
+                username = user_row.get('username') or user_row.get('email')
+        except Exception:
+            username = None
+
         # Versuch über Admin-Vorlage (Key: password_reset)
         try:
             from app.services.admin_email_templates_service import AdminEmailTemplatesService
-            rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
+            context = {
                 'reset_link': reset_link,
                 'password': password,
                 'recipient': recipient,
-            })
+                'username': username,
+                # Synonyme für bessere Abwärtskompatibilität mit älteren/angepassten Templates
+                'link': reset_link,
+                'new_password': password,
+            }
+            rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', context)
             if rendered and (rendered.get('html_content') or rendered.get('text_content')):
                 subj = rendered.get('subject') or subject
                 logger.info(f"[MAIL][reset] Verwende E-Mail-Vorlage für Passwort-Reset")

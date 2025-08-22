@@ -137,7 +137,8 @@ class UnifiedBackupManager:
                     'mongodump',
                     '--uri', mongo_uri,
                     '--out', str(backup_path),
-                    '--gzip'
+                    '--gzip',
+                    '--excludeCollection', 'users'
                 ]
                 # Primary bevorzugen, wenn Replikaset
                 cmd.extend(['--readPreference', 'primary'])
@@ -178,6 +179,9 @@ class UnifiedBackupManager:
                     'data': {}
                 }
                 
+                # 'users' niemals exportieren
+                collections = [c for c in collections if c != 'users']
+
                 for collection_name in collections:
                     try:
                         # Alle Dokumente aus der Collection laden
@@ -228,6 +232,18 @@ class UnifiedBackupManager:
             total_size = 0
             copied_files = 0
             
+            # Ausschluss-Listen für feste Assets/Icons/Logos
+            exclude_dirnames = {"icons", "logos", "images", "favicons"}
+            exclude_name_substrings = [
+                "favicon",  # Favicons
+                "logo",     # Logos
+                "scandy-logo",
+                "scandy-favicon",
+                "dancing_zebra"  # Easter-Egg GIF
+            ]
+            # Erlaubte Top-Level Upload-Ordner (Entity-Typen)
+            allowed_top_level = {"tools", "consumables", "tickets", "jobs"}
+
             # Alle Medien-Verzeichnisse durchsuchen
             for media_dir in self.media_dirs:
                 if media_dir.exists():
@@ -237,12 +253,27 @@ class UnifiedBackupManager:
                     for root, dirs, files in os.walk(media_dir):
                         # Relativen Pfad berechnen
                         rel_path = Path(root).relative_to(media_dir)
+                        # Verzeichnisse filtern (in-place), um ausgeschlossene Ordner zu überspringen
+                        dirs[:] = [d for d in dirs if d not in exclude_dirnames]
+                        # Auf Top-Level nur erlaubte Entity-Ordner zulassen
+                        if rel_path == Path('.'):
+                            dirs[:] = [d for d in dirs if d in allowed_top_level]
+                        # Relativen Pfad berechnen
                         target_dir = media_backup_path / rel_path
                         target_dir.mkdir(parents=True, exist_ok=True)
                         
                         for file in files:
                             source_file = Path(root) / file
                             target_file = target_dir / file
+                            
+                            # Datei-Muster ausschließen (z. B. Favicons, Logos, Easter-Egg)
+                            lower_name = file.lower()
+                            if any(substr in lower_name for substr in exclude_name_substrings):
+                                continue
+                            # Sicherstellen, dass Pfad unter erlaubtem Top-Level liegt
+                            rel_parts = (media_dir / rel_path / file).relative_to(media_dir).parts
+                            if len(rel_parts) == 0 or rel_parts[0] not in allowed_top_level:
+                                continue
                             
                             # Dateigröße prüfen
                             file_size = source_file.stat().st_size
@@ -492,6 +523,7 @@ class UnifiedBackupManager:
                 '--uri', mongo_uri,
                 '--gzip',
                 '--drop',  # Bestehende Collections löschen
+                '--nsExclude', f"{db_name}.users",  # Benutzer niemals überschreiben
                 str(mongodb_path / db_name)
             ]
             
@@ -593,9 +625,12 @@ class UnifiedBackupManager:
             # Datenbereich ermitteln (neu: data, alt: flach)
             data_section = backup_data['data'] if ('metadata' in backup_data and 'data' in backup_data) else backup_data
 
-            # Collections wiederherstellen (inkl. users)
+            # Collections wiederherstellen (ohne users)
             for collection_name, documents in data_section.items():
                 if collection_name == 'metadata':
+                    continue
+                # Benutzer niemals importieren
+                if collection_name == 'users':
                     continue
                 
                 print(f"  📊 Stelle Collection wieder her: {collection_name}")
@@ -609,21 +644,6 @@ class UnifiedBackupManager:
                     fixed_documents = []
                     for doc in documents:
                         fixed_doc = self._fix_json_document(doc)
-                        # Spezielle Behandlung für Benutzer: Passwort sicherstellen
-                        if collection_name == 'users':
-                            try:
-                                from werkzeug.security import generate_password_hash
-                                if not fixed_doc.get('password_hash'):
-                                    if fixed_doc.get('password'):
-                                        fixed_doc['password_hash'] = generate_password_hash(fixed_doc['password'])
-                                    else:
-                                        pw = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-                                        fixed_doc['password_hash'] = generate_password_hash(pw)
-                                fixed_doc.pop('password', None)
-                                fixed_doc.setdefault('role', 'anwender')
-                                fixed_doc.setdefault('is_active', True)
-                            except Exception:
-                                pass
                         fixed_documents.append(fixed_doc)
                     
                     # Dokumente einfügen

@@ -325,9 +325,9 @@ class BackupManager:
             # Alle Collections sichern
             collections_to_backup = [
                 'tools', 'workers', 'consumables', 'lendings', 'consumable_usages', 
-                'settings', 'tickets', 'timesheets', 'users', 'auftrag_details', 
+                'settings', 'tickets', 'timesheets', 'auftrag_details', 
                 'auftrag_material', 'email_config', 'email_settings', 'system_logs', 'jobs'
-            ]
+            ]  # 'users' ausgeschlossen
             backup_data = {}
             
             for collection in collections_to_backup:
@@ -490,6 +490,10 @@ class BackupManager:
             
             # Collections wiederherstellen
             for collection, documents in data_section.items():
+                # Benutzer niemals aus Backups wiederherstellen
+                if collection == 'users':
+                    print("Überspringe 'users'-Collection beim Restore (Sicherheitsvorgabe)")
+                    continue
                 restore_stats['total_collections'] += 1
                 
                 try:
@@ -606,7 +610,7 @@ class BackupManager:
             
             # ERWEITERTE Wiederherstellungs-Zusammenfassung
             print(f"\n📊 Backup-Wiederherstellung abgeschlossen:")
-            print(f"   - Format: {format_info['format_type']} ({format_info['version_estimate']})")
+            print(f"   - Format: {format_type} ({version_estimate})")
             print(f"   - Collections: {restore_stats['successful_collections']}/{restore_stats['total_collections']} erfolgreich")
             print(f"   - Dokumente: {restore_stats['total_documents']} wiederhergestellt")
             print(f"   - Konvertierungsfehler: {restore_stats['conversion_errors']}")
@@ -619,7 +623,7 @@ class BackupManager:
                 for warning in restore_stats['format_warnings']:
                     print(f"     • {warning}")
             
-            if format_info['is_old_format']:
+            if format_type == 'old':
                 print(f"   - 💡 Empfehlung: Konvertieren Sie das Backup in das neue Format für bessere Kompatibilität")
             
             return True

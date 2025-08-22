@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Passwort zurücksetzen{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 max-w-md">
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h1 class="card-title text-xl mb-4">Passwort zurücksetzen</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-2">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-control mb-3">
+          <label class="label"><span class="label-text">Neues Passwort</span></label>
+          <input type="password" name="new_password" class="input input-bordered" required minlength="8">
+        </div>
+        <div class="form-control mb-4">
+          <label class="label"><span class="label-text">Neues Passwort (wiederholen)</span></label>
+          <input type="password" name="confirm_password" class="input input-bordered" required minlength="8">
+        </div>
+        <button class="btn btn-primary w-full" type="submit">
+          <i class="fas fa-key mr-2"></i>Passwort setzen
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

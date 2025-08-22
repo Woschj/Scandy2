@@ -221,7 +221,8 @@ class ProductionConfig(Config):
         # CSP mit Nonce-Unterstützung. Templates sollten nonce="{{ csp_nonce }}" an Script-/Style-Tags setzen.
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'",
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+        # Kamera zulassen (wichtig für mobile Quickscan). Optional weitere Quellen ergänzen.
+        'Permissions-Policy': "geolocation=(), microphone=(), camera=(self)"
     }
     
     # Rate Limiting

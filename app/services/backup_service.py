@@ -73,10 +73,10 @@ class BackupService:
                 'data': {}
             }
             
-            # Collections die gesichert werden sollen
+            # Collections die gesichert werden sollen (ohne users)
             collections = [
                 'tools', 'workers', 'consumables', 'lendings', 
-                'consumable_usages', 'tickets', 'users', 'settings',
+                'consumable_usages', 'tickets', 'settings',
                 'homepage_notices', 'work_times'
             ]
             
@@ -121,11 +121,26 @@ class BackupService:
                 # Uploads-Verzeichnis hinzufügen
                 uploads_dir = Path("app/static/uploads")
                 if uploads_dir.exists():
+                    # Ausschlüsse: feste Assets in uploads/logos, uploads/icons und typische Logo/Favicon-Dateien
+                    exclude_dirnames = {"icons", "logos", "images", "favicons"}
+                    exclude_name_substrings = ["favicon", "logo", "scandy-logo", "scandy-favicon", "dancing_zebra"]
+                    allowed_top_level = {"tools", "consumables", "tickets", "jobs"}
                     for file_path in uploads_dir.rglob("*"):
-                        if file_path.is_file():
-                            # Relativen Pfad im ZIP verwenden
-                            arcname = f"uploads/{file_path.relative_to(uploads_dir)}"
-                            zipf.write(file_path, arcname)
+                        if not file_path.is_file():
+                            continue
+                        rel_parts = file_path.relative_to(uploads_dir).parts
+                        # Nur erlaubte Top-Level-Entity-Ordner zulassen
+                        if len(rel_parts) == 0 or rel_parts[0] not in allowed_top_level:
+                            continue
+                        # Ausgeschlossene Ordner ignorieren
+                        if any(part in exclude_dirnames for part in rel_parts):
+                            continue
+                        lower_name = file_path.name.lower()
+                        if any(substr in lower_name for substr in exclude_name_substrings):
+                            continue
+                        # Relativen Pfad im ZIP verwenden
+                        arcname = f"uploads/{file_path.relative_to(uploads_dir)}"
+                        zipf.write(file_path, arcname)
                 
                 # Logs-Verzeichnis hinzufügen (nur die letzten 10 Dateien)
                 logs_dir = Path("logs")
@@ -243,13 +258,12 @@ class BackupService:
             if not is_valid:
                 return False, f"Ungültiges Backup: {validation_message}"
             
-            # ERWEITERTE Collections-Liste für verschiedene Backup-Versionen
+            # ERWEITERTE Collections-Liste für verschiedene Backup-Versionen (ohne users)
             collections_to_restore = [
                 'tools', 'workers', 'consumables', 'lendings', 
-                'consumable_usages', 'tickets', 'users', 'settings',
-                'homepage_notices', 'work_times', 'jobs', 'timesheets',
+                'consumable_usages', 'tickets', 'settings', 'work_times', 'jobs', 'timesheets',
                 'auftrag_details', 'auftrag_material', 'email_config', 
-                'email_settings', 'system_logs'
+                'email_settings', 'system_logs', 'homepage_notices'
             ]
             
             # Bestimme welche Collections im Backup vorhanden sind
@@ -277,49 +291,19 @@ class BackupService:
                         # Dokumente wiederherstellen mit erweiterter Konvertierung
                         documents = data_section[collection_name]
                         if documents:
-                            # ERWEITERTE Dokument-Konvertierung für alte Formate
-                            converted_documents = []
-                            for doc in documents:
-                                try:
-                                    # Verwende BackupManager für Datentyp-Konvertierung
-                                    converted_doc = self.backup_manager._deserialize_from_backup(doc)
-                                    fixed_doc = self.backup_manager._fix_id_for_restore(converted_doc)
-                                    converted_documents.append(fixed_doc)
-                                except Exception as e:
-                                    logger.warning(f"Fehler bei Dokument-Konvertierung in {collection_name}: {str(e)}")
-                                    # Fallback: Verwende ursprüngliches Dokument
-                                    converted_documents.append(doc)
-                            
-                            mongodb.db[collection_name].insert_many(converted_documents)
+                            mongodb.db[collection_name].insert_many(documents)
                             restore_stats['successful_collections'] += 1
-                            restore_stats['total_documents'] += len(converted_documents)
+                            restore_stats['total_documents'] += len(documents)
                             
-                            logger.info(f"✅ Collection {collection_name}: {len(converted_documents)} Dokumente wiederhergestellt")
+                            logger.info(f"✅ Collection {collection_name}: {len(documents)} Dokumente wiederhergestellt")
                         
                     except Exception as e:
                         logger.error(f"❌ Fehler beim Wiederherstellen der Collection {collection_name}: {str(e)}")
                         restore_stats['failed_collections'] += 1
-                        
-                        # Fallback für sehr alte Backups: Versuche ohne Konvertierung
-                        try:
-                            mongodb.db[collection_name].insert_many(documents)
-                            logger.info(f"🔄 Collection {collection_name}: {len(documents)} Dokumente ohne Konvertierung wiederhergestellt (Fallback)")
-                            restore_stats['successful_collections'] += 1
-                            restore_stats['total_documents'] += len(documents)
-                        except Exception as e2:
-                            logger.error(f"💥 Kritischer Fehler bei {collection_name}: {str(e2)}")
-                            restore_stats['failed_collections'] += 1
             
-            # ERWEITERTE Erfolgsmeldung
             success_message = f"Backup erfolgreich wiederhergestellt ({format_info['version_estimate']} Format)"
             success_message += f" - {restore_stats['successful_collections']}/{restore_stats['total_collections']} Collections"
             success_message += f" - {restore_stats['total_documents']} Dokumente"
-            
-            if restore_stats['failed_collections'] > 0:
-                success_message += f" - ⚠️ {restore_stats['failed_collections']} fehlgeschlagene Collections"
-            
-            if format_info['is_old_format']:
-                success_message += " (altes Format - Konvertierung empfohlen)"
             
             return True, success_message
             

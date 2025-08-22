@@ -13,8 +13,14 @@ def reset_password():
         if not username_or_email:
             flash('Bitte Benutzername oder E-Mail eingeben', 'error')
             return render_template('auth/reset_password.html')
-        # User suchen per username oder email
-        user = mongodb.find_one('users', {'username': username_or_email}) or mongodb.find_one('users', {'email': username_or_email})
+        # User suchen: E-Mail und Username case-insensitiv
+        import re as _re
+        if '@' in username_or_email:
+            pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
+            user = mongodb.find_one('users', {'email': pattern})
+        else:
+            pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
+            user = mongodb.find_one('users', {'username': pattern})
         if not user:
             flash('Kein Benutzer gefunden', 'error')
             return render_template('auth/reset_password.html')
@@ -24,26 +30,76 @@ def reset_password():
             flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
             return render_template('auth/reset_password.html')
 
-        # Temporäres Passwort generieren
-        temp_pw = secrets.token_urlsafe(10)
-
-        # E-Mail mit neuem Passwort senden (nur per E-Mail, niemals im UI anzeigen)
+        # Token erzeugen und in DB speichern (gültig 60 Minuten)
+        import secrets
+        from datetime import datetime, timedelta
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(minutes=60)
         try:
-            from app.utils.email_utils import send_password_reset_mail
-            email_sent = send_password_reset_mail(recipient_email, password=temp_pw)
+            mongodb.insert_one('password_reset_tokens', {
+                'token': token,
+                'user_id': user.get('_id'),
+                'username': user.get('username'),
+                'email': recipient_email,
+                'created_at': datetime.utcnow(),
+                'expires_at': expires_at,
+                'used': False
+            })
         except Exception:
-            email_sent = False
-
-        if not email_sent:
-            # Sicherheit: Passwort nicht ändern, wenn E-Mail nicht versendet werden konnte
-            flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.', 'error')
+            flash('Fehler beim Erstellen des Reset-Links. Bitte später erneut versuchen.', 'error')
             return render_template('auth/reset_password.html')
 
-        # Nur wenn E-Mail erfolgreich versendet wurde: Passwort aktualisieren
-        mongodb.update_one('users', {'_id': user['_id']}, {'$set': {'password_hash': generate_password_hash(temp_pw)}})
-        flash('Ein neues Passwort wurde an Ihre E-Mail-Adresse gesendet.', 'success')
+        # Absoluten Link bauen und per E-Mail senden (kein Leak bei Versandfehler)
+        from flask import current_app
+        from app.utils.email_utils import send_password_reset_mail
+        reset_url = request.url_root.rstrip('/') + url_for('auth.reset_with_token', token=token)
+        email_sent = send_password_reset_mail(recipient_email, reset_link=reset_url)
+        if not email_sent and getattr(current_app, 'debug', False):
+            flash(f'DEBUG: Reset-Link: {reset_url}', 'info')
+        flash('Wenn ein Konto existiert, wurde ein Link zum Zurücksetzen per E-Mail gesendet.', 'success')
         return redirect(url_for('auth.login'))
     return render_template('auth/reset_password.html')
+
+@bp.route('/reset/<token>', methods=['GET', 'POST'])
+def reset_with_token(token):
+    from datetime import datetime
+    # Token validieren
+    tok = mongodb.find_one('password_reset_tokens', {'token': token})
+    if not tok or tok.get('used'):
+        flash('Dieser Reset-Link ist ungültig oder wurde bereits verwendet.', 'error')
+        return redirect(url_for('auth.reset_password'))
+    if tok.get('expires_at') and tok['expires_at'] < datetime.utcnow():
+        flash('Dieser Reset-Link ist abgelaufen.', 'error')
+        return redirect(url_for('auth.reset_password'))
+
+    if request.method == 'POST':
+        new_pw = (request.form.get('new_password') or '').strip()
+        new_pw2 = (request.form.get('confirm_password') or '').strip()
+        errors = []
+        if not new_pw:
+            errors.append('Neues Passwort ist erforderlich.')
+        if new_pw != new_pw2:
+            errors.append('Passwörter stimmen nicht überein.')
+        if new_pw and len(new_pw) < 8:
+            errors.append('Passwort muss mindestens 8 Zeichen lang sein.')
+        if errors:
+            for e in errors:
+                flash(e, 'error')
+            return render_template('auth/reset_with_token.html')
+
+        # Passwort setzen und Token verbrauchen
+        try:
+            from werkzeug.security import generate_password_hash
+            user_id = tok.get('user_id')
+            mongodb.update_one('users', {'_id': user_id}, {'$set': {'password_hash': generate_password_hash(new_pw)}})
+            mongodb.update_one('password_reset_tokens', {'token': token}, {'$set': {'used': True, 'used_at': datetime.utcnow()}})
+            flash('Passwort wurde erfolgreich zurückgesetzt. Bitte melden Sie sich an.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception:
+            flash('Fehler beim Zurücksetzen des Passworts. Bitte versuchen Sie es erneut.', 'error')
+            return render_template('auth/reset_with_token.html')
+
+    return render_template('auth/reset_with_token.html')
 """
 Authentifizierung und Benutzerverwaltung
 

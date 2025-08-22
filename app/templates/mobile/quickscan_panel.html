@@ -12,20 +12,23 @@
 
   <!-- Kamera-Vorschau: kompakter, begrenzte Höhe, objekt "contain" -->
   <div id="cameraContainer" class="camera-container relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow bg-black" style="min-height: 180px;">
-    <video id="cameraPreview" class="absolute inset-0 w-full h-full object-contain bg-black" autoplay playsinline muted></video>
+    <video id="cameraPreview" class="absolute inset-0 w-full h-full object-contain bg-black" autoplay playsinline webkit-playsinline muted></video>
     <!-- Container für html5-qrcode Fallback (muss ein DIV sein) -->
     <div id="html5qrcode" class="absolute inset-0 w-full h-full hidden"></div>
     <canvas id="scanOverlay" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
     <div id="scanStatus" class="absolute top-2 left-2 bg-black/60 text-white text-xs md:text-sm px-2 py-1 rounded">Scanne…</div>
     <div class="absolute bottom-2 left-0 right-0 flex items-center justify-between px-3">
       <button id="toggleTorchBtn" class="btn btn-sm md:btn-md btn-ghost text-white"><i class="fas fa-bolt mr-2"></i>Licht</button>
-      <div id="scanHint" class="text-white text-sm md:text-base opacity-80">Tippe auf eine Kachel zum Scannen</div>
+      <div id="scanHint" class="text-white text-sm md:text-base opacity-80">Tippe auf „Scannen“, um zu starten</div>
       <div class="flex gap-2">
         <button id="fallbackScannerBtn" class="btn btn-sm md:btn-md btn-ghost text-white hidden md:inline-flex"><i class="fas fa-shield-alt mr-2"></i>Stabil</button>
         <button id="switchCameraBtn" class="btn btn-sm md:btn-md btn-ghost text-white"><i class="fas fa-camera-rotate mr-2"></i>Kamera</button>
       </div>
     </div>
   </div>
+
+  <!-- Foto-Scan (HTTP/iOS Fallback ohne getUserMedia) -->
+  <input id="photoScanInput" type="file" accept="image/*" capture="environment" class="hidden" />
 
   <!-- Optional: Debug-Ausgaben (einklappbar) -->
   <details class="mt-2 text-xs opacity-80">

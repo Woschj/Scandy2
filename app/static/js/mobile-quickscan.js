@@ -78,6 +78,12 @@
 
   function setButtonState() {}
 
+  function isSecureContextLike() {
+    try {
+      return (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+    } catch (_) { return false; }
+  }
+
   function pauseDetect(ms = 1500) {
     pauseUntilTs = Date.now() + ms;
   }
@@ -279,7 +285,13 @@
     try {
       dbg('startCamera invoked', { step: currentStep });
       stopCamera();
-      // Optional: html5-qrcode (deaktiviert)
+      // iOS/HTTPS Check: Safari verlangt sicheren Kontext
+      if (!isSecureContextLike()) {
+        toast('info', 'Kein Live-Scan über HTTP. Foto-Scan verwenden.');
+        openPhotoScan();
+        return;
+      }
+      // Optional: html5-qrcode (robust), bevorzugt mit richtiger Back-Kamera via deviceId
       if (USE_HTML5_QR && window.Html5Qrcode) {
         try {
           els.video.classList.add('hidden');
@@ -295,8 +307,18 @@
             Html5QrcodeSupportedFormats.UPC_E,
             Html5QrcodeSupportedFormats.ITF
           ];
+          // Versuche explizit die Rückkamera per deviceId zu finden (iOS fix)
+          let cameraConfig = { facingMode: useEnvironment ? 'environment' : 'user' };
+          try {
+            const cams = await Html5Qrcode.getCameras();
+            dbg('cameras', cams);
+            if (Array.isArray(cams) && cams.length) {
+              const back = cams.find(c => /back|rear|environment/i.test(c.label)) || cams.find(c => c.id);
+              if (back && back.id) cameraConfig = { deviceId: { exact: back.id } };
+            }
+          } catch(eCam) { dbg('enumerate cameras failed', eCam); }
           await html5qrcodeInstance.start(
-            { facingMode: useEnvironment ? 'environment' : 'user' },
+            cameraConfig,
             { fps: 20, qrbox: 280, formatsToSupport },
             (decodedText) => {
               const raw = String(decodedText || '').trim();
@@ -382,7 +404,17 @@
         audio: false
       };
       // Browser-API
-      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        // Spezifische Hinweise bei blockierter Kamera (Permissions-Policy/unsicherer Kontext)
+        const name = (err && err.name) || '';
+        const msg = (err && err.message) || '';
+        if (/NotAllowedError|SecurityError/i.test(name) || /permission|secure context|feature policy|permissions-policy/i.test(msg)) {
+          toast('error', 'Kamera blockiert. Bitte HTTPS verwenden und Kamera in den Browser-/Geräteeinstellungen erlauben.');
+        }
+        throw err;
+      }
       dbg('getUserMedia success', { facing: useEnvironment ? 'environment' : 'user' });
       // Sicherstellen, dass der Video-Container sichtbar ist und Fallback versteckt
       ensureVideoVisible();
@@ -1012,7 +1044,6 @@
   }
 
   function bindEvents() {
-    const itemBtn = $('scanItemBtn');
     const unifiedBtn = $('scanUnifiedBtn');
     if (unifiedBtn) unifiedBtn.addEventListener('click', async () => {
       // Einheitlicher Modus: wir starten die Kamera und prüfen immer beide Typen
@@ -1096,16 +1127,99 @@
     if (resetBtn) {
       resetBtn.addEventListener('click', () => resetState(true));
     }
+    const photoInput = $('photoScanInput');
+    if (photoInput) {
+      photoInput.addEventListener('change', async (e) => {
+        try {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const imgUrl = URL.createObjectURL(file);
+          await decodeImageFile(imgUrl);
+          URL.revokeObjectURL(imgUrl);
+          // Nach Foto-Scan erneut öffnen für schnellen Folgescan
+          e.target.value = '';
+        } catch (err) {
+          toast('error', 'Foto-Scan fehlgeschlagen');
+        }
+      });
+    }
+  }
+
+  function openPhotoScan() {
+    const input = $('photoScanInput');
+    if (input) input.click();
+  }
+
+  async function decodeImageFile(objectUrl) {
+    try {
+      // Bevorzugt ZXing-BrowserReader, sonst Pure ZXing
+      if (window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader) {
+        const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
+        const img = await fetch(objectUrl).then(r => r.blob()).then(blob => createImageBitmap(blob));
+        // Workaround: Zeichne erst auf Canvas und gib als HTMLImageElement an ZXing
+        const cnv = document.createElement('canvas');
+        cnv.width = img.width; cnv.height = img.height;
+        const ctx = cnv.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = cnv.toDataURL('image/png');
+        const result = await reader.decodeFromImageUrl(dataUrl);
+        if (result && result.text) {
+          handleBarcode(String(result.text).trim());
+          return true;
+        }
+      }
+    } catch (_) {}
+    // Pure ZXing Fallback
+    if (window.ZXing) {
+      try {
+        const ZX = window.ZXing;
+        const imgEl = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = objectUrl;
+        });
+        const cnv = document.createElement('canvas');
+        cnv.width = imgEl.naturalWidth; cnv.height = imgEl.naturalHeight;
+        const ctx = cnv.getContext('2d');
+        ctx.drawImage(imgEl, 0, 0);
+        const imgData = ctx.getImageData(0, 0, cnv.width, cnv.height);
+        const luminance = new ZX.RGBLuminanceSource(imgData.data, cnv.width, cnv.height);
+        const binaryBitmap = new ZX.BinaryBitmap(new ZX.HybridBinarizer(luminance));
+        const reader = new ZX.MultiFormatReader();
+        const hints = new Map();
+        if (ZX.DecodeHintType && ZX.BarcodeFormat) {
+          hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+          hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [
+            ZX.BarcodeFormat.CODE_128,
+            ZX.BarcodeFormat.EAN_13,
+            ZX.BarcodeFormat.EAN_8,
+            ZX.BarcodeFormat.CODE_39,
+            ZX.BarcodeFormat.ITF,
+            ZX.BarcodeFormat.UPC_A,
+            ZX.BarcodeFormat.UPC_E,
+            ZX.BarcodeFormat.QR_CODE,
+          ]);
+        }
+        if (reader.setHints && hints) reader.setHints(hints);
+        const result = reader.decode(binaryBitmap);
+        const text = result.getText ? result.getText() : result.text;
+        if (text) {
+          handleBarcode(String(text).trim());
+          return true;
+        }
+      } catch (e) {
+        dbg('decodeImageFile error', e);
+      }
+    }
+    toast('error', 'Kein Code im Foto gefunden');
+    return false;
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
     els.video = $('cameraPreview');
     els.overlay = $('scanOverlay');
     els.status = $('scanStatus');
-    if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) {
-      toast('warning', 'Kamera wird von diesem Browser nicht unterstützt');
-      return;
-    }
     bindEvents();
     setStep('item');
     resizeOverlay();

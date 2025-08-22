@@ -4707,8 +4707,14 @@ def reset_password():
             flash('Bitte Benutzername oder E-Mail eingeben', 'error')
             return render_template('auth/reset_password.html')
         
-        # Benutzer per username oder email finden
-        user = mongodb.find_one('users', {'username': username_or_email}) or mongodb.find_one('users', {'email': username_or_email})
+        # Benutzer per username oder email finden (case-insensitiv für E-Mail und Username)
+        import re as _re
+        if '@' in username_or_email:
+            _pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
+            user = mongodb.find_one('users', {'email': _pattern})
+        else:
+            _pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
+            user = mongodb.find_one('users', {'username': _pattern})
         if not user:
             flash('Kein Benutzer mit dieser E-Mail-Adresse gefunden.', 'error')
             return render_template('auth/reset_password.html')
@@ -4719,52 +4725,34 @@ def reset_password():
             flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
             return render_template('auth/reset_password.html')
         
-        # Generiere sicheres neues Passwort (wie bei add_user)
+        # Token-basierten Reset-Link versenden (kein direktes Passwort-Ändern)
         import secrets
-        import string
-        # Mindestens 1 von jeder Kategorie sicherstellen
-        password = (
-            secrets.choice(string.ascii_uppercase) +  # 1 Großbuchstabe
-            secrets.choice(string.ascii_lowercase) +  # 1 Kleinbuchstabe
-            secrets.choice(string.digits) +           # 1 Ziffer
-            secrets.choice("!@#$%^&*") +              # 1 Sonderzeichen
-            ''.join(secrets.choice(string.ascii_letters + string.digits + "!@#$%^&*") for _ in range(8))  # 8 weitere zufällige Zeichen
-        )
-        # Passwort mischen
-        password_list = list(password)
-        secrets.SystemRandom().shuffle(password_list)
-        password = ''.join(password_list)
-        
-        # Sende E-Mail mit neuem Passwort (zuerst E-Mail, dann DB-Update)
+        from datetime import datetime, timedelta
+        token = secrets.token_urlsafe(32)
         try:
-            from app.utils.email_utils import send_password_reset_mail
-            send_result = send_password_reset_mail(email, password=password)
-            if not send_result:
-                flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.', 'error')
-                return render_template('auth/reset_password.html')
+            mongodb.insert_one('password_reset_tokens', {
+                'token': token,
+                'user_id': user.get('_id'),
+                'username': user.get('username'),
+                'email': email,
+                'created_at': datetime.utcnow(),
+                'expires_at': datetime.utcnow() + timedelta(minutes=60),
+                'used': False
+            })
         except Exception as e:
-            logger.error(f"Fehler beim Versenden der E-Mail: {e}")
-            flash('Passwort-Reset fehlgeschlagen: E-Mail konnte nicht versendet werden.', 'error')
+            logger.error(f"Fehler beim Erstellen des Reset-Tokens: {e}")
+            flash('Fehler beim Erstellen des Reset-Links.', 'error')
             return render_template('auth/reset_password.html')
-        
-        # Nur wenn E-Mail erfolgreich gesendet wurde: Passwort in der DB aktualisieren
-        from werkzeug.security import generate_password_hash
-        password_hash = generate_password_hash(password)
-        try:
-            result = mongodb.update_one('users', 
-                                     {'_id': convert_id_for_query(user['_id'])}, 
-                                     {'$set': {'password_hash': password_hash, 'updated_at': datetime.now()}})
-            if not result:
-                logger.error(f"Fehler beim Aktualisieren des Passworts für Benutzer {user['username']} - Update fehlgeschlagen")
-                flash('Fehler beim Zurücksetzen des Passworts.', 'error')
-                return render_template('auth/reset_password.html')
-            logger.info(f"Passwort erfolgreich zurückgesetzt für Benutzer {user['username']} ({email})")
-        except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Passworts in der Datenbank: {e}")
-            flash('Fehler beim Zurücksetzen des Passworts.', 'error')
-            return render_template('auth/reset_password.html')
-        
-        flash('Ein neues Passwort wurde an Ihre E-Mail-Adresse gesendet.', 'success')
+
+        from flask import current_app
+        from app.utils.email_utils import send_password_reset_mail
+        reset_url = request.url_root.rstrip('/') + url_for('auth.reset_with_token', token=token)
+        _sent = send_password_reset_mail(email, reset_link=reset_url)
+        if not _sent:
+            logger.warning('Passwort-Reset: E-Mail-Versand fehlgeschlagen – Token wurde erstellt')
+            if getattr(current_app, 'debug', False):
+                flash(f'DEBUG: Reset-Link: {reset_url}', 'info')
+        flash('Wenn ein Konto existiert, wurde ein Link zum Zurücksetzen per E-Mail gesendet.', 'success')
         
         return redirect(url_for('auth.login'))
     
