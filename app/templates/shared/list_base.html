@@ -47,6 +47,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Kontext-Hilfe (optional) -->
+    {% if help_title or help_items %}
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title text-lg">
+                <i class="fas fa-question-circle text-primary mr-2"></i>
+                {{ help_title or 'Hilfe' }}
+            </h3>
+            {% if help_text %}
+            <p class="text-sm opacity-75 mb-2">{{ help_text }}</p>
+            {% endif %}
+            {% if help_items %}
+            <ul class="list-disc list-inside text-sm space-y-1">
+                {% for item in help_items %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Scripts -->

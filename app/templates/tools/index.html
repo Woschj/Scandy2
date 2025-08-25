@@ -1,4 +1,12 @@
 {% extends "shared/list_base.html" %}
+{% set help_title = app_labels.tools.name ~ ' – Hilfe' %}
+{% set help_text = 'So filtern und verwalten Sie ' ~ app_labels.tools.name ~ '.' %}
+{% set help_items = [
+    'Über die Filter oben können Sie nach Kategorie, Standort und Status einschränken.',
+    'Klicken Sie auf den Namen, um die Detailseite mit Medien und Historie zu öffnen.',
+    'Über das Stiftsymbol bearbeiten Sie Stammdaten; der Papierkorb verschiebt in den Papierkorb (Admin).',
+    'Vorschaubilder werden automatisch aus den Medien geladen; das Sternsymbol setzt das Preview.'
+] %}
 
 {% block title %}{{ app_labels.tools.name }}{% endblock %}
 

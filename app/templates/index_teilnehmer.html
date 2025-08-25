@@ -59,6 +59,40 @@
         </div>
     </div>
 
+    {% if current_user.is_authenticated and current_user.timesheet_enabled %}
+    <!-- Schnell-Erfassung: heutiger Wochenplan-Tag -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <h2 class="card-title mb-2">
+                <i class="fas fa-clock text-primary mr-2"></i>
+                Heutige Zeiterfassung
+            </h2>
+            <p class="text-sm opacity-70 mb-4">Start-/Endzeit und Tätigkeiten für den heutigen Tag deiner aktuellen Woche erfassen.</p>
+            <form method="POST" action="{{ url_for('workers.timesheet_quick_update') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Startzeit</span></label>
+                    <input type="time" name="start_time" class="input input-bordered" required>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Endzeit</span></label>
+                    <input type="time" name="end_time" class="input input-bordered" required>
+                </div>
+                <div class="form-control md:col-span-3">
+                    <label class="label"><span class="label-text">Tätigkeiten</span></label>
+                    <textarea name="tasks" class="textarea textarea-bordered" rows="2" placeholder="Kurzbeschreibung deiner heutigen Tätigkeiten" required></textarea>
+                </div>
+                <div class="md:col-span-3 flex justify-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>Speichern
+                    </button>
+                    <a href="{{ url_for('workers.timesheet_list') }}" class="btn btn-ghost">Wochenberichte öffnen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Hilfe & Anleitungen -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Teilnehmer-Anleitung -->

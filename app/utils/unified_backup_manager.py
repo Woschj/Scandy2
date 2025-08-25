@@ -508,16 +508,39 @@ class UnifiedBackupManager:
             mongo_uri = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/scandy")
             db_name = os.environ.get("MONGO_INITDB_DATABASE", "scandy")
             
-            # mongorestore ausführen
-            # mongorestore Binärdatei robust ermitteln
-            mongorestore_bin = '/usr/bin/mongorestore'
-            try:
-                from shutil import which
-                w = which('mongorestore')
-                if w:
-                    mongorestore_bin = w
-            except Exception:
-                pass
+            # mongorestore ausführen – Binärdatei robust ermitteln
+            mongorestore_bin = os.environ.get('MONGORESTORE_BIN')
+            def _is_exec(p: str) -> bool:
+                try:
+                    return p and os.path.isfile(p) and os.access(p, os.X_OK)
+                except Exception:
+                    return False
+            if not _is_exec(mongorestore_bin or ''):
+                try:
+                    from shutil import which
+                    w = which('mongorestore')
+                    if w and _is_exec(w):
+                        mongorestore_bin = w
+                except Exception:
+                    mongorestore_bin = None
+            if not _is_exec(mongorestore_bin or ''):
+                # Prüfe gängige Installationspfade (Linux/Snap/Homebrew)
+                common_paths = [
+                    '/usr/bin/mongorestore',
+                    '/usr/local/bin/mongorestore',
+                    '/snap/bin/mongorestore',
+                    '/opt/homebrew/bin/mongorestore',  # macOS ARM/Homebrew
+                    '/opt/local/bin/mongorestore'
+                ]
+                mongorestore_bin = next((p for p in common_paths if _is_exec(p)), None)
+            if not _is_exec(mongorestore_bin or ''):
+                err = (
+                    "mongorestore nicht gefunden. Bitte installieren Sie die MongoDB Database Tools "
+                    "(z. B. auf macOS: 'brew install mongodb/brew/mongodb-database-tools') oder setzen Sie "
+                    "die Umgebungsvariable MONGORESTORE_BIN auf den Pfad der mongorestore-Binärdatei."
+                )
+                print(f"  ❌ {err}")
+                return False
             cmd = [
                 mongorestore_bin,
                 '--uri', mongo_uri,

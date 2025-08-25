@@ -1,4 +1,12 @@
 {% extends "shared/list_base.html" %}
+{% set help_title = app_labels.consumables.name ~ ' – Hilfe' %}
+{% set help_text = 'Bestände sichten und bei Bedarf Material hinzufügen oder bearbeiten.' %}
+{% set help_items = [
+    'Filter nach Kategorie, Standort und Bestandsstatus verwenden.',
+    'Kritische Bestände werden rot hervorgehoben; „Nicht verfügbar“ bei Menge 0.',
+    'Klick auf den Namen öffnet die Detail-/Bearbeitungsseite.',
+    'Medien/Preview analog zu Werkzeugen nutzbar.'
+] %}
 
 {% block title %}{{ app_labels.consumables.name }}{% endblock %}
 

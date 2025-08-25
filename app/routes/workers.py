@@ -1149,6 +1149,59 @@ def timesheet_download(ts_id):
     doc.save(output_path)
     return send_file(output_path, as_attachment=True, download_name=f'woplan_kw{ts["kw"]}.docx')
 
+@bp.route('/timesheet/quick-update', methods=['POST'])
+@login_required
+def timesheet_quick_update():
+    """Aktualisiert den heutigen Tag des aktuellen Wochenplans mit Start/Ende/Zeit und Tätigkeiten."""
+    # Feature-Checks
+    if not is_feature_enabled('weekly_reports') or not current_user.timesheet_enabled:
+        flash('Das Wochenberichte-System ist nicht verfügbar.', 'error')
+        return redirect(url_for('main.index'))
+
+    try:
+        user_id = current_user.username
+        now_dt = datetime.now()
+        year = now_dt.isocalendar()[0]
+        kw = now_dt.isocalendar()[1]
+        weekday = now_dt.weekday()  # 0=Montag
+        days = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag']
+        if weekday > 4:
+            weekday = 4  # Wochenende -> Freitag befüllen
+        day_key = days[weekday]
+
+        start_time = request.form.get('start_time', '').strip()
+        end_time = request.form.get('end_time', '').strip()
+        tasks = request.form.get('tasks', '').strip()
+
+        if not start_time or not end_time or not tasks:
+            flash('Bitte Startzeit, Endzeit und Tätigkeiten ausfüllen.', 'error')
+            return redirect(url_for('main.index'))
+
+        # Upsert aktuellen Wochenplan
+        ts = mongodb.find_one('timesheets', {'user_id': user_id, 'year': year, 'kw': kw})
+        if not ts:
+            mongodb.insert_one('timesheets', {
+                'user_id': user_id,
+                'year': year,
+                'kw': kw,
+                'created_at': now_dt,
+                'updated_at': now_dt
+            })
+            ts = mongodb.find_one('timesheets', {'user_id': user_id, 'year': year, 'kw': kw})
+
+        update_data = {
+            f'{day_key}_start': start_time,
+            f'{day_key}_end': end_time,
+            f'{day_key}_tasks': tasks,
+            'updated_at': now_dt
+        }
+        mongodb.update_one('timesheets', {'_id': ts['_id']}, {'$set': update_data})
+        flash('Heutiger Eintrag gespeichert.', 'success')
+    except Exception as e:
+        print(f"Quick-Update Fehler: {e}")
+        flash('Konnte den Eintrag nicht speichern.', 'error')
+    return redirect(url_for('main.index'))
+
 @bp.route('/timesheet/<ts_id>/delete', methods=['POST'])
 @login_required
 def timesheet_delete(ts_id):

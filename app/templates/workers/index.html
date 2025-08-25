@@ -1,4 +1,11 @@
 {% extends "shared/list_base.html" %}
+{% set help_title = 'Mitarbeiter – Hilfe' %}
+{% set help_text = 'Mitarbeiterdaten und Ausleihen überblicken.' %}
+{% set help_items = [
+    'Mit dem Abteilungsfilter die Anzeige einschränken.',
+    'Klick auf den Namen öffnet Details mit aktiven Ausleihen und Historie.',
+    'Rückgaben sind direkt in den Mitarbeiter-Details möglich.'
+] %}
 
 {% block actions %}
 <div class="flex gap-2">

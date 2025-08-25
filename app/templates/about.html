@@ -36,6 +36,319 @@
     </div>
 
     <div class="grid grid-cols-1 gap-8">
+        <!-- Benutzerhandbuch – Inhaltsverzeichnis -->
+        <div class="card bg-base-100 shadow-lg border border-base-300">
+            <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-book mr-2"></i>Benutzerhandbuch – Inhaltsverzeichnis</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <a class="link" href="#manual-roles">1. Rollen & Berechtigungen</a>
+                    <a class="link" href="#manual-auth">2. Anmeldung & Navigation</a>
+                    <a class="link" href="#manual-dashboard">3. Dashboard</a>
+                    <a class="link" href="#manual-tools">4. {{ app_labels.tools.name }}</a>
+                    <a class="link" href="#manual-consumables">5. {{ app_labels.consumables.name }}</a>
+                    <a class="link" href="#manual-workers">6. Mitarbeiter</a>
+                    <a class="link" href="#manual-lending">7. Ausleihe & Rückgabe</a>
+                    <a class="link" href="#manual-tickets">8. {{ app_labels.tickets.name }}</a>
+                    <a class="link" href="#manual-media">9. Medienverwaltung</a>
+                    <a class="link" href="#manual-admin">10. Admin-Bereich</a>
+                    <a class="link" href="#manual-backups">11. Backups</a>
+                    <a class="link" href="#manual-optional">12. Optionale Features</a>
+                    <a class="link" href="#manual-tips">13. Tipps & Fehlerbehebung</a>
+                    <a class="link" href="#manual-glossary">14. Glossar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rollen & Berechtigungen -->
+        <div id="manual-roles" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-user-shield mr-2"></i>1. Rollen & Berechtigungen
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-user-shield mr-2"></i>1. Rollen & Berechtigungen</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li><strong>Admin</strong>: Vollzugriff inkl. Systemeinstellungen, Benutzerverwaltung, Backups.</li>
+                    <li><strong>Mitarbeiter</strong>: Arbeiten innerhalb der eigenen Abteilung, keine Systemeinstellungen.</li>
+                    <li><strong>Anwender</strong>: Sicht/Bearbeitung in eigener Abteilung, keine Systemeinstellungen.</li>
+                    <li><strong>Teilnehmer</strong>: Eigene Tickets sehen/erstellen; Jobbörse sehen (falls aktiv).</li>
+                </ul>
+                <p class="text-sm opacity-75 mt-2">Hinweis: Abteilungszuordnung steuert Sicht und Kontext vieler Masken.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anmeldung & Navigation -->
+        <div id="manual-auth" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-right-to-bracket mr-2"></i>2. Anmeldung & Navigation
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-right-to-bracket mr-2"></i>2. Anmeldung & Navigation</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li><strong>Anmeldung</strong>: Benutzername/Passwort eingeben; bei Erfolg Navigation zu Dashboard.</li>
+                    <li><strong>Abmeldung</strong>: Über den Abmelden-Link im Menü.</li>
+                    <li><strong>Filter/Suche</strong>: Listen besitzen Filter (Kategorie/Standort/Status) und Suchfelder.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="manual-dashboard" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-gauge mr-2"></i>3. Dashboard
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-gauge mr-2"></i>3. Dashboard</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li>{{ app_labels.tools.name }}: Gesamt, Verfügbar, Ausgeliehen, Defekt; ggf. Überfällig.</li>
+                    <li>{{ app_labels.consumables.name }}: Sufficient/Warnung/Kritisch.</li>
+                    <li>Mitarbeiter (rollenabhängig): Anzahl, Verteilung nach Abteilungen.</li>
+                    <li>{{ app_labels.tickets.name }}: Offen, In Bearbeitung, Geschlossen.</li>
+                    <li>Warnungen: z. B. überfällige Ausleihen, kritische Bestände.</li>
+                    <li>Bestandsprognose (falls Daten vorhanden).</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Werkzeuge -->
+        <div id="manual-tools" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-screwdriver-wrench mr-2"></i>4. {{ app_labels.tools.name }}
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-screwdriver-wrench mr-2"></i>4. {{ app_labels.tools.name }}</h2>
+                <h3 class="font-semibold">Liste</h3>
+                <p class="text-sm opacity-75">Filter nach Kategorie/Standort/Status, Aktionen: Details, Löschen (Papierkorb über Admin).</p>
+                <h3 class="font-semibold mt-3">Anlegen</h3>
+                <ul class="list-disc list-inside text-sm">
+                    <li>Pflicht: Name, Barcode, Kategorie, Standort, Status.</li>
+                    <li>Optional (falls aktiviert): Seriennummer, Rechnungsnummer, MAC LAN/WLAN.</li>
+                    <li>Software-Management aktiv: Nutzergruppen/Software zuweisen.</li>
+                    <li>Benutzerdefinierte Felder, wenn konfiguriert.</li>
+                </ul>
+                <h3 class="font-semibold mt-3">Details & Medien</h3>
+                <ul class="list-disc list-inside text-sm">
+                    <li>Status-Kachel, ggf. Ausleihe-Infos (an wen, seit/bis).</li>
+                    <li>Bearbeiten-Dialog; Barcode ändern.</li>
+                    <li>Medien: Upload, Vorschaubild setzen, Galerie, Löschen, PDF-Download.</li>
+                    <li>Ausleihhistorie tabellarisch.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verbrauchsmaterial -->
+        <div id="manual-consumables" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-box-open mr-2"></i>5. {{ app_labels.consumables.name }}
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-box-open mr-2"></i>5. {{ app_labels.consumables.name }}</h2>
+                <p class="text-sm opacity-75">Liste mit Filtern (Kategorie/Standort/Bestand); Anzeige Kritisch/Genug/Nicht verfügbar.</p>
+                <p class="text-sm opacity-75">Anlegen/Bearbeiten analog {{ app_labels.tools.name }}, Fokus auf Mengen/Mindestmenge.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mitarbeiter -->
+        <div id="manual-workers" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-users mr-2"></i>6. Mitarbeiter
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-users mr-2"></i>6. Mitarbeiter</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li>Liste mit Abteilungsfilter; zeigt Barcode, E-Mail, Benutzer/Rolle, aktive Ausleihen.</li>
+                    <li>Details: Benutzerkonto, aktive Ausleihen (Rückgabe-Button), Ausleihhistorie.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ausleihe & Rückgabe -->
+        <div id="manual-lending" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-handshake mr-2"></i>7. Ausleihe & Rückgabe
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-handshake mr-2"></i>7. Ausleihe & Rückgabe</h2>
+                <h3 class="font-semibold">Manuelle Ausleihe/Ausgabe</h3>
+                <ol class="list-decimal list-inside text-sm space-y-1">
+                    <li>Artikel wählen ({{ app_labels.tools.name }} oder {{ app_labels.consumables.name }}).</li>
+                    <li>Mitarbeiter wählen.</li>
+                    <li>Für {{ app_labels.consumables.name }} Menge eingeben.</li>
+                    <li>Bestätigen.</li>
+                </ol>
+                <p class="text-sm opacity-75 mt-2">Rückgabe auch in Mitarbeiter-Details oder Dashboard möglich.</p>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <!-- Tickets -->
+        <div id="manual-tickets" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-ticket-alt mr-2"></i>8. {{ app_labels.tickets.name }}
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-ticket-alt mr-2"></i>9. {{ app_labels.tickets.name }}</h2>
+                <h3 class="font-semibold">Übersicht</h3>
+                <p class="text-sm opacity-75">Tabs: Offene, Zugewiesene/Meine & Abgeschlossene, optional Alle; Filter für Suche/Status/Priorität/Kategorie.</p>
+                <h3 class="font-semibold mt-3">Detail</h3>
+                <ul class="list-disc list-inside text-sm">
+                    <li>Status, Verantwortliche, Zuweisungen, Kategorie, geschätzte Zeit, Fälligkeit.</li>
+                    <li>Nachrichten, Medien-Upload/Galerie/PDF, Word-Export, Änderungshistorie.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medienverwaltung -->
+        <div id="manual-media" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-images mr-2"></i>9. Medienverwaltung
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-images mr-2"></i>10. Medienverwaltung</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li>{{ app_labels.tools.name }}: Upload, Vorschaubild setzen, Galerie, Löschen, PDF-Download.</li>
+                    <li>{{ app_labels.tickets.name }}: Upload, Galerie, Löschen, PDF-Download.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin-Bereich (Übersicht) -->
+        <div id="manual-admin" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-tools mr-2"></i>10. Admin-Bereich
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-tools mr-2"></i>11. Admin-Bereich</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <h3 class="font-semibold mb-1">Benutzerverwaltung</h3>
+                        <ul class="list-disc list-inside">
+                            <li>Liste mit Suche/Filtern/Sortierung.</li>
+                            <li>Anlegen/Bearbeiten: Rolle, E-Mail/Name, aktiv/Ablaufdatum, Wochenplan/Kantinenplan-Rechte.</li>
+                            <li>Abteilungen zuordnen; Standard-Abteilung wählen.</li>
+                            <li>Handlungsfelder für Ticket-Sichtbarkeit setzen.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-1">Feature-Einstellungen & Felder</h3>
+                        <ul class="list-disc list-inside">
+                            <li>Features je Abteilung: Ticketsystem, Software-Management, Jobbörse, Wochenberichte, Kantinenplan.</li>
+                            <li>Feldverwaltung: Standardfelder schalten, benutzerdefinierte Felder verwalten.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-1">Abteilungen/Kategorien/Standorte</h3>
+                        <ul class="list-disc list-inside">
+                            <li>Abteilungen anlegen/umbenennen/löschen (Löschen entfernt zugehörige Daten).</li>
+                            <li>Kategorien/Standorte im Admin-Dashboard pflegen.</li>
+                            <li>Handlungsfelder (Ticket-Kategorien) verwalten.</li>
+                        </ul>
+                    </div>
+                </div>
+                </div>
+        </div>
+
+        <!-- Backups -->
+        <div id="manual-backups" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-database mr-2"></i>11. Backups
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-database mr-2"></i>12. Backups</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li>Automatisches Backup: Status (Aktiv/Gestoppt), nächste Zeiten, Logs, wöchentliches Archiv per E-Mail.</li>
+                    <li>Konfiguration: tägliche Zeiten, wöchentliche Zeit, Ziel-E-Mail.</li>
+                    <li>JSON-Import: Altes JSON-Backup in Ziel-Abteilung importieren.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optionale Features -->
+        <div id="manual-optional" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-star mr-2"></i>12. Optionale Features
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-star mr-2"></i>13. Optionale Features</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li><strong>Kantinenplan</strong>: Verwaltung/Anzeige von Mahlzeiten (bei aktivem Feature).</li>
+                    <li><strong>Jobbörse</strong>: Stellenangebote und Verwaltung (bei aktivem Feature).</li>
+                    <li><strong>Software-Management</strong>: Software-Presets und Nutzergruppen im Zusammenhang mit {{ app_labels.tools.name }}.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tipps & Fehlerbehebung -->
+        <div id="manual-tips" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-lightbulb mr-2"></i>13. Tipps & Fehlerbehebung
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-lightbulb mr-2"></i>14. Tipps & Fehlerbehebung</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li><strong>Barcodes</strong>: Eindeutig halten; Duplikate werden im Dashboard gewarnt.</li>
+                    <li><strong>Berechtigungen</strong>: Abteilung/Rolle und Feature-Schalter prüfen, wenn etwas fehlt.</li>
+                    <li><strong>Backups</strong>: Status/Logs prüfen; Testversand des wöchentlichen Archivs nutzen.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glossar -->
+        <div id="manual-glossary" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
+            <input type="checkbox" class="peer" />
+            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
+                <i class="fas fa-book-open mr-2"></i>14. Glossar
+            </div>
+            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
+                <div class="card-body">
+                <h2 class="card-title text-xl"><i class="fas fa-book-open mr-2"></i>15. Glossar</h2>
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    <li><strong>Abteilung</strong>: Datenraum; filtert Sicht und Aktionen.</li>
+                    <li><strong>Handlungsfeld</strong>: Ticket-Kategorie zur Steuerung der Sichtbarkeit.</li>
+                    <li><strong>Vorschaubild</strong>: Markiertes Medienbild eines {{ app_labels.tools.name }} für Listenansichten.</li>
+                    <li><strong>Ausgabe</strong>: Mengengesteuerte Entnahme von {{ app_labels.consumables.name }}.</li>
+                </ul>
+                </div>
+            </div>
+        </div>
         
         <!-- System-Übersicht -->
         <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">

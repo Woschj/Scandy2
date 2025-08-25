@@ -1,14 +1,23 @@
-# Einfaches Dockerfile für Scandy
+# Tools-Stufe: MongoDB Database Tools (plattformabhängig, mehrarch-Image)
+FROM mongodb/mongodb-tools:100.13.0-ubuntu2204 AS dbtools
+
+# Einfaches Dockerfile für Scandy (App-Stufe)
 FROM python:3.11-slim
 
 # Installiere System-Abhängigkeiten
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
+    gnupg \
+    wget \
     nodejs \
     npm \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# Kopiere mongorestore aus Tools-Stufe (robust, multi-arch)
+COPY --from=dbtools /usr/bin/mongorestore /usr/local/bin/mongorestore
+RUN /usr/local/bin/mongorestore --version || true
 
 WORKDIR /app
 

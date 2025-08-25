@@ -1234,9 +1234,36 @@ class BackupManager:
                 print(f"URI: {mongo_uri}")
                 print(f"Datenbank: {db_name}")
                 
-                # mongorestore Befehl ausführen
+                # mongorestore Befehl ausführen – Binärdatei robust ermitteln
+                mongorestore_bin = os.environ.get('MONGORESTORE_BIN')
+                def _is_exec(p: str) -> bool:
+                    try:
+                        return p and os.path.isfile(p) and os.access(p, os.X_OK)
+                    except Exception:
+                        return False
+                if not _is_exec(mongorestore_bin or ''):
+                    try:
+                        from shutil import which
+                        w = which('mongorestore')
+                        if w and _is_exec(w):
+                            mongorestore_bin = w
+                    except Exception:
+                        mongorestore_bin = None
+                if not _is_exec(mongorestore_bin or ''):
+                    # Gängige Pfade testen
+                    common_paths = [
+                        '/usr/bin/mongorestore',
+                        '/usr/local/bin/mongorestore',
+                        '/snap/bin/mongorestore',
+                        '/opt/homebrew/bin/mongorestore',
+                        '/opt/local/bin/mongorestore'
+                    ]
+                    mongorestore_bin = next((p for p in common_paths if _is_exec(p)), None)
+                if not _is_exec(mongorestore_bin or ''):
+                    print("❌ mongorestore nicht gefunden. Setzen Sie MONGORESTORE_BIN oder installieren Sie die MongoDB Database Tools (z. B. 'brew install mongodb/brew/mongodb-database-tools').")
+                    return False
                 cmd = [
-                    '/usr/bin/mongorestore',
+                    mongorestore_bin,
                     '--uri', mongo_uri,
                     '--gzip',  # Komprimierung
                     '--drop',  # Bestehende Collections löschen
