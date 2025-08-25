@@ -1189,6 +1189,68 @@ class BackupManager:
             print(f"Fehler beim Wiederherstellen des nativen Backups: {e}")
             return False
 
+    def _python_restore_mongodb(self, mongo_uri: str, bson_dir):
+        """Fallback: Stellt Collections aus BSON/BSON.GZ per PyMongo wieder her."""
+        try:
+            import gzip
+            from pymongo import MongoClient
+            from bson import decode_file_iter
+            from pathlib import Path
+
+            bson_dir = Path(bson_dir)
+            client = MongoClient(mongo_uri)
+            db_name = client.get_default_database().name if client.get_default_database() else 'scandy'
+            db = client.get_database(db_name)
+
+            files = []
+            for p in bson_dir.iterdir():
+                name = p.name
+                if name.endswith('.metadata.json'):
+                    continue
+                if name.endswith('.bson') or name.endswith('.bson.gz'):
+                    files.append(p)
+
+            if not files:
+                print(f"❌ Keine BSON-Dateien in {bson_dir} gefunden")
+                return False
+
+            for fpath in sorted(files):
+                cname = fpath.name
+                if cname.endswith('.bson.gz'):
+                    coll = cname[:-8]
+                elif cname.endswith('.bson'):
+                    coll = cname[:-5]
+                else:
+                    continue
+                if coll == 'users':
+                    print(f"↷ Überspringe Collection 'users'")
+                    continue
+                print(f"→ Stelle Collection: {coll}")
+                try:
+                    db[coll].drop()
+                except Exception:
+                    pass
+                opener = gzip.open if fpath.suffix == '.gz' or fpath.name.endswith('.gz') else open
+                inserted = 0
+                batch = []
+                batch_size = 1000
+                with opener(fpath, 'rb') as fh:
+                    for doc in decode_file_iter(fh):
+                        batch.append(doc)
+                        if len(batch) >= batch_size:
+                            db[coll].insert_many(batch, ordered=False)
+                            inserted += len(batch)
+                            batch.clear()
+                    if batch:
+                        db[coll].insert_many(batch, ordered=False)
+                        inserted += len(batch)
+                print(f"  ✓ {inserted} Dokumente in {coll} eingefügt")
+            print("✅ MongoDB per Python-Fallback wiederhergestellt")
+            return True
+        except Exception as e:
+            print(f"❌ Python-Fallback fehlgeschlagen: {e}")
+            return False
+
     def restore_native_backup_from_upload(self, uploaded_file):
         """
         Stellt ein natives MongoDB-Backup aus einer hochgeladenen ZIP-Datei wieder her
@@ -1259,27 +1321,27 @@ class BackupManager:
                         '/opt/local/bin/mongorestore'
                     ]
                     mongorestore_bin = next((p for p in common_paths if _is_exec(p)), None)
-                if not _is_exec(mongorestore_bin or ''):
-                    print("❌ mongorestore nicht gefunden. Setzen Sie MONGORESTORE_BIN oder installieren Sie die MongoDB Database Tools (z. B. 'brew install mongodb/brew/mongodb-database-tools').")
-                    return False
-                cmd = [
-                    mongorestore_bin,
-                    '--uri', mongo_uri,
-                    '--gzip',  # Komprimierung
-                    '--drop',  # Bestehende Collections löschen
-                    str(bson_dir)
-                ]
-                
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-                
-                if result.returncode == 0:
-                    print(f"✅ Natives Backup aus Upload erfolgreich wiederhergestellt")
-                    return True
+                if _is_exec(mongorestore_bin or ''):
+                    cmd = [
+                        mongorestore_bin,
+                        '--uri', mongo_uri,
+                        '--gzip',  # Komprimierung
+                        '--drop',  # Bestehende Collections löschen
+                        str(bson_dir)
+                    ]
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                    if result.returncode == 0:
+                        print(f"✅ Natives Backup aus Upload erfolgreich wiederhergestellt")
+                        return True
+                    else:
+                        print(f"❌ Fehler beim Wiederherstellen des nativen Backups aus Upload:")
+                        print(f"STDOUT: {result.stdout}")
+                        print(f"STDERR: {result.stderr}")
+                        # Fallback auf Python-Restore
+                        return self._python_restore_mongodb(mongo_uri, bson_dir)
                 else:
-                    print(f"❌ Fehler beim Wiederherstellen des nativen Backups aus Upload:")
-                    print(f"STDOUT: {result.stdout}")
-                    print(f"STDERR: {result.stderr}")
-                    return False
+                    print("⚠️ mongorestore nicht gefunden – versuche Python-Fallback")
+                    return self._python_restore_mongodb(mongo_uri, bson_dir)
                     
         except Exception as e:
             print(f"Fehler beim Wiederherstellen des nativen Backups aus Upload: {e}")

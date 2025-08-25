@@ -4,13 +4,14 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex justify-between items-center mb-1">
         <h1 class="text-2xl font-bold">Startseiten-Hinweise</h1>
         <a href="{{ url_for('admin.create_notice') }}" class="btn btn-primary">
             <i class="fas fa-plus mr-2"></i>
             Neuer Hinweis
         </a>
     </div>
+    <p class="mb-6 text-sm opacity-70">Hinweise werden der aktuell gewählten Abteilung zugeordnet.</p>
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">

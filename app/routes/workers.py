@@ -1152,9 +1152,9 @@ def timesheet_download(ts_id):
 @bp.route('/timesheet/quick-update', methods=['POST'])
 @login_required
 def timesheet_quick_update():
-    """Aktualisiert den heutigen Tag des aktuellen Wochenplans mit Start/Ende/Zeit und Tätigkeiten."""
+    """Aktualisiert den heutigen Tag des aktuellen Wochenplans (teilweise Eingaben erlaubt)."""
     # Feature-Checks
-    if not is_feature_enabled('weekly_reports') or not current_user.timesheet_enabled:
+    if not is_feature_enabled('weekly_reports') or not getattr(current_user, 'timesheet_enabled', False):
         flash('Das Wochenberichte-System ist nicht verfügbar.', 'error')
         return redirect(url_for('main.index'))
 
@@ -1169,12 +1169,12 @@ def timesheet_quick_update():
             weekday = 4  # Wochenende -> Freitag befüllen
         day_key = days[weekday]
 
-        start_time = request.form.get('start_time', '').strip()
-        end_time = request.form.get('end_time', '').strip()
-        tasks = request.form.get('tasks', '').strip()
+        start_time = (request.form.get('start_time') or '').strip()
+        end_time = (request.form.get('end_time') or '').strip()
+        tasks = (request.form.get('tasks') or '').strip()
 
-        if not start_time or not end_time or not tasks:
-            flash('Bitte Startzeit, Endzeit und Tätigkeiten ausfüllen.', 'error')
+        if not start_time and not end_time and not tasks:
+            flash('Keine Änderungen. Bitte Start, Ende oder Tätigkeiten angeben.', 'warning')
             return redirect(url_for('main.index'))
 
         # Upsert aktuellen Wochenplan
@@ -1189,14 +1189,16 @@ def timesheet_quick_update():
             })
             ts = mongodb.find_one('timesheets', {'user_id': user_id, 'year': year, 'kw': kw})
 
-        update_data = {
-            f'{day_key}_start': start_time,
-            f'{day_key}_end': end_time,
-            f'{day_key}_tasks': tasks,
-            'updated_at': now_dt
-        }
+        update_data = {'updated_at': now_dt}
+        if start_time:
+            update_data[f'{day_key}_start'] = start_time
+        if end_time:
+            update_data[f'{day_key}_end'] = end_time
+        if tasks:
+            update_data[f'{day_key}_tasks'] = tasks
+
         mongodb.update_one('timesheets', {'_id': ts['_id']}, {'$set': update_data})
-        flash('Heutiger Eintrag gespeichert.', 'success')
+        flash('Eintrag gespeichert.', 'success')
     except Exception as e:
         print(f"Quick-Update Fehler: {e}")
         flash('Konnte den Eintrag nicht speichern.', 'error')

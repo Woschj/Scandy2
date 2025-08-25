@@ -267,6 +267,55 @@
         </div>
     </div>
 
+    <!-- Startseiten-Hinweise verwalten (kompakt) -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title">
+                    <i class="fas fa-bullhorn text-info"></i>
+                    Startseiten-Hinweise (aktuelle Abteilung)
+                </h2>
+                <a href="{{ url_for('admin.create_notice') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus mr-2"></i> Neuer Hinweis
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>Titel</th>
+                            <th>Inhalt</th>
+                            <th>Priorität</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notices %}
+                        <tr>
+                            <td class="whitespace-nowrap">{{ n.title }}</td>
+                            <td class="max-w-md truncate">{{ n.message }}</td>
+                            <td>{{ n.priority or 0 }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if n.is_active else 'error' }}">{{ 'Aktiv' if n.is_active else 'Inaktiv' }}</span>
+                            </td>
+                            <td class="text-right">
+                                <a href="{{ url_for('admin.edit_notice', id=n._id if n._id else n.id) }}" class="btn btn-ghost btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">Keine Hinweise vorhanden</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- Verwaltung (Standorte, Kategorien, Handlungsfelder) – jetzt in System-Einstellungen verschoben -->

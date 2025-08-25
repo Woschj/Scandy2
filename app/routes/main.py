@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, current_app, redirect, url_for
 from flask_login import current_user
 from ..utils.auth_utils import needs_setup
-from ..models.mongodb_database import MongoDB
+from ..models.mongodb_database import MongoDB, is_feature_enabled
 from ..models.mongodb_models import MongoDBTool
 from datetime import datetime
 
@@ -37,7 +37,11 @@ def index():
                 template_name = 'index_teilnehmer.html'
             else:
                 template_name = 'index_normal.html'
-            
+            # Bei DB-Problemen keine Timesheet-Quick-Funktion anzeigen
+            timesheet_prefill = None
+            timesheet_quick_enabled = False
+            weekly_reports_enabled = False
+
             return render_template(template_name,
                                tool_stats={'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
                                consumable_stats={'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
@@ -45,7 +49,10 @@ def index():
                                ticket_stats={'total': 0, 'open': 0, 'in_progress': 0, 'closed': 0},
                                duplicate_barcodes=[],
                                overdue_loans=[],
-                               notices=[])
+                               notices=[],
+                               timesheet_prefill=timesheet_prefill,
+                               timesheet_quick_enabled=timesheet_quick_enabled,
+                               weekly_reports_enabled=weekly_reports_enabled)
         
         # Verwende den zentralen Statistics Service
         try:
@@ -70,6 +77,38 @@ def index():
             overdue_loans = []
             notices = []
         
+        # Optional: Prefill für heutige Timesheet-Eingabe ermitteln
+        timesheet_prefill = None
+        weekly_reports_enabled = False
+        timesheet_quick_enabled = False
+        try:
+            weekly_reports_enabled = is_feature_enabled('weekly_reports')
+            if current_user.is_authenticated and getattr(current_user, 'timesheet_enabled', False) and weekly_reports_enabled:
+                today = datetime.now()
+                current_year = today.isocalendar()[0]
+                current_week = today.isocalendar()[1]
+                weekday = today.weekday()  # 0=Montag
+                days = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag']
+                if weekday > 4:
+                    weekday = 4
+                day_key = days[weekday]
+                ts = mongodb.find_one('timesheets', {
+                    'user_id': getattr(current_user, 'username', None),
+                    'year': current_year,
+                    'kw': current_week
+                })
+                if ts:
+                    timesheet_prefill = {
+                        'start': ts.get(f'{day_key}_start', ''),
+                        'end': ts.get(f'{day_key}_end', ''),
+                        'tasks': ts.get(f'{day_key}_tasks', '')
+                    }
+                else:
+                    timesheet_prefill = {'start': '', 'end': '', 'tasks': ''}
+                timesheet_quick_enabled = True
+        except Exception as _ts_err:
+            current_app.logger.warning(f"Timesheet Prefill nicht verfügbar: {_ts_err}")
+
         # Wähle das Template basierend auf der Benutzerrolle
         if not current_user.is_authenticated:
             template_name = 'index_public.html'
@@ -85,7 +124,10 @@ def index():
                            ticket_stats=ticket_stats,
                            duplicate_barcodes=duplicate_barcodes,
                            overdue_loans=overdue_loans,
-                           notices=notices)
+                           notices=notices,
+                           timesheet_prefill=timesheet_prefill,
+                           timesheet_quick_enabled=timesheet_quick_enabled,
+                           weekly_reports_enabled=weekly_reports_enabled)
         
     except Exception as e:
         current_app.logger.error(f"Fehler beim Laden der Startseite: {str(e)}")
@@ -98,7 +140,10 @@ def index():
                            ticket_stats={'total': 0, 'open': 0, 'in_progress': 0, 'closed': 0},
                            duplicate_barcodes=[],
                            overdue_loans=[],
-                           notices=[])
+                           notices=[],
+                           timesheet_prefill=None,
+                           timesheet_quick_enabled=False,
+                           weekly_reports_enabled=False)
 
 @bp.route('/emergency-admin')
 def emergency_admin():

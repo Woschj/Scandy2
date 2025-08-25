@@ -374,10 +374,13 @@ class AdminNotificationService:
             }
 
     @staticmethod
-    def get_all_notices() -> List[Dict[str, Any]]:
+    def get_all_notices(department: Optional[str] = None) -> List[Dict[str, Any]]:
         """Hole alle Benachrichtigungen (Notices)"""
         try:
-            notices = list(mongodb.find('homepage_notices', {}, sort=[('created_at', -1)]))
+            query = {}
+            if department:
+                query['department'] = department
+            notices = list(mongodb.find('homepage_notices', query, sort=[('created_at', -1)]))
             
             # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
             for notice in notices:
@@ -391,7 +394,7 @@ class AdminNotificationService:
             return []
 
     @staticmethod
-    def create_notice(title: str, content: str, notice_type: str = 'info') -> Tuple[bool, str]:
+    def create_notice(title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: int = 0, is_active: bool = True) -> Tuple[bool, str]:
         """
         Erstellt eine neue Benachrichtigung (Notice)
         
@@ -408,9 +411,11 @@ class AdminNotificationService:
                 'title': title,
                 'message': content,
                 'type': notice_type,
-                'is_active': True,
+                'is_active': bool(is_active),
                 'created_at': datetime.now(),
-                'created_by': 'admin'  # Könnte später erweitert werden
+                'created_by': 'admin',  # Könnte später erweitert werden
+                'department': department,
+                'priority': int(priority) if priority is not None else 0
             }
             
             mongodb.insert_one('homepage_notices', notice_data)
@@ -422,7 +427,7 @@ class AdminNotificationService:
             return False, f"Fehler beim Erstellen der Benachrichtigung: {str(e)}"
 
     @staticmethod
-    def update_notice(notice_id: str, title: str, content: str, notice_type: str = 'info') -> Tuple[bool, str]:
+    def update_notice(notice_id: str, title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: Optional[int] = None, is_active: Optional[bool] = None) -> Tuple[bool, str]:
         """
         Aktualisiert eine Benachrichtigung (Notice)
         
@@ -446,8 +451,13 @@ class AdminNotificationService:
                 'title': title,
                 'message': content,
                 'type': notice_type,
+                'department': department,
                 'updated_at': datetime.now()
             }
+            if priority is not None:
+                update_data['priority'] = int(priority)
+            if is_active is not None:
+                update_data['is_active'] = bool(is_active)
             
             mongodb.update_one('homepage_notices', {'_id': notice_id}, {'$set': update_data})
             

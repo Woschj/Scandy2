@@ -163,10 +163,15 @@ class StatisticsService:
     def get_notices() -> List[Dict[str, Any]]:
         """Lädt aktive Hinweise aus der Datenbank"""
         try:
-            notices = mongodb.find('homepage_notices', {'is_active': True})
+            from flask import g
+            current_dept = getattr(g, 'current_department', None)
+            query = {'is_active': True}
+            if current_dept:
+                query['department'] = current_dept
+            notices_list = list(mongodb.find('homepage_notices', query))
             # Sortiere nach Priorität und Erstellungsdatum
-            notices.sort(key=lambda x: (x.get('priority', 0), x.get('created_at', datetime.min)), reverse=True)
-            return notices
+            notices_list.sort(key=lambda x: (x.get('priority', 0), x.get('created_at', datetime.min)), reverse=True)
+            return notices_list
         except Exception as e:
             logger.error(f"Fehler beim Laden der Hinweise: {str(e)}")
             return [] 

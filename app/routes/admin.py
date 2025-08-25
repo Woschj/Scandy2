@@ -377,6 +377,20 @@ def dashboard():
         consumables_forecast = AdminDashboardService.get_consumables_forecast()
         consumable_trend = AdminDashboardService.get_consumable_trend()
         
+        # Starseiten-Hinweise (aktuelle Abteilung)
+        try:
+            from flask import g
+            from app.services.admin_notification_service import AdminNotificationService
+            current_department = getattr(g, 'current_department', None)
+            raw_notices = AdminNotificationService.get_all_notices(current_department)
+            # Nur aktive, nach Priorität/Datum sortiert
+            notices = [n for n in raw_notices if n.get('is_active', False)]
+            from datetime import datetime as _dt
+            notices.sort(key=lambda x: (int(x.get('priority', 0)), x.get('created_at') or _dt.min), reverse=True)
+        except Exception as _nerr:
+            logger.warning(f"Dashboard: Hinweise konnten nicht geladen werden: {_nerr}")
+            notices = []
+        
         # Hole zusätzliche Statistiken
         try:
             total_tools = mongodb.count_documents('tools', {'deleted': {'$ne': True}})
@@ -637,7 +651,8 @@ def dashboard():
                              consumable_stats=consumable_stats,
                              worker_stats=worker_stats,
                              tool_warnings=tool_warnings,
-                             consumable_warnings=consumable_warnings)
+                             consumable_warnings=consumable_warnings,
+                             notices=notices)
         
     except Exception as e:
         logger.error(f"Fehler beim Laden des Dashboards: {e}")
@@ -657,7 +672,8 @@ def dashboard():
                              consumable_stats={'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
                              worker_stats={'total': 0, 'by_department': []},
                              tool_warnings=[],
-                             consumable_warnings=[])
+                             consumable_warnings=[],
+                             notices=[])
 
 @bp.route('/manual-lending', methods=['GET', 'POST'])
 @mitarbeiter_required
@@ -2060,7 +2076,15 @@ def edit_user(user_id):
 @admin_required
 def notices():
     """Notizen-Übersicht"""
-    notices = AdminNotificationService.get_all_notices()
+    from flask import g
+    current_department = getattr(g, 'current_department', None)
+    notices = AdminNotificationService.get_all_notices(current_department)
+    # Konvertiere Felder für Template-Kompatibilität
+    for n in notices:
+        if '_id' in n and 'id' not in n:
+            n['id'] = n['_id']
+        if 'message' in n and 'content' not in n:
+            n['content'] = n['message']
     return render_template('admin/notices.html', notices=notices)
 
 @bp.route('/create_notice', methods=['GET', 'POST'])
@@ -2071,8 +2095,12 @@ def create_notice():
         title = request.form.get('title')
         content = request.form.get('content')
         notice_type = request.form.get('type', 'info')
+        from flask import g
+        current_department = getattr(g, 'current_department', None)
+        priority = request.form.get('priority')
+        is_active = True if request.form.get('is_active') in ('on', 'true', '1') else False
         
-        success, message = AdminNotificationService.create_notice(title, content, notice_type)
+        success, message = AdminNotificationService.create_notice(title, content, notice_type, department=current_department, priority=priority, is_active=is_active)
         
         if success:
             flash(message, 'success')
@@ -2091,8 +2119,12 @@ def edit_notice(id):
         title = request.form.get('title')
         content = request.form.get('content')
         notice_type = request.form.get('type', 'info')
+        from flask import g
+        current_department = getattr(g, 'current_department', None)
+        priority = request.form.get('priority')
+        is_active = True if request.form.get('is_active') in ('on', 'true', '1') else False
         
-        success, message = AdminNotificationService.update_notice(id, title, content, notice_type)
+        success, message = AdminNotificationService.update_notice(id, title, content, notice_type, department=current_department, priority=priority, is_active=is_active)
         
         if success:
             flash(message, 'success')
@@ -2102,6 +2134,11 @@ def edit_notice(id):
         return redirect(url_for('admin.notices'))
     
     notice = AdminNotificationService.get_notice_by_id(id)
+    if notice:
+        # Mapping für Template
+        notice['id'] = notice.get('_id') or id
+        if 'message' in notice:
+            notice['content'] = notice['message']
     if not notice:
         flash('Notiz nicht gefunden', 'error')
         return redirect(url_for('admin.notices'))

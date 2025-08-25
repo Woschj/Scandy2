@@ -533,34 +533,91 @@ class UnifiedBackupManager:
                     '/opt/local/bin/mongorestore'
                 ]
                 mongorestore_bin = next((p for p in common_paths if _is_exec(p)), None)
-            if not _is_exec(mongorestore_bin or ''):
-                err = (
-                    "mongorestore nicht gefunden. Bitte installieren Sie die MongoDB Database Tools "
-                    "(z. B. auf macOS: 'brew install mongodb/brew/mongodb-database-tools') oder setzen Sie "
-                    "die Umgebungsvariable MONGORESTORE_BIN auf den Pfad der mongorestore-Binärdatei."
-                )
-                print(f"  ❌ {err}")
-                return False
-            cmd = [
-                mongorestore_bin,
-                '--uri', mongo_uri,
-                '--gzip',
-                '--drop',  # Bestehende Collections löschen
-                '--nsExclude', f"{db_name}.users",  # Benutzer niemals überschreiben
-                str(mongodb_path / db_name)
-            ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            if result.returncode == 0:
-                print(f"  ✅ MongoDB erfolgreich wiederhergestellt")
-                return True
+            if _is_exec(mongorestore_bin or ''):
+                cmd = [
+                    mongorestore_bin,
+                    '--uri', mongo_uri,
+                    '--gzip',
+                    '--drop',  # Bestehende Collections löschen
+                    '--nsExclude', f"{db_name}.users",  # Benutzer niemals überschreiben
+                    str(mongodb_path / db_name)
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print(f"  ✅ MongoDB erfolgreich wiederhergestellt")
+                    return True
+                else:
+                    print(f"  ❌ MongoDB-Wiederherstellung fehlgeschlagen: {result.stderr}")
+                    # Fallback auf Python-Restore
+                    return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name)
             else:
-                print(f"  ❌ MongoDB-Wiederherstellung fehlgeschlagen: {result.stderr}")
-                return False
+                print("  ⚠️ mongorestore nicht gefunden – verwende Python-Fallback")
+                return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name)
                 
         except Exception as e:
             print(f"  ❌ Fehler bei MongoDB-Wiederherstellung: {e}")
+            return False
+
+    def _python_restore_mongodb(self, mongo_uri, db_name, dir_path) -> bool:
+        """Fallback: Stellt Collections aus BSON/BSON.GZ per PyMongo wieder her."""
+        try:
+            import gzip
+            from pymongo import MongoClient
+            from bson import decode_file_iter
+
+            client = MongoClient(mongo_uri)
+            db = client.get_database(db_name)
+
+            # Sammle .bson und .bson.gz Dateien
+            files = []
+            for p in (dir_path).iterdir():
+                name = p.name
+                if name.endswith('.metadata.json'):
+                    continue
+                if name.endswith('.bson') or name.endswith('.bson.gz'):
+                    files.append(p)
+
+            if not files:
+                print(f"  ❌ Keine BSON-Dateien in {dir_path} gefunden")
+                return False
+
+            for fpath in sorted(files):
+                cname = fpath.name
+                if cname.endswith('.bson.gz'):
+                    coll = cname[:-8]
+                elif cname.endswith('.bson'):
+                    coll = cname[:-5]
+                else:
+                    continue
+                if coll == 'users':
+                    print(f"  ↷ Überspringe Collection 'users'")
+                    continue
+                print(f"  → Stelle Collection: {coll}")
+                try:
+                    # Drop bestehende Collection
+                    db[coll].drop()
+                except Exception:
+                    pass
+                # Stream-basiertes Einlesen
+                opener = gzip.open if fpath.suffix == '.gz' or fpath.name.endswith('.gz') else open
+                inserted = 0
+                batch = []
+                batch_size = 1000
+                with opener(fpath, 'rb') as fh:
+                    for doc in decode_file_iter(fh):
+                        batch.append(doc)
+                        if len(batch) >= batch_size:
+                            db[coll].insert_many(batch, ordered=False)
+                            inserted += len(batch)
+                            batch.clear()
+                    if batch:
+                        db[coll].insert_many(batch, ordered=False)
+                        inserted += len(batch)
+                print(f"    ✓ {inserted} Dokumente in {coll} eingefügt")
+            print("  ✅ MongoDB per Python-Fallback wiederhergestellt")
+            return True
+        except Exception as e:
+            print(f"  ❌ Python-Fallback fehlgeschlagen: {e}")
             return False
     
     def _restore_media(self, media_path: Path) -> bool:

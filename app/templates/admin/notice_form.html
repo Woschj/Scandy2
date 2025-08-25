@@ -5,9 +5,10 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto">
-        <h1 class="text-2xl font-bold mb-6">
+        <h1 class="text-2xl font-bold mb-1">
             {{ 'Hinweis bearbeiten' if notice else 'Neuer Hinweis' }}
         </h1>
+        <p class="mb-6 text-sm opacity-70">Hinweis wird der aktuell gewählten Abteilung zugeordnet.</p>
 
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
@@ -27,7 +28,7 @@
                             <span class="label-text">Inhalt</span>
                         </label>
                         <textarea id="content" name="content" 
-                                  class="textarea textarea-bordered h-32" required>{{ notice.content if notice else '' }}</textarea>
+                                  class="textarea textarea-bordered h-40" required>{{ notice.content if notice else '' }}</textarea>
                     </div>
 
                     <div class="form-control mt-4">
