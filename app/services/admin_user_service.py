@@ -404,32 +404,42 @@ class AdminUserService:
                 logger.info(f"Mitarbeiter-Eintrag existiert bereits für: {user_data['username']}")
                 return True
             
-            # Kompaktes, scannerfreundliches Barcode-Format für Mitarbeiter (Code128 geeignet)
-            # Präfix 'W' + 7 Zeichen aus unmissverständlichem Alphabet
-            def _generate_compact_worker_barcode() -> str:
-                alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'  # ohne 0,1,I,O
+            # Neues, sprechendes Barcode-Schema: 1. Buchst. Vorname + 3 Buchst. Nachname + laufende 3-stellige Nummer bei Kollision
+            import unicodedata
+
+            def _to_ascii_upper(text: str) -> str:
+                if not text:
+                    return ''
+                mapping = {
+                    'ä': 'AE', 'ö': 'OE', 'ü': 'UE', 'ß': 'SS',
+                    'Ä': 'AE', 'Ö': 'OE', 'Ü': 'UE'
+                }
+                replaced = ''.join(mapping.get(ch, ch) for ch in text)
+                normalized = unicodedata.normalize('NFKD', replaced)
+                ascii_only = normalized.encode('ascii', 'ignore').decode('ascii')
+                return ascii_only.upper()
+
+            def _propose_worker_barcode(firstname: str, lastname: str) -> str:
+                fn = _to_ascii_upper((firstname or '').strip())
+                ln = _to_ascii_upper((lastname or '').strip())
+                base = f"{fn[:1]}{ln[:3]}" or 'W'
+                base = ''.join(ch for ch in base if ch.isalnum())[:8]
+                # Falls Basis schon eindeutig ist
+                if not mongodb.find_one('workers', {'barcode': base}):
+                    return base
+                # Sonst laufend nummerieren
+                number = 1
+                while number < 1000:
+                    cand = f"{base}{number:03d}"
+                    if not mongodb.find_one('workers', {'barcode': cand}):
+                        return cand
+                    number += 1
+                # Fallback auf zufälliges, kompaktes Format
+                alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
                 return 'W' + ''.join(random.choice(alphabet) for _ in range(6))
 
-            # Eindeutigen Barcode finden
-            max_tries = 50
-            barcode = None
-            for _ in range(max_tries):
-                candidate = _generate_compact_worker_barcode()
-                existing_barcode = mongodb.find_one('workers', {'barcode': candidate})
-                if not existing_barcode:
-                    barcode = candidate
-                    break
-            if not barcode:
-                # Fallback: nutze username-basierte Variante, notfalls mit Zähler
-                base = f"W{user_data['username'][:7].upper()}".replace('_','').replace('-','')
-                if len(base) < 4:
-                    base = (base + 'XXXX')[:4]
-                candidate = base
-                counter = 1
-                while mongodb.find_one('workers', {'barcode': candidate}):
-                    candidate = f"{base}{counter}"
-                    counter += 1
-                barcode = candidate
+            # Eindeutigen Barcode bestimmen
+            barcode = _propose_worker_barcode(user_data.get('firstname',''), user_data.get('lastname',''))
             
             # Erstelle Mitarbeiter-Daten (mit Legacy-Kompatibilität)
             worker_data = {

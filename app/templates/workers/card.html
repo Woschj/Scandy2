@@ -73,13 +73,14 @@
         JsBarcode('#barcode', value, {
           format: 'code128',
           displayValue: false,
-          width: 1.2,
+          width: 2,
           height: mmToPx(20),
           marginTop: mmToPx(0.5),
           marginBottom: mmToPx(0.5),
-          marginLeft: mmToPx(2),
-          marginRight: mmToPx(2),
-          lineColor: '#000'
+          marginLeft: mmToPx(5),
+          marginRight: mmToPx(5),
+          lineColor: '#000',
+          background: '#FFFFFF'
         });
       } catch(e) {}
     });
@@ -94,7 +95,7 @@
       const svgEl = document.getElementById('barcode');
       try {
         if (svgEl && svgEl.childNodes.length === 0) {
-          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, width: 1.2, height: mmToPx(20), marginTop: mmToPx(0.5), marginBottom: mmToPx(0.5), marginLeft: mmToPx(2), marginRight: mmToPx(2), lineColor:'#000'});
+          JsBarcode('#barcode', barcodeTxt, {format:'code128', displayValue:false, width: 2, height: mmToPx(20), marginTop: mmToPx(0.5), marginBottom: mmToPx(0.5), marginLeft: mmToPx(5), marginRight: mmToPx(5), lineColor:'#000', background:'#FFFFFF'});
         }
       } catch(e) {}
       const svgMarkup = svgEl ? svgEl.outerHTML : '';

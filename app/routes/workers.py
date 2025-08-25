@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+import logging
 from app.models.mongodb_models import MongoDBWorker
 from app.models.mongodb_database import mongodb, is_feature_enabled
 from app.utils.decorators import login_required, admin_required, mitarbeiter_required, teilnehmer_required
@@ -13,6 +14,8 @@ from bson import ObjectId
 from typing import Union
 
 bp = Blueprint('workers', __name__, url_prefix='/workers')
+
+logger = logging.getLogger(__name__)
 
 def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
     """
@@ -147,19 +150,48 @@ def add():
                     return render_template('workers/add.html', departments=departments, form_data=request.form)
             # Automatischen Barcode erzeugen, wenn leer
             if not barcode:
-                base = f"WRK_{(lastname or '').strip().upper()}_{(firstname or '').strip().upper()}" if (firstname or lastname) else "WRK"
-                base = ''.join(ch for ch in base if ch.isalnum() or ch == '_')[:40]
-                candidate = base or 'WRK'
-                counter = 1
-                while True:
-                    exists_tool = mongodb.find_one('tools', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
-                    exists_cons = mongodb.find_one('consumables', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
-                    exists_work = mongodb.find_one('workers', {'barcode': candidate, 'deleted': {'$ne': True}, 'department': department})
-                    if not (exists_tool or exists_cons or exists_work):
-                        barcode = candidate
-                        break
-                    counter += 1
-                    candidate = f"{base}_{counter}"
+                import unicodedata
+
+                def _to_ascii_upper(text: str) -> str:
+                    if not text:
+                        return ''
+                    # Deutsche Umlaute und ß ersetzen
+                    mapping = {
+                        'ä': 'AE', 'ö': 'OE', 'ü': 'UE', 'ß': 'SS',
+                        'Ä': 'AE', 'Ö': 'OE', 'Ü': 'UE'
+                    }
+                    replaced = ''.join(mapping.get(ch, ch) for ch in text)
+                    normalized = unicodedata.normalize('NFKD', replaced)
+                    ascii_only = normalized.encode('ascii', 'ignore').decode('ascii')
+                    return ascii_only.upper()
+
+                fn = _to_ascii_upper((firstname or '').strip())
+                ln = _to_ascii_upper((lastname or '').strip())
+                first_letter = fn[:1] if fn else ''
+                last_three = ln[:3] if ln else ''
+                base = f"{first_letter}{last_three}" or 'W'
+                # Nur A-Z und Ziffern erlauben
+                base = ''.join(ch for ch in base if ch.isalnum())
+                # Maximal sinnvolle Basislänge begrenzen
+                base = base[:8]
+
+                # Prüfe Uniqueness innerhalb der Abteilung: zunächst Basis ohne Nummer zulassen
+                candidate = base
+                def _exists_any(cand: str) -> bool:
+                    exists_tool = mongodb.find_one('tools', {'barcode': cand, 'deleted': {'$ne': True}, 'department': department})
+                    exists_cons = mongodb.find_one('consumables', {'barcode': cand, 'deleted': {'$ne': True}, 'department': department})
+                    exists_work = mongodb.find_one('workers', {'barcode': cand, 'deleted': {'$ne': True}, 'department': department})
+                    return bool(exists_tool or exists_cons or exists_work)
+
+                if _exists_any(candidate):
+                    # Laufende dreistellige Nummer anhängen bis eindeutig
+                    number = 1
+                    while number < 1000:
+                        candidate = f"{base}{number:03d}"
+                        if not _exists_any(candidate):
+                            break
+                        number += 1
+                barcode = candidate
             # Prüfe ob der Barcode bereits existiert
             existing_tool = mongodb.find_one('tools', {'barcode': barcode, 'deleted': {'$ne': True}, 'department': department})
             existing_consumable = mongodb.find_one('consumables', {'barcode': barcode, 'deleted': {'$ne': True}, 'department': department})
