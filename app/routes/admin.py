@@ -1809,7 +1809,7 @@ def add_user():
                                  departments=departments,
                                  user_allowed_departments=allowed_departments,
                                  user_default_department=default_department,
-                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')),
+                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(default_department),
                                  user_handlungsfelder=request.form.getlist('handlungsfelder'))
         
         # Automatische Passwort-Generierung wenn keines eingegeben wurde
@@ -1892,24 +1892,26 @@ def add_user():
                                  departments=departments,
                                  user_allowed_departments=allowed_departments,
                                  user_default_department=default_department,
-                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(session.get('department')),
+                                 handlungsfelder=handlungsfeld_service.get_handlungsfelder_for_department(default_department),
                                  user_handlungsfelder=handlungsfelder)
     
     # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
     from app.services.handlungsfeld_service import handlungsfeld_service
     current_department = session.get('department')
-    handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
-    
-    # Abteilungen aus Settings
     from app.services.admin_system_settings_service import AdminSystemSettingsService
     departments = AdminSystemSettingsService.get_departments_from_settings()
+    preferred_default = current_department or (departments[0] if departments else None)
+    handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(preferred_default)
+    
+    # Abteilungen aus Settings
+    # departments bereits geladen
     return render_template('admin/user_form.html', 
                          roles=['admin', 'mitarbeiter', 'anwender', 'teilnehmer'],
                          handlungsfelder=handlungsfelder,
                          user_handlungsfelder=[],
                          departments=departments,
                          user_allowed_departments=[],
-                         user_default_department='')
+                         user_default_department=(preferred_default or ''))
 
 @bp.route('/migrate_users_to_workers', methods=['POST'])
 @admin_required
@@ -1936,7 +1938,8 @@ def edit_user(user_id):
     if request.method == 'GET':
         # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
         from app.services.handlungsfeld_service import handlungsfeld_service
-        current_department = session.get('department')
+        # Für die Bearbeitung: Handlungsfelder der Standard-Abteilung des Benutzers zeigen
+        current_department = user.get('default_department') or session.get('department')
         handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
         
         user_handlungsfelder = user.get('handlungsfelder', [])
@@ -1968,8 +1971,9 @@ def edit_user(user_id):
                 flash(error, 'error')
             # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
             from app.services.handlungsfeld_service import handlungsfeld_service
-            current_department = session.get('department')
-            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
+            # Nach Validierungsfehlern: auf ausgewählte Standard-Abteilung aus dem Formular reagieren
+            form_default_department = request.form.get('default_department') or user.get('default_department') or session.get('department')
+            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(form_default_department)
             
             user_handlungsfelder = user.get('handlungsfelder', [])
             
@@ -2028,8 +2032,8 @@ def edit_user(user_id):
             flash(message, 'error')
             # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
             from app.services.handlungsfeld_service import handlungsfeld_service
-            current_department = session.get('department')
-            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
+            form_default_department = request.form.get('default_department') or user.get('default_department') or session.get('department')
+            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(form_default_department)
             
             user_handlungsfelder = user.get('handlungsfelder', [])
             
@@ -2044,9 +2048,9 @@ def edit_user(user_id):
         flash('Fehler beim Aktualisieren des Benutzers', 'error')
         # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
         from app.services.handlungsfeld_service import handlungsfeld_service
-        current_department = session.get('department')
-        if current_department:
-            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
+        form_default_department = request.form.get('default_department') or user.get('default_department') or session.get('department')
+        if form_default_department:
+            handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(form_default_department)
         else:
             # Fallback zu globalen Kategorien
             handlungsfelder = get_ticket_categories_from_settings()
@@ -2061,7 +2065,7 @@ def edit_user(user_id):
     
     # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
     from app.services.handlungsfeld_service import handlungsfeld_service
-    current_department = session.get('department')
+    current_department = user.get('default_department') or session.get('department')
     handlungsfelder = handlungsfeld_service.get_handlungsfelder_for_department(current_department)
     
     user_handlungsfelder = user.get('handlungsfelder', [])

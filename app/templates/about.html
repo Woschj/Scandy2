@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-8">
+    <div class="flex flex-col gap-8">
         <!-- Benutzerhandbuch – Inhaltsverzeichnis -->
         <div class="card bg-base-100 shadow-lg border border-base-300">
             <div class="card-body">
@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        <!-- Rollen & Berechtigungen -->
+        <!-- 1. Rollen & Berechtigungen -->
         <div id="manual-roles" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -67,19 +67,18 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-user-shield mr-2"></i>1. Rollen & Berechtigungen</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li><strong>Admin</strong>: Vollzugriff inkl. Systemeinstellungen, Benutzerverwaltung, Backups.</li>
-                    <li><strong>Mitarbeiter</strong>: Arbeiten innerhalb der eigenen Abteilung, keine Systemeinstellungen.</li>
-                    <li><strong>Anwender</strong>: Sicht/Bearbeitung in eigener Abteilung, keine Systemeinstellungen.</li>
-                    <li><strong>Teilnehmer</strong>: Eigene Tickets sehen/erstellen; Jobbörse sehen (falls aktiv).</li>
+                    <li><strong>Admin</strong>: System verwalten (Benutzer, Abteilungen, Feature‑Schalter, Backups). Sieht/bearbeitet alle Abteilungen.</li>
+                    <li><strong>Mitarbeiter</strong>: In der eigenen Abteilung arbeiten ({{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Tickets, Ausleihen/Rückgaben).</li>
+                    <li><strong>Anwender</strong>: Eingeschränkte Bedienung in der eigenen Abteilung (Ansichten, einfache Aktionen).</li>
+                    <li><strong>Teilnehmer</strong>: Eigene Tickets/Zeiterfassung (falls aktiviert). Kein Admin‑Zugriff.</li>
                 </ul>
-                <p class="text-sm opacity-75 mt-2">Hinweis: Abteilungszuordnung steuert Sicht und Kontext vieler Masken.</p>
+                <p class="text-sm opacity-75 mt-2"><strong>Wichtig:</strong> Die <em>Abteilung</em> steuert Sicht und Datenkontext. Oben im Admin‑Bereich immer die gewünschte Abteilung wählen.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Anmeldung & Navigation -->
+        <!-- 2. Anmeldung & Navigation -->
         <div id="manual-auth" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -87,7 +86,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-right-to-bracket mr-2"></i>2. Anmeldung & Navigation</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
                     <li><strong>Anmeldung</strong>: Benutzername/Passwort eingeben; bei Erfolg Navigation zu Dashboard.</li>
                     <li><strong>Abmeldung</strong>: Über den Abmelden-Link im Menü.</li>
@@ -97,7 +95,7 @@
             </div>
         </div>
 
-        <!-- Dashboard -->
+        <!-- 3. Dashboard -->
         <div id="manual-dashboard" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -105,20 +103,17 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-gauge mr-2"></i>3. Dashboard</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li>{{ app_labels.tools.name }}: Gesamt, Verfügbar, Ausgeliehen, Defekt; ggf. Überfällig.</li>
-                    <li>{{ app_labels.consumables.name }}: Sufficient/Warnung/Kritisch.</li>
-                    <li>Mitarbeiter (rollenabhängig): Anzahl, Verteilung nach Abteilungen.</li>
-                    <li>{{ app_labels.tickets.name }}: Offen, In Bearbeitung, Geschlossen.</li>
-                    <li>Warnungen: z. B. überfällige Ausleihen, kritische Bestände.</li>
-                    <li>Bestandsprognose (falls Daten vorhanden).</li>
+                    <li><strong>Kacheln</strong>: Kennzahlen zu {{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Mitarbeitern, {{ app_labels.tickets.name }}.</li>
+                    <li><strong>Überfällige Ausleihen</strong>: Liste mit Tagen „überfällig“ – direkt auf Werkzeug/Mitarbeiter klickbar.</li>
+                    <li><strong>Doppelte Barcodes</strong>: Hinweis, wenn Barcodes mehrfach vergeben sind. Barcodes in den Datensätzen korrigieren.</li>
+                    <li><strong>Wichtige Hinweise</strong>: Admin‑pflegbar pro Abteilung (Admin → Startseiten‑Hinweise).</li>
                 </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Werkzeuge -->
+        <!-- 4. Werkzeuge -->
         <div id="manual-tools" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -126,7 +121,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-screwdriver-wrench mr-2"></i>4. {{ app_labels.tools.name }}</h2>
                 <h3 class="font-semibold">Liste</h3>
                 <p class="text-sm opacity-75">Filter nach Kategorie/Standort/Status, Aktionen: Details, Löschen (Papierkorb über Admin).</p>
                 <h3 class="font-semibold mt-3">Anlegen</h3>
@@ -147,7 +141,7 @@
             </div>
         </div>
 
-        <!-- Verbrauchsmaterial -->
+        <!-- 5. Verbrauchsmaterial -->
         <div id="manual-consumables" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -155,14 +149,13 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-box-open mr-2"></i>5. {{ app_labels.consumables.name }}</h2>
                 <p class="text-sm opacity-75">Liste mit Filtern (Kategorie/Standort/Bestand); Anzeige Kritisch/Genug/Nicht verfügbar.</p>
                 <p class="text-sm opacity-75">Anlegen/Bearbeiten analog {{ app_labels.tools.name }}, Fokus auf Mengen/Mindestmenge.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Mitarbeiter -->
+        <!-- 6. Mitarbeiter -->
         <div id="manual-workers" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -170,7 +163,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-users mr-2"></i>6. Mitarbeiter</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
                     <li>Liste mit Abteilungsfilter; zeigt Barcode, E-Mail, Benutzer/Rolle, aktive Ausleihen.</li>
                     <li>Details: Benutzerkonto, aktive Ausleihen (Rückgabe-Button), Ausleihhistorie.</li>
@@ -179,7 +171,7 @@
             </div>
         </div>
 
-        <!-- Ausleihe & Rückgabe -->
+        <!-- 7. Ausleihe & Rückgabe -->
         <div id="manual-lending" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -187,22 +179,26 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-handshake mr-2"></i>7. Ausleihe & Rückgabe</h2>
-                <h3 class="font-semibold">Manuelle Ausleihe/Ausgabe</h3>
+                <h3 class="font-semibold">Quick‑Scan (Stationär)</h3>
                 <ol class="list-decimal list-inside text-sm space-y-1">
-                    <li>Artikel wählen ({{ app_labels.tools.name }} oder {{ app_labels.consumables.name }}).</li>
-                    <li>Mitarbeiter wählen.</li>
-                    <li>Für {{ app_labels.consumables.name }} Menge eingeben.</li>
-                    <li>Bestätigen.</li>
+                    <li>Menü „Quick‑Scan“ öffnen.</li>
+                    <li><strong>Ausleihe</strong>: Zuerst Mitarbeiter‑Barcode scannen, dann {{ app_labels.tools.name }}‑Barcode.</li>
+                    <li><strong>Rückgabe</strong>: {{ app_labels.tools.name }}‑Barcode scannen.</li>
                 </ol>
-                <p class="text-sm opacity-75 mt-2">Rückgabe auch in Mitarbeiter-Details oder Dashboard möglich.</p>
+                <h3 class="font-semibold mt-3">Manuelle Vorgänge</h3>
+                <ol class="list-decimal list-inside text-sm space-y-1">
+                    <li>Admin → „Manuelle Ausleihe/Ausgabe“.</li>
+                    <li>Aktion wählen (Ausleihen, Zurückgeben, Materialausgabe).</li>
+                    <li>Artikel und ggf. Mitarbeiter auswählen, Menge angeben → Ausführen.</li>
+                </ol>
+                <p class="text-sm opacity-75 mt-2">Rückgaben sind auch über Mitarbeiter‑Details möglich.</p>
                 </div>
             </div>
         </div>
 
         
 
-        <!-- Tickets -->
+        <!-- 8. Tickets -->
         <div id="manual-tickets" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -210,7 +206,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-ticket-alt mr-2"></i>9. {{ app_labels.tickets.name }}</h2>
                 <h3 class="font-semibold">Übersicht</h3>
                 <p class="text-sm opacity-75">Tabs: Offene, Zugewiesene/Meine & Abgeschlossene, optional Alle; Filter für Suche/Status/Priorität/Kategorie.</p>
                 <h3 class="font-semibold mt-3">Detail</h3>
@@ -222,7 +217,7 @@
             </div>
         </div>
 
-        <!-- Medienverwaltung -->
+        <!-- 9. Medienverwaltung -->
         <div id="manual-media" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -230,16 +225,16 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-images mr-2"></i>10. Medienverwaltung</h2>
-                <ul class="list-disc list-inside text-sm space-y-1">
-                    <li>{{ app_labels.tools.name }}: Upload, Vorschaubild setzen, Galerie, Löschen, PDF-Download.</li>
-                    <li>{{ app_labels.tickets.name }}: Upload, Galerie, Löschen, PDF-Download.</li>
-                </ul>
+                <ol class="list-decimal list-inside text-sm space-y-1">
+                    <li>Im Detail eines {{ app_labels.tools.name }} bzw. Tickets den Reiter „Medien“ öffnen.</li>
+                    <li>Dateien hochladen; Bilder erscheinen als Galerie.</li>
+                    <li>Ein Bild als Vorschaubild markieren.</li>
+                </ol>
                 </div>
             </div>
         </div>
 
-        <!-- Admin-Bereich (Übersicht) -->
+        <!-- 10. Admin-Bereich -->
         <div id="manual-admin" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -247,7 +242,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-tools mr-2"></i>11. Admin-Bereich</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                         <h3 class="font-semibold mb-1">Benutzerverwaltung</h3>
@@ -277,7 +271,7 @@
                 </div>
         </div>
 
-        <!-- Backups -->
+        <!-- 11. Backups -->
         <div id="manual-backups" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -285,17 +279,17 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-database mr-2"></i>12. Backups</h2>
-                <ul class="list-disc list-inside text-sm space-y-1">
-                    <li>Automatisches Backup: Status (Aktiv/Gestoppt), nächste Zeiten, Logs, wöchentliches Archiv per E-Mail.</li>
-                    <li>Konfiguration: tägliche Zeiten, wöchentliche Zeit, Ziel-E-Mail.</li>
-                    <li>JSON-Import: Altes JSON-Backup in Ziel-Abteilung importieren.</li>
-                </ul>
+                <ol class="list-decimal list-inside text-sm space-y-1">
+                    <li><strong>Auto‑Backups</strong>: Zeitpläne und Ziel‑E‑Mail im Admin‑Bereich konfigurieren.</li>
+                    <li><strong>Manuelles Backup</strong>: Über Admin erstellen und herunterladen.</li>
+                    <li><strong>Wiederherstellung</strong>: ZIP hochladen und Wiederherstellen starten.</li>
+                    <li><strong>JSON‑Import</strong>: Alte JSON‑Backups einer Abteilung zuordnen und importieren.</li>
+                </ol>
                 </div>
             </div>
         </div>
 
-        <!-- Optionale Features -->
+        <!-- 12. Optionale Features -->
         <div id="manual-optional" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -303,7 +297,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-star mr-2"></i>13. Optionale Features</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
                     <li><strong>Kantinenplan</strong>: Verwaltung/Anzeige von Mahlzeiten (bei aktivem Feature).</li>
                     <li><strong>Jobbörse</strong>: Stellenangebote und Verwaltung (bei aktivem Feature).</li>
@@ -313,7 +306,7 @@
             </div>
         </div>
 
-        <!-- Tipps & Fehlerbehebung -->
+        <!-- 13. Tipps & Fehlerbehebung -->
         <div id="manual-tips" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -321,7 +314,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-lightbulb mr-2"></i>14. Tipps & Fehlerbehebung</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
                     <li><strong>Barcodes</strong>: Eindeutig halten; Duplikate werden im Dashboard gewarnt.</li>
                     <li><strong>Berechtigungen</strong>: Abteilung/Rolle und Feature-Schalter prüfen, wenn etwas fehlt.</li>
@@ -331,7 +323,7 @@
             </div>
         </div>
 
-        <!-- Glossar -->
+        <!-- 14. Glossar -->
         <div id="manual-glossary" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
@@ -339,7 +331,6 @@
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-book-open mr-2"></i>15. Glossar</h2>
                 <ul class="list-disc list-inside text-sm space-y-1">
                     <li><strong>Abteilung</strong>: Datenraum; filtert Sicht und Aktionen.</li>
                     <li><strong>Handlungsfeld</strong>: Ticket-Kategorie zur Steuerung der Sichtbarkeit.</li>
@@ -350,637 +341,6 @@
             </div>
         </div>
         
-        <!-- System-Übersicht -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" checked />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-info-circle mr-2"></i>
-                Was ist Scandy?
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-base">
-                        Scandy ist ein webbasiertes Verwaltungssystem für moderne Organisationen. 
-                        Das System ermöglicht die umfassende Verwaltung von Inventar, Verbrauchsmaterialien, Personal und Arbeitsaufträgen.
-                    </p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                        <div class="card bg-primary/10 border border-primary/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-tools text-3xl text-primary mb-2"></i>
-                                <h4 class="font-bold">Inventarverwaltung</h4>
-                                <p class="text-sm opacity-75">Barcode-basierte Verwaltung von Werkzeugen und Materialien</p>
-                            </div>
-                        </div>
-                        <div class="card bg-secondary/10 border border-secondary/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-box text-3xl text-secondary mb-2"></i>
-                                <h4 class="font-bold">Materialverwaltung</h4>
-                                <p class="text-sm opacity-75">Bestandsführung und Mindestmengen</p>
-                            </div>
-                        </div>
-                        <div class="card bg-accent/10 border border-accent/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-tasks text-3xl text-accent mb-2"></i>
-                                <h4 class="font-bold">Aufgabenverwaltung</h4>
-                                <p class="text-sm opacity-75">Tickets und Arbeitsaufträge</p>
-                            </div>
-                        </div>
-                        <div class="card bg-info/10 border border-info/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-users text-3xl text-info mb-2"></i>
-                                <h4 class="font-bold">Mitarbeiterverwaltung</h4>
-                                <p class="text-sm opacity-75">Benutzerprofile und Zeiterfassung</p>
-                            </div>
-                        </div>
-                        <div class="card bg-success/10 border border-success/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-briefcase text-3xl text-success mb-2"></i>
-                                <h4 class="font-bold">Jobbörse</h4>
-                                <p class="text-sm opacity-75">Stellenausschreibungen verwalten</p>
-                            </div>
-                        </div>
-                        <div class="card bg-warning/10 border border-warning/20">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-alt text-3xl text-warning mb-2"></i>
-                                <h4 class="font-bold">Wochenberichte</h4>
-                                <p class="text-sm opacity-75">Digitale Berichtsheft-Verwaltung</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 1: Stammdaten pflegen (Admin) -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-cogs mr-2"></i>
-                Schritt 1: Stammdaten pflegen (Admin-Bereich)
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Bevor Sie mit der Nutzung beginnen, müssen einige grundlegende Einstellungen vorgenommen werden.</p>
-
-                    <div class="space-y-6">
-                        <!-- Kategorien verwalten -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-tags mr-2"></i>Kategorien verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Erstellen Sie Kategorien für Ihre Werkzeuge und Materialien (z.B. "Handwerkzeuge", "Elektrowerkzeuge", "Verbrauchsmaterial").</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum <strong>Dashboard</strong>.</li>
-                                <li>Suchen Sie den Abschnitt "Kategorien".</li>
-                                <li>Geben Sie den Namen der neuen Kategorie in das Eingabefeld ein.</li>
-                                <li>Klicken Sie auf den Button <strong>"Hinzufügen"</strong>.</li>
-                                <li>Zum Löschen auf das Mülleimer-Icon klicken (nur möglich, wenn die Kategorie nicht mehr verwendet wird).</li>
-                            </ul>
-                        </div>
-
-                        <!-- Standorte verwalten -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-map-marker-alt mr-2"></i>Standorte verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Definieren Sie Lagerorte für Ihre Werkzeuge und Materialien (z.B. "Werkzeugraum", "Lager", "Werkstatt").</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum <strong>Dashboard</strong>.</li>
-                                <li>Suchen Sie den Abschnitt "Standorte".</li>
-                                <li>Geben Sie den Namen des neuen Standorts in das Eingabefeld ein.</li>
-                                <li>Klicken Sie auf den Button <strong>"Hinzufügen"</strong>.</li>
-                                <li>Zum Löschen auf das Mülleimer-Icon klicken (nur möglich, wenn der Standort nicht mehr verwendet wird).</li>
-                            </ul>
-                        </div>
-
-                        <!-- Abteilungen verwalten -->
-                        <div>
-                            <h4 class="font-bold mb-1">Abteilungen verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Ordnen Sie Mitarbeiter Abteilungen zu (z.B. "Elektro", "Sanitär", "Verwaltung").</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum <strong>Dashboard</strong>.</li>
-                                <li>Suchen Sie den Abschnitt "Abteilungen".</li>
-                                <li>Geben Sie den Namen der neuen Abteilung in das Eingabefeld ein.</li>
-                                <li>Klicken Sie auf den Button <strong>"Hinzufügen"</strong>.</li>
-                                <li>Zum Löschen auf das Mülleimer-Icon klicken (nur möglich, wenn die Abteilung keinem Mitarbeiter mehr zugewiesen ist).</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 2: Kerndaten hinzufügen -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-             <input type="checkbox" class="peer" />
-             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-database mr-2"></i>
-                Schritt 2: Mitarbeiter, {{ app_labels.tools.name }} & {{ app_labels.consumables.name }} anlegen
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Nachdem die Stammdaten gepflegt sind, können Sie die eigentlichen Inventar- und Personendaten erfassen.</p>
-
-                    <div class="space-y-6">
-                        <!-- Mitarbeiter hinzufügen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-users mr-2"></i>Mitarbeiter hinzufügen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erfassen Sie alle Personen, die Werkzeuge ausleihen oder Material entnehmen sollen.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>Mitarbeiter</strong>.</li>
-                                <li>Klicken Sie auf den Button <strong>"Neuer Mitarbeiter"</strong>.</li>
-                                <li>Füllen Sie die Felder aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Vorname & Nachname:</strong> Selbsterklärend.</li>
-                                        <li><strong>Barcode:</strong> <span class="font-bold text-error">Wichtig!</span> Scannen Sie den Barcode vom Mitarbeiterausweis oder geben Sie die Nummer manuell ein. Dieser Barcode wird beim Scannen verwendet. Er muss eindeutig sein.</li>
-                                        <li><strong>Abteilung:</strong> Wählen Sie eine der zuvor angelegten Abteilungen aus.</li>
-                                        <li><strong>Email (Optional):</strong> Für Benachrichtigungen.</li>
-                                    </ul>
-                                </li>
-                                <li>Klicken Sie auf <strong>Hinzufügen</strong>.</li>
-                            </ul>
-                        </div>
-                        
-                        <!-- Werkzeuge hinzufügen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-tools mr-2"></i>{{ app_labels.tools.name }} hinzufügen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erfassen Sie alle {{ app_labels.tools.name }}, die ausgeliehen werden können.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>{{ app_labels.tools.name }}</strong>.</li>
-                                <li>Klicken Sie auf den Button <strong>"{{ app_labels.tools.name }} hinzufügen"</strong>.</li>
-                                <li>Füllen Sie die Felder aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Name:</strong> Eindeutige Bezeichnung (z.B. "Bohrmaschine Bosch GSB 18V").</li>
-                                        <li><strong>Barcode:</strong> <span class="font-bold text-error">Wichtig!</span> Scannen oder geben Sie den Barcode ein, der am {{ app_labels.tools.name }} angebracht ist. Dieser Barcode dient zur Identifikation. Er muss eindeutig sein.</li>
-                                        <li><strong>Kategorie:</strong> Wählen Sie eine passende, zuvor angelegte Kategorie.</li>
-                                        <li><strong>Standort:</strong> Wählen Sie den Lagerort aus.</li>
-                                        <li><strong>Status:</strong> Wählen Sie "Verfügbar" oder "Defekt".</li>
-                                        <li><strong>Beschreibung (Optional):</strong> Weitere Details.</li>
-                                    </ul>
-                                </li>
-                                <li>Klicken Sie auf <strong>Hinzufügen</strong>.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Verbrauchsmaterial hinzufügen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-box mr-2"></i>{{ app_labels.consumables.name }} hinzufügen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erfassen Sie alle {{ app_labels.consumables.name }}.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>{{ app_labels.consumables.name }}</strong>.</li>
-                                <li>Klicken Sie auf den Button <strong>"{{ app_labels.consumables.name }} hinzufügen"</strong>.</li>
-                                <li>Füllen Sie die Felder aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Name:</strong> Eindeutige Bezeichnung (z.B. "Schrauben Senkkopf 4x40mm").</li>
-                                        <li><strong>Barcode:</strong> <span class="font-bold text-error">Wichtig!</span> Scannen oder geben Sie den Barcode ein, der auf der Verpackung oder dem Regalplatz angebracht ist. Dieser Barcode dient zur Identifikation. Er muss eindeutig sein.</li>
-                                        <li><strong>Kategorie:</strong> Wählen Sie eine passende, zuvor angelegte Kategorie.</li>
-                                        <li><strong>Standort:</strong> Wählen Sie den Lagerort aus.</li>
-                                        <li><strong>Menge:</strong> Der aktuelle Lagerbestand.</li>
-                                        <li><strong>Mindestmenge:</strong> Wird dieser Wert unterschritten, erscheint eine Warnung im Dashboard.</li>
-                                        <li><strong>Beschreibung (Optional):</strong> Weitere Details.</li>
-                                    </ul>
-                                </li>
-                                <li>Klicken Sie auf <strong>Hinzufügen</strong>.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 3: Kernprozesse -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-barcode mr-2"></i>
-                Schritt 3: Scannen & Manuelle Vorgänge
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Nach der Systemeinrichtung können die Hauptprozesse durchgeführt werden.</p>
-
-                    <div class="space-y-6">
-                        <!-- Quick-Scan -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-bolt mr-2"></i>Quick-Scan</h4>
-                            <p class="text-sm mb-2 opacity-75">Ausleihen, Rückgaben und Materialentnahmen über Barcode-Scanner.</p>
-                            <ol class="list-decimal list-inside text-sm space-y-2">
-                                <li>Öffnen Sie <strong>Quick-Scan</strong> über die Navigation.</li>
-                                <li>Das System ist bereit für den ersten Scan.</li>
-                                <li>
-                                    <strong>{{ app_labels.tools.name }} Ausleihe/Rückgabe:</strong>
-                                    <ul class="list-disc list-inside ml-4">
-                                        <li>Scannen Sie den Barcode des {{ app_labels.tools.name }}.</li>
-                                        <li>Das System zeigt Details an und prüft den Status.</li>
-                                        <li>Klicken Sie auf <strong>"Ausleihen/Zurückgeben"</strong>.</li>
-                                        <li>Bei Ausleihe: Scannen Sie den Barcode des Mitarbeiterausweises.</li>
-                                        <li>Die Aktion wird gespeichert.</li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <strong>{{ app_labels.consumables.name }} Entnahme:</strong>
-                                    <ul class="list-disc list-inside ml-4">
-                                        <li>Scannen Sie den Barcode des {{ app_labels.consumables.name }}.</li>
-                                        <li>Das System zeigt Details und Bestand an.</li>
-                                        <li>Klicken Sie auf <strong>"{{ app_labels.consumables.name }} nutzen"</strong>.</li>
-                                        <li>Geben Sie die Menge ein, die Sie entnehmen möchten.</li>
-                                        <li>Scannen Sie den Barcode des Mitarbeiterausweises.</li>
-                                        <li>Die Entnahme wird gespeichert und der Bestand reduziert.</li>
-                                    </ul>
-                                </li>
-                            </ol>
-                        </div>
-
-                        <!-- Manuelle Ausleihe/Ausgabe -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-edit mr-2"></i>Manuelle Ausleihe / Ausgabe</h4>
-                            <p class="text-sm mb-2 opacity-75">Alternative, wenn der Scanner nicht funktioniert oder für spezielle Korrekturen.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zu <strong>Admin</strong> -> <strong>Manuelle Ausleihe/Ausgabe</strong>.</li>
-                                <li>Wählen Sie die Aktion (<strong>Ausleihen</strong>, <strong>Zurückgeben</strong> oder <strong>Materialausgabe</strong>).</li>
-                                <li>Wählen Sie das entsprechende <strong>Werkzeug</strong> oder <strong>Material</strong> aus der Liste aus.</li>
-                                <li>Wählen Sie den <strong>Mitarbeiter</strong> aus (nur bei Ausleihe/Materialausgabe nötig).</li>
-                                <li>Geben Sie bei Materialausgabe die <strong>Menge</strong> an.</li>
-                                <li>Klicken Sie auf den Button <strong>"Aktion durchführen"</strong>.</li>
-                                <li>Eine Übersicht der letzten manuellen Vorgänge und aktuellen Ausleihen wird angezeigt.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 4: Aufgabenverwaltung & Tickets -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-tasks mr-2"></i>
-                Schritt 4: Ticket-System & Aufgabenverwaltung
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Das Ticket-System ermöglicht die Erstellung und Verwaltung von Arbeitsaufträgen.</p>
-
-                    <div class="space-y-6">
-                        <!-- Tickets erstellen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-plus mr-2"></i>Tickets erstellen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erstellen Sie neue Arbeitsaufträge.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>Tickets</strong>.</li>
-                                <li>Klicken Sie auf den Button <strong>"Neues Ticket"</strong>.</li>
-                                <li>Füllen Sie die Felder aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Titel:</strong> Kurze Beschreibung der Aufgabe.</li>
-                                        <li><strong>Beschreibung:</strong> Detaillierte Anweisungen und Informationen.</li>
-                                        <li><strong>Typ:</strong> Allgemein, Auftrag oder Materialbedarf.</li>
-                                        <li><strong>Zugewiesener Mitarbeiter:</strong> Wählen Sie den verantwortlichen Mitarbeiter aus.</li>
-                                        <li><strong>Priorität:</strong> Niedrig, Mittel oder Hoch.</li>
-                                        <li><strong>Fälligkeitsdatum:</strong> Wann die Aufgabe erledigt sein soll.</li>
-                                        <li><strong>Status:</strong> Offen, zugewiesen, in Bearbeitung oder erledigt.</li>
-                                    </ul>
-                                </li>
-                                <li>Klicken Sie auf <strong>Erstellen</strong>.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Ticket-Verwaltung -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-edit mr-2"></i>Tickets verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Verfolgen Sie den Fortschritt und aktualisieren Sie den Status.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Ticket-Liste anzeigen:</strong> Über den Menüpunkt <strong>Tickets</strong> sehen Sie alle Tickets in einer Tabelle.</li>
-                                <li><strong>Status ändern:</strong> Klicken Sie auf ein Ticket, um Details zu sehen und den Status zu aktualisieren.</li>
-                                <li><strong>Tickets bearbeiten:</strong> Ändern Sie Titel, Beschreibung, Zuweisung oder Fälligkeitsdatum.</li>
-                                <li><strong>Nachrichten hinzufügen:</strong> Kommunizieren Sie direkt im Ticket mit Kollegen.</li>
-                                <li><strong>Notizen & Kommentare:</strong> Ergänzen Sie wichtige Informationen zum Ticket.</li>
-                                <li><strong>Medien anhängen:</strong> Laden Sie Fotos, Dokumente oder andere Dateien zum Ticket hoch.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Ticket-Historie -->
-                        <div class="bg-primary/10 p-4 rounded-lg border border-primary/20">
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-history mr-2 text-primary"></i>Ticket-Historie</h4>
-                            <p class="text-sm mb-2 opacity-75">Jede Änderung an einem Ticket wird automatisch protokolliert.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Automatische Protokollierung:</strong> Status-Änderungen, Zuweisungen, Nachrichten, Medien-Uploads und alle anderen Änderungen werden erfasst.</li>
-                                <li><strong>Transparenz:</strong> Nachverfolgung aller Änderungen mit Zeitstempel und Benutzer.</li>
-                                <li><strong>Visuelle Timeline:</strong> Darstellung mit Icons und Zeitstempeln.</li>
-                                <li><strong>Dokumentation:</strong> Für Qualitätsmanagement und Nachverfolgung.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Auftragsdetails -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-clipboard-list mr-2"></i>Auftragsdetails & Materiallisten</h4>
-                            <p class="text-sm mb-2 opacity-75">Für komplexe Aufträge können detaillierte Informationen hinterlegt werden.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Auftragsdetails:</strong> Zusätzliche Informationen wie Deadline, Fertigstellungstermin und erweiterte Beschreibungen.</li>
-                                <li><strong>Materialliste:</strong> Benötigte Materialien mit Mengen und Prioritäten definieren.</li>
-                                <li><strong>Bereichszuweisung:</strong> Tickets verschiedenen Arbeitsbereichen zuordnen.</li>
-                                <li><strong>Zeitschätzung:</strong> Geschätzte Arbeitszeit für Planung.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Öffentliches Anfrageformular -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-globe mr-2"></i>Öffentliches Anfrageformular</h4>
-                            <p class="text-sm mb-2 opacity-75">Mitarbeiter können über ein öffentliches Formular Ticket-Anfragen einreichen.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Anfrage einreichen:</strong> Über das öffentliche Formular können Ticket-Anfragen ohne Anmeldung eingereicht werden.</li>
-                                <li><strong>Anfragefelder:</strong> Name, Kontaktdaten, Beschreibung der gewünschten Aufgabe und Priorität.</li>
-                                <li><strong>Automatische Erstellung:</strong> Eingereichte Anfragen werden automatisch als neue Tickets im System erstellt.</li>
-                                <li><strong>Bearbeitung:</strong> Die erstellten Tickets können von Mitarbeitern im System bearbeitet und zugewiesen werden.</li>
-                                <li><strong>Statusverfolgung:</strong> Anfragende können den Status ihrer Anfrage verfolgen.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 5: Jobbörse -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-briefcase mr-2"></i>
-                Schritt 5: Jobbörse
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Die Jobbörse ermöglicht die Verwaltung von Stellenausschreibungen.</p>
-
-                    <div class="space-y-6">
-                        <!-- Stellenausschreibungen erstellen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-plus-circle mr-2"></i>Stellenausschreibungen erstellen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erstellen Sie neue Jobangebote.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>Jobbörse</strong>.</li>
-                                <li>Klicken Sie auf <strong>"Neue Stellenausschreibung"</strong>.</li>
-                                <li>Füllen Sie die Job-Details aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Stellentitel:</strong> Bezeichnung der Position.</li>
-                                        <li><strong>Unternehmen:</strong> Arbeitgeber oder Organisation.</li>
-                                        <li><strong>Standort:</strong> Arbeitsort der Stelle.</li>
-                                        <li><strong>Anstellungsart:</strong> Vollzeit, Teilzeit, Praktikum, etc.</li>
-                                        <li><strong>Branche:</strong> Zugehöriger Wirtschaftsbereich.</li>
-                                        <li><strong>Beschreibung:</strong> Stellenbeschreibung und Anforderungen.</li>
-                                        <li><strong>Kontaktdaten:</strong> Bewerbungsinformationen.</li>
-                                    </ul>
-                                </li>
-                                <li>Veröffentlichen Sie die Ausschreibung.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Job-Verwaltung -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-cog mr-2"></i>Stellenausschreibungen verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Bearbeiten und verwalten Sie bestehende Jobangebote.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Übersicht:</strong> Alle Stellenausschreibungen in einer filterbaren Liste.</li>
-                                <li><strong>Status-Verwaltung:</strong> Jobs als aktiv, inaktiv oder abgelaufen markieren.</li>
-                                <li><strong>Bearbeitung:</strong> Job-Details jederzeit anpassen und aktualisieren.</li>
-                                <li><strong>Suchfunktion:</strong> Jobs nach Titel, Unternehmen, Standort oder Branche filtern.</li>
-                                <li><strong>Statistiken:</strong> Überblick über Anzahl der Jobs nach Branchen und Status.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Öffentliche Jobbörse -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-eye mr-2"></i>Öffentliche Ansicht</h4>
-                            <p class="text-sm mb-2 opacity-75">Stellensuchende können die Jobbörse einsehen.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Suche:</strong> Filter nach Standort, Branche, Anstellungsart.</li>
-                                <li><strong>Detailansicht:</strong> Stellenbeschreibung mit Bewerbungsinformationen.</li>
-                                <li><strong>Pagination:</strong> Navigation bei vielen Stellenanzeigen.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 6: Wochenberichtssystem -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-calendar-week mr-2"></i>
-                Schritt 6: Wochenberichtssystem
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Das Wochenberichtssystem ermöglicht die Erfassung von wöchentlichen Arbeitszeiten und Tätigkeiten.</p>
-
-                    <div class="space-y-6">
-                        <!-- Wochenbericht erstellen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-file-alt mr-2"></i>Wochenbericht erstellen</h4>
-                            <p class="text-sm mb-2 opacity-75">Erstellen Sie einen neuen Wochenbericht.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Navigieren Sie zum Menüpunkt <strong>Wochenberichte</strong>.</li>
-                                <li>Klicken Sie auf den Button <strong>"Neuer Wochenbericht"</strong>.</li>
-                                <li>Füllen Sie die Felder aus:
-                                    <ul class="list-circle list-inside ml-4">
-                                        <li><strong>Woche:</strong> Wählen Sie die Kalenderwoche aus.</li>
-                                        <li><strong>Jahr:</strong> Das entsprechende Jahr.</li>
-                                        <li><strong>Arbeitszeiten:</strong> Erfassen Sie für jeden Tag die Arbeitszeiten (Start, Ende).</li>
-                                        <li><strong>Tätigkeiten:</strong> Beschreiben Sie die durchgeführten Arbeiten pro Tag.</li>
-                                    </ul>
-                                </li>
-                                <li>Klicken Sie auf <strong>Speichern</strong>.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Wochenberichte verwalten -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-folder-open mr-2"></i>Wochenberichte verwalten</h4>
-                            <p class="text-sm mb-2 opacity-75">Verwalten und bearbeiten Sie bestehende Wochenberichte.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Berichte anzeigen:</strong> Über den Menüpunkt <strong>Wochenberichte</strong> sehen Sie alle Ihre Berichte.</li>
-                                <li><strong>Automatische Erstellung:</strong> Für die aktuelle Woche wird automatisch ein leerer Bericht angelegt.</li>
-                                <li><strong>Bericht bearbeiten:</strong> Klicken Sie auf einen Bericht, um ihn zu bearbeiten.</li>
-                                <li><strong>Status-Übersicht:</strong> Sehen Sie auf einen Blick, welche Tage vollständig ausgefüllt sind.</li>
-                                <li><strong>Bericht herunterladen:</strong> Laden Sie Wochenberichte als Word-Dokument herunter.</li>
-                                <li><strong>Benachrichtigungen:</strong> Das System zeigt Ihnen fehlende Einträge in der Navigation an.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Berechtigungen -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-user-check mr-2"></i>Berechtigungen</h4>
-                            <p class="text-sm mb-2 opacity-75">Das Wochenbericht-Feature kann pro Benutzer aktiviert oder deaktiviert werden.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Admin-Kontrolle:</strong> Administratoren können das Feature für einzelne Benutzer ein- oder ausschalten.</li>
-                                <li><strong>Rollenberechtigung:</strong> Normalerweise für Mitarbeiter und Teilnehmer verfügbar.</li>
-                                <li><strong>Eigene Berichte:</strong> Benutzer sehen nur ihre eigenen Wochenberichte.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schritt 7: Backup & System -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-shield-alt mr-2"></i>
-                Schritt 7: Backup-System & Systemverwaltung
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <p class="mb-4 text-sm opacity-75">Das Backup-System ermöglicht die Datensicherung über die Web-Oberfläche.</p>
-
-                    <div class="space-y-6">
-                        <!-- Backup System -->
-                        <div class="bg-success/10 p-4 rounded-lg border border-success/20">
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-archive mr-2 text-success"></i>Backup-System</h4>
-                            <p class="text-sm mb-2 opacity-75">Alle Backups werden im ZIP-Format erstellt.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>ZIP-Format:</strong> Alle Backups sind komprimierte ZIP-Archive.</li>
-                                <li><strong>Datenbank-Backup:</strong> Vollständige MongoDB-Sicherung.</li>
-                                <li><strong>Medien-Backup:</strong> Optional können alle Medien (Fotos, Dokumente) mit gesichert werden.</li>
-                                <li><strong>Konfiguration:</strong> Wichtige Systemdateien werden automatisch mit einbezogen.</li>
-                                <li><strong>Kompatibilität:</strong> Alte JSON-Backups können weiterhin importiert werden.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Backup-Verwaltung -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-cogs mr-2"></i>Backup-Verwaltung</h4>
-                            <p class="text-sm mb-2 opacity-75">Erstellen, verwalten und wiederherstellen Sie Backups über die Web-Oberfläche.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>Manuelles Backup:</strong> Erstellen Sie jederzeit ein Backup über die Admin-Oberfläche.</li>
-                                <li><strong>Automatische Backups:</strong> Tägliche automatische Sicherungen im Hintergrund.</li>
-                                <li><strong>Backup-Liste:</strong> Übersicht aller verfügbaren Backups mit Größe und Erstellungsdatum.</li>
-                                <li><strong>Download:</strong> Backups direkt über die Web-Oberfläche herunterladen.</li>
-                                <li><strong>Wiederherstellen:</strong> Backups mit einem Klick wiederherstellen.</li>
-                                <li><strong>Upload:</strong> Externe Backup-Dateien hochladen und wiederherstellen.</li>
-                                <li><strong>Löschung:</strong> Alte oder nicht benötigte Backups entfernen.</li>
-                            </ul>
-                        </div>
-
-                        <!-- System-Überwachung -->
-                        <div>
-                            <h4 class="font-bold mb-1 flex items-center"><i class="fas fa-chart-line mr-2"></i>System-Überwachung</h4>
-                            <p class="text-sm mb-2 opacity-75">Überwachen Sie die Systemleistung.</p>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li><strong>System-Status:</strong> Überprüfung der wichtigsten Systemkomponenten.</li>
-                                <li><strong>Backup-Status:</strong> Übersicht über automatische Backup-Läufe.</li>
-                                <li><strong>Speicherplatz:</strong> Monitoring der verfügbaren Festplattenkapazität.</li>
-                                <li><strong>Logs:</strong> Zugriff auf System- und Anwendungslogs über die Web-Oberfläche.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Weitere Features -->
-        <div class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
-            <input type="checkbox" class="peer" />
-            <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-star mr-2"></i>
-                Weitere Features & Funktionen
-            </div>
-            <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
-                <div class="card-body">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Benutzerverwaltung -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-users-cog mr-2"></i>Benutzerverwaltung</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Rollenbasierte Berechtigungen (Admin, Mitarbeiter, Anwender, Teilnehmer)</li>
-                                <li>Benutzerprofile mit Kontaktdaten</li>
-                                <li>Passwort-Reset über Admin-Oberfläche</li>
-                                <li>Feature-Aktivierung pro Benutzer (z.B. Wochenberichte)</li>
-                                <li>Session-Management</li>
-                            </ul>
-                        </div>
-
-                        <!-- Dashboard -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-tachometer-alt mr-2"></i>Dashboard & Übersichten</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Übersichtsdashboard mit wichtigsten KPIs</li>
-                                <li>Schnellzugriff auf häufig verwendete Funktionen</li>
-                                <li>Benachrichtigungen und Warnungen</li>
-                                <li>Systemstatus und Übersichten</li>
-                                <li>Benutzeraktivität</li>
-                            </ul>
-                        </div>
-
-                        <!-- Analytics & Statistiken -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-chart-bar mr-2"></i>Statistiken & Analytics</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Ausleih-Statistiken und Trends</li>
-                                <li>Materialverbrauch und Bestandsanalysen</li>
-                                <li>Ticket-Status und Arbeitsauslastung</li>
-                                <li>Zeiterfassung und Produktivitätsmessungen</li>
-                                <li>Datenexport für weiterführende Analysen</li>
-                            </ul>
-                        </div>
-
-                        <!-- E-Mail-System -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-envelope mr-2"></i>E-Mail-Benachrichtigungen</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>E-Mail-Benachrichtigungen für Tickets (optional, wenn konfiguriert)</li>
-                                <li>Erinnerungen für überfällige Aufgaben</li>
-                            </ul>
-                        </div>
-
-                        <!-- Integration -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-plug mr-2"></i>Integration & Export</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>RESTful API für externe Integrationen</li>
-                                <li>JSON-Export/Import für Datenaustauch</li>
-                                <li>Barcode-Scanner Integration</li>
-                                <li>Word-Export für Wochenberichte</li>
-                            </ul>
-                        </div>
-
-                        <!-- Sicherheit -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-lock mr-2"></i>Sicherheit</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>Verschlüsselte Passwort-Speicherung</li>
-                                <li>Session-basierte Authentifizierung</li>
-                                <li>Audit-Logs für kritische Aktionen</li>
-                                <li>Rollenbasierte Zugriffskontrolle</li>
-                            </ul>
-                        </div>
-
-                        <!-- Performance -->
-                        <div>
-                            <h4 class="font-bold mb-2 flex items-center"><i class="fas fa-rocket mr-2"></i>Performance</h4>
-                            <ul class="list-disc list-inside text-sm space-y-1">
-                                <li>MongoDB für optimale Datenbankperformance</li>
-                                <li>Caching für häufig abgerufene Daten</li>
-                                <li>Optimierte Datenbank-Indizierung</li>
-                                <li>Lazy Loading für große Datensätze</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Abschluss -->
-        <div class="text-center mt-8">
-            <div class="card bg-base-200 border border-base-300">
-                <div class="card-body">
-                    <p class="opacity-75 mb-4">
-                        Damit sind die grundlegenden Schritte zur Einrichtung und Bedienung von Scandy abgedeckt.
-                    </p>
-                    <p class="text-sm opacity-60">
-                        Erkunden Sie die weiteren Menüpunkte für Detailansichten, Verläufe und zusätzliche Admin-Funktionen. 
-                        Bei Fragen wenden Sie sich an Ihren Systemadministrator.
-                    </p>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %} 

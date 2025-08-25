@@ -195,7 +195,7 @@
                         Benutzer können nur Tickets aus ihren zugewiesenen Handlungsfeldern einsehen.
                     </p>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div id="handlungsfelderGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {% for handlungsfeld in handlungsfelder %}
                         <div class="form-control">
                             <label class="label cursor-pointer justify-start gap-3">
@@ -235,6 +235,61 @@
     </div>
 </div>
 
+{% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+  const deptSelect = document.querySelector('select[name="default_department"]');
+  const grid = document.getElementById('handlungsfelderGrid');
+  const apiUrl = "{{ url_for('admin.get_ticket_categories') }}";
 
-{% endblock %} 
+  function getCurrentlySelected() {
+    const selected = new Set();
+    grid.querySelectorAll('input[name="handlungsfelder"]:checked').forEach(el => selected.add(el.value));
+    return selected;
+  }
+
+  function renderCategories(names, preserveSelection=true) {
+    const selected = preserveSelection ? getCurrentlySelected() : new Set();
+    if (!names || names.length === 0) {
+      grid.innerHTML = '<div class="col-span-full"><div class="alert alert-info"><i class="fas fa-info-circle"></i><span>Keine Handlungsfelder verfügbar. Erstellen Sie zuerst Ticket-Kategorien im Admin-Dashboard.</span></div></div>';
+      return;
+    }
+    const parts = names.map(name => {
+      const checked = selected.has(name) ? 'checked' : '';
+      const safe = name.replace(/"/g, '&quot;');
+      return (
+        '<div class="form-control">\
+           <label class="label cursor-pointer justify-start gap-3">\
+             <input type="checkbox" name="handlungsfelder" value="'+ safe +'" class="checkbox checkbox-primary" '+ checked +'>\
+             <span class="label-text font-medium">'+ safe +'</span>\
+           </label>\
+         </div>'
+      );
+    });
+    grid.innerHTML = parts.join('');
+  }
+
+  async function refreshCategoriesForDepartment(dep) {
+    if (!dep) { return; }
+    try {
+      const res = await fetch(apiUrl + '?dept=' + encodeURIComponent(dep));
+      if (!res.ok) return;
+      const data = await res.json();
+      const names = (data && Array.isArray(data.categories)) ? data.categories.map(c => c.name) : [];
+      renderCategories(names, true);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (deptSelect && grid) {
+    deptSelect.addEventListener('change', function() {
+      refreshCategoriesForDepartment(deptSelect.value);
+    });
+  }
+});
+</script>
+{% endblock %}
