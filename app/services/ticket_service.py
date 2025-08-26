@@ -262,11 +262,11 @@ class TicketService:
             def safe_sort_key(ticket):
                 updated_at = ticket.get('updated_at')
                 if isinstance(updated_at, str):
-                                    try:
-                    return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
-                except Exception as e:
-                    logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
-                    return datetime.min
+                    try:
+                        return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
+                        return datetime.min
                 elif isinstance(updated_at, datetime):
                     return updated_at
                 else:
