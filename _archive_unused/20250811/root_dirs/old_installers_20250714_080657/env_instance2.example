@@ -1,0 +1,33 @@
+# Scandy Instance 2 - Umgebungsvariablen
+# Kopiere diese Datei zu .env und passe die Werte an
+
+# MongoDB Einstellungen
+MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_PASSWORD=dein_sicheres_passwort_hier
+MONGO_INITDB_DATABASE=scandy_instance2
+MONGODB_DB=scandy_instance2
+
+# Flask Einstellungen
+SECRET_KEY=dein_sehr_sicheres_secret_key_hier_fuer_instance2
+FLASK_ENV=production
+
+# System-Namen (kann angepasst werden)
+SYSTEM_NAME=Scandy Instance 2
+TICKET_SYSTEM_NAME=Aufgaben
+TOOL_SYSTEM_NAME=Werkzeuge
+CONSUMABLE_SYSTEM_NAME=Verbrauchsgüter
+
+# Email-Einstellungen (optional)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=deine_email@gmail.com
+SMTP_PASSWORD=dein_app_passwort
+SMTP_USE_TLS=True
+
+# Backup-Einstellungen
+AUTO_BACKUP_ENABLED=True
+AUTO_BACKUP_INTERVAL=24  # Stunden
+BACKUP_RETENTION_DAYS=30
+
+# Logging
+LOG_LEVEL=INFO 

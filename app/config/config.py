@@ -94,14 +94,14 @@ class Config:
                     BASE_URL = f"http://{external_ip}:{PORT}"
                 else:
                     raise Exception("Konnte externe IP nicht abrufen")
-            except:
+            except Exception as e:
                 # Fallback: Verwende die lokale IP-Adresse
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
                 local_ip = s.getsockname()[0]
                 s.close()
                 BASE_URL = f"http://{local_ip}:{PORT}"
-        except:
+        except Exception as e:
             # Fallback auf localhost
             BASE_URL = f"http://localhost:{PORT}"
     
@@ -117,7 +117,7 @@ class Config:
     REMEMBER_COOKIE_DOMAIN = None  # Keine Domain-Beschränkung für Intranet
     
     # Debug: Zeige aktuelle Cookie-Konfiguration
-    print(f"DEBUG: Session-Cookies - SECURE: {SESSION_COOKIE_SECURE}, SAMESITE: {SESSION_COOKIE_SAMESITE}")
+    # print(f"DEBUG: Session-Cookies - SECURE: {SESSION_COOKIE_SECURE}, SAMESITE: {SESSION_COOKIE_SAMESITE}")
     
     # Datumsformat-Konfiguration (Deutsch)
     DATE_FORMAT = '%d.%m.%Y'
@@ -147,7 +147,7 @@ class Config:
                         break
                     except ValueError:
                         continue
-            except:
+            except Exception as e:
                 return dt
         
         formats = {

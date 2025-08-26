@@ -24,7 +24,8 @@ class UtilityService:
         # Bevorzugt: gültige 24‑hex Strings zu ObjectId konvertieren
         try:
             return ObjectId(str(id_value))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Fehler bei ID-Konvertierung: {e}")
             # Fallback: unverändert zurückgeben (z. B. echte String-IDs)
             return id_value
     
@@ -49,7 +50,8 @@ class UtilityService:
                         return datetime.strptime(date_value, fmt)
                     except ValueError:
                         continue
-            except:
+            except Exception as e:
+                logger.warning(f"Fehler bei Datumskonvertierung: {e}")
                 pass
         elif isinstance(date_value, datetime):
             return date_value
@@ -103,7 +105,8 @@ class UtilityService:
                                 break
                             except ValueError:
                                 continue
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: {e}")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         item[field] = None
                 elif isinstance(item[field], datetime):
@@ -113,7 +116,8 @@ class UtilityService:
                     # Versuche es als datetime zu konvertieren
                     try:
                         item[field] = datetime.fromisoformat(str(item[field]))
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: {e}")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         item[field] = None
             else:

@@ -2,10 +2,13 @@ import os
 import subprocess
 import shutil
 import json
+import logging
 from pathlib import Path
 from datetime import datetime
 from bson import ObjectId
 from app.models.mongodb_database import mongodb
+
+logger = logging.getLogger(__name__)
 
 class BackupManager:
     """Vollständiger Backup-Manager für MongoDB"""
@@ -52,7 +55,8 @@ class BackupManager:
                             break
                         except ValueError:
                             continue
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
                     pass  # Belasse als String wenn Konvertierung fehlschlägt
         
         return doc
@@ -74,7 +78,8 @@ class BackupManager:
                 elif obj['__type__'] == 'ObjectId':
                     try:
                         return ObjectId(obj['value'])
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
                         return obj['value']  # Fallback zu String
                 else:
                     return obj['value']
@@ -86,7 +91,8 @@ class BackupManager:
                     if k == '_id' and isinstance(v, str) and len(v) == 24:
                         try:
                             result[k] = ObjectId(v)
-                        except:
+                        except Exception as e:
+                            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
                             result[k] = v  # Fallback zu String
                     # Datetime-Felder konvertieren - ERWEITERTE LISTE für ältere Versionen
                     elif k in ['created_at', 'updated_at', 'modified_at', 'deleted_at', 'date', 'timestamp', 
@@ -215,7 +221,7 @@ class BackupManager:
             return format_info
             
         except Exception as e:
-            print(f"Fehler beim Erkennen des Backup-Formats: {e}")
+            logger.error(f"Fehler beim Erkennen des Backup-Formats: {e}")
             return {
                 'is_old_format': True,
                 'version_estimate': 'unknown',
@@ -524,7 +530,8 @@ class BackupManager:
                                     if isinstance(fixed_doc['_id'], str) and len(fixed_doc['_id']) == 24:
                                         try:
                                             fixed_doc['_id'] = ObjectId(fixed_doc['_id'])
-                                        except:
+                                        except Exception as e:
+                                            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
                                             # Falls keine gültige ObjectId, entferne das Feld
                                             del fixed_doc['_id']
                                     elif not isinstance(fixed_doc['_id'], ObjectId):
@@ -561,7 +568,7 @@ class BackupManager:
                                         break
                                         
                             except Exception as e:
-                                print(f"Fehler bei Dokument-Konvertierung in {collection}: {e}")
+                                logger.error(f"Fehler bei Dokument-Konvertierung in {collection}: {e}")
                                 conversion_stats['errors'] += 1
                                 restore_stats['conversion_errors'] += 1
                                 # Versuche das ursprüngliche Dokument zu verwenden
@@ -572,25 +579,25 @@ class BackupManager:
                         restore_stats['successful_collections'] += 1
                         restore_stats['total_documents'] += len(restored_documents)
                         
-                        print(f"✅ Collection {collection}: {len(restored_documents)} Dokumente wiederhergestellt")
-                        print(f"  - Konvertierungen: {conversion_stats['id_converted']} IDs, {conversion_stats['datetime_converted']} Datetimes")
-                        print(f"  - Zusätzlich: {conversion_stats['boolean_converted']} Booleans, {conversion_stats['numeric_converted']} Numerische")
+                        logger.info(f"✅ Collection {collection}: {len(restored_documents)} Dokumente wiederhergestellt")
+                        logger.info(f"  - Konvertierungen: {conversion_stats['id_converted']} IDs, {conversion_stats['datetime_converted']} Datetimes")
+                        logger.info(f"  - Zusätzlich: {conversion_stats['boolean_converted']} Booleans, {conversion_stats['numeric_converted']} Numerische")
                         if conversion_stats['errors'] > 0:
-                            print(f"  - ⚠️  Fehler: {conversion_stats['errors']}")
+                            logger.warning(f"  - ⚠️  Fehler: {conversion_stats['errors']}")
                         
                 except Exception as e:
-                    print(f"❌ Fehler beim Wiederherstellen von {collection}: {e}")
+                    logger.error(f"❌ Fehler beim Wiederherstellen von {collection}: {e}")
                     restore_stats['failed_collections'] += 1
                     
                     # Bei Fehler: Versuche ohne ID-Korrektur (Fallback für sehr alte Backups)
                     try:
                         mongodb.db[collection].insert_many(documents)
-                        print(f"🔄 Collection {collection}: {len(documents)} Dokumente ohne ID-Korrektur wiederhergestellt (Fallback)")
+                        logger.info(f"🔄 Collection {collection}: {len(documents)} Dokumente ohne ID-Korrektur wiederhergestellt (Fallback)")
                         restore_stats['successful_collections'] += 1
                         restore_stats['total_documents'] += len(documents)
                         restore_stats['format_warnings'].append(f"{collection}: Fallback-Modus verwendet")
                     except Exception as e2:
-                        print(f"💥 Kritischer Fehler bei {collection}: {e2}")
+                        logger.error(f"💥 Kritischer Fehler bei {collection}: {e2}")
                         restore_stats['failed_collections'] += 1
             
             # Nach der Wiederherstellung: Kategorien-Inkonsistenz beheben
@@ -603,10 +610,10 @@ class BackupManager:
             try:
                 from app.services.admin_debug_service import AdminDebugService
                 fixes = AdminDebugService.fix_dashboard_comprehensive()
-                print(f"Umfassende Dashboard-Reparatur nach Backup angewendet: {fixes}")
+                logger.info(f"Umfassende Dashboard-Reparatur nach Backup angewendet: {fixes}")
                 
             except Exception as e:
-                print(f"Fehler bei automatischen Dashboard-Fixes: {e}")
+                logger.error(f"Fehler bei automatischen Dashboard-Fixes: {e}")
             
             # ERWEITERTE Wiederherstellungs-Zusammenfassung
             print(f"\n📊 Backup-Wiederherstellung abgeschlossen:")
@@ -755,7 +762,8 @@ class BackupManager:
                         created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
                         update_data['created_at'] = created_at_dt
                         updated = True
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung created_at: {e}")
                         pass
                 
                 # updated_at korrigieren
@@ -765,7 +773,8 @@ class BackupManager:
                         updated_at_dt = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
                         update_data['updated_at'] = updated_at_dt
                         updated = True
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
                         pass
                 
                 if updated:
@@ -789,7 +798,8 @@ class BackupManager:
                         used_at_dt = datetime.fromisoformat(used_at.replace('Z', '+00:00'))
                         update_data['used_at'] = used_at_dt
                         updated = True
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung used_at: {e}")
                         pass
                 
                 # created_at korrigieren
@@ -799,7 +809,8 @@ class BackupManager:
                         created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
                         update_data['created_at'] = created_at_dt
                         updated = True
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung created_at: {e}")
                         pass
                 
                 if updated:
@@ -808,14 +819,14 @@ class BackupManager:
                                      {'$set': update_data})
                     fixed_usages += 1
             
-            print(f"Verbrauchsgüter-Inkonsistenzen behoben:")
-            print(f"  - Negative Bestände korrigiert: {fixed_negative}")
-            print(f"  - min_quantity Felder hinzugefügt: {fixed_min_quantity}")
-            print(f"  - Datetime-Felder korrigiert: {fixed_datetime}")
-            print(f"  - Verbrauchseinträge korrigiert: {fixed_usages}")
+            logger.info(f"Verbrauchsgüter-Inkonsistenzen behoben:")
+            logger.info(f"  - Negative Bestände korrigiert: {fixed_negative}")
+            logger.info(f"  - min_quantity Felder hinzugefügt: {fixed_min_quantity}")
+            logger.info(f"  - Datetime-Felder korrigiert: {fixed_datetime}")
+            logger.info(f"  - Verbrauchseinträge korrigiert: {fixed_usages}")
             
         except Exception as e:
-            print(f"Fehler beim Beheben der Verbrauchsgüter-Inkonsistenzen: {e}")
+            logger.error(f"Fehler beim Beheben der Verbrauchsgüter-Inkonsistenzen: {e}")
     
     def get_backup_path(self, filename):
         """Gibt den Pfad zu einer Backup-Datei zurück"""
@@ -830,7 +841,7 @@ class BackupManager:
                 return True
             return False
         except Exception as e:
-            print(f"Fehler beim Löschen des Backups: {e}")
+            logger.error(f"Fehler beim Löschen des Backups: {e}")
             return False
     
     def test_backup(self, filename):

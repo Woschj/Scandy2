@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 from app.config.version import get_version, get_author
 from flask import Blueprint
+import logging
+
+logger = logging.getLogger(__name__)
 
 def format_datetime(value):
     """Formatiert ein Datum in deutsches Format ohne Mikrosekunden"""
@@ -19,10 +22,12 @@ def format_datetime(value):
             if isinstance(value, str):
                 try:
                     value = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei ISO-Format-Konvertierung: {e}")
                     return value
         return value.strftime('%d.%m.%Y %H:%M')
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Fehler bei Datumsformatierung: {e}")
         return value
 
 def format_date(value):
@@ -39,7 +44,8 @@ def format_date(value):
                 except ValueError:
                     continue
         return value.strftime('%d.%m.%Y')
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Fehler bei Datumsformatierung: {e}")
         return value
 
 def format_time(value):
@@ -56,7 +62,8 @@ def format_time(value):
                 except ValueError:
                     continue
         return value.strftime('%H:%M')
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Fehler bei Zeitformatierung: {e}")
         return value
 
 def to_datetime(value):

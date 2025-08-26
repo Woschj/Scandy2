@@ -652,7 +652,8 @@ class ToolService:
                                 break
                             except ValueError:
                                 continue
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: {e}")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         tool[field] = None
                 elif isinstance(tool[field], datetime):
@@ -662,7 +663,8 @@ class ToolService:
                     # Versuche es als datetime zu konvertieren
                     try:
                         tool[field] = datetime.fromisoformat(str(tool[field]))
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: {e}")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         tool[field] = None
             else:

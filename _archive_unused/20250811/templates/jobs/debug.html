@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Job Debug{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold text-gray-900">Job Debug</h1>
+    
+    <div class="card-compact shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">Job-Statistiken</h3>
+            <div class="stats stats-horizontal">
+                <div class="stat">
+                    <div class="stat-title">Alle Jobs</div>
+                    <div class="stat-value text-primary">{{ debug_info.all_jobs_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Aktive Jobs</div>
+                    <div class="stat-value text-secondary">{{ debug_info.active_jobs_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Öffentliche Jobs</div>
+                    <div class="stat-value text-accent">{{ debug_info.public_jobs_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Aktiv + Öffentlich</div>
+                    <div class="stat-value text-info">{{ debug_info.both_jobs_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if debug_info.all_jobs %}
+    <div class="card-compact shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">Alle Jobs (erste 3)</h3>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Titel</th>
+                            <th>Firma</th>
+                            <th>is_active</th>
+                            <th>is_public</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in debug_info.all_jobs %}
+                        <tr>
+                            <td>{{ job._id }}</td>
+                            <td>{{ job.title }}</td>
+                            <td>{{ job.company }}</td>
+                            <td>{{ job.is_active }}</td>
+                            <td>{{ job.is_public }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if debug_info.both_jobs %}
+    <div class="card-compact shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">Aktive + Öffentliche Jobs (erste 3)</h3>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Titel</th>
+                            <th>Firma</th>
+                            <th>is_active</th>
+                            <th>is_public</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in debug_info.both_jobs %}
+                        <tr>
+                            <td>{{ job._id }}</td>
+                            <td>{{ job.title }}</td>
+                            <td>{{ job.company }}</td>
+                            <td>{{ job.is_active }}</td>
+                            <td>{{ job.is_public }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="flex gap-4">
+        <a href="{{ url_for('jobs.job_list') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i>
+            Zurück zur Jobbörse
+        </a>
+        <a href="{{ url_for('jobs.create_job') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Neuen Job erstellen
+        </a>
+    </div>
+</div>
+{% endblock %} 

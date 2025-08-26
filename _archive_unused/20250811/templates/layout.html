@@ -1,0 +1,11 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}" style="min-width: 200px; height: 40px;">
+            {% if app_labels.custom_logo %}
+            <img src="{{ url_for('static', filename=app_labels.custom_logo) }}" alt="Logo" style="max-height: 40px; max-width: 180px; object-fit: contain;">
+            {% else %}
+            <i class="fas fa-tools"></i> Scandy
+            {% endif %}
+        </a>
+    </div>
+</nav> 

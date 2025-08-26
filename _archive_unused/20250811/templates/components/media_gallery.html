@@ -1,0 +1,152 @@
+<!-- Universelle Medien-Galerie -->
+<div class="media-gallery" data-entity-type="{{ entity_type }}" data-entity-id="{{ entity_id }}">
+    
+    <!-- Medien-Liste -->
+    <div class="media-list grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
+        <!-- Wird per JavaScript gefüllt -->
+    </div>
+    
+    <!-- Upload-Bereich -->
+    <div class="upload-area border-2 border-dashed border-base-300 rounded-lg p-6 text-center">
+        <form action="{{ url_for('media.upload_media', entity_type=entity_type, entity_id=entity_id) }}" 
+              method="post" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="flex items-center justify-center">
+                <i class="fas fa-cloud-upload-alt text-4xl text-base-content/50 mb-4"></i>
+            </div>
+            
+            <div>
+                <label for="media" class="btn btn-outline btn-primary">
+                    <i class="fas fa-image mr-2"></i>Medien auswählen
+                </label>
+                <input type="file" id="media" name="media" accept="image/*,.svg,image/svg+xml,.pdf,application/pdf" 
+                       class="hidden" onchange="updateMediaFileName(this)">
+            </div>
+            
+            <!-- Debug-Info -->
+            <div id="debug-info" class="text-xs text-base-content/50 mt-2">
+                <p>Entity Type: <span id="debug-entity-type">{{ entity_type }}</span></p>
+                <p>Entity ID: <span id="debug-entity-id">{{ entity_id }}</span></p>
+                <p>Upload URL: <span id="debug-upload-url">{{ url_for('media.upload_media', entity_type=entity_type, entity_id=entity_id) }}</span></p>
+            </div>
+            
+            <div id="selected-media-file" class="text-sm text-base-content/70 hidden">
+                <span id="media-file-name"></span>
+            </div>
+            
+            <div class="text-sm text-base-content/60">
+                <p>Maximal 10 Bilder (jpg, png, gif, webp)</p>
+                <p>Bilder werden automatisch auf 1080p skaliert</p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="upload-media-btn" disabled>
+                <i class="fas fa-upload mr-2"></i>Medien hochladen
+            </button>
+        </form>
+    </div>
+    
+    <!-- Medien-Modal -->
+    <div id="mediaModal" class="modal">
+        <div class="modal-box max-w-4xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">Medien-Vorschau</h3>
+                <button onclick="closeMediaModal()" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <img id="modalMediaImage" src="" alt="Medien-Vorschau" class="w-full h-auto max-h-96 object-contain">
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+// Medien-Galerie JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const gallery = document.querySelector('.media-gallery');
+    if (!gallery) return;
+    
+    const entityType = gallery.dataset.entityType;
+    const entityId = gallery.dataset.entityId;
+    
+    // Medien laden
+    loadMediaList(entityType, entityId);
+});
+
+function loadMediaList(entityType, entityId) {
+    fetch(`/media/${entityType}/${entityId}/list`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMediaList(data.media_list, entityType, entityId);
+            } else {
+                console.error('Fehler beim Laden der Medien:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Medien:', error);
+        });
+}
+
+function displayMediaList(mediaList, entityType, entityId) {
+    const mediaListContainer = document.querySelector('.media-list');
+    if (!mediaListContainer) return;
+    
+    mediaListContainer.innerHTML = '';
+    
+    mediaList.forEach((media, index) => {
+        const mediaItem = document.createElement('div');
+        mediaItem.className = 'relative group';
+        mediaItem.innerHTML = `
+            <img src="${media.url}" 
+                 alt="Medien ${index + 1}"
+                 class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                 onclick="openMediaModal('${media.url}')">
+            
+            <form action="/media/${entityType}/${entityId}/delete/${media.filename}" 
+                  method="post" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-error btn-xs" 
+                        onclick="return confirm('Medium wirklich löschen?')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        `;
+        mediaListContainer.appendChild(mediaItem);
+    });
+}
+
+function updateMediaFileName(input) {
+    const fileName = input.files[0]?.name;
+    const selectedFile = document.getElementById('selected-media-file');
+    const fileNameSpan = document.getElementById('media-file-name');
+    const uploadBtn = document.getElementById('upload-media-btn');
+    
+    if (fileName) {
+        fileNameSpan.textContent = fileName;
+        selectedFile.classList.remove('hidden');
+        uploadBtn.disabled = false;
+    } else {
+        selectedFile.classList.add('hidden');
+        uploadBtn.disabled = true;
+    }
+}
+
+function openMediaModal(imageSrc) {
+    document.getElementById('modalMediaImage').src = imageSrc;
+    document.getElementById('mediaModal').classList.add('modal-open');
+}
+
+function closeMediaModal() {
+    document.getElementById('mediaModal').classList.remove('modal-open');
+}
+
+
+
+// Modal schließen bei Klick außerhalb
+document.getElementById('mediaModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeMediaModal();
+    }
+});
+</script> 

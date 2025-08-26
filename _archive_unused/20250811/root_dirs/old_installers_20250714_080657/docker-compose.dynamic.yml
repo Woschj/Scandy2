@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MongoDB für Abteilung
+  ${DEPARTMENT}-mongodb:
+    image: mongo:6.0
+    container_name: ${DEPARTMENT}-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${DEPARTMENT}Password123
+      MONGO_INITDB_DATABASE: ${DEPARTMENT}_scandy
+    volumes:
+      - ${DEPARTMENT}_mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "${MONGODB_PORT}:27017"
+    networks:
+      - ${DEPARTMENT}-network
+
+  # Scandy-App für Abteilung
+  ${DEPARTMENT}-scandy:
+    build: .
+    container_name: ${DEPARTMENT}-scandy
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://admin:${DEPARTMENT}Password123@${DEPARTMENT}-mongodb:27017/${DEPARTMENT}_scandy?authSource=admin
+      - SECRET_KEY=${DEPARTMENT}SecretKey123456789
+      - SYSTEM_NAME=Scandy ${DEPARTMENT_NAME}
+      - TICKET_SYSTEM_NAME=Aufgaben ${DEPARTMENT_NAME}
+      - TOOL_SYSTEM_NAME=Werkzeuge ${DEPARTMENT_NAME}
+      - CONSUMABLE_SYSTEM_NAME=Verbrauchsgüter ${DEPARTMENT_NAME}
+    volumes:
+      - ./app:/app/app
+      - ./data/${DEPARTMENT}:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    ports:
+      - "${WEB_PORT}:5000"
+    depends_on:
+      - ${DEPARTMENT}-mongodb
+    networks:
+      - ${DEPARTMENT}-network
+
+volumes:
+  ${DEPARTMENT}_mongodb_data:
+
+networks:
+  ${DEPARTMENT}-network:
+    driver: bridge 

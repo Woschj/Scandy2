@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Fehler{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+    <div class="card bg-base-100 shadow-xl max-w-lg w-full">
+        <div class="card-body">
+            <h2 class="card-title text-error">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Fehler
+            </h2>
+            <p class="py-4">{{ message }}</p>
+            {% if details %}
+            <div class="bg-base-200 p-4 rounded-lg text-sm">
+                <pre class="whitespace-pre-wrap">{{ details }}</pre>
+            </div>
+            {% endif %}
+            <div class="card-actions justify-end mt-6">
+                <a href="{{ url_for('tools.index') }}" class="btn btn-primary">
+                    <i class="fas fa-home mr-2"></i>
+                    Zur Startseite
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

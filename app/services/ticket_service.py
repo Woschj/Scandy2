@@ -262,10 +262,11 @@ class TicketService:
             def safe_sort_key(ticket):
                 updated_at = ticket.get('updated_at')
                 if isinstance(updated_at, str):
-                    try:
-                        return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
-                    except:
-                        return datetime.min
+                                    try:
+                    return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
+                except Exception as e:
+                    logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
+                    return datetime.min
                 elif isinstance(updated_at, datetime):
                     return updated_at
                 else:
@@ -306,7 +307,8 @@ class TicketService:
             # Versuche zuerst mit String-ID
             try:
                 ticket = mongodb.find_one('tickets', {'_id': ticket_id})
-            except:
+            except Exception as e:
+                logger.warning(f"Fehler bei String-ID-Suche für Ticket {ticket_id}: {e}")
                 pass
             
             # Falls nicht gefunden, versuche mit ObjectId
@@ -315,7 +317,8 @@ class TicketService:
                     from bson import ObjectId
                     obj_id = ObjectId(ticket_id)
                     ticket = mongodb.find_one('tickets', {'_id': obj_id})
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei ObjectId-Suche für Ticket {ticket_id}: {e}")
                     pass
             
             if ticket:

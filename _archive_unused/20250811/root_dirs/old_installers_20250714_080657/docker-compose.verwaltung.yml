@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MongoDB für Verwaltung
+  verwaltung-mongodb:
+    image: mongo:6.0
+    container_name: verwaltung-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: verwaltungPassword123
+      MONGO_INITDB_DATABASE: verwaltung_scandy
+    volumes:
+      - verwaltung_mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27019:27017"
+    networks:
+      - verwaltung-network
+
+  # Scandy-App für Verwaltung
+  verwaltung-scandy:
+    build: .
+    container_name: verwaltung-scandy
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://admin:verwaltungPassword123@verwaltung-mongodb:27017/verwaltung_scandy?authSource=admin
+      - SECRET_KEY=verwaltungSecretKey123456789
+      - SYSTEM_NAME=Scandy Verwaltung
+      - TICKET_SYSTEM_NAME=Aufgaben Verwaltung
+      - TOOL_SYSTEM_NAME=Werkzeuge Verwaltung
+      - CONSUMABLE_SYSTEM_NAME=Verbrauchsgüter Verwaltung
+    volumes:
+      - ./app:/app/app
+      - ./data/verwaltung:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    ports:
+      - "5002:5000"
+    depends_on:
+      - verwaltung-mongodb
+    networks:
+      - verwaltung-network
+
+volumes:
+  verwaltung_mongodb_data:
+
+networks:
+  verwaltung-network:
+    driver: bridge

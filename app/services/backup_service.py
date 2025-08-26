@@ -392,7 +392,8 @@ class BackupService:
                         if 'metadata' in data:
                             backup_info['version'] = data['metadata'].get('version', '1.0')
                             backup_info['collections'] = data['metadata'].get('collections', [])
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler beim Extrahieren der JSON-Metadaten: {e}")
                     pass
             
             return backup_info

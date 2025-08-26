@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# CSRF optional: kann leer sein bzw. global deaktiviert werden #}
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {# CSRF deaktiviert - Token nicht verfügbar #}
+    <meta name="csrf-token" content="">
     <title>{% block title %}Scandy{% endblock %}</title>
     <meta name="current-department" content="{{ (departments_ctx.current or departments.current) or '' }}">
     
@@ -37,40 +37,11 @@
 
     <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- CSRF-Token für AJAX-Requests (optional, no-op wenn leer) -->
+    <!-- CSRF deaktiviert - AJAX-Requests ohne CSRF-Validierung -->
     <script nonce="{{ csp_nonce }}">
-        // CSRF-Token für alle AJAX-Requests
-        function getCSRFToken() {
-            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        }
-        
-        // Automatisch CSRF-Token zu allen AJAX-Requests hinzufügen
+        // CSRF ist deaktiviert - alle AJAX-Requests werden ohne CSRF-Validierung gesendet
         document.addEventListener('DOMContentLoaded', function() {
-            // Intercepte alle fetch-Requests
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options) {
-                if (options && options.method && options.method.toUpperCase() !== 'GET') {
-                    options.headers = options.headers || {};
-                    const token = getCSRFToken();
-                    if (token) options.headers['X-CSRFToken'] = token;
-                }
-                return originalFetch(url, options);
-            };
-            
-            // Intercepte alle XMLHttpRequest
-            const originalXHROpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-                const xhr = this;
-                originalXHROpen.call(xhr, method, url, async, user, password);
-                if (method.toUpperCase() !== 'GET') {
-                    xhr.addEventListener('readystatechange', function() {
-                        if (xhr.readyState === 1) { // OPENED
-                            const token = getCSRFToken();
-                            if (token) xhr.setRequestHeader('X-CSRFToken', token);
-                        }
-                    });
-                }
-            };
+            console.log('CSRF-Schutz ist deaktiviert - AJAX-Requests werden ohne CSRF-Validierung gesendet');
         });
     </script>
 

@@ -558,12 +558,13 @@ def _legacy_get_feature_settings():
                 settings[feature] = True
             
             return settings
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler beim Laden der Feature-Einstellungen: {e}")
             # Fallback zu Standard-Einstellungen
             return default_settings
             
     except Exception as e:
-        print(f"Fehler beim Laden der Feature-Einstellungen: {e}")
+        logger.error(f"Fehler beim Laden der Feature-Einstellungen: {e}")
         return {
             'tools': True,
             'consumables': True,
@@ -647,7 +648,8 @@ def _legacy_is_feature_enabled(feature_name):
         try:
             setting = mongodb.find_one('settings', {'key': f'feature_{feature_name}'})
             return setting.get('value', default_settings.get(feature_name, False)) if setting else default_settings.get(feature_name, False)
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler beim Lesen der Feature-Einstellung {feature_name}: {e}")
             # Fallback zu Standard-Einstellungen
             return default_settings.get(feature_name, False)
             

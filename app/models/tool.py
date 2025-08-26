@@ -1,6 +1,9 @@
 from .mongodb_models import BaseModel
 from datetime import datetime
 from bson import ObjectId
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Tool(BaseModel):
     collection_name = 'tools'
@@ -147,12 +150,13 @@ class Tool(BaseModel):
                 tool_data = tools_collection.find_one({'_id': obj_id, 'deleted': False})
                 if tool_data:
                     return Tool(**tool_data)
-            except:
+            except Exception as e:
+                logger.warning(f"Fehler bei ObjectId-Konvertierung für Tool {tool_id}: {e}")
                 pass
             
             return None
         except Exception as e:
-            print(f"Fehler beim Suchen von Tool {tool_id}: {e}")
+            logger.error(f"Fehler beim Suchen von Tool {tool_id}: {e}")
             return None
 
     def save(self):
