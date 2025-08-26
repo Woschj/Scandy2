@@ -196,8 +196,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <div class="tabs tabs-boxed mb-4">
-                        <a role="tab" class="tab tab-active" id="tab-open" onclick="showTab('open')">Offene {{ app_labels.tickets.name }}</a>
-                        <a role="tab" class="tab" id="tab-assigned" onclick="showTab('assigned')">
+                        <a role="tab" class="tab" id="tab-open" onclick="showTab('open')">Offene {{ app_labels.tickets.name }}</a>
+                        <a role="tab" class="tab tab-active" id="tab-assigned" onclick="showTab('assigned')">
                             {% if current_user.role in ['admin', 'mitarbeiter'] %}
                             Meine & Abgeschlossene {{ app_labels.tickets.name }}
                             {% else %}
@@ -274,10 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </div>
                     </div>
-                    <div id="table-open">
+                    <div id="table-open" style="display:none;">
                         {% include 'tickets/_ticket_table_open.html' with context %}
                     </div>
-                    <div id="table-assigned" style="display:none;">
+                    <div id="table-assigned">
                         {% include 'tickets/_ticket_table_assigned.html' with context %}
                     </div>
                     {% if show_all_tickets %}

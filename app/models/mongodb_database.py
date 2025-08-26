@@ -270,12 +270,32 @@ class MongoDBDatabase:
         processed_filter = {}
         
         for key, value in filter_dict.items():
-            if key == '_id' and isinstance(value, str):
-                try:
-                    from bson import ObjectId
-                    processed_filter[key] = ObjectId(value)
-                except Exception:
-                    # Falls Konvertierung fehlschlägt, verwende Original-Wert
+            if key == '_id':
+                # Fall 1: Direkter String -> zu ObjectId konvertieren
+                if isinstance(value, str):
+                    try:
+                        from bson import ObjectId
+                        processed_filter[key] = ObjectId(value)
+                    except Exception:
+                        processed_filter[key] = value
+                # Fall 2: Operatoren ($in/$nin) mit Liste
+                elif isinstance(value, dict):
+                    converted = dict(value)
+                    for op in ('$in', '$nin'):
+                        if op in converted and isinstance(converted[op], list):
+                            new_list = []
+                            for v in converted[op]:
+                                if isinstance(v, str):
+                                    try:
+                                        from bson import ObjectId
+                                        new_list.append(ObjectId(v))
+                                    except Exception:
+                                        new_list.append(v)
+                                else:
+                                    new_list.append(v)
+                            converted[op] = new_list
+                    processed_filter[key] = converted
+                else:
                     processed_filter[key] = value
             else:
                 processed_filter[key] = value

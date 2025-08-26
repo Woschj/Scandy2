@@ -147,7 +147,12 @@ class TicketService:
                 ]
             }
             if getattr(g, 'current_department', None):
-                assigned_tickets_legacy_query['$and'].append({'department': g.current_department})
+                assigned_tickets_legacy_query['$and'].append({
+                    '$or': [
+                        {'department': g.current_department},
+                        {'department': {'$exists': False}}
+                    ]
+                })
 
             # Handlungsfeld-Filter für alle Rollen außer Admin
             # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern –
@@ -164,10 +169,8 @@ class TicketService:
                 # Konvertiere IDs für die Ticketsuche
                 assignment_ticket_ids = []
                 for raw_id in assignment_ticket_ids_raw:
-                    try:
-                        assignment_ticket_ids.append(self.utility_service.convert_id_for_query(str(raw_id)))
-                    except Exception:
-                        assignment_ticket_ids.append(str(raw_id))
+                    # Immer als String sammeln; die Datenbankschicht konvertiert bei Bedarf zu ObjectId
+                    assignment_ticket_ids.append(str(raw_id))
 
                 assigned_tickets_multi = []
                 if assignment_ticket_ids:
@@ -178,7 +181,12 @@ class TicketService:
                         ]
                     }
                     if getattr(g, 'current_department', None):
-                        assigned_tickets_multi_query['$and'].append({'department': g.current_department})
+                        assigned_tickets_multi_query['$and'].append({
+                            '$or': [
+                                {'department': g.current_department},
+                                {'department': {'$exists': False}}
+                            ]
+                        })
                     # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern
 
                     logger.debug(f"Zugewiesene (Multi) Tickets Query: {assigned_tickets_multi_query}")
@@ -197,7 +205,12 @@ class TicketService:
                 ]
             }
             if getattr(g, 'current_department', None):
-                responsible_query['$and'].append({'department': g.current_department})
+                responsible_query['$and'].append({
+                    '$or': [
+                        {'department': g.current_department},
+                        {'department': {'$exists': False}}
+                    ]
+                })
             responsible_tickets = list(mongodb.find('tickets', responsible_query))
 
             # 4) Zusammenführen und Duplikate entfernen

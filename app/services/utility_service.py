@@ -18,16 +18,15 @@ class UtilityService:
         Konvertiert eine ID für Datenbankabfragen.
         Versucht zuerst mit String-ID, dann mit ObjectId.
         """
-        try:
-            # Versuche zuerst mit String-ID (für importierte Daten)
+        # Wenn bereits ein ObjectId-Objekt übergeben wurde, direkt zurückgeben
+        if isinstance(id_value, ObjectId):
             return id_value
-        except:
-            # Falls das fehlschlägt, versuche ObjectId
-            try:
-                return ObjectId(id_value)
-            except:
-                # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-                return id_value
+        # Bevorzugt: gültige 24‑hex Strings zu ObjectId konvertieren
+        try:
+            return ObjectId(str(id_value))
+        except Exception:
+            # Fallback: unverändert zurückgeben (z. B. echte String-IDs)
+            return id_value
     
     @staticmethod
     def safe_date_key(item: Dict[str, Any], date_field: str = 'created_at') -> datetime:
