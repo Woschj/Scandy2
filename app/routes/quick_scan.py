@@ -125,14 +125,22 @@ def process():
             consumable = mongodb.find_one('consumables', {'barcode': item_barcode, 'deleted': {'$ne': True}})
             
             if consumable:
-                if action == 'use':
+                # Akzeptiere sowohl 'use' (alt) als auch 'consume' (neu) als Aktion
+                if action in ['use', 'consume']:
                     # Verwende den LendingService für Verbrauchsmaterial-Ausgaben
+                    try:
+                        qty = int(data.get('quantity') or 1)
+                    except Exception:
+                        qty = 1
+                    if qty <= 0:
+                        qty = 1
+
                     service_data = {
                         'item_barcode': item_barcode,
                         'worker_barcode': worker_barcode,
                         'action': 'consume',  # Korrekte Aktion für LendingService
                         'item_type': 'consumable',
-                        'quantity': 1
+                        'quantity': qty
                     }
                     
                     success, message, result_data = LendingService.process_lending_request(service_data)

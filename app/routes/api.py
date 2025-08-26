@@ -135,6 +135,28 @@ def after_request(response):
     logger.info(f"Response: {response.status_code} {response.status} {response.status_code} - Size: {len(response.get_data())} bytes")
     return response
 
+@bp.route('/lending/process', methods=['POST'])
+@login_required
+def process_lending_via_api():
+    """Alias-Endpoint für Ausleihe/Rückgabe/Verbrauch über das zentrale LendingService.
+    Erwartet JSON mit item_barcode, worker_barcode, action (lend|return|consume), item_type (tool|consumable), quantity.
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'Keine Daten empfangen'}), 400
+
+        from app.services.lending_service import LendingService
+        success, message, result_data = LendingService.process_lending_request(data)
+
+        if success:
+            return jsonify({'success': True, 'message': message, 'data': result_data})
+        else:
+            return jsonify({'success': False, 'message': message}), 400
+    except Exception as e:
+        logger.error(f"Fehler bei /api/lending/process: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'message': 'Fehler bei der Verarbeitung'}), 500
+
 @bp.route('/lending/return', methods=['POST'])
 @login_required
 def return_tool():
