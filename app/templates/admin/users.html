@@ -155,13 +155,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if user.expiry_date %}
-                            {% set _exp = user.expiry_date %}
-                            {% if _exp.strftime %}
-                                {{ _exp.strftime('%d.%m.%Y') }}
-                            {% else %}
-                                {{ _exp }}
-                            {% endif %}
+                        {% set _exp = user.delete_at or user.expiry_date %}
+                        {% if _exp %}
+                            {{ _exp|format_date }}
                         {% else %}
                             <span class="text-base-content/60">-</span>
                         {% endif %}

@@ -13,6 +13,13 @@
             <span class="badge badge-secondary text-lg align-middle">{{ current_user.username }}</span>
         </div>
     </div>
+    {% if ts %}
+    {% set week_start = datetime.fromisocalendar(ts.year, ts.kw, 1) %}
+    <div class="text-sm text-base-content/70 mb-4">
+        Zeitraum dieser KW: 
+        {{ week_start.strftime('%d.%m.%Y') }} – {{ (week_start + timedelta(days=4)).strftime('%d.%m.%Y') }}
+    </div>
+    {% endif %}
     <div class="flex flex-row gap-2 mb-4">
         {% for day in ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag'] %}
             {% set has_times = (ts and (ts[day ~ '_start'] or ts[day ~ '_end'])) or (not ts and (request.form['start_' ~ day] or request.form['end_' ~ day])) %}
@@ -39,23 +46,36 @@
             }
             label.tab {
                 transition: background 0.2s, color 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: .25rem;
             }
             label.tab:hover {
                 background-color: #dbeafe; /* Tailwind bg-primary/20 */
             }
+            /* Datum innerhalb eines Tabs dezenter, aber Farbe erbt */
+            label.tab .tab-date { opacity: .8; color: inherit; }
         </style>
         <div role="tablist" class="tabs tabs-boxed mb-4">
             {% for day in ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag'] %}
             <input type="radio" name="tab-days" id="tab-{{ day }}" class="hidden" {% if loop.first %}checked{% endif %}>
-            <label for="tab-{{ day }}" role="tab" class="tab tab-bordered cursor-pointer">{{ day|title }}</label>
+            <label for="tab-{{ day }}" role="tab" class="tab tab-bordered cursor-pointer">
+                {{ day|title }}
+                {% if ts %}
+                <span class="text-xs ml-1 tab-date">{{ (week_start + timedelta(days=loop.index0)).strftime('%d.%m.') }}</span>
+                {% endif %}
+            </label>
             {% endfor %}
         </div>
         <div>
             {% for day in ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag'] %}
-            <div id="panel-{{ day }}" class="tab-content" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+            <div id="panel-{{ day }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
                 <div class="card bg-base-200 p-4 mb-4">
                     <h3 class="font-medium mb-2 text-lg flex items-center gap-2">
                         <i class="fas fa-calendar-day"></i> {{ day|title }}
+                        {% if ts %}
+                        <span class="text-sm text-base-content/60">({{ (week_start + timedelta(days=loop.index0)).strftime('%A, %d.%m.%Y') }})</span>
+                        {% endif %}
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
@@ -88,15 +108,28 @@
     </form>
 </div>
 <script nonce="{{ csp_nonce }}">
-// Tabs umschalten
+// Tabs steuern und initial anzeigen
 const tabs = document.querySelectorAll('input[name="tab-days"]');
 const panels = document.querySelectorAll('.tab-content');
-tabs.forEach((tab, idx) => {
-    tab.addEventListener('change', () => {
-        panels.forEach((panel, i) => {
-            panel.style.display = (i === idx) ? 'block' : 'none';
-        });
+
+function updatePanels() {
+    let activeIdx = 0;
+    tabs.forEach((tab, i) => { if (tab.checked) activeIdx = i; });
+    panels.forEach((panel, i) => {
+        const show = i === activeIdx;
+        panel.style.display = show ? 'block' : 'none';
+        if (show) panel.classList.remove('hidden');
+    });
+}
+
+tabs.forEach(() => {
+    // Bei Wechsel aktualisieren
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.name === 'tab-days') updatePanels();
     });
 });
+
+// Initialen Zustand setzen
+document.addEventListener('DOMContentLoaded', updatePanels);
 </script>
 {% endblock %} 

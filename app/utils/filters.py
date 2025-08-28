@@ -5,27 +5,44 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+GERMAN_WEEKDAYS = {
+    0: 'Montag',
+    1: 'Dienstag',
+    2: 'Mittwoch',
+    3: 'Donnerstag',
+    4: 'Freitag',
+    5: 'Samstag',
+    6: 'Sonntag',
+}
+
+def _parse_datetime(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        # Versuche gängige Formate
+        for fmt in ['%Y-%m-%d %H:%M:%S', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M', '%Y-%m-%d', '%H:%M:%S', '%H:%M']:
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+        # ISO-Formate inkl. Mikrosekunden/Z
+        try:
+            return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except Exception:
+            return None
+    return None
+
 def format_datetime(value):
-    """Formatiert ein Datum in deutsches Format ohne Mikrosekunden"""
+    """Formatiert ein Datum in deutsches Format mit Sekunden (keine Mikrosekunden)"""
     if not value:
         return ''
     try:
-        if isinstance(value, str):
-            # Versuche verschiedene Datumsformate
-            for fmt in ['%Y-%m-%d %H:%M:%S', '%d.%m.%Y %H:%M', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S']:
-                try:
-                    value = datetime.strptime(value, fmt)
-                    break
-                except ValueError:
-                    continue
-            # Falls kein Format passt, versuche ISO-Format
-            if isinstance(value, str):
-                try:
-                    value = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                except Exception as e:
-                    logger.warning(f"Fehler bei ISO-Format-Konvertierung: {e}")
-                    return value
-        return value.strftime('%d.%m.%Y %H:%M')
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value
+        return parsed.strftime('%d.%m.%Y %H:%M:%S')
     except Exception as e:
         logger.warning(f"Fehler bei Datumsformatierung: {e}")
         return value
@@ -35,15 +52,10 @@ def format_date(value):
     if not value:
         return ''
     try:
-        if isinstance(value, str):
-            # Versuche verschiedene Datumsformate
-            for fmt in ['%Y-%m-%d %H:%M:%S', '%d.%m.%Y %H:%M', '%Y-%m-%d']:
-                try:
-                    value = datetime.strptime(value, fmt)
-                    break
-                except ValueError:
-                    continue
-        return value.strftime('%d.%m.%Y')
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value
+        return parsed.strftime('%d.%m.%Y')
     except Exception as e:
         logger.warning(f"Fehler bei Datumsformatierung: {e}")
         return value
@@ -53,15 +65,10 @@ def format_time(value):
     if not value:
         return ''
     try:
-        if isinstance(value, str):
-            # Versuche verschiedene Zeitformate
-            for fmt in ['%Y-%m-%d %H:%M:%S', '%d.%m.%Y %H:%M', '%H:%M:%S', '%H:%M']:
-                try:
-                    value = datetime.strptime(value, fmt)
-                    break
-                except ValueError:
-                    continue
-        return value.strftime('%H:%M')
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value
+        return parsed.strftime('%H:%M:%S')
     except Exception as e:
         logger.warning(f"Fehler bei Zeitformatierung: {e}")
         return value
@@ -72,7 +79,30 @@ def to_datetime(value):
         return None
     if isinstance(value, datetime):
         return value
-    return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+    parsed = _parse_datetime(value)
+    return parsed or value
+
+def weekday_de(value):
+    """Gibt deutschen Wochentagsnamen zurück für Datum/Datetime/String."""
+    if not value:
+        return ''
+    try:
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value
+        # Python: Monday=0
+        return GERMAN_WEEKDAYS.get(parsed.weekday(), '')
+    except Exception:
+        return ''
+
+def date_long_de(value):
+    """Deutscher Wochentag plus Datum (ohne Zeit), z. B. 'Montag, 12.08.2025'"""
+    if not value:
+        return ''
+    parsed = _parse_datetime(value)
+    if not parsed:
+        return value
+    return f"{GERMAN_WEEKDAYS.get(parsed.weekday(), '')}, {parsed.strftime('%d.%m.%Y')}"
 
 def format_duration(duration):
     """Formatiert eine Zeitdauer benutzerfreundlich"""
@@ -121,38 +151,29 @@ def register_filters(app):
     @app.template_filter('datetime_long')
     def datetime_long_filter(value):
         """Langes Datumsformat mit Wochentag"""
-        if value is None:
-            return ''
-        if isinstance(value, str):
-            try:
-                value = datetime.fromisoformat(value.replace('Z', '+00:00'))
-            except:
-                return value
-        return value.strftime('%A, %d.%m.%Y %H:%M')
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value or ''
+        return f"{GERMAN_WEEKDAYS.get(parsed.weekday(), '')}, {parsed.strftime('%d.%m.%Y %H:%M:%S')}"
     
     @app.template_filter('date_relative')
     def date_relative_filter(value):
         """Relatives Datum (heute, gestern, etc.)"""
-        if value is None:
-            return ''
-        if isinstance(value, str):
-            try:
-                value = datetime.fromisoformat(value.replace('Z', '+00:00'))
-            except:
-                return value
-        
+        parsed = _parse_datetime(value)
+        if not parsed:
+            return value or ''
         now = datetime.now()
         today = now.date()
-        value_date = value.date()
+        value_date = parsed.date()
         
         if value_date == today:
-            return f'Heute, {value.strftime("%H:%M")}'
+            return f'Heute, {parsed.strftime("%H:%M:%S")}'
         elif value_date == today - timedelta(days=1):
-            return f'Gestern, {value.strftime("%H:%M")}'
+            return f'Gestern, {parsed.strftime("%H:%M:%S")}'
         elif value_date == today + timedelta(days=1):
-            return f'Morgen, {value.strftime("%H:%M")}'
+            return f'Morgen, {parsed.strftime("%H:%M:%S")}'
         else:
-            return value.strftime('%d.%m.%Y %H:%M')
+            return parsed.strftime('%d.%m.%Y %H:%M:%S')
     
     @app.template_filter('author')
     def author_filter(value):
@@ -162,6 +183,8 @@ def register_filters(app):
     app.jinja_env.filters['format_datetime'] = format_datetime
     app.jinja_env.filters['format_date'] = format_date
     app.jinja_env.filters['format_time'] = format_time
+    app.jinja_env.filters['weekday_de'] = weekday_de
+    app.jinja_env.filters['date_long_de'] = date_long_de
     app.jinja_env.filters['to_datetime'] = to_datetime
     app.jinja_env.filters['format_duration'] = format_duration
     app.jinja_env.filters['nl2br'] = nl2br

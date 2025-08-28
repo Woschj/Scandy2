@@ -103,6 +103,7 @@ class AdminUserService:
 
             
             # Benutzer erstellen
+            expiry_date = user_data.get('expiry_date')  # Erwartet datetime oder None
             new_user = {
                 'username': user_data['username'],
                 'password_hash': password_hash,
@@ -117,8 +118,8 @@ class AdminUserService:
                 'allowed_departments': allowed_departments,
                 'default_department': default_department or allowed_departments[0],
                 'handlungsfelder': user_data.get('handlungsfelder', []),
-                # Neues, einfaches Löschdatum
-                'delete_at': user_data.get('delete_at', None),
+                # Ablaufdatum (delete_at) aus Formular übernehmen
+                'delete_at': user_data.get('delete_at', expiry_date),
                 'created_at': datetime.now(),
                 'updated_at': datetime.now()
             }
@@ -178,6 +179,10 @@ class AdminUserService:
             for field in updatable_fields:
                 if field in user_data:
                     update_data[field] = user_data[field]
+
+            # Mapping: expiry_date aus Formular (Admin-Seite) auf delete_at übernehmen
+            if 'expiry_date' in user_data and user_data['expiry_date']:
+                update_data['delete_at'] = user_data['expiry_date']
             
 
             

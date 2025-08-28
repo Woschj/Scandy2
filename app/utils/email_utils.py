@@ -832,6 +832,10 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
                 # Synonyme für bessere Abwärtskompatibilität mit älteren/angepassten Templates
                 'link': reset_link,
                 'new_password': password,
+                'passwort': password,
+                'pwd': password,
+                'server_url': (current_app.config.get('BASE_URL') or '').rstrip('/'),
+                'base_url': (current_app.config.get('BASE_URL') or '').rstrip('/'),
             }
             rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', context)
             if rendered and (rendered.get('html_content') or rendered.get('text_content')):
@@ -846,22 +850,54 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
         except Exception as _tpl_err:
             logger.warning(f"[MAIL][reset] E-Mail-Vorlage 'password_reset' nicht verfügbar/nutzbar: {_tpl_err}")
 
-        # Fallback: Einfacher Textkörper
-        logger.info(f"[MAIL][reset] Verwende Fallback-Text für Passwort-Reset")
+        # Fallback: HTML + Textkörper mit klickbarem Link/Passwort
+        logger.info(f"[MAIL][reset] Verwende Fallback-HTML/Text für Passwort-Reset")
+        base_url = (current_app.config.get('BASE_URL') or '').rstrip('/')
+        html_body = ""
+        text_body = ""
+        # Vorbereitete HTML/Text-Snippets, um Backslashes in f-String-Expressions zu vermeiden
+        link_html = (f'<p>Zur Startseite: <a href="{base_url}" style="color:#1d4ed8">{base_url}</a></p>'
+                     if base_url else '')
+        login_html = (f'<p>Zur Anmeldung: <a href="{base_url}" style="color:#1d4ed8">{base_url}</a></p>'
+                      if base_url else '')
+        start_text = (f'Startseite: {base_url}\n\n' if base_url else '')
+        login_text = (f'Anmeldung: {base_url}\n\n' if base_url else '')
         if reset_link:
-            body = f"Sie haben einen Passwort-Reset angefordert.\n\nBitte klicken Sie auf folgenden Link, um Ihr Passwort zurückzusetzen:\n{reset_link}\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
+            html_body = f"""
+            <div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#111\">
+              <p>Sie haben einen Passwort-Reset angefordert.</p>
+              <p>Bitte klicken Sie auf den folgenden Link, um Ihr Passwort zurückzusetzen:</p>
+              <p><a href=\"{reset_link}\" style=\"color:#1d4ed8\">Passwort zurücksetzen</a></p>
+              <p>Oder kopieren Sie diesen Link in die Adresszeile Ihres Browsers:<br>
+                 <span style=\"font-family:monospace;color:#374151\">{reset_link}</span>
+              </p>
+              {link_html}
+              <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
+            </div>
+            """
+            text_body = f"Sie haben einen Passwort-Reset angefordert.\n\nLink zum Zurücksetzen: {reset_link}\n\n{start_text}Mit freundlichen Grüßen\nIhr Scandy-Team"
         elif password:
-            body = f"Ihr neues Passwort lautet: {password}\n\nBitte ändern Sie es nach dem Login.\n\nMit freundlichen Grüßen\nIhr Scandy-Team"
+            html_body = f"""
+            <div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#111\">
+              <p>Ihr neues Passwort lautet:</p>
+              <p><strong style=\"font-family:monospace\">{password}</strong></p>
+              {login_html}
+              <p>Bitte ändern Sie es nach dem Login.</p>
+              <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
+            </div>
+            """
+            text_body = f"Ihr neues Passwort lautet: {password}\n\nBitte ändern Sie es nach dem Login.\n\n{login_text}Mit freundlichen Grüßen\nIhr Scandy-Team"
         else:
-            body = "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Administrator."
-        
+            html_body = "<p>Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Administrator.</p>"
+            text_body = "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Administrator."
+
         try:
-            # Verwende direkte SMTP-Verbindung
-            success = _send_email_direct(recipient, subject, body, mail_type="reset")
+            # Verwende HTML-Versand mit Text-Alternative
+            success = _send_email_direct_html(recipient, subject, html_body, text_body, mail_type="reset")
             if success:
-                logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Fallback)")
+                logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Fallback HTML)")
             else:
-                logger.error(f"[MAIL][reset] Passwort-Reset-E-Mail fehlgeschlagen (Fallback)")
+                logger.error(f"[MAIL][reset] Passwort-Reset-E-Mail fehlgeschlagen (Fallback HTML)")
             return success
         except Exception as e:
             logger.error(f"[MAIL][reset] Fehler beim Versenden der Passwort-Reset-E-Mail (Fallback): {e}")

@@ -75,9 +75,14 @@
                             {% set has_tasks = ts[day ~ '_tasks'] %}
                             {% set is_past_day = day_date.date() < today.date() %}
                             {% set badge_class = 'badge-success' if has_times and has_tasks else 'badge-error' if is_past_day else 'badge-outline' %}
-                            <span class="badge {{ badge_class }} text-xs">{{ day[0]|upper }}{% if has_times and has_tasks %}✔{% elif has_times or has_tasks %}!{% else %}–{% endif %}</span>
+                            <span class="badge {{ badge_class }} text-xs" title="{{ day_date.strftime('%A, %d.%m.%Y') }}">{{ day[0]|upper }}{% if has_times and has_tasks %}✔{% elif has_times or has_tasks %}!{% else %}–{% endif %}</span>
                         {% endfor %}
                         <span class="text-xs text-gray-500 ml-2">({{ ts.filled_days }}/5)</span>
+                        <div class="text-[10px] text-gray-500 mt-1">
+                            {% for i in range(5) %}
+                                {{ (week_start.dt + timedelta(days=i)).strftime('%d.%m.') }}{% if not loop.last %} · {% endif %}
+                            {% endfor %}
+                        </div>
                     </td>
                     <td>{{ ts.created_at_de }}</td>
                     <td>{{ ts.updated_at_de }}</td>

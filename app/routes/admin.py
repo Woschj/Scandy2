@@ -1724,22 +1724,29 @@ def manage_users():
         expired_users = []
         
         for user in users:
-            if user.get('expiry_date'):
-                # Verarbeite verschiedene Datumsformate
-                expiry_date = user['expiry_date']
-                if isinstance(expiry_date, str):
-                    try:
-                        expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
-                    except ValueError:
+            # Verwende delete_at (echtes Date-Feld) als maßgebliches Ablaufdatum
+            exp = user.get('delete_at') or user.get('expiry_date')
+            if exp:
+                try:
+                    if isinstance(exp, str):
+                        # Versuche ISO oder YYYY-MM-DD
+                        try:
+                            exp_dt = datetime.fromisoformat(exp.replace('Z', '+00:00'))
+                        except Exception:
+                            exp_dt = datetime.strptime(exp, '%Y-%m-%d')
+                    elif isinstance(exp, datetime):
+                        exp_dt = exp
+                    else:
+                        # Unbekannter Typ -> als nicht abgelaufen behandeln
+                        user['is_expired'] = False
                         continue
-                elif isinstance(expiry_date, datetime):
-                    expiry_date = expiry_date.date()
-                
-                # Markiere als abgelaufen wenn das Datum überschritten ist
-                if expiry_date < today:
-                    user['is_expired'] = True
-                    expired_users.append(user)
-                else:
+                    # Vergleich auf Datumsebene
+                    if exp_dt.date() < today:
+                        user['is_expired'] = True
+                        expired_users.append(user)
+                    else:
+                        user['is_expired'] = False
+                except Exception:
                     user['is_expired'] = False
             else:
                 user['is_expired'] = False

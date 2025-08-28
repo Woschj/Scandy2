@@ -1111,7 +1111,7 @@ def timesheet_edit(ts_id):
                          {'$set': update_data})
         flash('Wochenplan aktualisiert.', 'success')
         return redirect(url_for('workers.timesheet_list'))
-    return render_template('workers/timesheet.html', ts=ts, now=datetime.now())
+    return render_template('workers/timesheet.html', ts=ts, now=datetime.now(), datetime=datetime, timedelta=timedelta)
 
 @bp.route('/timesheet/<string:ts_id>/download')
 @login_required

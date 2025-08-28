@@ -236,6 +236,9 @@ def create_app(test_config=None):
     init_app_logger(app)
     app.logger.setLevel(logging.DEBUG)
     app.logger.info("\n=== ANWENDUNGSSTART ===")
+
+    # Jinja-Filter früh registrieren, damit sie bereits beim Blueprint-Import verfügbar sind
+    register_filters(app)
     
     ensure_directories_exist()
     

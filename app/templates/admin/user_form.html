@@ -136,7 +136,7 @@
                             <span class="label-text">Konto läuft ab am (optional)</span>
                         </label>
                         <input type="date" id="expiry_date" name="expiry_date" 
-                               value="{{ request.form.expiry_date or ((user.expiry_date.strftime('%Y-%m-%d')) if user and user.expiry_date and user.expiry_date.strftime else (user.expiry_date if user and user.expiry_date else '')) }}" 
+                               value="{{ request.form.expiry_date or ((user.delete_at.strftime('%Y-%m-%d')) if user and user.delete_at and user.delete_at.strftime else (user.delete_at if user and user.delete_at else (user.expiry_date.strftime('%Y-%m-%d') if user and user.expiry_date and user.expiry_date.strftime else (user.expiry_date if user and user.expiry_date else ''))) ) }}" 
                                class="input input-bordered w-full" />
                         <label class="label">
                             <span class="label-text-alt text-warning">
