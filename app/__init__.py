@@ -374,29 +374,32 @@ def create_app(test_config=None):
         """
         try:
             dept = session.get('department')
-            # Falls kein Department in der Session: aus Benutzerprofil ableiten
-            if not dept and current_user.is_authenticated:
+            # Falls kein Department oder ungültig: aus Benutzerprofil ableiten und validieren
+            if current_user.is_authenticated:
+                from app.models.mongodb_database import mongodb
                 try:
-                    from app.models.mongodb_database import mongodb
                     user = mongodb.find_one('users', {'username': current_user.username})
-                    # Admins: Standardmäßig erste globale Abteilung wählen, wenn vorhanden
-                    if getattr(current_user, 'role', None) == 'admin':
-                        depts_setting = mongodb.find_one('settings', {'key': 'departments'})
-                        all_departments = depts_setting.get('value', []) if depts_setting else []
-                        # Admin: bevorzuge Benutzer-Default falls gesetzt, sonst erste globale
-                        if user and user.get('default_department'):
-                            dept = user.get('default_department')
-                        elif isinstance(all_departments, list) and all_departments:
-                            dept = all_departments[0]
-                        else:
-                            dept = (user.get('allowed_departments') or [None])[0] if user else None
-                    else:
-                        if user:
-                            dept = user.get('default_department') or (user.get('allowed_departments') or [None])[0]
-                    if dept:
-                        session['department'] = dept
                 except Exception:
-                    pass
+                    user = None
+                allowed = []
+                if getattr(current_user, 'role', None) == 'admin':
+                    # Admins: alle globalen Departments
+                    try:
+                        depts_setting = mongodb.find_one('settings', {'key': 'departments'})
+                        if depts_setting and isinstance(depts_setting.get('value'), list):
+                            allowed = [d for d in depts_setting['value'] if isinstance(d, str) and d.strip()]
+                    except Exception:
+                        allowed = []
+                else:
+                    allowed = (user.get('allowed_departments') if user else []) or []
+
+                user_default = (user.get('default_department') if user else None)
+
+                # Ungültige Session-Abteilung verwerfen
+                if not dept or (allowed and dept not in allowed and getattr(current_user, 'role', None) != 'admin'):
+                    dept = user_default or (allowed[0] if allowed else None)
+                    session['department'] = dept if dept else None
+
             g.current_department = dept
         except Exception:
             g.current_department = None

@@ -18,7 +18,7 @@ class FeatureSystem:
     
     # Kern-Features, die immer aktiviert sein sollten
     CORE_FEATURES = {
-        'tools', 'consumables', 'workers', 'lending_system'
+        'tools', 'consumables', 'workers', 'lending_system', 'job_board'
     }
     
     # Standard-Feature-Einstellungen
@@ -31,7 +31,7 @@ class FeatureSystem:
         'timesheet': True,
         'media_management': True,
         'software_management': False,
-        'job_board': False,
+        'job_board': True,
         'weekly_reports': False,
         'canteen_plan': False,
         # Werkzeug-Felder

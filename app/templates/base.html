@@ -281,16 +281,14 @@
             </a>
             {% endif %}
             
-            {# Jobbörse - für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
-            {% if current_user.is_authenticated and features_enabled.get('job_board', False) %}
+            {# Jobbörse - global sichtbar #}
             <a href="{{ url_for('jobs.job_list') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'jobs' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="fas fa-briefcase text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Jobbörse</span>
+              <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-briefcase text-xl"></i>
+              </div>
+              <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Jobbörse</span>
             </a>
-            {% endif %}
 
             {# Kantinenplan - nur für berechtigte Benutzer wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('canteen_plan', False) and current_user.canteen_plan_enabled %}

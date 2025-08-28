@@ -264,6 +264,32 @@ def login():
                 logger.info(f"login_user aufgerufen für: {user.username}")
                 
                 flash('Anmeldung erfolgreich!', 'success')
+                # Abteilung strikt setzen: zuerst Session bereinigen, dann Default des Benutzers
+                try:
+                    from flask import session, g
+                    session.pop('department', None)
+                    session.pop('current_department', None)
+                    # Benutzer-Default bestimmen
+                    user_default = user_data.get('default_department')
+                    allowed = user_data.get('allowed_departments') or []
+                    # Falls kein Default, nimm die erste erlaubte; Admins dürfen alle, aber setze dennoch explizit
+                    if not user_default:
+                        if allowed:
+                            user_default = allowed[0]
+                        else:
+                            # Admin-Fallback: erste globale Abteilung
+                            if user.role == 'admin':
+                                try:
+                                    depts_setting = mongodb.find_one('settings', {'key': 'departments'})
+                                    all_departments = depts_setting.get('value', []) if depts_setting else []
+                                    user_default = all_departments[0] if all_departments else None
+                                except Exception:
+                                    user_default = None
+                    if user_default:
+                        session['department'] = user_default
+                        g.current_department = user_default
+                except Exception:
+                    pass
                 
                 # ===== REDIRECT LOGIK =====
                 next_page = request.args.get('next')
@@ -564,6 +590,18 @@ def logout():
     
     Beendet die aktuelle Session und leitet zur Login-Seite weiter.
     """
+    # Benutzer abmelden und Abteilungs-Session bereinigen
+    try:
+        from flask import session, g
+        # Department aus Session entfernen
+        session.pop('department', None)
+        # Auch evtl. alternative Keys entfernen (Legacy/Fallbacks)
+        session.pop('current_department', None)
+        # Request-Kontext bereinigen
+        if hasattr(g, 'current_department'):
+            g.current_department = None
+    except Exception:
+        pass
     logout_user()
     flash('Sie wurden erfolgreich abgemeldet.', 'info')
     return redirect(url_for('auth.login'))

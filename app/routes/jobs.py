@@ -16,10 +16,7 @@ bp = Blueprint('jobs', __name__)
 @bp.route('/')
 def job_list():
     """Job-Übersicht"""
-    # Prüfe ob Jobbörse aktiviert ist
-    if not is_feature_enabled('job_board'):
-        flash('Jobbörse ist deaktiviert', 'error')
-        return redirect(url_for('main.index'))
+    # Jobbörse ist global aktiviert
     
     try:
         # Filter aus Request
@@ -42,8 +39,8 @@ def job_list():
         # Jobs direkt aus MongoDB abrufen
         mongodb = get_mongodb()
         
-        # Filter vorbereiten
-        query = {}  # Zeige alle Jobs an
+        # Filter vorbereiten: Öffentlich sichtbare, aktive Jobs
+        query = {'is_active': True, 'is_public': True}
         
         if filters:
             if filters.get('search'):
@@ -145,10 +142,7 @@ def job_list():
 @mitarbeiter_required
 def create_job():
     """Job erstellen"""
-    # Prüfe ob Jobbörse aktiviert ist
-    if not is_feature_enabled('job_board'):
-        flash('Jobbörse ist deaktiviert', 'error')
-        return redirect(url_for('main.index'))
+    # Jobbörse ist global aktiviert
     
     if request.method == 'POST':
         try:
@@ -206,10 +200,7 @@ def create_job():
 @bp.route('/<job_id>')
 def job_detail(job_id):
     """Job-Details"""
-    # Prüfe ob Jobbörse aktiviert ist
-    if not is_feature_enabled('job_board'):
-        flash('Jobbörse ist deaktiviert', 'error')
-        return redirect(url_for('main.index'))
+    # Jobbörse ist global aktiviert
     
     try:
         loggers['user_actions'].info(f"Job-Detail abgerufen für ID: {job_id}")
@@ -219,6 +210,18 @@ def job_detail(job_id):
             flash('Job nicht gefunden', 'error')
             return redirect(url_for('jobs.job_list'))
         
+        # Zugriff: Gäste dürfen nur aktive, öffentliche Jobs sehen
+        is_owner_or_admin = False
+        try:
+            is_owner_or_admin = current_user.is_authenticated and (
+                getattr(current_user, 'role', None) == 'admin' or (job.created_by and str(job.created_by) == str(getattr(current_user, 'id', '')))
+            )
+        except Exception:
+            is_owner_or_admin = False
+        if not (job.is_active and job.is_public) and not is_owner_or_admin:
+            flash('Dieser Job ist nicht öffentlich sichtbar.', 'error')
+            return redirect(url_for('jobs.job_list'))
+
         loggers['user_actions'].info(f"Job gefunden: {job.title}")
         return render_template('jobs/detail.html', 
                              job=job, entity_type='jobs', entity_id=job_id)

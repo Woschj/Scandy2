@@ -157,7 +157,7 @@
                         <div class="form-control">
                             <label class="label"><span class="label-text">Zugeordnete Abteilungen</span></label>
                             <div class="border rounded-md p-3 max-h-56 overflow-auto">
-                                {% for dep in departments %}
+                                {% for dep in available_departments or departments_ctx.allowed %}
                                 <label class="label cursor-pointer justify-start gap-3">
                                     <input type="checkbox" name="allowed_departments" value="{{ dep }}" class="checkbox checkbox-primary"
                                            {% if dep in (user_allowed_departments or []) %}checked{% endif %}>
@@ -173,7 +173,7 @@
                             <label class="label"><span class="label-text">Standard-Abteilung</span></label>
                             <select name="default_department" class="select select-bordered w-full">
                                 <option value="">– bitte wählen –</option>
-                                {% for dep in departments %}
+                                {% for dep in available_departments or departments_ctx.allowed %}
                                 <option value="{{ dep }}" {% if user_default_department == dep %}selected{% endif %}>{{ dep }}</option>
                                 {% endfor %}
                             </select>

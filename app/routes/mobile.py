@@ -76,6 +76,14 @@ def login():
 @login_required
 def logout():
     """Mobile Logout"""
+    try:
+        # Department aus Session und Context entfernen
+        session.pop('department', None)
+        session.pop('current_department', None)
+        if hasattr(g, 'current_department'):
+            g.current_department = None
+    except Exception:
+        pass
     logout_user()
     flash('Erfolgreich abgemeldet', 'success')
     return redirect(url_for('mobile.quickscan'))

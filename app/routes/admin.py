@@ -2607,7 +2607,7 @@ def feature_settings():
             # Nur Features aktualisieren, die auf der Seite tatsächlich vorhanden sind
             # (kein implizites Deaktivieren nicht angezeigter Features)
             form_to_feature_keys = {
-                'feature_job_board': 'job_board',
+                # 'feature_job_board': 'job_board',  # global immer aktiv, nicht konfigurierbar
                 'feature_weekly_reports': 'weekly_reports',
                 'feature_software_management': 'software_management',
                 'feature_ticket_system': 'ticket_system',

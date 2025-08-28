@@ -174,6 +174,15 @@ def inject_feature_settings():
     try:
         from app.models.mongodb_database import get_feature_settings
         feature_settings = get_feature_settings()
+        # Gäste haben kein Department -> nutze globale Sichtbarkeit:
+        # Wenn Jobbörse in irgendeiner Abteilung aktiv ist, Links für Gäste erlauben
+        try:
+            if (not hasattr(current_user, 'is_authenticated') or not current_user.is_authenticated) and not feature_settings.get('job_board', False):
+                rows = mongodb.find('feature_settings', {'feature_name': 'job_board', 'enabled': True})
+                if rows:
+                    feature_settings['job_board'] = True
+        except Exception:
+            pass
         return {
             'features_enabled': feature_settings,
             'feature_settings': feature_settings
