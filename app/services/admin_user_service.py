@@ -109,6 +109,7 @@ class AdminUserService:
                 'role': user_data['role'],
                 'is_active': user_data.get('is_active', True),
                 'timesheet_enabled': user_data.get('timesheet_enabled', False),
+                'canteen_plan_enabled': user_data.get('canteen_plan_enabled', False),
                 'email': user_data.get('email', ''),
                 'firstname': user_data.get('firstname', ''),
                 'lastname': user_data.get('lastname', ''),
@@ -170,7 +171,7 @@ class AdminUserService:
             }
             
             # Aktualisierbare Felder inkl. Multi-Department
-            updatable_fields = ['username', 'role', 'is_active', 'timesheet_enabled', 
+            updatable_fields = ['username', 'role', 'is_active', 'timesheet_enabled', 'canteen_plan_enabled',
                               'email', 'firstname', 'lastname', 'handlungsfelder', 'delete_at',
                               'allowed_departments', 'default_department']
             
