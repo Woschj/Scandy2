@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MongoDB für BTZ
+  btz-mongodb:
+    image: mongo:6.0
+    container_name: btz-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: btzPassword123
+      MONGO_INITDB_DATABASE: btz_scandy
+    volumes:
+      - btz_mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27020:27017"
+    networks:
+      - btz-network
+
+  # Scandy-App für BTZ
+  btz-scandy:
+    build: .
+    container_name: btz-scandy
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://admin:btzPassword123@btz-mongodb:27017/btz_scandy?authSource=admin
+      - SECRET_KEY=btzSecretKey123456789
+      - SYSTEM_NAME=Scandy BTZ
+      - TICKET_SYSTEM_NAME=Aufgaben BTZ
+      - TOOL_SYSTEM_NAME=Werkzeuge BTZ
+      - CONSUMABLE_SYSTEM_NAME=Verbrauchsgüter BTZ
+    volumes:
+      - ./app:/app/app
+      - ./data/btz:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    ports:
+      - "5003:5000"
+    depends_on:
+      - btz-mongodb
+    networks:
+      - btz-network
+
+volumes:
+  btz_mongodb_data:
+
+networks:
+  btz-network:
+    driver: bridge

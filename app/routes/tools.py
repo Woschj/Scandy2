@@ -45,7 +45,8 @@ def get_software_presets():
     try:
         software_list = list(mongodb.find('software', {}, sort=[('name', 1)]))
         return software_list
-    except:
+    except Exception as e:
+        logger.warning(f"Fehler beim Laden der Software-Presets: {e}")
         return []
 
 def get_user_groups():
@@ -54,7 +55,8 @@ def get_user_groups():
     try:
         groups_list = list(mongodb.find('user_groups', {}, sort=[('name', 1)]))
         return groups_list
-    except:
+    except Exception as e:
+        logger.warning(f"Fehler beim Laden der Nutzergruppen: {e}")
         return []
 
 @bp.route('/')

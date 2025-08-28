@@ -3,6 +3,9 @@ User-Modell für Flask-Login Integration mit MongoDB
 """
 from flask_login import UserMixin
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class User(UserMixin):
     """User-Klasse für Flask-Login Integration"""
@@ -25,7 +28,8 @@ class User(UserMixin):
             if self.delete_at and isinstance(self.delete_at, str):
                 try:
                     self.delete_at = datetime.fromisoformat(self.delete_at.replace('Z', '+00:00'))
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Datumskonvertierung delete_at: {e}")
                     self.delete_at = None
             
 

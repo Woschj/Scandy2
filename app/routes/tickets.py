@@ -1277,7 +1277,7 @@ def update_status(id):
 
         # Verwende die gleiche ID für das Update
         result = mongodb.update_one('tickets', {'_id': ticket_id_for_update}, {'$set': update_fields})
-        print(f"DEBUG: update_one Erfolg: {result}")
+        # print(f"DEBUG: update_one Erfolg: {result}")  # Debug-Ausgabe entfernt
 
         if not result:
             return jsonify({'success': False, 'message': 'Fehler beim Aktualisieren des Status'})

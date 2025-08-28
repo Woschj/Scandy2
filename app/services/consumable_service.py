@@ -188,7 +188,7 @@ class ConsumableService:
             # Verwendung protokollieren
             usage_data = {
                 'consumable_barcode': barcode,
-                'worker_barcode': 'admin',  # TODO: Aktuellen Benutzer verwenden
+                'worker_barcode': getattr(g, 'current_user', {}).get('username', 'admin'),  # Aktuellen Benutzer verwenden
                 'quantity': quantity_change,  # Positiv für Hinzufügung, negativ für Entnahme
                 'reason': reason,
                 'used_at': datetime.now()

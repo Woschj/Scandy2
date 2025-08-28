@@ -318,7 +318,8 @@ def _check_auth_required(server, port, use_tls):
             try:
                 smtp_server.starttls()
                 capabilities = smtp_server.ehlo()
-            except:
+            except Exception as e:
+                logger.warning(f"STARTTLS nicht verfügbar: {e}")
                 pass  # STARTTLS nicht verfügbar
         
         # Prüfe AUTH in Capabilities (korrigiert für btz-koeln.net)

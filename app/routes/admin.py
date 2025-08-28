@@ -149,7 +149,8 @@ def _resolve_user_group_names(group_ids):
                 if isinstance(group_id, str) and len(group_id) == 24:
                     try:
                         query_id = ObjectId(group_id)
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {e}")
                         query_id = group_id
                 
                 # Lade Nutzergruppe aus Datenbank
@@ -172,7 +173,8 @@ def _create_enhanced_tools_sheet(ws, tools_data):
         try:
             from app.services.custom_fields_service import CustomFieldsService
             custom_fields = CustomFieldsService.get_custom_fields_for_target('tools')
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler beim Laden der Custom Fields für Tools: {e}")
             custom_fields = []
         
         # Header definieren

@@ -25,11 +25,13 @@ def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
     try:
         # Versuche zuerst mit String-ID (für importierte Daten)
         return id_value
-    except:
+    except Exception as e:
+        logger.warning(f"Fehler bei String-ID-Behandlung: {e}")
         # Falls das fehlschlägt, versuche ObjectId
         try:
             return ObjectId(id_value)
-        except:
+        except Exception as e2:
+            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e2}")
             # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
             return id_value
 
@@ -50,7 +52,8 @@ def find_document_by_id(collection: str, id_value: str):
             doc = mongodb.find_one(collection, {'_id': obj_id})
             if doc:
                 return doc
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
             pass
         
         # Falls auch das fehlschlägt, versuche mit convert_id_for_query

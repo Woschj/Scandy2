@@ -1,0 +1,55 @@
+{
+  "tickets": {
+    "count": 2,
+    "ids": [
+      "68872546a197f7f0edac8ccc",
+      "68872708a197f7f0edac8ccf"
+    ],
+    "titles": [
+      "Insta-Post",
+      "Cover Akzente 09"
+    ]
+  },
+  "tools": {
+    "count": 3,
+    "ids": [
+      "6882069da197f7f0edac8cb4",
+      "688206c5a197f7f0edac8cb5",
+      "68820737a197f7f0edac8cb6"
+    ],
+    "titles": [
+      "Adobe Laptop 1",
+      "Social Media Handy",
+      "Social Media Tablet"
+    ]
+  },
+  "workers": {
+    "count": 1,
+    "ids": [
+      "688207a2a197f7f0edac8cb8"
+    ],
+    "titles": [
+      "Andreas Klann"
+    ]
+  },
+  "consumables": {
+    "count": 1,
+    "ids": [
+      "6882078ba197f7f0edac8cb7"
+    ],
+    "titles": [
+      "Creality Filament PLA Gr\u00fcn"
+    ]
+  },
+  "jobs": {
+    "count": 2,
+    "ids": [
+      "6882064aa197f7f0edac8cb2",
+      "68823953a197f7f0edac8cbe"
+    ],
+    "titles": [
+      "Beispieljob",
+      "Festanstellung UX/UI Designer:in"
+    ]
+  }
+}

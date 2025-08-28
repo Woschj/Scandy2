@@ -1,0 +1,134 @@
+services:
+  mongodb-instance2:
+    image: mongo:7
+    container_name: scandy-mongodb-2
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27018:27017"  # Anderer Port für MongoDB
+    volumes:
+      - mongodb_data_2:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - scandy-network-2
+    command: mongod --bind_ip_all
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ulimits:
+      nproc: 64000
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - .env
+
+  mongo-express-instance2:
+    image: mongo-express:1.0.0
+    container_name: scandy-mongo-express-2
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb-instance2:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "8082:8081"  # Anderer Port für Mongo Express
+    depends_on:
+      mongodb-instance2:
+        condition: service_healthy
+    networks:
+      - scandy-network-2
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app-instance2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scandy-local:dev-2
+    container_name: scandy-app-2
+    restart: unless-stopped
+    environment:
+      - DATABASE_MODE=mongodb
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb-instance2:27017/${MONGODB_DB:-scandy_instance2}
+      - MONGODB_DB=${MONGODB_DB:-scandy_instance2}
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - SYSTEM_NAME=${SYSTEM_NAME:-Scandy Instance 2}
+      - TICKET_SYSTEM_NAME=${TICKET_SYSTEM_NAME:-Aufgaben}
+      - TOOL_SYSTEM_NAME=${TOOL_SYSTEM_NAME:-Werkzeuge}
+      - CONSUMABLE_SYSTEM_NAME=${CONSUMABLE_SYSTEM_NAME:-Verbrauchsgüter}
+      - CONTAINER_NAME=scandy-2
+      - TZ=Europe/Berlin
+    ports:
+      - "5001:5000"  # Anderer Port für die App
+    volumes:
+      - ./app:/app/app
+      - app_uploads_2:/app/app/uploads
+      - app_backups_2:/app/app/backups
+      - app_logs_2:/app/app/logs
+      - app_sessions_2:/app/app/flask_session
+    depends_on:
+      mongodb-instance2:
+        condition: service_healthy
+    networks:
+      - scandy-network-2
+    healthcheck:
+      test: ["CMD", "powershell", "-Command", "try { Invoke-WebRequest -Uri 'http://localhost:5000/health' -UseBasicParsing -TimeoutSec 5 | Out-Null; exit 0 } catch { exit 1 }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - .env
+
+volumes:
+  mongodb_data_2:
+    driver: local
+  app_uploads_2:
+    driver: local
+  app_backups_2:
+    driver: local
+  app_logs_2:
+    driver: local
+  app_sessions_2:
+    driver: local
+
+networks:
+  scandy-network-2:
+    driver: bridge 

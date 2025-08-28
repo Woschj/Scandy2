@@ -192,7 +192,8 @@ def api_current_week():
                 try:
                     date_obj = datetime.strptime(date, '%Y-%m-%d')
                     date_label = date_obj.strftime('%d.%m.%Y')
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
                     date_label = date
             else:
                 # Fallback: Datum anhand aktueller Woche bestimmen
@@ -280,7 +281,8 @@ def api_two_weeks():
                 try:
                     date_obj = datetime.strptime(date, '%Y-%m-%d')
                     date_label = date_obj.strftime('%d.%m.%Y')
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
                     date_label = date
             else:
                 today = datetime.now()
@@ -657,8 +659,8 @@ def debug_request():
         try:
             json_data = request.get_json()
             logger.info(f"JSON Data: {json_data}")
-        except:
-            logger.info("JSON Data: None (not JSON content-type)")
+        except Exception as e:
+            logger.info(f"JSON Data: None (not JSON content-type) - {e}")
     
     return jsonify({
         'method': request.method,

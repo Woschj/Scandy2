@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MongoDB für Werkstatt
+  werkstatt-mongodb:
+    image: mongo:6.0
+    container_name: werkstatt-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: werkstattPassword123
+      MONGO_INITDB_DATABASE: werkstatt_scandy
+    volumes:
+      - werkstatt_mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27018:27017"
+    networks:
+      - werkstatt-network
+
+  # Scandy-App für Werkstatt
+  werkstatt-scandy:
+    build: .
+    container_name: werkstatt-scandy
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://admin:werkstattPassword123@werkstatt-mongodb:27017/werkstatt_scandy?authSource=admin
+      - SECRET_KEY=werkstattSecretKey123456789
+      - SYSTEM_NAME=Scandy Werkstatt
+      - TICKET_SYSTEM_NAME=Aufgaben Werkstatt
+      - TOOL_SYSTEM_NAME=Werkzeuge Werkstatt
+      - CONSUMABLE_SYSTEM_NAME=Verbrauchsgüter Werkstatt
+    volumes:
+      - ./app:/app/app
+      - ./data/werkstatt:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    ports:
+      - "5001:5000"
+    depends_on:
+      - werkstatt-mongodb
+    networks:
+      - werkstatt-network
+
+volumes:
+  werkstatt_mongodb_data:
+
+networks:
+  werkstatt-network:
+    driver: bridge

@@ -67,7 +67,8 @@ class ExcelExportService:
                     if isinstance(group_id, str) and len(group_id) == 24:
                         try:
                             query_id = ObjectId(group_id)
-                        except:
+                        except Exception as e:
+                            logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {e}")
                             query_id = group_id
                     
                     # Lade Nutzergruppe aus Datenbank
@@ -77,11 +78,13 @@ class ExcelExportService:
                         group_names.append(group.get('name', str(group_id)))
                     else:
                         group_names.append(str(group_id))
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Gruppenverarbeitung für group_id {group_id}: {e}")
                     group_names.append(str(group_id))
             
             return ', '.join(group_names)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Fehler bei Gruppenverarbeitung: {e}")
             return ', '.join([str(gid) for gid in group_ids]) if group_ids else ''
     
     def generate_complete_export(self) -> BinaryIO:
@@ -257,7 +260,8 @@ class ExcelExportService:
             try:
                 from app.services.custom_fields_service import CustomFieldsService
                 custom_fields = CustomFieldsService.get_custom_fields_for_target('consumables')
-            except:
+            except Exception as e:
+                logger.warning(f"Fehler beim Laden der Custom Fields für Verbrauchsmaterial: {e}")
                 custom_fields = []
             
             headers = [
@@ -664,7 +668,8 @@ class ExcelExportService:
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
-                except:
+                except Exception as e:
+                    logger.warning(f"Fehler bei Spaltenbreiten-Berechnung: {e}")
                     pass
             
             adjusted_width = min(max_length + 2, 50)  # Maximal 50 Zeichen

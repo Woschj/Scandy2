@@ -1,0 +1,39 @@
+{
+  "timestamp": 1754398600,
+  "data": {
+    "generated_at": "2025-08-05T14:56:40.181924",
+    "success": true,
+    "week": [
+      {
+        "date": "Montag, 04.08.2025",
+        "meat_dish": "Schnitzel mit Pommes",
+        "vegan_dish": "Schnitzel ohne  Pommes",
+        "weekday": "Montag"
+      },
+      {
+        "date": "Dienstag, 05.08.2025",
+        "meat_dish": "Kein Schnitzel aber Pommes",
+        "vegan_dish": "Pommes aber kein Schnitzel",
+        "weekday": "Dienstag"
+      },
+      {
+        "date": "Mittwoch, 06.08.2025",
+        "meat_dish": "Witzel mit Schwommes",
+        "vegan_dish": "Witzel mit Schwommes",
+        "weekday": "Mittwoch"
+      },
+      {
+        "date": "Donnerstag, 07.08.2025",
+        "meat_dish": "Witzel mit Schwommes",
+        "vegan_dish": "Witzel mit Schwommes",
+        "weekday": "Donnerstag"
+      },
+      {
+        "date": "Freitag, 08.08.2025",
+        "meat_dish": "Witzel mit Schwommes",
+        "vegan_dish": "Freitag",
+        "weekday": "Freitag"
+      }
+    ]
+  }
+}

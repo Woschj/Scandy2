@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from app.utils.decorators import mitarbeiter_required
 from app.utils.logger import loggers
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 # Temporärer Import-Fix
 try:
     from app.utils.media_manager import MediaManager
@@ -257,7 +260,8 @@ def upload_media(entity_type, entity_id):
                     'file_size': final_size,
                     'file_size_mb': round(final_size_mb, 2)
                 })
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler bei Bildverarbeitung: {e}")
             # History-Logging für Medien-Upload (nur bei Tickets) - Fallback
             if entity_type == 'tickets':
                 try:

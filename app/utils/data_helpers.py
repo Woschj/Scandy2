@@ -30,7 +30,8 @@ def resolve_user_group_names(group_ids):
                 if isinstance(group_id, str) and len(group_id) == 24:
                     try:
                         query_id = ObjectId(group_id)
-                    except:
+                    except Exception as e:
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {e}")
                         query_id = group_id
                 
                 # Lade Nutzergruppe aus Datenbank
@@ -39,11 +40,13 @@ def resolve_user_group_names(group_ids):
                     group_names.append(group.get('name', str(group_id)))
                 else:
                     group_names.append(str(group_id))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Fehler bei Gruppenverarbeitung für group_id {group_id}: {e}")
                 group_names.append(str(group_id))
         
         return ', '.join(group_names)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Fehler bei Gruppenverarbeitung: {e}")
         return ', '.join([str(gid) for gid in group_ids]) if group_ids else ''
 
 def format_software_list(software_list):
@@ -60,7 +63,8 @@ def format_software_list(software_list):
         if not software_list:
             return ''
         return ', '.join(software_list)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Fehler bei Software-Listen-Formatierung: {e}")
         return ''
 
 def format_boolean_field(value, true_text="Ja", false_text="Nein"):
@@ -79,5 +83,6 @@ def format_boolean_field(value, true_text="Ja", false_text="Nein"):
         if isinstance(value, bool):
             return true_text if value else false_text
         return str(value) if value is not None else ''
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Fehler bei Boolean-Feld-Formatierung: {e}")
         return ''

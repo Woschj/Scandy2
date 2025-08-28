@@ -27,13 +27,15 @@ def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
         if isinstance(id_value, str) and len(id_value) == 24:
             try:
                 return ObjectId(id_value)
-            except:
+            except Exception as e:
+                logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
                 # Falls die Konvertierung fehlschlägt, gib die ursprüngliche ID zurück
                 return id_value
         else:
             # Für andere IDs (z.B. Barcodes) gib die ursprüngliche ID zurück
             return id_value
-    except:
+    except Exception as e:
+        logger.warning(f"Fehler bei ID-Behandlung: {e}")
         # Falls etwas schiefgeht, gib die ursprüngliche ID zurück
         return id_value
 

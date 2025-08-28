@@ -1,0 +1,127 @@
+<!-- Medien-Anzeige (nur Anzeige, kein Upload) -->
+<div class="media-display" data-entity-type="{{ entity_type }}" data-entity-id="{{ entity_id }}">
+    
+    <!-- Medien-Liste -->
+    <div class="media-list grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <!-- Wird per JavaScript gefüllt -->
+    </div>
+    
+    <!-- Keine Medien Nachricht -->
+    <div class="no-media-message hidden">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <h4 class="font-bold">Keine Medien vorhanden</h4>
+                <p>Für diese {{ entity_type|title }} sind noch keine Medien hochgeladen.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Medien-Modal -->
+    <div id="mediaDisplayModal" class="modal">
+        <div class="modal-box max-w-4xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">Medien-Vorschau</h3>
+                <button onclick="closeMediaDisplayModal()" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <img id="modalDisplayMediaImage" src="" alt="Medien-Vorschau" class="w-full h-auto max-h-96 object-contain">
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+// Medien-Anzeige JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const display = document.querySelector('.media-display');
+    if (!display) return;
+    
+    const entityType = display.dataset.entityType;
+    const entityId = display.dataset.entityId;
+    
+    // Medien laden
+    loadMediaDisplay(entityType, entityId);
+});
+
+function loadMediaDisplay(entityType, entityId) {
+    fetch(`/media/${entityType}/${entityId}/list`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMediaDisplay(data.media_list);
+            } else {
+                console.error('Fehler beim Laden der Medien:', data.error);
+                showNoMediaMessage();
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Medien:', error);
+            showNoMediaMessage();
+        });
+}
+
+function displayMediaDisplay(mediaList) {
+    const mediaListContainer = document.querySelector('.media-display .media-list');
+    const noMediaMessage = document.querySelector('.no-media-message');
+    
+    if (!mediaListContainer) return;
+    
+    if (mediaList.length === 0) {
+        mediaListContainer.innerHTML = '';
+        noMediaMessage.classList.remove('hidden');
+        return;
+    }
+    
+    noMediaMessage.classList.add('hidden');
+    mediaListContainer.innerHTML = '';
+    
+    mediaList.forEach((media, index) => {
+        const mediaItem = document.createElement('div');
+        mediaItem.className = 'relative group';
+        mediaItem.innerHTML = `
+            <img src="${media.url}" 
+                 alt="Medien ${index + 1}"
+                 class="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity shadow-md">
+            
+            <!-- Zoom-Indikator -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="bg-black/50 text-white rounded-full p-2">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+            </div>
+        `;
+        
+        // Klick-Event für Modal
+        mediaItem.querySelector('img').addEventListener('click', function() {
+            openMediaDisplayModal(media.url);
+        });
+        
+        mediaListContainer.appendChild(mediaItem);
+    });
+}
+
+function showNoMediaMessage() {
+    const mediaListContainer = document.querySelector('.media-display .media-list');
+    const noMediaMessage = document.querySelector('.no-media-message');
+    
+    if (mediaListContainer) mediaListContainer.innerHTML = '';
+    if (noMediaMessage) noMediaMessage.classList.remove('hidden');
+}
+
+function openMediaDisplayModal(imageSrc) {
+    document.getElementById('modalDisplayMediaImage').src = imageSrc;
+    document.getElementById('mediaDisplayModal').classList.add('modal-open');
+}
+
+function closeMediaDisplayModal() {
+    document.getElementById('mediaDisplayModal').classList.remove('modal-open');
+}
+
+// Modal schließen bei Klick außerhalb
+document.getElementById('mediaDisplayModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeMediaDisplayModal();
+    }
+});
+</script> 

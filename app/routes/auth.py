@@ -143,7 +143,8 @@ def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
         # Falls das fehlschlägt, versuche ObjectId
         try:
             return ObjectId(id_value)
-        except:
+        except Exception as e:
+            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
             # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
             return id_value
 
