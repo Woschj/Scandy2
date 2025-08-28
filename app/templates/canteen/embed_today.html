@@ -29,19 +29,12 @@
       <table>
         <thead>
           <tr>
-            <th style="width:34%">Tag, Datum</th>
-            <th style="width:33%">Menü 1 (Fleisch)</th>
-            <th style="width:33%">Menü 2 (Vegan)</th>
+            <th style="width:50%">Menü 1 (Fleisch)</th>
+            <th style="width:50%">Menü 2 (Vegan)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
-              <div class="meta">
-                <div id="weekday"></div>
-                <div id="date" class="date"></div>
-              </div>
-            </td>
             <td id="meat"></td>
             <td id="vegan"></td>
           </tr>
@@ -58,8 +51,6 @@
       const errorEl=document.getElementById('canteen-error');
       const tableWrap=document.getElementById('canteen-table-wrap');
       const gen=document.getElementById('canteen-generated');
-      const elWeekday=document.getElementById('weekday');
-      const elDate=document.getElementById('date');
       const elMeat=document.getElementById('meat');
       const elVegan=document.getElementById('vegan');
 
@@ -68,8 +59,6 @@
         .then(data=>{
           loading.style.display='none';
           if(!data||!data.success){ errorEl.style.display='block'; return; }
-          elWeekday.textContent=data.weekday||'';
-          elDate.textContent=data.date||'';
           elMeat.textContent=data.meat_dish||'';
           elVegan.textContent=data.vegan_dish||'';
           tableWrap.style.display='block';
