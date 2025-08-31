@@ -174,7 +174,7 @@ class ToolService:
                 'deleted': False
             }
             
-            # Benutzerdefinierte Felder hinzufügen, falls vorhanden
+            # Nutzendedefinierte Felder hinzufügen, falls vorhanden
             if 'custom_fields' in tool_data:
                 tool['custom_fields'] = tool_data['custom_fields']
             
@@ -246,7 +246,7 @@ class ToolService:
                 'modified_at': datetime.now()
             }
             
-            # Benutzerdefinierte Felder hinzufügen, falls vorhanden
+            # Nutzendedefinierte Felder hinzufügen, falls vorhanden
             if 'custom_fields' in tool_data:
                 update_data['custom_fields'] = tool_data['custom_fields']
             

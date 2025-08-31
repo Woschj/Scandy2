@@ -6,10 +6,17 @@ from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 from flask import current_app, g
 from app.models.mongodb_database import mongodb
-from app.services.notification_service import NotificationService
+from app.services.unified_notification_service import unified_notification_service
 from app.services.utility_service import UtilityService
 from app.utils.database_helpers import get_next_ticket_number
 from app.services.ticket_category_service import ticket_category_service
+from app.utils.enhanced_error_handler import (
+    handle_service_errors, safe_db_operation, ValidationException,
+    DatabaseException, log_error, validate_required_fields
+)
+from app.utils.performance_optimizer import (
+    optimize_db_query, cached_query, QueryOptimizer
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,24 +25,27 @@ class TicketService:
     """Zentraler Service für alle Ticket-Operationen"""
     
     def __init__(self):
-        self.notification_service = NotificationService()
         self.utility_service = UtilityService()
     
+    @handle_service_errors("TicketService")
     def create_ticket(self, ticket_data: Dict[str, Any], created_by: str) -> Tuple[bool, str, Optional[str]]:
         """
         Erstellt ein neues Ticket
-        
+
         Args:
             ticket_data: Ticket-Daten
-            created_by: Benutzername des Erstellers
-            
+            created_by: Nutzendename des Erstellers
+
         Returns:
             Tuple: (success, message, ticket_id)
         """
         try:
-            # Validierung
-            if not ticket_data.get('title'):
-                return False, 'Titel ist erforderlich', None
+            # Verbesserte Validierung mit dem neuen System
+            validate_required_fields(ticket_data, ['title'])
+
+            # Zusätzliche Validierung für created_by
+            if not created_by or not isinstance(created_by, str):
+                raise ValidationException("Ersteller ist erforderlich", field="created_by")
             
             # Kategorie validieren: strikt gegen department-spezifische Kategorien
             category = ticket_data.get('category')
@@ -91,20 +101,22 @@ class TicketService:
             logger.error(f"Fehler beim Erstellen des Tickets: {str(e)}")
             return False, f'Fehler beim Erstellen des Tickets: {str(e)}', None
     
+    @cached_query(ttl=60, key_prefix="tickets_user")  # Cache für 1 Minute
+    @optimize_db_query
     def get_tickets_by_user(self, username: str, role: str, handlungsfelder: List[str] = None) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Holt Tickets basierend auf Benutzerrolle und Handlungsfeld-Zuweisungen
-        
+        Holt Tickets basierend auf Nutzenderolle und Handlungsfeld-Zuweisungen
+
         Args:
-            username: Benutzername
-            role: Benutzerrolle
+            username: Nutzendename
+            role: Nutzenderolle
             handlungsfelder: Liste der zugewiesenen Handlungsfelder (Ticket-Kategorien)
-            
+
         Returns:
             Dict: Verschiedene Ticket-Listen
         """
         try:
-            logger.debug(f"Lade Tickets für Benutzer: {username}, Rolle: {role}, Handlungsfelder: {handlungsfelder}")
+            logger.debug(f"Lade Tickets für Nutzende: {username}, Rolle: {role}, Handlungsfelder: {handlungsfelder}")
             
             # Debug: Prüfe alle Tickets in der Datenbank
             all_tickets_debug = list(mongodb.find('tickets', {}))
@@ -192,7 +204,7 @@ class TicketService:
                     logger.debug(f"Zugewiesene (Multi) Tickets Query: {assigned_tickets_multi_query}")
                     assigned_tickets_multi = list(mongodb.find('tickets', assigned_tickets_multi_query))
                 else:
-                    logger.debug("Keine Mehrfachzuweisungen für Benutzer gefunden.")
+                    logger.debug("Keine Mehrfachzuweisungen für Nutzende gefunden.")
             except Exception as assign_err:
                 logger.error(f"Fehler beim Laden der Mehrfachzuweisungen: {assign_err}")
                 assigned_tickets_multi = []
@@ -290,13 +302,15 @@ class TicketService:
                 'all_tickets': []
             }
     
+    @cached_query(ttl=300, key_prefix="ticket")  # Cache für 5 Minuten
+    @optimize_db_query
     def get_ticket_by_id(self, ticket_id: str) -> Optional[Dict[str, Any]]:
         """
         Holt ein Ticket anhand der ID
-        
+
         Args:
             ticket_id: Ticket-ID
-            
+
         Returns:
             Optional[Dict]: Ticket-Daten oder None
         """
@@ -337,7 +351,7 @@ class TicketService:
         Args:
             ticket_id: Ticket-ID
             new_status: Neuer Status
-            updated_by: Benutzername des Aktualisierenden
+            updated_by: Nutzendename des Aktualisierenden
             
         Returns:
             Tuple: (success, message)
@@ -375,7 +389,9 @@ class TicketService:
             if ticket.get('assigned_to') and ticket['assigned_to'] != updated_by:
                 assigned_user = mongodb.find_one('users', {'username': ticket['assigned_to']})
                 if assigned_user and assigned_user.get('email'):
-                    self.notification_service.notify_ticket_update(ticket, assigned_user['email'])
+                    unified_notification_service.send_ticket_notification_email(
+                        assigned_user['email'], ticket, 'updated'
+                    )
             
             logger.info(f"Ticket-Status aktualisiert: {ticket_id} -> {new_status} von {updated_by}")
             return True, f'Status erfolgreich auf "{new_status}" geändert'
@@ -386,12 +402,12 @@ class TicketService:
     
     def assign_ticket(self, ticket_id: str, assigned_to: str, assigned_by: str) -> Tuple[bool, str]:
         """
-        Weist ein Ticket einem Benutzer zu (Legacy-Methode für Einzelzuweisung)
+        Weist ein Ticket einem Nutzende zu (Legacy-Methode für Einzelzuweisung)
         
         Args:
             ticket_id: Ticket-ID
-            assigned_to: Benutzername des Zugewiesenen
-            assigned_by: Benutzername des Zuweisenden
+            assigned_to: Nutzendename des Zugewiesenen
+            assigned_by: Nutzendename des Zuweisenden
             
         Returns:
             Tuple: (success, message)
@@ -400,12 +416,12 @@ class TicketService:
     
     def assign_ticket_multiple(self, ticket_id: str, assigned_users: List[str], assigned_by: str) -> Tuple[bool, str]:
         """
-        Weist ein Ticket mehreren Benutzern zu
+        Weist ein Ticket mehreren Nutzenden zu
         
         Args:
             ticket_id: Ticket-ID
-            assigned_users: Liste der Benutzernamen der Zugewiesenen
-            assigned_by: Benutzername des Zuweisenden
+            assigned_users: Liste der Nutzendenamen der Zugewiesenen
+            assigned_by: Nutzendename des Zuweisenden
             
         Returns:
             Tuple: (success, message)
@@ -415,7 +431,7 @@ class TicketService:
             if not ticket:
                 return False, 'Ticket nicht gefunden'
             
-            # Prüfe ob alle Benutzer existieren
+            # Prüfe ob alle Nutzende existieren
             valid_users = []
             for username in assigned_users:
                 if username:  # Ignoriere leere Strings
@@ -423,7 +439,7 @@ class TicketService:
                     if user:
                         valid_users.append(username)
                     else:
-                        logger.warning(f"Benutzer {username} nicht gefunden")
+                        logger.warning(f"Nutzende {username} nicht gefunden")
             
             # Lösche bestehende Zuweisungen
             mongodb.delete_many('ticket_assignments', {'ticket_id': ticket_id})
@@ -466,10 +482,12 @@ class TicketService:
             for username in valid_users:
                 user = mongodb.find_one('users', {'username': username})
                 if user and user.get('email'):
-                    self.notification_service.notify_ticket_assignment(ticket, user['email'])
+                    unified_notification_service.send_ticket_notification_email(
+                        user['email'], ticket, 'assigned'
+                    )
             
             logger.info(f"Ticket mehrfach zugewiesen: {ticket_id} -> {valid_users} von {assigned_by}")
-            return True, f'Ticket erfolgreich {len(valid_users)} Benutzern zugewiesen'
+            return True, f'Ticket erfolgreich {len(valid_users)} Nutzenden zugewiesen'
             
         except Exception as e:
             logger.error(f"Fehler beim Mehrfachzuweisen des Tickets: {str(e)}")
@@ -494,13 +512,13 @@ class TicketService:
     
     def get_assigned_users(self, ticket_id: str) -> List[str]:
         """
-        Holt alle zugewiesenen Benutzer für ein Ticket
+        Holt alle zugewiesenen Nutzende für ein Ticket
         
         Args:
             ticket_id: Ticket-ID
             
         Returns:
-            Liste der Benutzernamen
+            Liste der Nutzendenamen
         """
         assignments = self.get_ticket_assignments(ticket_id)
         return [assignment['assigned_to'] for assignment in assignments]
@@ -577,7 +595,7 @@ class TicketService:
         
         Args:
             ticket_id: Ticket-ID
-            deleted_by: Benutzername des Löschers
+            deleted_by: Nutzendename des Löschers
             permanent: True für permanente Löschung
             
         Returns:
@@ -648,8 +666,8 @@ class TicketService:
         
         Args:
             ticket_id: Ticket-ID
-            responsible_username: Benutzername der verantwortlichen Person oder None zum Entfernen
-            updated_by: Benutzername der ändernden Person
+            responsible_username: Nutzendename der verantwortlichen Person oder None zum Entfernen
+            updated_by: Nutzendename der ändernden Person
         
         Returns:
             Tuple: (success, message)

@@ -127,7 +127,7 @@ class AdminSystemService:
             # Prüfe ob Abteilung noch verwendet wird
             workers_with_dept = mongodb.count_documents('workers', {'department': department_name})
             if workers_with_dept > 0:
-                return False, f"Abteilung '{department_name}' wird noch von {workers_with_dept} Mitarbeitern verwendet"
+                return False, f"Abteilung '{department_name}' wird noch von {workers_with_dept} Mitarbeitenden verwendet"
             
             # Entferne Abteilung
             departments.remove(department_name)

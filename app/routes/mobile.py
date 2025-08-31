@@ -42,10 +42,10 @@ def login():
         password = request.form.get('password')
         
         if not username or not password:
-            flash('Benutzername und Passwort sind erforderlich', 'error')
+            flash('Nutzendename und Passwort sind erforderlich', 'error')
             return redirect(url_for('mobile.quickscan'))
         
-        # Benutzer in der Datenbank suchen
+        # Nutzende in der Datenbank suchen
         user_data = mongodb.find_one('users', {'username': username})
         
         if not user_data:
@@ -173,7 +173,7 @@ def scan_barcode():
                     result = consumable; item_type = 'consumable'; barcode = v; break
                 # Nur wenn nicht bereits als Worker priorisiert geprüft
                 if not priority_worker:
-                    # Mitarbeiter: erlaube Match auf aktuellem Barcode ODER Legacy-Barcodes
+                    # Mitarbeitende: erlaube Match auf aktuellem Barcode ODER Legacy-Barcodes
                     cond_w = {
                         '$and': [
                             {'deleted': {'$ne': True}},

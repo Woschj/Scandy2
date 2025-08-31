@@ -118,7 +118,7 @@ class StatisticsService:
                     # Hole Tool-Informationen
                     tool = mongodb.find_one('tools', {'barcode': loan.get('tool_barcode')})
                     
-                    # Hole Mitarbeiter-Informationen
+                    # Hole Mitarbeitende-Informationen
                     worker = mongodb.find_one('workers', {
                         'barcode': loan.get('worker_barcode'),
                         'deleted': {'$ne': True}

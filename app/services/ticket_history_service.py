@@ -29,7 +29,7 @@ class TicketHistoryService:
             field: Geändertes Feld
             old_value: Alter Wert
             new_value: Neuer Wert
-            changed_by: Benutzer der die Änderung vorgenommen hat
+            changed_by: Nutzende der die Änderung vorgenommen hat
             change_type: Art der Änderung (create, update, delete, status_change, assign, etc.)
             note: Optionale Notiz zur Änderung
             
@@ -78,7 +78,7 @@ class TicketHistoryService:
             ticket_id: ID des Tickets
             old_status: Alter Status
             new_status: Neuer Status
-            changed_by: Benutzer der die Änderung vorgenommen hat
+            changed_by: Nutzende der die Änderung vorgenommen hat
             note: Optionale Notiz
             
         Returns:
@@ -103,7 +103,7 @@ class TicketHistoryService:
             ticket_id: ID des Tickets
             old_assignee: Alter Zugewiesener
             new_assignee: Neuer Zugewiesener
-            changed_by: Benutzer der die Änderung vorgenommen hat
+            changed_by: Nutzende der die Änderung vorgenommen hat
             note: Optionale Notiz
             
         Returns:
@@ -148,7 +148,7 @@ class TicketHistoryService:
         Args:
             ticket_id: ID des Tickets
             message: Nachricht (gekürzt für History)
-            added_by: Benutzer der die Nachricht hinzugefügt hat
+            added_by: Nutzende der die Nachricht hinzugefügt hat
             
         Returns:
             bool: True wenn erfolgreich
@@ -172,7 +172,7 @@ class TicketHistoryService:
         Args:
             ticket_id: ID des Tickets
             note: Notiz (gekürzt für History)
-            added_by: Benutzer der die Notiz hinzugefügt hat
+            added_by: Nutzende der die Notiz hinzugefügt hat
             
         Returns:
             bool: True wenn erfolgreich
@@ -198,7 +198,7 @@ class TicketHistoryService:
             ticket_id: ID des Tickets
             updates: Neue Werte
             old_values: Alte Werte
-            changed_by: Benutzer der die Änderungen vorgenommen hat
+            changed_by: Nutzende der die Änderungen vorgenommen hat
             
         Returns:
             bool: True wenn erfolgreich
@@ -295,15 +295,15 @@ class TicketHistoryService:
     
     def get_user_activity(self, username: str, days: int = 30, limit: int = 100) -> List[Dict[str, Any]]:
         """
-        Holt die Aktivitäten eines Benutzers
+        Holt die Aktivitäten eines Nutzendes
         
         Args:
-            username: Benutzername
+            username: Nutzendename
             days: Anzahl der Tage rückwirkend
             limit: Maximale Anzahl der Einträge
             
         Returns:
-            Liste der Aktivitäten des Benutzers
+            Liste der Aktivitäten des Nutzendes
         """
         try:
             from datetime import timedelta
@@ -322,7 +322,7 @@ class TicketHistoryService:
             return activity
             
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Benutzer-Aktivitäten für {username}: {e}")
+            logger.error(f"Fehler beim Abrufen der Nutzende-Aktivitäten für {username}: {e}")
             return []
 
 

@@ -149,7 +149,7 @@ class AdminTicketService:
         
         Args:
             ticket_id: ID des Tickets
-            assigned_to: Benutzername des zugewiesenen Benutzers
+            assigned_to: Nutzendename des zugewiesenen Nutzendes
             
         Returns:
             (success, message)
@@ -160,11 +160,11 @@ class AdminTicketService:
             if not ticket:
                 return False, "Ticket nicht gefunden"
             
-            # Prüfe ob Benutzer existiert (falls zugewiesen)
+            # Prüfe ob Nutzende existiert (falls zugewiesen)
             if assigned_to:
                 user = MongoDBUser.get_by_username(assigned_to)
                 if not user:
-                    return False, "Zugewiesener Benutzer nicht gefunden"
+                    return False, "Zugewiesener Nutzende nicht gefunden"
             
             # Aktualisiere Zuweisung
             mongodb.update_one('tickets', {'_id': ticket_id}, {

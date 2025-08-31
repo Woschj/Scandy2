@@ -2,7 +2,7 @@
 Service für Handlungsfeld-Verwaltung
 
 Dieser Service verwaltet Handlungsfelder (Ticket-Kategorien) pro Abteilung
-und stellt sicher, dass Benutzer nur die Handlungsfelder ihrer Abteilung sehen.
+und stellt sicher, dass Nutzende nur die Handlungsfelder ihrer Abteilung sehen.
 """
 
 from typing import List, Dict, Any, Optional

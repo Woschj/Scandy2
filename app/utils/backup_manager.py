@@ -496,7 +496,7 @@ class BackupManager:
             
             # Collections wiederherstellen
             for collection, documents in data_section.items():
-                # Benutzer niemals aus Backups wiederherstellen
+                # Nutzende niemals aus Backups wiederherstellen
                 if collection == 'users':
                     print("Überspringe 'users'-Collection beim Restore (Sicherheitsvorgabe)")
                     continue
@@ -659,7 +659,7 @@ class BackupManager:
                 if consumable.get('category'):
                     used_categories.add(consumable['category'])
             
-            # Aus Mitarbeitern (Abteilungen)
+            # Aus Mitarbeitenden (Abteilungen)
             workers = list(mongodb.find('workers', {}))
             for worker in workers:
                 if worker.get('department'):

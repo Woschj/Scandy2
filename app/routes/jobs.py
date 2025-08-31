@@ -764,7 +764,7 @@ def fix_job_creator(job_id):
         
         # created_by_name hinzufügen falls nicht vorhanden
         if 'created_by_name' not in job_data or not job_data['created_by_name']:
-            # Versuche den Benutzer zu finden
+            # Versuche den Nutzende zu finden
             if job_data.get('created_by'):
                 user_data = mongodb.find_one('users', {'_id': ObjectId(job_data['created_by'])})
                 if user_data:

@@ -87,7 +87,7 @@ def create_specialized_loggers():
     # Sicherheits-Logger
     loggers['security'] = setup_logger('scandy.security', 'logs/security.log')
     
-    # Benutzer-Aktionen Logger
+    # Nutzende-Aktionen Logger
     loggers['user_actions'] = setup_logger('scandy.user_actions', 'logs/user_actions.log')
     
     # Datenbank-Logger
@@ -126,7 +126,7 @@ def log_security_event(event_type, user_id=None, ip_address=None, details=None):
         loggers['errors'].error(f"KRITISCHES SICHERHEITSEREIGNIS: {event_type} - User: {user_id}, IP: {ip_address}")
 
 def log_user_action(action, user_id, details=None):
-    """Loggt Benutzeraktionen"""
+    """Loggt Nutzendeaktionen"""
     user_logger = loggers['user_actions']
     user_logger.info(f"USER_ACTION: {action} - User: {user_id} - Details: {details}")
 

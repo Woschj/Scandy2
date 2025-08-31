@@ -46,14 +46,14 @@ class MongoDBDatabase:
             try:
                 password = os.environ.get("MONGO_INITDB_ROOT_PASSWORD", "")
                 safe_uri = uri.replace(password, "***") if password and uri else uri
-                print(f"[MongoDB] Verbindungsversuch {attempt+1}/10 zu {safe_uri}")
+                logger.info(f"[MongoDB] Verbindungsversuch {attempt+1}/10 zu {safe_uri}")
                 self._client = MongoClient(uri, serverSelectionTimeoutMS=10000, connectTimeoutMS=10000, retryWrites=True, w='majority')
                 self._client.admin.command('ping')
                 self._db = self._client[db_name]
-                print(f"[MongoDB] Verbindung erfolgreich zu {safe_uri}")
+                logger.info(f"[MongoDB] Verbindung erfolgreich zu {safe_uri}")
                 return
             except (ServerSelectionTimeoutError, OperationFailure) as e:
-                print(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/10): {e}")
+                logger.warning(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/10): {e}")
                 time.sleep(3)
         raise Exception("MongoDB-Verbindung nach 10 Versuchen fehlgeschlagen!")
     

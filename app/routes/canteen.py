@@ -351,7 +351,7 @@ def debug_canteen():
         # Prüfe Feature-Status
         feature_enabled = is_feature_enabled('canteen_plan')
         
-        # Prüfe Benutzer-Status
+        # Prüfe Nutzende-Status
         user_status = "Nicht eingeloggt"
         if current_user.is_authenticated:
             user_status = f"Eingeloggt: {current_user.username} (Role: {current_user.role})"

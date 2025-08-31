@@ -49,7 +49,7 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, Dict[str, List[str]]] = {
         "jobs": ["view", "create", "edit", "delete"],
         "settings": ["manage"],
     },
-    # Mitarbeiter: Vollzugriff wie Admin, jedoch nur innerhalb der eigenen Abteilung (durch Scoping erzwungen)
+    # Mitarbeitende: Vollzugriff wie Admin, jedoch nur innerhalb der eigenen Abteilung (durch Scoping erzwungen)
     "mitarbeiter": {
         "tools": ["view", "create", "edit", "delete", "export"],
         "consumables": ["view", "create", "edit", "delete", "export"],
@@ -67,7 +67,7 @@ DEFAULT_ROLE_PERMISSIONS: Dict[str, Dict[str, List[str]]] = {
         "jobs": ["view", "create", "edit", "delete"],
         # kein Zugriff auf settings
     },
-    # Teilnehmer: Zugriff auf Tickets (view/create) und Jobbörse (view)
+    # Teilnehmende: Zugriff auf Tickets (view/create) und Jobbörse (view)
     "teilnehmer": {
         "tickets": ["view", "create"],
         "jobs": ["view"],

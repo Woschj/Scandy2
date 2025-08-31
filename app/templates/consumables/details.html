@@ -32,7 +32,7 @@
                 <p><strong>Beschreibung:</strong> {{ consumable.description }}</p>
                 {% endif %}
                 
-                <!-- Benutzerdefinierte Felder -->
+                <!-- Nutzendedefinierte Felder -->
                 {% if custom_fields_consumables %}
                     {% set has_custom_values = false %}
                     {% for custom_field in custom_fields_consumables %}
@@ -96,7 +96,7 @@
                     <thead>
                         <tr>
                             <th>Datum</th>
-                            <th>Mitarbeiter</th>
+                            <th>Mitarbeitende</th>
                             <th>Menge</th>
                         </tr>
                     </thead>
@@ -286,11 +286,11 @@
                 <textarea name="description" class="textarea textarea-bordered" rows="3">{{ consumable.description or '' }}</textarea>
             </div>
             
-            <!-- Benutzerdefinierte Felder -->
+            <!-- Nutzendedefinierte Felder -->
             {% if custom_fields_consumables %}
             <div class="space-y-4">
                 <div class="divider">
-                    <span class="text-sm font-medium text-base-content/70">Benutzerdefinierte Felder</span>
+                    <span class="text-sm font-medium text-base-content/70">Nutzendedefinierte Felder</span>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

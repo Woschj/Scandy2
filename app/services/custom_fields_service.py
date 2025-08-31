@@ -131,7 +131,7 @@ class CustomFieldsService:
             
             result = mongodb.insert_one('custom_fields', field_data)
             if result:
-                return True, 'Benutzerdefiniertes Feld wurde erfolgreich erstellt'
+                return True, 'Nutzendedefiniertes Feld wurde erfolgreich erstellt'
             else:
                 return False, 'Fehler beim Speichern des Feldes'
                 

@@ -529,7 +529,7 @@ class AutoBackupScheduler:
         try:
             from app.models.mongodb_database import mongodb
             
-            # Suche nach Admin-Benutzer
+            # Suche nach Admin-Nutzende
             admin_user = mongodb.find_one('users', {'role': 'admin'})
             if admin_user and admin_user.get('email'):
                 return admin_user['email']

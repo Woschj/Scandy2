@@ -1,7 +1,7 @@
 """
 Admin User Service
 
-Dieser Service enthält alle Funktionen für die Benutzerverwaltung,
+Dieser Service enthält alle Funktionen für die Nutzendeverwaltung,
 die aus der großen admin.py Datei ausgelagert wurden.
 """
 
@@ -17,11 +17,11 @@ import string
 logger = logging.getLogger(__name__)
 
 class AdminUserService:
-    """Service für Admin-Benutzerverwaltungs-Funktionen"""
+    """Service für Admin-Nutzendeverwaltungs-Funktionen"""
     
     @staticmethod
     def get_all_users() -> List[Dict[str, Any]]:
-        """Hole alle Benutzer"""
+        """Hole alle Nutzende"""
         try:
             users = list(mongodb.find('users', {}))
             
@@ -33,12 +33,12 @@ class AdminUserService:
             return users
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Benutzer: {str(e)}")
+            logger.error(f"Fehler beim Laden aller Nutzende: {str(e)}")
             return []
 
     @staticmethod
     def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
-        """Hole einen Benutzer anhand der ID"""
+        """Hole einen Nutzende anhand der ID"""
         try:
             user = find_user_by_id(user_id)
             if user and '_id' in user:
@@ -47,16 +47,16 @@ class AdminUserService:
             return user
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Benutzers {user_id}: {str(e)}")
+            logger.error(f"Fehler beim Laden des Nutzendes {user_id}: {str(e)}")
             return None
 
     @staticmethod
     def create_user(user_data: Dict[str, Any]) -> Tuple[bool, str, Optional[str]]:
         """
-        Erstellt einen neuen Benutzer
+        Erstellt einen neuen Nutzende
         
         Args:
-            user_data: Benutzerdaten
+            user_data: Nutzendedaten
             
         Returns:
             (success, message, user_id)
@@ -68,10 +68,10 @@ class AdminUserService:
                 if field not in user_data or not user_data[field]:
                     return False, f"Feld '{field}' ist erforderlich", None
             
-            # Prüfe ob Benutzername bereits existiert (case-insensitive)
+            # Prüfe ob Nutzendename bereits existiert (case-insensitive)
             existing_user = mongodb.find_one('users', {'username': {'$regex': f'^{user_data["username"]}$', '$options': 'i'}})
             if existing_user:
-                return False, "Benutzername existiert bereits", None
+                return False, "Nutzendename existiert bereits", None
             
             # Department-Zuweisung: Admins dürfen mehrere, Nicht‑Admins genau eine
             allowed_departments = user_data.get('allowed_departments') or []
@@ -102,14 +102,17 @@ class AdminUserService:
             
 
             
-            # Benutzer erstellen
+            # Nutzende erstellen
+            email_raw = (user_data.get('email') or '').strip()
+            email_lower = email_raw.lower() if email_raw else ''
             new_user = {
                 'username': user_data['username'],
                 'password_hash': password_hash,
                 'role': user_data['role'],
                 'is_active': user_data.get('is_active', True),
                 'timesheet_enabled': user_data.get('timesheet_enabled', False),
-                'email': user_data.get('email', ''),
+                'email': email_raw,
+                'email_lower': email_lower or None,
                 'firstname': user_data.get('firstname', ''),
                 'lastname': user_data.get('lastname', ''),
                 # Multi-Department Felder
@@ -122,47 +125,52 @@ class AdminUserService:
                 'updated_at': datetime.now()
             }
 
-            # Standard: Für Teilnehmer ohne explizites Datum -> 1 Jahr
+            # Standard: Für Teilnehmende ohne explizites Datum -> 1 Jahr
             if new_user.get('role') == 'teilnehmer' and not new_user.get('delete_at'):
                 new_user['delete_at'] = datetime.now() + timedelta(days=365)
             
-            # Benutzer in Datenbank speichern
+            # Nutzende in Datenbank speichern
+            # Duplikatprüfung für E-Mail (case-insensitive)
+            if email_lower:
+                existing = mongodb.find_one('users', {'email_lower': email_lower})
+                if existing:
+                    return False, "E-Mail ist bereits einem anderen Nutzende zugewiesen", None
             user_id = mongodb.insert_one('users', new_user)
             
-            logger.info(f"Neuer Benutzer erstellt: {user_data['username']} (ID: {user_id})")
+            logger.info(f"Neuer Nutzende erstellt: {user_data['username']} (ID: {user_id})")
             
-            # Automatisch Mitarbeiter-Eintrag erstellen
+            # Automatisch Mitarbeitende-Eintrag erstellen
             worker_created = AdminUserService._create_worker_from_user(new_user, user_id)
             if worker_created:
-                logger.info(f"Automatischer Mitarbeiter-Eintrag erstellt für: {user_data['username']}")
+                logger.info(f"Automatischer Mitarbeitende-Eintrag erstellt für: {user_data['username']}")
             
             # Passwort in der Nachricht zurückgeben falls generiert
             if not user_data.get('password'):
-                return True, f"Benutzer '{user_data['username']}' erfolgreich erstellt. Generiertes Passwort: {password}", user_id
+                return True, f"Nutzende '{user_data['username']}' erfolgreich erstellt. Generiertes Passwort: {password}", user_id
             else:
-                return True, f"Benutzer '{user_data['username']}' erfolgreich erstellt", user_id
+                return True, f"Nutzende '{user_data['username']}' erfolgreich erstellt", user_id
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Benutzers: {str(e)}")
-            return False, f"Fehler beim Erstellen des Benutzers: {str(e)}", None
+            logger.error(f"Fehler beim Erstellen des Nutzendes: {str(e)}")
+            return False, f"Fehler beim Erstellen des Nutzendes: {str(e)}", None
 
     @staticmethod
     def update_user(user_id: str, user_data: Dict[str, Any]) -> Tuple[bool, str]:
         """
-        Aktualisiert einen bestehenden Benutzer
+        Aktualisiert einen bestehenden Nutzende
         
         Args:
-            user_id: ID des zu aktualisierenden Benutzers
-            user_data: Neue Benutzerdaten
+            user_id: ID des zu aktualisierenden Nutzendes
+            user_data: Neue Nutzendedaten
             
         Returns:
             (success, message)
         """
         try:
-            # Prüfe ob Benutzer existiert
+            # Prüfe ob Nutzende existiert
             user = find_user_by_id(user_id)
             if not user:
-                return False, "Benutzer nicht gefunden"
+                return False, "Nutzende nicht gefunden"
             
             # Update-Daten vorbereiten
             update_data = {
@@ -180,11 +188,24 @@ class AdminUserService:
             
 
             
+            # E-Mail normalisieren und Duplikate verhindern
+            if 'email' in update_data:
+                email_raw = (update_data.get('email') or '').strip()
+                update_data['email'] = email_raw
+                update_data['email_lower'] = (email_raw.lower() if email_raw else None)
+                if update_data['email_lower']:
+                    existing_email = mongodb.find_one('users', {
+                        'email_lower': update_data['email_lower'],
+                        '_id': {'$ne': user.get('_id')}
+                    })
+                    if existing_email:
+                        return False, "E-Mail ist bereits einem anderen Nutzende zugewiesen"
+
             # Passwort aktualisieren falls angegeben
             if 'password' in user_data and user_data['password']:
                 update_data['password_hash'] = generate_password_hash(user_data['password'])
             
-            # Prüfe ob neuer Benutzername bereits existiert (außer bei diesem Benutzer) - case-insensitive
+            # Prüfe ob neuer Nutzendename bereits existiert (außer bei diesem Nutzende) - case-insensitive
             if 'username' in update_data:
                 # Konvertiere user_id zu ObjectId für korrekte Datenbankabfrage
                 from bson import ObjectId
@@ -199,7 +220,7 @@ class AdminUserService:
                     '_id': {'$ne': object_id}
                 })
                 if existing_user:
-                    return False, "Benutzername existiert bereits"
+                    return False, "Nutzendename existiert bereits"
             
             # Department-Zuweisung konsolidieren: Admins dürfen mehrere, Nicht‑Admins genau eine
             new_allowed = update_data.get('allowed_departments', user.get('allowed_departments', []))
@@ -226,38 +247,38 @@ class AdminUserService:
                     new_allowed.append(new_default)
                     update_data['allowed_departments'] = new_allowed
 
-            # Benutzer aktualisieren
+            # Nutzende aktualisieren
             mongodb.update_one('users', {'_id': user_id}, {'$set': update_data})
             
-            # Synchronisiere Mitarbeiter-Eintrag falls vorhanden (inkl. delete_at)
+            # Synchronisiere Mitarbeitende-Eintrag falls vorhanden (inkl. delete_at)
             AdminUserService._sync_worker_from_user(user_id, update_data)
             
-            logger.info(f"Benutzer aktualisiert: {user.get('username', 'Unknown')} (ID: {user_id})")
-            return True, f"Benutzer erfolgreich aktualisiert"
+            logger.info(f"Nutzende aktualisiert: {user.get('username', 'Unknown')} (ID: {user_id})")
+            return True, f"Nutzende erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Benutzers {user_id}: {str(e)}")
-            return False, f"Fehler beim Aktualisieren des Benutzers: {str(e)}"
+            logger.error(f"Fehler beim Aktualisieren des Nutzendes {user_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren des Nutzendes: {str(e)}"
 
     @staticmethod
     def delete_user(user_id: str, permanent: bool = False) -> Tuple[bool, str]:
         """
-        Löscht einen Benutzer. Standard: Soft-Delete (deaktivieren). Optional: permanent löschen.
+        Löscht einen Nutzende. Standard: Soft-Delete (deaktivieren). Optional: permanent löschen.
         
         Args:
-            user_id: ID des zu löschenden Benutzers
+            user_id: ID des zu löschenden Nutzendes
             permanent: True für permanentes Löschen
             
         Returns:
             (success, message)
         """
         try:
-            # Prüfe ob Benutzer existiert
+            # Prüfe ob Nutzende existiert
             user = find_user_by_id(user_id)
             if not user:
-                return False, "Benutzer nicht gefunden"
+                return False, "Nutzende nicht gefunden"
             
-            # Admin-Benutzer dürfen ebenfalls gelöscht werden (über Papierkorb)
+            # Admin-Nutzende dürfen ebenfalls gelöscht werden (über Papierkorb)
             
             if permanent:
                 # Permanente Löschung
@@ -290,8 +311,8 @@ class AdminUserService:
                     AdminUserService._deactivate_worker_from_user(user_id)
                 except Exception:
                     pass
-                logger.info(f"Benutzer permanent gelöscht: {user.get('username', 'Unknown')} (ID: {user_id})")
-                return True, f"Benutzer '{user.get('username', 'Unknown')}' dauerhaft gelöscht"
+                logger.info(f"Nutzende permanent gelöscht: {user.get('username', 'Unknown')} (ID: {user_id})")
+                return True, f"Nutzende '{user.get('username', 'Unknown')}' dauerhaft gelöscht"
             else:
                 # Soft-Delete (Papierkorb)
                 mongodb.update_one('users', {'_id': user_id}, {
@@ -302,32 +323,32 @@ class AdminUserService:
                         'updated_at': datetime.now()
                     }
                 })
-                # Deaktiviere auch den zugehörigen Mitarbeiter-Eintrag
+                # Deaktiviere auch den zugehörigen Mitarbeitende-Eintrag
                 AdminUserService._deactivate_worker_from_user(user_id)
-                logger.info(f"Benutzer deaktiviert: {user.get('username', 'Unknown')} (ID: {user_id})")
-                return True, f"Benutzer '{user.get('username', 'Unknown')}' erfolgreich deaktiviert"
+                logger.info(f"Nutzende deaktiviert: {user.get('username', 'Unknown')} (ID: {user_id})")
+                return True, f"Nutzende '{user.get('username', 'Unknown')}' erfolgreich deaktiviert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Benutzers {user_id}: {str(e)}")
-            return False, f"Fehler beim Löschen des Benutzers: {str(e)}"
+            logger.error(f"Fehler beim Löschen des Nutzendes {user_id}: {str(e)}")
+            return False, f"Fehler beim Löschen des Nutzendes: {str(e)}"
 
     @staticmethod
     def reset_user_password(user_id: str, new_password: str) -> Tuple[bool, str]:
         """
-        Setzt das Passwort eines Benutzers zurück
+        Setzt das Passwort eines Nutzendes zurück
         
         Args:
-            user_id: ID des Benutzers
+            user_id: ID des Nutzendes
             new_password: Neues Passwort
             
         Returns:
             (success, message)
         """
         try:
-            # Prüfe ob Benutzer existiert
+            # Prüfe ob Nutzende existiert
             user = find_user_by_id(user_id)
             if not user:
-                return False, "Benutzer nicht gefunden"
+                return False, "Nutzende nicht gefunden"
             
             # Passwort hashen
             password_hash = generate_password_hash(new_password)
@@ -349,15 +370,15 @@ class AdminUserService:
 
     @staticmethod
     def get_user_statistics() -> Dict[str, Any]:
-        """Hole Benutzer-Statistiken"""
+        """Hole Nutzende-Statistiken"""
         try:
-            # Gesamtanzahl Benutzer
+            # Gesamtanzahl Nutzende
             total_users = mongodb.count_documents('users', {})
             
-            # Aktive Benutzer
+            # Aktive Nutzende
             active_users = mongodb.count_documents('users', {'is_active': True})
             
-            # Benutzer nach Rollen
+            # Nutzende nach Rollen
             role_stats = list(mongodb.aggregate('users', [
                 {'$group': {'_id': '$role', 'count': {'$sum': 1}}},
                 {'$sort': {'count': -1}}
@@ -370,7 +391,7 @@ class AdminUserService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Benutzer-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Abrufen der Nutzende-Statistiken: {str(e)}")
             return {
                 'total_users': 0,
                 'active_users': 0,
@@ -382,17 +403,17 @@ class AdminUserService:
     @staticmethod
     def _create_worker_from_user(user_data: Dict[str, Any], user_id: str) -> bool:
         """
-        Erstellt automatisch einen Mitarbeiter-Eintrag aus Benutzerdaten
+        Erstellt automatisch einen Mitarbeitende-Eintrag aus Nutzendedaten
         
         Args:
-            user_data: Benutzerdaten
-            user_id: ID des erstellten Benutzers
+            user_data: Nutzendedaten
+            user_id: ID des erstellten Nutzendes
             
         Returns:
             True wenn erfolgreich erstellt, False sonst
         """
         try:
-            # Prüfe ob bereits ein Mitarbeiter mit diesem Benutzernamen oder dieser User-ID existiert (auch gelöschte)
+            # Prüfe ob bereits ein Mitarbeitende mit diesem Nutzendenamen oder dieser User-ID existiert (auch gelöschte)
             existing_worker = mongodb.find_one('workers', {
                 '$or': [
                     {'username': user_data['username']},
@@ -401,7 +422,7 @@ class AdminUserService:
             })
             
             if existing_worker:
-                logger.info(f"Mitarbeiter-Eintrag existiert bereits für: {user_data['username']}")
+                logger.info(f"Mitarbeitende-Eintrag existiert bereits für: {user_data['username']}")
                 return True
             
             # Neues, sprechendes Barcode-Schema: 1. Buchst. Vorname + 3 Buchst. Nachname + laufende 3-stellige Nummer bei Kollision
@@ -441,11 +462,11 @@ class AdminUserService:
             # Eindeutigen Barcode bestimmen
             barcode = _propose_worker_barcode(user_data.get('firstname',''), user_data.get('lastname',''))
             
-            # Erstelle Mitarbeiter-Daten (mit Legacy-Kompatibilität)
+            # Erstelle Mitarbeitende-Daten (mit Legacy-Kompatibilität)
             worker_data = {
                 'barcode': barcode,
-                'username': user_data['username'],  # Verknüpfung zum Benutzer
-                'user_id': user_id,  # Verknüpfung zur Benutzer-ID
+                'username': user_data['username'],  # Verknüpfung zum Nutzende
+                'user_id': user_id,  # Verknüpfung zur Nutzende-ID
                 'firstname': user_data.get('firstname', ''),
                 'lastname': user_data.get('lastname', ''),
                 'department': user_data.get('default_department') or (user_data.get('allowed_departments', [])[:1] or [''])[0],
@@ -457,36 +478,36 @@ class AdminUserService:
                 'deleted': False
             }
             
-            # Mitarbeiter in Datenbank speichern
+            # Mitarbeitende in Datenbank speichern
             mongodb.insert_one('workers', worker_data)
             
-            logger.info(f"Automatischer Mitarbeiter-Eintrag erstellt: {barcode} für Benutzer {user_data['username']}")
+            logger.info(f"Automatischer Mitarbeitende-Eintrag erstellt: {barcode} für Nutzende {user_data['username']}")
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des automatischen Mitarbeiter-Eintrags: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des automatischen Mitarbeitende-Eintrags: {str(e)}")
             return False
     
     @staticmethod
     def _sync_worker_from_user(user_id: str, user_update_data: Dict[str, Any]) -> bool:
         """
-        Synchronisiert einen bestehenden Mitarbeiter-Eintrag mit Benutzerdaten
+        Synchronisiert einen bestehenden Mitarbeitende-Eintrag mit Nutzendedaten
         
         Args:
-            user_id: ID des Benutzers
-            user_update_data: Aktualisierte Benutzerdaten
+            user_id: ID des Nutzendes
+            user_update_data: Aktualisierte Nutzendedaten
             
         Returns:
             True wenn erfolgreich synchronisiert, False sonst
         """
         try:
-            # Finde den zugehörigen Mitarbeiter-Eintrag (auch gelöschte)
+            # Finde den zugehörigen Mitarbeitende-Eintrag (auch gelöschte)
             worker = mongodb.find_one('workers', {
                 'user_id': user_id
             })
             
             if not worker:
-                logger.info(f"Kein Mitarbeiter-Eintrag gefunden für Benutzer-ID: {user_id}")
+                logger.info(f"Kein Mitarbeitende-Eintrag gefunden für Nutzende-ID: {user_id}")
                 return False
             
             # Bereite Update-Daten vor
@@ -506,40 +527,40 @@ class AdminUserService:
             if 'delete_at' in user_update_data:
                 worker_update_data['delete_at'] = user_update_data['delete_at']
             
-            # Aktualisiere Mitarbeiter-Eintrag
+            # Aktualisiere Mitarbeitende-Eintrag
             mongodb.update_one('workers', 
                              {'user_id': user_id}, 
                              {'$set': worker_update_data})
             
-            logger.info(f"Mitarbeiter-Eintrag synchronisiert für Benutzer-ID: {user_id}")
+            logger.info(f"Mitarbeitende-Eintrag synchronisiert für Nutzende-ID: {user_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Synchronisieren des Mitarbeiter-Eintrags: {str(e)}")
+            logger.error(f"Fehler beim Synchronisieren des Mitarbeitende-Eintrags: {str(e)}")
             return False
     
     @staticmethod
     def _deactivate_worker_from_user(user_id: str) -> bool:
         """
-        Deaktiviert den zugehörigen Mitarbeiter-Eintrag
+        Deaktiviert den zugehörigen Mitarbeitende-Eintrag
         
         Args:
-            user_id: ID des Benutzers
+            user_id: ID des Nutzendes
             
         Returns:
             True wenn erfolgreich deaktiviert, False sonst
         """
         try:
-            # Finde den zugehörigen Mitarbeiter-Eintrag (auch gelöschte)
+            # Finde den zugehörigen Mitarbeitende-Eintrag (auch gelöschte)
             worker = mongodb.find_one('workers', {
                 'user_id': user_id
             })
             
             if not worker:
-                logger.info(f"Kein Mitarbeiter-Eintrag gefunden für Benutzer-ID: {user_id}")
+                logger.info(f"Kein Mitarbeitende-Eintrag gefunden für Nutzende-ID: {user_id}")
                 return False
             
-            # Deaktiviere den Mitarbeiter-Eintrag (Soft Delete)
+            # Deaktiviere den Mitarbeitende-Eintrag (Soft Delete)
             mongodb.update_one('workers', 
                              {'user_id': user_id}, 
                              {'$set': {
@@ -548,11 +569,11 @@ class AdminUserService:
                                  'modified_at': datetime.now()
                              }})
             
-            logger.info(f"Mitarbeiter-Eintrag deaktiviert für Benutzer-ID: {user_id}")
+            logger.info(f"Mitarbeitende-Eintrag deaktiviert für Nutzende-ID: {user_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Deaktivieren des Mitarbeiter-Eintrags: {str(e)}")
+            logger.error(f"Fehler beim Deaktivieren des Mitarbeitende-Eintrags: {str(e)}")
             return False
     
 

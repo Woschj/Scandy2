@@ -132,7 +132,7 @@ if __name__ == '__main__':
         print("\n✅ Migration erfolgreich abgeschlossen!")
         print("\n💡 Nächste Schritte:")
         print("  1. Starte die Scandy-App neu")
-        print("  2. Gehe zu Admin -> Benutzerverwaltung")
+        print("  2. Gehe zu Admin -> Nutzendeverwaltung")
         print("  3. Handlungsfelder sind jetzt pro Abteilung konfigurierbar")
     else:
         print("\n❌ Migration fehlgeschlagen!")

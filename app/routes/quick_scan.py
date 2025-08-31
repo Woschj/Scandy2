@@ -37,7 +37,7 @@ def process():
         worker = mongodb.find_one('workers', {'barcode': worker_barcode, 'deleted': {'$ne': True}})
         
         if not worker:
-            return jsonify({'error': 'Mitarbeiter nicht gefunden'}), 404
+            return jsonify({'error': 'Mitarbeitende nicht gefunden'}), 404
             
         # Prüfe ob es ein Tool ist
         tool = mongodb.find_one('tools', {'barcode': item_barcode, 'deleted': {'$ne': True}})
@@ -99,7 +99,7 @@ def process():
                 if tool['current_status'] != 'ausgeliehen':
                     return jsonify({'error': 'Dieses Werkzeug ist nicht ausgeliehen'}), 400
                 
-                # Wenn ein Mitarbeiter angegeben wurde, prüfe ob er berechtigt ist
+                # Wenn ein Mitarbeitende angegeben wurde, prüfe ob er berechtigt ist
                 if worker_barcode and tool['current_worker_barcode'] != worker_barcode:
                     return jsonify({'error': f'Dieses Werkzeug wurde von {tool["current_worker_name"]} ausgeliehen'}), 403
                 

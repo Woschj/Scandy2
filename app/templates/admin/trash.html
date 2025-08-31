@@ -13,9 +13,9 @@
             <div class="text-sm text-gray-500 mb-4">
                 <p>Anzahl gelöschter {{ app_labels.tools.name }}: {{ tools|length }}</p>
                 <p>Anzahl gelöschter {{ app_labels.consumables.name }}: {{ consumables|length }}</p>
-                <p>Anzahl gelöschter Mitarbeiter: {{ workers|length }}</p>
+                <p>Anzahl gelöschter Mitarbeitende: {{ workers|length }}</p>
                 <p>Anzahl gelöschter Tickets: {{ tickets|length }}</p>
-                <p>Anzahl gelöschter Benutzer: {{ users|length }}</p>
+                <p>Anzahl gelöschter Nutzende: {{ users|length }}</p>
             </div>
         </div>
     </div>
@@ -104,9 +104,9 @@
         </div>
     </div>
 
-    <!-- Mitarbeiter Tabelle -->
+    <!-- Mitarbeitende Tabelle -->
     <div class="mb-8">
-        <h2 class="text-xl font-bold mb-2">Gelöschte Mitarbeiter</h2>
+        <h2 class="text-xl font-bold mb-2">Gelöschte Mitarbeitende</h2>
         <div class="card bg-base-100 shadow">
             <div class="card-body">
                 <div class="overflow-x-auto w-full">
@@ -135,7 +135,7 @@
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="5" class="text-center py-4">Keine gelöschten Mitarbeiter vorhanden</td></tr>
+                            <tr><td colspan="5" class="text-center py-4">Keine gelöschten Mitarbeitende vorhanden</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -188,9 +188,9 @@
         </div>
     </div>
 
-    <!-- Benutzer Tabelle -->
+    <!-- Nutzende Tabelle -->
     <div class="mb-8">
-        <h2 class="text-xl font-bold mb-2">Gelöschte Benutzer</h2>
+        <h2 class="text-xl font-bold mb-2">Gelöschte Nutzende</h2>
         <div class="card bg-base-100 shadow">
             <div class="card-body">
                 <div class="overflow-x-auto w-full">
@@ -219,7 +219,7 @@
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="5" class="text-center py-4">Keine gelöschten Benutzer vorhanden</td></tr>
+                            <tr><td colspan="5" class="text-center py-4">Keine gelöschten Nutzende vorhanden</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

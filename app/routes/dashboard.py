@@ -10,7 +10,7 @@ bp = Blueprint('dashboard', __name__)
 @login_required
 def index():
     """Dashboard-Hauptseite"""
-    # Für Teilnehmer: Weiterleitung zu Wochenberichten
+    # Für Teilnehmende: Weiterleitung zu Wochenberichten
     if current_user.role == 'teilnehmer':
         return redirect(url_for('workers.teilnehmer_timesheet_list'))
     

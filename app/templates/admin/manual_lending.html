@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <!-- Mittlere Spalte: Mitarbeiter-Auswahl -->
+    <!-- Mittlere Spalte: Mitarbeitende-Auswahl -->
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             <div class="flex gap-4">
@@ -104,9 +104,9 @@
                 <div class="w-[52px]"></div>
 
                 <div class="flex-1">
-                    <h2 class="card-title mb-4">Mitarbeiter auswählen</h2>
+                    <h2 class="card-title mb-4">Mitarbeitende auswählen</h2>
 
-                    <!-- Mitarbeiter Details -->
+                    <!-- Mitarbeitende Details -->
                     <div id="workerDetails" class="mb-4 p-4 bg-base-200 rounded-lg hidden">
                         <h3 class="font-bold mb-2" id="workerDetailName"></h3>
                         <div class="text-sm space-y-1">
@@ -115,17 +115,17 @@
                         </div>
                     </div>
 
-                    <!-- Mitarbeiter-Suche -->
+                    <!-- Mitarbeitende-Suche -->
                     <div class="form-control">
                         <input type="text" 
                                id="workerSearch" 
-                               placeholder="Mitarbeiter suchen..." 
+                               placeholder="Mitarbeitende suchen..." 
                                class="input input-bordered mb-4">
 
-                        <!-- Mitarbeiter-Liste -->
+                        <!-- Mitarbeitende-Liste -->
                         <div class="h-96 overflow-hidden bg-white rounded-lg shadow border border-gray-200">
                             <div class="p-4 border-b bg-gray-50">
-                                <h3 class="font-semibold text-gray-800">Mitarbeiter</h3>
+                                <h3 class="font-semibold text-gray-800">Mitarbeitende</h3>
                             </div>
                             <select size="10" 
                                     id="workerSelect"
@@ -178,8 +178,8 @@
                         
                         <!-- Worker Vorschau -->
                         <div class="mb-4">
-                            <p class="text-sm font-medium text-gray-500">Mitarbeiter</p>
-                            <div id="previewWorker">Kein Mitarbeiter ausgewählt</div>
+                            <p class="text-sm font-medium text-gray-500">Mitarbeitende</p>
+                            <div id="previewWorker">Kein Mitarbeitende ausgewählt</div>
                         </div>
                     </div>
 
@@ -226,7 +226,7 @@
                         Ausgeliehen/Ausgegeben an
                         <i class="fas fa-sort ml-1"></i>
                     </th>
-                    <th class="px-4 py-2 text-left">Mitarbeiter-Barcode</th>
+                    <th class="px-4 py-2 text-left">Mitarbeitende-Barcode</th>
                     <th class="px-4 py-2 text-left cursor-pointer" data-sort="date">
                         Datum
                         <i class="fas fa-sort ml-1"></i>
@@ -405,7 +405,7 @@ const ManualLending = {
         if (previewWorker) {
             previewWorker.textContent = this.selectedWorker ? 
                 this.selectedWorker.name : 
-                'Kein Mitarbeiter ausgewählt';
+                'Kein Mitarbeitende ausgewählt';
         }
         if (confirmButton) {
             confirmButton.disabled = !(this.selectedItem && this.selectedWorker);
@@ -439,7 +439,7 @@ const ManualLending = {
 
     async processLending() {
         if (!this.selectedItem || !this.selectedWorker) {
-            alert('Bitte wählen Sie einen Artikel und einen Mitarbeiter aus');
+            alert('Bitte wählen Sie einen Artikel und einen Mitarbeitende aus');
             return;
         }
 

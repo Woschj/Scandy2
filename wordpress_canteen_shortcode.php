@@ -308,7 +308,7 @@ function canteen_plan_settings_page() {
         
         <h3>Erweiterte Optionen:</h3>
         <ul>
-            <li><code>[canteen_plan api_url="http://localhost:5000"]</code> - Benutzerdefinierte API-URL</li>
+            <li><code>[canteen_plan api_url="http://localhost:5000"]</code> - Nutzendedefinierte API-URL</li>
             <li><code>[canteen_plan cache_duration="600"]</code> - 10 Minuten Cache</li>
             <li><code>[canteen_plan show_header="false"]</code> - Header ausblenden</li>
             <li><code>[canteen_plan show_footer="false"]</code> - Footer ausblenden</li>

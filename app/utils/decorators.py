@@ -11,7 +11,7 @@ import time
 logger = logging.getLogger(__name__) # Logger für dieses Modul
 
 def login_required(f):
-    """Decorator, der sicherstellt, dass ein Benutzer eingeloggt ist.
+    """Decorator, der sicherstellt, dass ein Nutzende eingeloggt ist.
 
     Prüft zuerst, ob das System-Setup benötigt wird (via needs_setup()).
     Wenn ja, wird zur Login-Seite weitergeleitet mit einer Flash-Nachricht.
@@ -43,7 +43,7 @@ def login_required(f):
     return decorated_function
 
 def role_required(role_name):
-    """Decorator, der sicherstellt, dass der Benutzer eine bestimmte Rolle hat."""
+    """Decorator, der sicherstellt, dass der Nutzende eine bestimmte Rolle hat."""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -133,7 +133,7 @@ def mitarbeiter_required(f):
     return decorated_function
 
 def teilnehmer_required(f):
-    """Decorator für Routen, die nur Teilnehmern zugänglich sind."""
+    """Decorator für Routen, die nur Teilnehmenden zugänglich sind."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         logger.debug(f"[DECORATOR] teilnehmer_required: Checking user {getattr(current_user, 'id', 'Guest')}")
@@ -167,7 +167,7 @@ def teilnehmer_required(f):
     return decorated_function
 
 def not_teilnehmer_required(f):
-    """Decorator für Routen, die Teilnehmern NICHT zugänglich sind."""
+    """Decorator für Routen, die Teilnehmenden NICHT zugänglich sind."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         logger.debug(f"[DECORATOR] not_teilnehmer_required: Checking user {getattr(current_user, 'id', 'Guest')}")

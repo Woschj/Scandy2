@@ -14,10 +14,10 @@ def get_mongodb_instance():
     return get_mongodb()
 
 def needs_setup():
-    """Überprüft, ob ein Admin-Benutzer in der MongoDB existiert.
+    """Überprüft, ob ein Admin-Nutzende in der MongoDB existiert.
 
     Returns:
-        bool: True, wenn kein Admin-Benutzer gefunden wurde oder ein Fehler auftrat,
+        bool: True, wenn kein Admin-Nutzende gefunden wurde oder ein Fehler auftrat,
               andernfalls False.
     """
     try:
@@ -27,7 +27,7 @@ def needs_setup():
         return admin_count == 0  # True wenn kein Admin gefunden wurde
     except Exception as e:
         # Wenn Collection oder DB nicht existiert oder anderer Fehler, ist Setup nötig
-        print(f"Fehler beim Prüfen auf Admin-Benutzer für Setup: {e}")
+        print(f"Fehler beim Prüfen auf Admin-Nutzende für Setup: {e}")
         return True
 
 def is_admin_user_present():
@@ -36,7 +36,7 @@ def is_admin_user_present():
         admin_count = mongodb.count_documents('users', {'role': 'admin'})
         return admin_count > 0
     except Exception as e:
-        print(f"Fehler beim Prüfen auf Admin-Benutzer: {e}")
+        print(f"Fehler beim Prüfen auf Admin-Nutzende: {e}")
         return False
 
 def check_password_compatible(password_hash, password):

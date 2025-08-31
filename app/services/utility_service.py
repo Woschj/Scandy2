@@ -12,22 +12,8 @@ logger = logging.getLogger(__name__)
 class UtilityService:
     """Zentraler Service für Utility-Funktionen"""
     
-    @staticmethod
-    def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-        """
-        Konvertiert eine ID für Datenbankabfragen.
-        Versucht zuerst mit String-ID, dann mit ObjectId.
-        """
-        # Wenn bereits ein ObjectId-Objekt übergeben wurde, direkt zurückgeben
-        if isinstance(id_value, ObjectId):
-            return id_value
-        # Bevorzugt: gültige 24‑hex Strings zu ObjectId konvertieren
-        try:
-            return ObjectId(str(id_value))
-        except Exception as e:
-            logger.warning(f"Fehler bei ID-Konvertierung: {e}")
-            # Fallback: unverändert zurückgeben (z. B. echte String-IDs)
-            return id_value
+    # Import der zentralen ID-Helper-Funktionen
+    from app.utils.id_helpers import convert_id_for_query
     
     @staticmethod
     def safe_date_key(item: Dict[str, Any], date_field: str = 'created_at') -> datetime:
@@ -129,7 +115,7 @@ class UtilityService:
     @staticmethod
     def format_worker_name(worker: Dict[str, Any]) -> str:
         """
-        Formatiert einen Mitarbeiternamen
+        Formatiert einen Mitarbeitendenamen
         
         Args:
             worker: Worker-Dictionary

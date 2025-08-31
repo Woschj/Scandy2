@@ -19,11 +19,11 @@ def reset_admin_password():
     new_password = "Admin123!"
     
     try:
-        # Finde Admin-Benutzer
+        # Finde Admin-Nutzende
         admin_user = mongodb.find_one('users', {'role': 'admin'})
         
         if not admin_user:
-            print("❌ Kein Admin-Benutzer gefunden!")
+            print("❌ Kein Admin-Nutzende gefunden!")
             return False
         
         # Aktualisiere das Passwort
@@ -41,7 +41,7 @@ def reset_admin_password():
         if result:
             print("✅ Admin-Passwort erfolgreich zurückgesetzt!")
             print(f"📧 E-Mail: {admin_user.get('email', 'Nicht gesetzt')}")
-            print(f"👤 Benutzername: {admin_user.get('username', 'Nicht gesetzt')}")
+            print(f"👤 Nutzendename: {admin_user.get('username', 'Nicht gesetzt')}")
             print(f"🔑 Neues Passwort: {new_password}")
             print("\n⚠️  WICHTIG: Ändern Sie das Passwort nach dem Login!")
             return True

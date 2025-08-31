@@ -4,7 +4,7 @@ Repariert Rollenrechte-Einträge in der MongoDB-Settings-Collection.
 
 Ziel:
 - Für JEDES Department einen konsistenten Eintrag settings[key='role_permissions'] anlegen/aktualisieren
-- Matrix auf sichere Defaults zurücksetzen, damit Benutzer wieder sehen/anlegen dürfen
+- Matrix auf sichere Defaults zurücksetzen, damit Nutzende wieder sehen/anlegen dürfen
 
 Ausführung:
   python3 repair_role_permissions.py
@@ -39,9 +39,9 @@ def main():
 
     # Gewünschte Matrix gemäß Vorgabe:
     # - Admin: Vollzugriff inkl. Systemverwaltung (global)
-    # - Mitarbeiter: Vollzugriff innerhalb der Abteilung, keine Settings
-    # - Benutzer: Vollzugriff innerhalb der Abteilung, keine Settings
-    # - Teilnehmer: Tickets (view/create) + Jobbörse (view)
+    # - Mitarbeitende: Vollzugriff innerhalb der Abteilung, keine Settings
+    # - Nutzende: Vollzugriff innerhalb der Abteilung, keine Settings
+    # - Teilnehmende: Tickets (view/create) + Jobbörse (view)
     desired_matrix_raw = {
         "admin": {
             "tools": ["view", "create", "edit", "delete", "export"],

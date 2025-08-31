@@ -539,7 +539,7 @@ class UnifiedBackupManager:
                     '--uri', mongo_uri,
                     '--gzip',
                     '--drop',  # Bestehende Collections löschen
-                    '--nsExclude', f"{db_name}.users",  # Benutzer niemals überschreiben
+                    '--nsExclude', f"{db_name}.users",  # Nutzende niemals überschreiben
                     str(mongodb_path / db_name)
                 ]
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -709,7 +709,7 @@ class UnifiedBackupManager:
             for collection_name, documents in data_section.items():
                 if collection_name == 'metadata':
                     continue
-                # Benutzer niemals importieren
+                # Nutzende niemals importieren
                 if collection_name == 'users':
                     continue
                 
@@ -799,7 +799,7 @@ class UnifiedBackupManager:
         return doc
 
     def _anonymize_orphan_user_names(self):
-        """Entfernt Namen/Bezüge auf nicht vorhandene Benutzer (kein Name anzeigen)."""
+        """Entfernt Namen/Bezüge auf nicht vorhandene Nutzende (kein Name anzeigen)."""
         from datetime import datetime as _dt
         try:
             from app.models.mongodb_database import mongodb
@@ -816,7 +816,7 @@ class UnifiedBackupManager:
                     for field in username_fields:
                         if field in doc and doc.get(field) and doc.get(field) not in existing_users:
                             updates[field] = None
-                    # Namens-Felder: auf 'Anonym' setzen, wenn korrespondierender Benutzer fehlt
+                    # Namens-Felder: auf 'Anonym' setzen, wenn korrespondierender Nutzende fehlt
                     for field in name_fields:
                         if field in doc and doc.get(field):
                             related_user = None
@@ -832,7 +832,7 @@ class UnifiedBackupManager:
                         mongodb.update_one(collection, {'_id': doc['_id']}, {'$set': updates})
                         anonymized += 1
             if anonymized:
-                print(f"  🔒 {anonymized} Dokumente anonymisiert (fehlende Benutzer)")
+                print(f"  🔒 {anonymized} Dokumente anonymisiert (fehlende Nutzende)")
         except Exception as e:
             print(f"⚠️  Anonymisierung fehlgeschlagen: {e}")
     
@@ -994,7 +994,7 @@ class UnifiedBackupManager:
                 total_failed += failed_count
                 print(f"    ✅ {inserted_count} eingefügt, ❌ {failed_count} fehlgeschlagen in {collection_name}")
             print(f"✅ JSON-Backup (scoped) abgeschlossen – Gesamt: {total_inserted} eingefügt, {total_failed} fehlgeschlagen")
-            # Optional: Benutzer global importieren, wenn vorhanden (idempotent über username)
+            # Optional: Nutzende global importieren, wenn vorhanden (idempotent über username)
             try:
                 users_docs = data_section.get('users')
                 if isinstance(users_docs, list):
@@ -1032,7 +1032,7 @@ class UnifiedBackupManager:
                         except Exception as e:
                             print(f"    ⚠️  Nutzer-Import: {e}")
             except Exception as e:
-                print(f"⚠️  Benutzer-Import (scoped) übersprungen: {e}")
+                print(f"⚠️  Nutzende-Import (scoped) übersprungen: {e}")
 
             # Nachzug: Orphan-Namen anonymisieren
             try:
@@ -1172,7 +1172,7 @@ class UnifiedBackupManager:
                 report['total_failed'] += failed_count
                 report['total_duplicates'] += duplicate_count
                 report['total_reassigned'] = report.get('total_reassigned', 0) + reassigned_count
-            # Benutzer global importieren (idempotent über username)
+            # Nutzende global importieren (idempotent über username)
             try:
                 users_docs = data_section.get('users')
                 if isinstance(users_docs, list):

@@ -1,16 +1,16 @@
 {% extends "shared/list_base.html" %}
-{% set help_title = 'Mitarbeiter – Hilfe' %}
-{% set help_text = 'Mitarbeiterdaten und Ausleihen überblicken.' %}
+{% set help_title = 'Mitarbeitende – Hilfe' %}
+{% set help_text = 'Mitarbeitendedaten und Ausleihen überblicken.' %}
 {% set help_items = [
     'Mit dem Abteilungsfilter die Anzeige einschränken.',
     'Klick auf den Namen öffnet Details mit aktiven Ausleihen und Historie.',
-    'Rückgaben sind direkt in den Mitarbeiter-Details möglich.'
+    'Rückgaben sind direkt in den Mitarbeitende-Details möglich.'
 ] %}
 
 {% block actions %}
 <div class="flex gap-2">
     <a href="{{ url_for('workers.add') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Neuer Mitarbeiter
+        <i class="fas fa-plus"></i> Neuer Mitarbeitende
     </a>
 </div>
 {% endblock %}
@@ -29,7 +29,7 @@
 <th>Barcode</th>
 <th>Abteilung</th>
 <th>E-Mail</th>
-<th>Benutzer</th>
+<th>Nutzende</th>
 <th>Status</th>
 <th class="text-right">Aktionen</th>
 {% endblock %}

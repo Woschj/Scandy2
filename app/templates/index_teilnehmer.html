@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Startseite - Teilnehmer{% endblock %}
+{% block title %}Startseite - Teilnehmende{% endblock %}
 
 {% block content %}
 <div class="container mx-auto p-4">
@@ -24,14 +24,14 @@
         </div>
     </div>
 
-    <!-- Teilnehmer-Willkommensnachricht -->
+    <!-- Teilnehmende-Willkommensnachricht -->
     <div class="card bg-base-100 shadow-xl mb-8">
         <div class="card-body text-center">
             <h2 class="card-title justify-center mb-4">
                 <i class="fas fa-user-graduate text-secondary mr-2"></i>
-                Willkommen, Teilnehmer!
+                Willkommen, Teilnehmende!
             </h2>
-            <p class="text-lg mb-4">Als Teilnehmer haben Sie Zugriff auf:</p>
+            <p class="text-lg mb-4">Als Teilnehmende haben Sie Zugriff auf:</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
                     <i class="fas fa-clock text-primary text-xl"></i>
@@ -52,9 +52,9 @@
                 <a href="{{ url_for('workers.teilnehmer_timesheet_list') }}" class="btn btn-primary">
                     <i class="fas fa-clock mr-2"></i>Zu den Wochenberichten
                 </a>
-                <a href="{{ url_for('tickets.public_create_order') }}" class="btn btn-secondary">
+                {# <a href="{{ url_for('tickets.create_extern_auftrag_ticket') }}" class="btn btn-secondary">
                     <i class="fas fa-file-alt mr-2"></i>Auftrag erstellen
-                </a>
+                </a> #}
             </div>
         </div>
     </div>
@@ -63,7 +63,7 @@
 
     <!-- Hilfe & Anleitungen -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Linke Box: Heutige Zeiterfassung statt Teilnehmer-Anleitung -->
+        <!-- Linke Box: Heutige Zeiterfassung statt Teilnehmende-Anleitung -->
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 {% if current_user.is_authenticated and current_user.timesheet_enabled and weekly_reports_enabled and timesheet_quick_enabled %}

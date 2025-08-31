@@ -50,10 +50,10 @@ class LendingService:
             if item_type not in valid_types:
                 return False, f'Ungültiger Item-Typ. Erlaubt: {", ".join(valid_types)}', {}
             
-            # Prüfe ob Mitarbeiter existiert
+            # Prüfe ob Mitarbeitende existiert
             worker = mongodb.find_one('workers', {'barcode': worker_barcode, 'deleted': {'$ne': True}})
             if not worker:
-                return False, 'Mitarbeiter nicht gefunden', {}
+                return False, 'Mitarbeitende nicht gefunden', {}
             
             # Verarbeite basierend auf Item-Typ
             if item_type == 'tool':
@@ -399,16 +399,16 @@ class LendingService:
     @staticmethod
     def get_worker_consumable_history(worker_barcode: str) -> List[Dict[str, Any]]:
         """
-        Holt die Verbrauchsmaterial-Historie für einen Mitarbeiter
+        Holt die Verbrauchsmaterial-Historie für einen Mitarbeitende
         
         Args:
-            worker_barcode: Barcode des Mitarbeiters
+            worker_barcode: Barcode des Mitarbeitendes
             
         Returns:
             List[Dict]: Liste der Verbrauchsmaterial-Ausgaben
         """
         try:
-            # Hole alle Verbrauchsmaterial-Ausgaben des Mitarbeiters
+            # Hole alle Verbrauchsmaterial-Ausgaben des Mitarbeitendes
             usages = mongodb.find('consumable_usages', {'worker_barcode': worker_barcode})
             
             # Erweitere mit Consumable-Informationen
@@ -691,7 +691,7 @@ class LendingService:
         
         Args:
             tool_barcode: Barcode des Werkzeugs
-            worker_barcode: Optional - Barcode des Mitarbeiters
+            worker_barcode: Optional - Barcode des Mitarbeitendes
             
         Returns:
             (success, message)
@@ -701,7 +701,7 @@ class LendingService:
             
             # Finde aktive Ausleihe
             if worker_barcode:
-                # Spezifischer Mitarbeiter
+                # Spezifischer Mitarbeitende
                 lending = mongodb.find_one('lendings', {
                     'tool_barcode': tool_barcode,
                     'worker_barcode': worker_barcode,
@@ -709,7 +709,7 @@ class LendingService:
                 })
                 logger.info(f"Suche nach spezifischer Ausleihe: {lending}")
             else:
-                # Beliebiger Mitarbeiter
+                # Beliebiger Mitarbeitende
                 lending = mongodb.find_one('lendings', {
                     'tool_barcode': tool_barcode,
                     'returned_at': None

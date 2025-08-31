@@ -100,21 +100,21 @@ class AdminDebugService:
     @staticmethod
     def fix_session_for_user(username: str) -> Tuple[bool, str]:
         """
-        Repariert die Session für einen bestimmten Benutzer
+        Repariert die Session für einen bestimmten Nutzende
         
         Args:
-            username: Benutzername
+            username: Nutzendename
             
         Returns:
             (success, message)
         """
         try:
-            # Finde den Benutzer
+            # Finde den Nutzende
             user = MongoDBUser.get_by_username(username)
             if not user:
-                return False, f"Benutzer '{username}' nicht gefunden"
+                return False, f"Nutzende '{username}' nicht gefunden"
             
-            # Erstelle eine neue Session für den Benutzer
+            # Erstelle eine neue Session für den Nutzende
             session.clear()
             session['user_id'] = str(user['_id'])
             session['username'] = user['username']
@@ -122,8 +122,8 @@ class AdminDebugService:
             session['is_authenticated'] = True
             session['_id'] = str(user['_id'])
             
-            logger.info(f"Session für Benutzer '{username}' repariert")
-            return True, f"Session für Benutzer '{username}' erfolgreich repariert"
+            logger.info(f"Session für Nutzende '{username}' repariert")
+            return True, f"Session für Nutzende '{username}' erfolgreich repariert"
             
         except Exception as e:
             logger.error(f"Fehler beim Reparieren der Session für '{username}': {str(e)}")
@@ -145,7 +145,7 @@ class AdminDebugService:
                 'details': []
             }
             
-            # Hole alle Benutzer
+            # Hole alle Nutzende
             users = list(mongodb.find('users', {}))
             stats['total_users'] = len(users)
             
@@ -184,7 +184,7 @@ class AdminDebugService:
                     stats['errors'] += 1
                     stats['details'].append(f"Fehler bei User {user.get('username', 'unknown')}: {str(e)}")
             
-            message = f"Normalisierung abgeschlossen: {stats['normalized_users']} Benutzer normalisiert, {stats['errors']} Fehler"
+            message = f"Normalisierung abgeschlossen: {stats['normalized_users']} Nutzende normalisiert, {stats['errors']} Fehler"
             logger.info(message)
             return True, message, stats
             
@@ -258,16 +258,16 @@ class AdminDebugService:
     @staticmethod
     def debug_user_management() -> Dict[str, Any]:
         """
-        Gibt Debug-Informationen über die Benutzerverwaltung zurück
+        Gibt Debug-Informationen über die Nutzendeverwaltung zurück
         
         Returns:
-            Dictionary mit Benutzer-Management-Informationen
+            Dictionary mit Nutzende-Management-Informationen
         """
         try:
-            # Hole alle Benutzer
+            # Hole alle Nutzende
             users = list(mongodb.find('users', {}))
             
-            # Analysiere Benutzer-Daten
+            # Analysiere Nutzende-Daten
             user_stats = {
                 'total_users': len(users),
                 'active_users': len([u for u in users if u.get('is_active', True)]),
@@ -313,7 +313,7 @@ class AdminDebugService:
         Testet eine spezifische User-ID
         
         Args:
-            user_id: ID des Benutzers
+            user_id: ID des Nutzendes
             
         Returns:
             Dictionary mit Test-Ergebnissen
@@ -328,7 +328,7 @@ class AdminDebugService:
                 'errors': []
             }
             
-            # Versuche den Benutzer zu finden
+            # Versuche den Nutzende zu finden
             try:
                 user = find_document_by_id('users', user_id)
                 if user:
@@ -339,7 +339,7 @@ class AdminDebugService:
                         'is_active': user.get('is_active', True)
                     }
             except Exception as e:
-                test_results['errors'].append(f"Fehler beim Laden des Benutzers: {str(e)}")
+                test_results['errors'].append(f"Fehler beim Laden des Nutzendes: {str(e)}")
             
             # Prüfe Referenzen auf diese User-ID
             collections_to_check = [
@@ -515,7 +515,7 @@ class AdminDebugService:
                     logger.info("E-Mail-Konfiguration erfolgreich migriert")
                     return True, "E-Mail-Konfiguration erfolgreich migriert"
             
-            # Prüfe ob Admin-Benutzer ohne E-Mail-Adresse existieren
+            # Prüfe ob Admin-Nutzende ohne E-Mail-Adresse existieren
             admin_users = list(mongodb.find('users', {'role': 'admin'}))
             fixed_users = 0
             
@@ -530,8 +530,8 @@ class AdminDebugService:
                     fixed_users += 1
             
             if fixed_users > 0:
-                logger.info(f"{fixed_users} Admin-Benutzer ohne E-Mail-Adresse korrigiert")
-                return True, f"E-Mail-Konfiguration repariert: {fixed_users} Admin-Benutzer korrigiert"
+                logger.info(f"{fixed_users} Admin-Nutzende ohne E-Mail-Adresse korrigiert")
+                return True, f"E-Mail-Konfiguration repariert: {fixed_users} Admin-Nutzende korrigiert"
             
             return True, "E-Mail-Konfiguration ist bereits korrekt"
             

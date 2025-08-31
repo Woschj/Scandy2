@@ -55,18 +55,18 @@ def upload_media(entity_type, entity_id):
         
         # Berechtigungsprüfung
         if entity_type == 'tickets':
-            # Für Tickets: Benutzer können Medien zu ihren eigenen Tickets hochladen
+            # Für Tickets: Nutzende können Medien zu ihren eigenen Tickets hochladen
             from app.models.mongodb_database import mongodb
             ticket = mongodb.find_one('tickets', {'_id': entity_id})
             if not ticket:
                 return jsonify({'success': False, 'error': 'Ticket nicht gefunden'})
             
-            # Prüfe ob Benutzer das Ticket erstellt hat oder Admin/Mitarbeiter ist
+            # Prüfe ob Nutzende das Ticket erstellt hat oder Admin/Mitarbeitende ist
             if (current_user.role not in ['admin', 'mitarbeiter'] and 
                 ticket.get('created_by') != current_user.username):
                 return jsonify({'success': False, 'error': 'Keine Berechtigung für dieses Ticket'})
         else:
-            # Für andere Entitäten: Nur Mitarbeiter und Admins
+            # Für andere Entitäten: Nur Mitarbeitende und Admins
             if current_user.role not in ['admin', 'mitarbeiter']:
                 return jsonify({'success': False, 'error': 'Keine Berechtigung'})
         
@@ -304,18 +304,18 @@ def delete_media(entity_type, entity_id, filename):
         
         # Berechtigungsprüfung
         if entity_type == 'tickets':
-            # Für Tickets: Benutzer können Medien von ihren eigenen Tickets löschen
+            # Für Tickets: Nutzende können Medien von ihren eigenen Tickets löschen
             from app.models.mongodb_database import mongodb
             ticket = mongodb.find_one('tickets', {'_id': entity_id})
             if not ticket:
                 return jsonify({'success': False, 'error': 'Ticket nicht gefunden'})
             
-            # Prüfe ob Benutzer das Ticket erstellt hat oder Admin/Mitarbeiter ist
+            # Prüfe ob Nutzende das Ticket erstellt hat oder Admin/Mitarbeitende ist
             if (current_user.role not in ['admin', 'mitarbeiter'] and 
                 ticket.get('created_by') != current_user.username):
                 return jsonify({'success': False, 'error': 'Keine Berechtigung für dieses Ticket'})
         else:
-            # Für andere Entitäten: Nur Mitarbeiter und Admins
+            # Für andere Entitäten: Nur Mitarbeitende und Admins
             if current_user.role not in ['admin', 'mitarbeiter']:
                 return jsonify({'success': False, 'error': 'Keine Berechtigung'})
         

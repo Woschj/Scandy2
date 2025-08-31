@@ -33,10 +33,10 @@ Flask-Session==0.5.0
 openpyxl==3.1.2
 
 # Data processing (nur wenn benötigt) - Python 3.13 kompatibel
-pandas>=2.2.0
+# pandas>=2.2.0  # Nicht verwendet - auskommentiert
 
 # Scheduling
-APScheduler==3.9.1
+# APScheduler==3.9.1  # Nicht verwendet - auskommentiert
 
 # Production server
 waitress==3.0.1

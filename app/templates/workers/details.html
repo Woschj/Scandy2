@@ -10,7 +10,7 @@
     </a>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Mitarbeiter-Details -->
+    <!-- Mitarbeitende-Details -->
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
             <div class="flex justify-between items-start">
@@ -30,15 +30,15 @@
                 <p><strong>E-Mail:</strong> {{ worker.email }}</p>
                 {% endif %}
                 
-                <!-- Benutzer-Informationen -->
+                <!-- Nutzende-Informationen -->
                 {% if worker.username %}
                 <div class="divider"></div>
                 <div class="bg-info/10 p-3 rounded-lg">
                     <h3 class="font-semibold text-info mb-2">
-                        <i class="fas fa-user mr-2"></i>Benutzerkonto
+                        <i class="fas fa-user mr-2"></i>Nutzendekonto
                     </h3>
                     <div class="space-y-1">
-                        <p><strong>Benutzername:</strong> {{ worker.username }}</p>
+                        <p><strong>Nutzendename:</strong> {{ worker.username }}</p>
                         {% if worker.user_role %}
                         <p><strong>Rolle:</strong> 
                             <span class="badge badge-{{ 'error' if worker.user_role == 'admin' else 'warning' if worker.user_role == 'mitarbeiter' else 'info' }}">
@@ -194,7 +194,7 @@
 <!-- Edit Modal -->
 <dialog id="editModal" class="modal">
     <div class="modal-box">
-        <h3 class="font-bold text-lg">Mitarbeiter bearbeiten</h3>
+        <h3 class="font-bold text-lg">Mitarbeitende bearbeiten</h3>
         <form id="editWorkerForm" method="POST" action="{{ url_for('workers.edit', barcode=worker.barcode) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-control">

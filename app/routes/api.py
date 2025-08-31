@@ -21,7 +21,7 @@ def log_request_info():
 @bp.route('/workers', methods=['GET'])
 @mitarbeiter_required
 def get_workers():
-    """Gibt alle aktiven Mitarbeiter zurück"""
+    """Gibt alle aktiven Mitarbeitende zurück"""
     try:
         workers = list(mongodb.find('workers', {'deleted': {'$ne': True}}, sort=[('lastname', 1), ('firstname', 1)]))
         return jsonify({
@@ -31,7 +31,7 @@ def get_workers():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Laden der Mitarbeiter: {str(e)}'
+            'message': f'Fehler beim Laden der Mitarbeitende: {str(e)}'
         }), 500
 
 @bp.route('/inventory/tools/<barcode>', methods=['GET'])
@@ -66,14 +66,14 @@ def get_tool(barcode):
 
 @bp.route('/inventory/workers/<barcode>', methods=['GET'])
 def get_worker(barcode):
-    """Gibt Details zu einem Mitarbeiter zurück"""
+    """Gibt Details zu einem Mitarbeitende zurück"""
     try:
         worker = mongodb.find_one('workers', {'barcode': barcode, 'deleted': {'$ne': True}})
         
         if not worker:
             return jsonify({
                 'success': False,
-                'message': 'Mitarbeiter nicht gefunden'
+                'message': 'Mitarbeitende nicht gefunden'
             }), 404
         
         # Hole aktive Ausleihen
@@ -94,10 +94,10 @@ def get_worker(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Mitarbeiters: {str(e)}")
+        logger.error(f"Fehler beim Laden des Mitarbeitendes: {str(e)}")
         return jsonify({
             'success': False,
-            'message': 'Fehler beim Laden des Mitarbeiters'
+            'message': 'Fehler beim Laden des Mitarbeitendes'
         }), 500
 
 @bp.route('/settings/colors', methods=['POST'])

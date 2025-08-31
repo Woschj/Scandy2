@@ -11,7 +11,7 @@ def reset_password():
     if request.method == 'POST':
         username_or_email = (request.form.get('username') or '').strip()
         if not username_or_email:
-            flash('Bitte Benutzername oder E-Mail eingeben', 'error')
+            flash('Bitte Nutzendename oder E-Mail eingeben', 'error')
             return render_template('auth/reset_password.html')
         # User suchen: E-Mail und Username case-insensitiv
         import re as _re
@@ -22,12 +22,12 @@ def reset_password():
             pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
             user = mongodb.find_one('users', {'username': pattern})
         if not user:
-            flash('Kein Benutzer gefunden', 'error')
+            flash('Kein Nutzende gefunden', 'error')
             return render_template('auth/reset_password.html')
         # E-Mail-Adresse prüfen
         recipient_email = (user.get('email') or '').strip()
         if not recipient_email:
-            flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
+            flash('Für diesen Nutzende ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
             return render_template('auth/reset_password.html')
 
         # Token erzeugen und in DB speichern (gültig 60 Minuten)
@@ -101,15 +101,15 @@ def reset_with_token(token):
 
     return render_template('auth/reset_with_token.html')
 """
-Authentifizierung und Benutzerverwaltung
+Authentifizierung und Nutzendeverwaltung
 
-Dieses Modul enthält alle Routen für die Benutzerauthentifizierung:
+Dieses Modul enthält alle Routen für die Nutzendeauthentifizierung:
 - Login/Logout
 - Setup für die Ersteinrichtung
 - Profilverwaltung (E-Mail und Passwort ändern)
 
 Alle Routen verwenden Flask-Login für die Session-Verwaltung
-und MongoDB für die Benutzerdaten.
+und MongoDB für die Nutzendedaten.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
@@ -131,22 +131,8 @@ import re
 mongodb = MongoDB()
 logger = logging.getLogger(__name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return id_value
-    except:
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            return ObjectId(id_value)
-        except Exception as e:
-            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return id_value
+# Import der zentralen ID-Helper-Funktionen
+from app.utils.id_helpers import convert_id_for_query
 
 def get_objectid_if_possible(id_value):
     if isinstance(id_value, str) and len(id_value) == 24:
@@ -161,18 +147,18 @@ def get_objectid_if_possible(id_value):
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     """
-    Benutzeranmeldung.
+    Nutzendeanmeldung.
     
     GET: Zeigt das Login-Formular
     POST: Verarbeitet die Anmeldedaten
     
     Validierung:
-    - Benutzername und Passwort müssen korrekt sein
-    - Benutzerkonto muss aktiv sein
+    - Nutzendename und Passwort müssen korrekt sein
+    - Nutzendekonto muss aktiv sein
     
     Redirects:
     - Bei erfolgreicher Anmeldung: Zur ursprünglich gewünschten Seite oder Dashboard
-    - Bei bereits angemeldeten Benutzern: Direkt zum Dashboard
+    - Bei bereits angemeldeten Nutzenden: Direkt zum Dashboard
     """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -186,21 +172,21 @@ def login():
         # ===== INPUT-VALIDIERUNG =====
         errors = []
         
-        # Benutzername/E-Mail-Validierung
+        # Nutzendename/E-Mail-Validierung
         is_email_login = '@' in username
         if not username:
-            errors.append('Benutzername oder E-Mail ist erforderlich.')
+            errors.append('Nutzendename oder E-Mail ist erforderlich.')
         elif is_email_login:
             # Sehr einfache E-Mail-Prüfung (keine harte RFC-Validierung)
             if len(username) > 254 or not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', username):
                 errors.append('E-Mail-Format ist ungültig.')
         else:
             if len(username) > 50:
-                errors.append('Benutzername ist zu lang (maximal 50 Zeichen).')
+                errors.append('Nutzendename ist zu lang (maximal 50 Zeichen).')
             else:
                 # Erlaube Unicode-Buchstaben (inkl. Umlaute), Zahlen, Unterstrich, Bindestrich und Punkt
                 if not re.match(r'^[\w._-]+$', username):
-                    errors.append('Benutzername darf nur Buchstaben (inkl. Umlaute), Zahlen, Unterstriche, Bindestriche und Punkte enthalten.')
+                    errors.append('Nutzendename darf nur Buchstaben (inkl. Umlaute), Zahlen, Unterstriche, Bindestriche und Punkte enthalten.')
         
         # Passwort-Validierung
         if not password:
@@ -222,10 +208,9 @@ def login():
         
         # ===== BENUTZER VALIDIEREN =====
         if is_email_login:
-            # Case-insensitive Suche nach E-Mail
+            # Case-insensitive Suche über normalisierte Spalte
             try:
-                pattern = {'$regex': f'^{re.escape(username)}$', '$options': 'i'}
-                user_data = mongodb.find_one('users', {'email': pattern})
+                user_data = mongodb.find_one('users', {'email_lower': username.lower()})
             except Exception:
                 user_data = None
         else:
@@ -251,7 +236,7 @@ def login():
                                          {'$set': {'password_hash': new_hash, 'updated_at': datetime.now()}})
                         # Aktualisiere user_data für die Session
                         user_data['password_hash'] = new_hash
-                        logger.info(f"Passwort-Hash für Benutzer {user_data['username']} erfolgreich konvertiert")
+                        logger.info(f"Passwort-Hash für Nutzende {user_data['username']} erfolgreich konvertiert")
                     except Exception as e:
                         logger.error(f"Fehler bei der Passwort-Konvertierung: {e}")
                         # Fahre trotz Fehler fort - der Login war erfolgreich
@@ -275,19 +260,19 @@ def login():
                 # Logge Login-Versuch mit deaktiviertem Konto
                 from app.utils.logger import log_security_event
                 log_security_event('login_disabled_account', username, request.remote_addr)
-                flash('Ihr Benutzerkonto ist deaktiviert.', 'error')
+                flash('Ihr Nutzendekonto ist deaktiviert.', 'error')
         else:
             # Logge fehlgeschlagenen Login
             from app.utils.logger import log_security_event
             log_security_event('login_failed', username, request.remote_addr, {'reason': 'invalid_credentials'})
-            flash('Ungültiger Benutzername oder Passwort.', 'error')
+            flash('Ungültiger Nutzendename oder Passwort.', 'error')
     
     return render_template('auth/login.html')
 
 @bp.route('/debug/users')
 @login_required
 def debug_users():
-    """Debug-Route um alle Benutzer anzuzeigen"""
+    """Debug-Route um alle Nutzende anzuzeigen"""
     try:
         from app.models.mongodb_models import MongoDBUser
         users = MongoDBUser.get_all()
@@ -309,13 +294,13 @@ def setup():
     Ersteinrichtung des Systems.
     
     GET: Zeigt das Setup-Formular
-    POST: Erstellt den ersten Admin-Benutzer und Systemeinstellungen
+    POST: Erstellt den ersten Admin-Nutzende und Systemeinstellungen
     
     Erstellt:
-    - Admin-Benutzer mit gewähltem Passwort
+    - Admin-Nutzende mit gewähltem Passwort
     - Standard-Systemeinstellungen (Labels für Tickets, Tools, etc.)
     
-    Zugriff nur möglich wenn noch kein Admin-Benutzer existiert.
+    Zugriff nur möglich wenn noch kein Admin-Nutzende existiert.
     """
     if not needs_setup():
         flash('Das System wurde bereits eingerichtet.', 'info')
@@ -329,7 +314,7 @@ def setup():
         
         # Validierung
         if not username:
-            flash('Bitte geben Sie einen Benutzernamen ein.', 'error')
+            flash('Bitte geben Sie einen Nutzendenamen ein.', 'error')
             return render_template('auth/setup.html')
         
         if not password:
@@ -340,10 +325,10 @@ def setup():
             flash('Die Passwörter stimmen nicht überein.', 'error')
             return render_template('auth/setup.html')
         
-        # Prüfe ob Benutzername bereits existiert
+        # Prüfe ob Nutzendename bereits existiert
         existing_user = mongodb.find_one('users', {'username': username})
         if existing_user:
-            flash('Dieser Benutzername existiert bereits. Bitte wählen Sie einen anderen.', 'error')
+            flash('Dieser Nutzendename existiert bereits. Bitte wählen Sie einen anderen.', 'error')
             return render_template('auth/setup.html')
         
         # ===== ADMIN-BENUTZER ERSTELLEN =====
@@ -358,11 +343,11 @@ def setup():
         }
         
         try:
-            logger.info(f"Setup: Versuche Admin-Benutzer '{username}' zu erstellen")
+            logger.info(f"Setup: Versuche Admin-Nutzende '{username}' zu erstellen")
             logger.info(f"Setup: Admin-Daten: {admin_data}")
             
             result = mongodb.insert_one('users', admin_data)
-            logger.info(f"Setup: Benutzer erfolgreich erstellt mit ID: {result.inserted_id}")
+            logger.info(f"Setup: Nutzende erfolgreich erstellt mit ID: {result.inserted_id}")
             
             # ===== SYSTEMEINSTELLUNGEN SPEICHERN =====
             settings = [
@@ -387,7 +372,7 @@ def setup():
             return redirect(url_for('auth.login'))
             
         except Exception as e:
-            logger.error(f"Setup: Fehler beim Erstellen des Admin-Benutzers: {e}")
+            logger.error(f"Setup: Fehler beim Erstellen des Admin-Nutzendes: {e}")
             logger.error(f"Setup: Exception-Typ: {type(e)}")
             import traceback
             logger.error(f"Setup: Stacktrace: {traceback.format_exc()}")
@@ -414,14 +399,14 @@ def setup_api():
         password = data.get('password')
         
         if not username or not password:
-            return jsonify({'success': False, 'message': 'Benutzername und Passwort erforderlich'}), 400
+            return jsonify({'success': False, 'message': 'Nutzendename und Passwort erforderlich'}), 400
         
-        # Prüfe ob Benutzername bereits existiert
+        # Prüfe ob Nutzendename bereits existiert
         existing_user = mongodb.find_one('users', {'username': username})
         if existing_user:
-            return jsonify({'success': False, 'message': 'Benutzername existiert bereits'}), 400
+            return jsonify({'success': False, 'message': 'Nutzendename existiert bereits'}), 400
         
-        # Admin-Benutzer erstellen
+        # Admin-Nutzende erstellen
         admin_data = {
             'username': username,
             'password_hash': generate_password_hash(password),
@@ -433,7 +418,7 @@ def setup_api():
         }
         
         result = mongodb.insert_one('users', admin_data)
-        logger.info(f"Setup-API: Admin-Benutzer '{username}' erstellt mit ID: {result.inserted_id}")
+        logger.info(f"Setup-API: Admin-Nutzende '{username}' erstellt mit ID: {result.inserted_id}")
         
         # Systemeinstellungen
         settings = [
@@ -470,7 +455,7 @@ def setup_simple():
         confirm_password = request.form.get('confirm_password')
         
         if not username or not password:
-            flash('Benutzername und Passwort sind erforderlich.', 'error')
+            flash('Nutzendename und Passwort sind erforderlich.', 'error')
             return render_template('auth/setup.html')
         
         if password != confirm_password:
@@ -478,7 +463,7 @@ def setup_simple():
             return render_template('auth/setup.html')
         
         try:
-            # Admin-Benutzer erstellen
+            # Admin-Nutzende erstellen
             admin_data = {
                 'username': username,
                 'password_hash': generate_password_hash(password),
@@ -561,7 +546,7 @@ def auto_fix_session():
 @login_required
 def logout():
     """
-    Benutzer abmelden.
+    Nutzende abmelden.
     
     Beendet die aktuelle Session und leitet zur Login-Seite weiter.
     """
@@ -573,13 +558,13 @@ def logout():
 @login_required
 def profile():
     """
-    Benutzerprofil bearbeiten.
+    Nutzendeprofil bearbeiten.
     
-    GET: Zeigt das Profilformular mit aktuellen Benutzerdaten
+    GET: Zeigt das Profilformular mit aktuellen Nutzendedaten
     POST: Aktualisiert E-Mail und/oder Passwort
     
     Validierung:
-    - E-Mail darf nicht bereits von anderem Benutzer verwendet werden
+    - E-Mail darf nicht bereits von anderem Nutzende verwendet werden
     - Aktuelles Passwort muss korrekt sein (bei Passwortänderung)
     - Neues Passwort muss mindestens 8 Zeichen lang sein
     - Neue Passwörter müssen übereinstimmen
@@ -595,7 +580,7 @@ def profile():
             # ===== AKTUELLE BENUTZERDATEN HOLEN =====
             user = mongodb.find_one('users', {'username': current_user.username})
             if not user:
-                flash('Benutzer nicht gefunden', 'error')
+                flash('Nutzende nicht gefunden', 'error')
                 return redirect(url_for('auth.profile'))
             
             logger.info(f"DEBUG: Aktueller User aus DB: {user.get('username')}, ID: {user.get('_id')}, Email: {user.get('email')}")
@@ -620,13 +605,13 @@ def profile():
             if email and email != user.get('email', ''):
                 logger.info(f"DEBUG: E-Mail-Update wird durchgeführt - von '{user.get('email')}' zu '{email}'")
                 
-                # Prüfe ob E-Mail bereits von anderem Benutzer verwendet wird
+                # Prüfe ob E-Mail bereits von anderem Nutzende verwendet wird
                 existing_user = mongodb.find_one('users', {
                     'email': email,
                     'username': {'$ne': current_user.username}
                 })
                 if existing_user:
-                    flash('Diese E-Mail-Adresse wird bereits von einem anderen Benutzer verwendet.', 'error')
+                    flash('Diese E-Mail-Adresse wird bereits von einem anderen Nutzende verwendet.', 'error')
                     return render_template('auth/profile.html', user=user)
                 
                 # E-Mail validieren
@@ -694,7 +679,7 @@ def profile():
             logger.info(f"DEBUG: User nach Update - Email: {user.get('email')}")
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Benutzerprofils: {e}")
+            logger.error(f"Fehler beim Aktualisieren des Nutzendeprofils: {e}")
             flash('Fehler beim Aktualisieren des Profils.', 'error')
     
     # ===== BENUTZERDATEN FÜR TEMPLATE VORBEREITEN =====

@@ -137,7 +137,7 @@ def add():
                 tool_data['user_groups'] = []
                 tool_data['additional_software'] = []
             
-            # Benutzerdefinierte Felder verarbeiten
+            # Nutzendedefinierte Felder verarbeiten
             try:
                 from app.services.custom_fields_service import CustomFieldsService
                 success_custom, error_msg, custom_values = CustomFieldsService.process_custom_fields_from_form('tools', request.form)
@@ -154,7 +154,7 @@ def add():
                                          feature_settings=get_feature_settings_safe())
             except Exception as e:
                 logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
-                # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
+                # Nutzendedefinierte Felder sind optional, daher kein Fehler-Return
                 tool_data['custom_fields'] = {}
             
             # Validierung
@@ -285,7 +285,7 @@ def edit(barcode):
             tool_data['user_groups'] = []
             tool_data['additional_software'] = []
         
-        # Benutzerdefinierte Felder verarbeiten
+        # Nutzendedefinierte Felder verarbeiten
         try:
             from app.services.custom_fields_service import CustomFieldsService
             success_custom, error_msg, custom_values = CustomFieldsService.process_custom_fields_from_form('tools', request.form)
@@ -295,7 +295,7 @@ def edit(barcode):
                 return jsonify({'success': False, 'message': f'Fehler bei benutzerdefinierten Feldern: {error_msg}'})
         except Exception as e:
             logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
-            # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
+            # Nutzendedefinierte Felder sind optional, daher kein Fehler-Return
             tool_data['custom_fields'] = {}
         
         # Status nur hinzufügen, wenn er explizit im Formular angegeben wurde

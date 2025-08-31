@@ -130,7 +130,7 @@ def inject_unfilled_timesheet_days():
         from flask_login import current_user
         from datetime import datetime, timedelta
         
-        # Nur für eingeloggte Benutzer mit aktiviertem Wochenbericht-Feature berechnen
+        # Nur für eingeloggte Nutzende mit aktiviertem Wochenbericht-Feature berechnen
         if not hasattr(current_user, 'is_authenticated') or not current_user.is_authenticated:
             return {'unfilled_timesheet_days': 0}
         
@@ -138,11 +138,11 @@ def inject_unfilled_timesheet_days():
         if not hasattr(current_user, 'timesheet_enabled') or not current_user.timesheet_enabled:
             return {'unfilled_timesheet_days': 0}
         
-        # Berechne unausgefüllte Tage für den aktuellen Benutzer
+        # Berechne unausgefüllte Tage für den aktuellen Nutzende
         user_id = current_user.username
         today = datetime.now()
         
-        # Hole alle Timesheets des Benutzers
+        # Hole alle Timesheets des Nutzendes
         timesheets = list(mongodb.find('timesheets', {'user_id': user_id}))
         
         # Berechne unausgefüllte Tage für alle Wochen
@@ -264,7 +264,7 @@ def inject_departments():
             ctx = {'allowed': [], 'current': None}
             return {'departments': ctx, 'departments_ctx': ctx}
 
-        # Benutzer lesen
+        # Nutzende lesen
         user = mongodb.find_one('users', {'username': current_user.username})
 
         # Globale Departments laden (für Admins nötig)

@@ -43,13 +43,13 @@ def get_ticket_history(ticket_id):
 @login_required  
 def get_user_activity(username):
     """
-    Holt die Aktivitäten eines Benutzers
+    Holt die Aktivitäten eines Nutzendes
     
     Args:
-        username: Benutzername
+        username: Nutzendename
         
     Returns:
-        JSON: Liste der Benutzer-Aktivitäten
+        JSON: Liste der Nutzende-Aktivitäten
     """
     try:
         days = request.args.get('days', 30, type=int)
@@ -66,5 +66,5 @@ def get_user_activity(username):
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': f'Fehler beim Laden der Benutzer-Aktivitäten: {str(e)}'
+            'error': f'Fehler beim Laden der Nutzende-Aktivitäten: {str(e)}'
         }), 500 

@@ -186,23 +186,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('canteenForm');
     const clearButton = document.getElementById('clearForm');
     
-    // Prüfe Benutzerstatus beim Laden
+    // Prüfe Nutzendestatus beim Laden
     fetch('/canteen/user_status', {
         credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('Benutzerstatus:', data.user);
+            console.log('Nutzendestatus:', data.user);
             if (!data.user.canteen_plan_enabled) {
                 showToast('error', 'Sie haben keine Berechtigung für den Kantinenplan');
             }
         } else {
-            console.error('Fehler beim Laden des Benutzerstatus:', data.error);
+            console.error('Fehler beim Laden des Nutzendestatus:', data.error);
         }
     })
     .catch(error => {
-        console.error('Netzwerkfehler beim Laden des Benutzerstatus:', error);
+        console.error('Netzwerkfehler beim Laden des Nutzendestatus:', error);
     });
     
     // Formular leeren

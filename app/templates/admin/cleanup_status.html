@@ -8,7 +8,7 @@
         <h1 class="text-3xl font-bold">Löschungsstatus</h1>
         <div class="flex gap-2">
             <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline">
-                <i class="fas fa-arrow-left mr-2"></i>Zurück zur Benutzerverwaltung
+                <i class="fas fa-arrow-left mr-2"></i>Zurück zur Nutzendeverwaltung
             </a>
             <form action="{{ url_for('admin.run_cleanup') }}" method="post" class="inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -41,7 +41,7 @@
             <div class="stat-figure text-primary">
                 <i class="fas fa-users text-3xl"></i>
             </div>
-            <div class="stat-title">Gesamt Benutzer</div>
+            <div class="stat-title">Gesamt Nutzende</div>
             <div class="stat-value text-primary">{{ user_stats.total_users }}</div>
         </div>
         
@@ -49,7 +49,7 @@
             <div class="stat-figure text-success">
                 <i class="fas fa-user-check text-3xl"></i>
             </div>
-            <div class="stat-title">Aktive Benutzer</div>
+            <div class="stat-title">Aktive Nutzende</div>
             <div class="stat-value text-success">{{ user_stats.active_users }}</div>
         </div>
         
@@ -70,12 +70,12 @@
         </div>
     </div>
 
-    <!-- Zur Löschung vorgesehene Benutzer -->
+    <!-- Zur Löschung vorgesehene Nutzende -->
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
             <h2 class="card-title">
                 <i class="fas fa-clock text-warning"></i>
-                Zur Löschung vorgesehene Benutzer
+                Zur Löschung vorgesehene Nutzende
             </h2>
             
             {% if scheduled_users %}
@@ -83,7 +83,7 @@
                     <table class="table w-full">
                         <thead>
                             <tr>
-                                <th>Benutzername</th>
+                                <th>Nutzendename</th>
                                 <th>Rolle</th>
                                 <th>Email</th>
                                 <th>Löschdatum</th>
@@ -99,11 +99,11 @@
                                     {% if user.role == 'admin' %}
                                         <span class="badge badge-error">Admin</span>
                                     {% elif user.role == 'mitarbeiter' %}
-                                        <span class="badge badge-warning">Mitarbeiter</span>
+                                        <span class="badge badge-warning">Mitarbeitende</span>
                                     {% elif user.role == 'teilnehmer' %}
-                                        <span class="badge badge-secondary">Teilnehmer</span>
+                                        <span class="badge badge-secondary">Teilnehmende</span>
                                     {% else %}
-                                        <span class="badge badge-info">Benutzer</span>
+                                        <span class="badge badge-info">Nutzende</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ user.email or '-' }}</td>
@@ -148,8 +148,8 @@
             {% else %}
                 <div class="text-center py-8">
                     <i class="fas fa-check-circle text-success text-5xl mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">Keine Benutzer zur Löschung vorgesehen</h3>
-                    <p class="text-gray-600">Alle Benutzer sind aktuell aktiv und nicht zur Löschung geplant.</p>
+                    <h3 class="text-xl font-semibold mb-2">Keine Nutzende zur Löschung vorgesehen</h3>
+                    <p class="text-gray-600">Alle Nutzende sind aktuell aktiv und nicht zur Löschung geplant.</p>
                 </div>
             {% endif %}
         </div>
@@ -166,16 +166,16 @@
             <div class="prose max-w-none">
                 <h3>Wie funktioniert die automatische Löschung?</h3>
                 <ul>
-                    <li><strong>Geplante Löschung:</strong> Benutzer können mit einem Löschdatum versehen werden</li>
+                    <li><strong>Geplante Löschung:</strong> Nutzende können mit einem Löschdatum versehen werden</li>
                     <li><strong>Automatische Bereinigung:</strong> Täglich um 2:00 Uhr werden abgelaufene Accounts gelöscht</li>
-                    <li><strong>Vollständige Löschung:</strong> Alle mit dem Benutzer verbundenen Daten werden entfernt</li>
+                    <li><strong>Vollständige Löschung:</strong> Alle mit dem Nutzende verbundenen Daten werden entfernt</li>
                     <li><strong>Stornierung:</strong> Geplante Löschungen können jederzeit storniert werden</li>
                 </ul>
                 
                 <h3>Was wird gelöscht?</h3>
                 <ul>
-                    <li>Benutzeraccount und alle persönlichen Daten</li>
-                    <li>Zugehöriger Mitarbeiter-Eintrag</li>
+                    <li>Nutzendeaccount und alle persönlichen Daten</li>
+                    <li>Zugehöriger Mitarbeitende-Eintrag</li>
                     <li>Alle Ausleihen und Materialverwendungen</li>
                     <li>Erstellte Tickets und Nachrichten</li>
                     <li>Wochenberichte und Erfahrungsberichte</li>
@@ -183,7 +183,7 @@
                 
                 <h3>Sicherheitshinweise</h3>
                 <ul>
-                    <li>Admin-Benutzer können nicht automatisch gelöscht werden</li>
+                    <li>Admin-Nutzende können nicht automatisch gelöscht werden</li>
                     <li>Eigene Accounts können nicht gelöscht werden</li>
                     <li>Löschungen sind unwiderruflich</li>
                     <li>Backups werden vor der Löschung erstellt</li>

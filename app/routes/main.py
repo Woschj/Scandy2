@@ -16,7 +16,7 @@ def index():
     if needs_setup():
         return redirect(url_for('setup.setup_admin'))
     
-    # Für eingeloggte Teilnehmer: Keine Weiterleitung - sie können die Startseite sehen
+    # Für eingeloggte Teilnehmende: Keine Weiterleitung - sie können die Startseite sehen
     # if current_user.is_authenticated and current_user.role == 'teilnehmer':
     #     return redirect(url_for('workers.timesheet_list'))
         
@@ -30,7 +30,7 @@ def index():
                 raise Exception("MongoDB-Verbindung nicht initialisiert")
         except Exception as db_error:
             current_app.logger.error(f"MongoDB-Verbindung nicht verfügbar: {str(db_error)}")
-            # Wähle das Template basierend auf der Benutzerrolle
+            # Wähle das Template basierend auf der Nutzenderolle
             if not current_user.is_authenticated:
                 template_name = 'index_public.html'
             elif current_user.role == 'teilnehmer':
@@ -109,7 +109,7 @@ def index():
         except Exception as _ts_err:
             current_app.logger.warning(f"Timesheet Prefill nicht verfügbar: {_ts_err}")
 
-        # Wähle das Template basierend auf der Benutzerrolle
+        # Wähle das Template basierend auf der Nutzenderolle
         if not current_user.is_authenticated:
             template_name = 'index_public.html'
         elif current_user.role == 'teilnehmer':
@@ -148,7 +148,7 @@ def index():
 @bp.route('/emergency-admin')
 def emergency_admin():
     """
-    Notfall-Route zur Erstellung eines Admin-Benutzers
+    Notfall-Route zur Erstellung eines Admin-Nutzendes
     """
     try:
         import os
@@ -158,23 +158,23 @@ def emergency_admin():
         from werkzeug.security import generate_password_hash
         from datetime import datetime
         
-        # Prüfe ob Admin-Benutzer bereits existiert
+        # Prüfe ob Admin-Nutzende bereits existiert
         admin_user = mongodb.find_one('users', {'role': 'admin'})
         
         if admin_user:
                     return f"""
         <html>
-        <head><title>Admin-Benutzer existiert</title></head>
+        <head><title>Admin-Nutzende existiert</title></head>
         <body>
-            <h1>✅ Admin-Benutzer existiert bereits</h1>
-            <p><strong>Benutzername:</strong> admin</p>
+            <h1>✅ Admin-Nutzende existiert bereits</h1>
+            <p><strong>Nutzendename:</strong> admin</p>
             <p><strong>Passwort:</strong> [Standard-Passwort]</p>
             <p><a href="/auth/login">→ Zum Login</a></p>
         </body>
         </html>
         """
         
-        # Erstelle Admin-Benutzer
+        # Erstelle Admin-Nutzende
         admin_data = {
             'username': 'admin',
             'password_hash': generate_password_hash('admin'),
@@ -191,10 +191,10 @@ def emergency_admin():
         
         return f"""
         <html>
-        <head><title>Admin-Benutzer erstellt</title></head>
+        <head><title>Admin-Nutzende erstellt</title></head>
         <body>
-            <h1>✅ Admin-Benutzer erfolgreich erstellt!</h1>
-            <p><strong>Benutzername:</strong> admin</p>
+            <h1>✅ Admin-Nutzende erfolgreich erstellt!</h1>
+            <p><strong>Nutzendename:</strong> admin</p>
             <p><strong>Passwort:</strong> [Standard-Passwort]</p>
             <p><a href="/auth/login">→ Zum Login</a></p>
         </body>
@@ -206,7 +206,7 @@ def emergency_admin():
         <html>
         <head><title>Fehler</title></head>
         <body>
-            <h1>❌ Fehler beim Erstellen des Admin-Benutzers</h1>
+            <h1>❌ Fehler beim Erstellen des Admin-Nutzendes</h1>
             <p>Fehler: {str(e)}</p>
         </body>
         </html>

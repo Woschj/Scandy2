@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 from app.utils.filters import register_filters, status_color, priority_color
 import logging
 from app.utils.error_handler import handle_errors
+from app.utils.enhanced_error_handler import register_enhanced_error_handlers
+from app.utils.performance_optimizer import monitor_request_performance, get_request_performance_summary, IndexOptimizer
 from flask_compress import Compress
 from app.utils.auth_utils import needs_setup
 from pathlib import Path
@@ -289,7 +291,7 @@ def create_app(test_config=None):
         try:
             # Setze Berechtigungen für Session-Verzeichnis
             os.chmod(session_dir, 0o755)  # rwxr-xr-x
-            # Stelle sicher, dass das Verzeichnis dem root-Benutzer gehört (für Gunicorn)
+            # Stelle sicher, dass das Verzeichnis dem root-Nutzende gehört (für Gunicorn)
             import pwd
             root_uid = pwd.getpwnam('root').pw_uid
             root_gid = pwd.getpwnam('root').pw_gid
@@ -313,6 +315,9 @@ def create_app(test_config=None):
             if os.path.exists(session_dir):
                 current_time = datetime.now()
                 session_lifetime = app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(days=7))
+                # Stelle sicher, dass session_lifetime ein timedelta ist
+                if isinstance(session_lifetime, int):
+                    session_lifetime = timedelta(days=session_lifetime)
                 cutoff_time = current_time - session_lifetime
                 
                 cleaned_count = 0
@@ -370,11 +375,11 @@ def create_app(test_config=None):
     def load_current_department():
         """Lädt das aktuelle Department in den Request-Context.
         Fallback: Wenn nichts in der Session steht, verwende die Default‑Abteilung
-        des eingeloggten Benutzers (oder die erste erlaubte).
+        des eingeloggten Nutzendes (oder die erste erlaubte).
         """
         try:
             dept = session.get('department')
-            # Falls kein Department in der Session: aus Benutzerprofil ableiten
+            # Falls kein Department in der Session: aus Nutzendeprofil ableiten
             if not dept and current_user.is_authenticated:
                 try:
                     from app.models.mongodb_database import mongodb
@@ -383,7 +388,7 @@ def create_app(test_config=None):
                     if getattr(current_user, 'role', None) == 'admin':
                         depts_setting = mongodb.find_one('settings', {'key': 'departments'})
                         all_departments = depts_setting.get('value', []) if depts_setting else []
-                        # Admin: bevorzuge Benutzer-Default falls gesetzt, sonst erste globale
+                        # Admin: bevorzuge Nutzende-Default falls gesetzt, sonst erste globale
                         if user and user.get('default_department'):
                             dept = user.get('default_department')
                         elif isinstance(all_departments, list) and all_departments:
@@ -404,10 +409,10 @@ def create_app(test_config=None):
     @login_manager.user_loader
     def load_user(user_id):
         """
-        Lädt einen Benutzer aus der Datenbank für Flask-Login.
+        Lädt einen Nutzende aus der Datenbank für Flask-Login.
         
         Args:
-            user_id: ID des zu ladenden Benutzers (immer ein String)
+            user_id: ID des zu ladenden Nutzendes (immer ein String)
             
         Returns:
             User-Objekt oder None falls nicht gefunden
@@ -466,7 +471,7 @@ def create_app(test_config=None):
             
             return None
         except Exception as e:
-            logging.error(f"Fehler beim Laden des Benutzers {user_id}: {e}")
+            logging.error(f"Fehler beim Laden des Nutzendes {user_id}: {e}")
             # Bei Fehlern Session zurücksetzen
             try:
                 from flask import session
@@ -504,6 +509,32 @@ def create_app(test_config=None):
     logging.info("CSRF-Schutz deaktiviert - alle Routen ohne CSRF-Validierung")
 
     
+    # ===== PERFORMANCE-OPTIMIERUNGEN =====
+    try:
+        # Stelle sicher, dass wichtige Indizes existieren
+        with app.app_context():
+            IndexOptimizer.ensure_indexes()
+            logging.info("Datenbank-Indizes optimiert")
+    except Exception as e:
+        logging.warning(f"Fehler bei der Index-Optimierung: {e}")
+
+    # ===== REQUEST PERFORMANCE MONITORING =====
+    @app.before_request
+    def start_performance_monitoring():
+        """Startet die Performance-Überwachung für jeden Request"""
+        monitor_request_performance()
+
+    @app.after_request
+    def log_performance_summary(response):
+        """Loggt Performance-Zusammenfassung nach jedem Request"""
+        try:
+            summary = get_request_performance_summary()
+            if summary.get('total_request_time', 0) > 1.0:  # Nur langsame Requests loggen
+                logging.info(f"Request Performance: {summary}")
+        except Exception as e:
+            logging.debug(f"Fehler beim Performance-Logging: {e}")
+        return response
+
     # ===== AUTOMATISCHES BACKUP-SYSTEM STARTEN =====
     try:
         from app.utils.auto_backup import start_auto_backup
@@ -560,6 +591,7 @@ def create_app(test_config=None):
     
     # ===== FEHLERBEHANDLUNG UND FILTER =====
     handle_errors(app)
+    register_enhanced_error_handlers(app)
     register_filters(app)
     
     # Logging-Setup für Gunicorn deaktiviert

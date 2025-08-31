@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Automatische Bereinigung abgelaufener Benutzer und Jobs
+Automatische Bereinigung abgelaufener Nutzende und Jobs
 
 Dieses Script kann als Cron-Job ausgeführt werden, um regelmäßig abgelaufene Daten zu bereinigen.
 """
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 def main():
     """Hauptfunktion für die automatische Bereinigung via TTL/Backstop"""
     try:
-        logger.info("Starte automatische Bereinigung abgelaufener Benutzer (delete_at)...")
+        logger.info("Starte automatische Bereinigung abgelaufener Nutzende (delete_at)...")
 
         app = create_app()
         with app.app_context():

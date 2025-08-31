@@ -163,7 +163,7 @@ class ExcelExportService:
                     'returned_at': None
                 })
                 
-                # Hole Mitarbeiter-Info falls ausgeliehen
+                # Hole Mitarbeitende-Info falls ausgeliehen
                 lent_to = None
                 lent_since = None
                 return_date = None
@@ -342,9 +342,9 @@ class ExcelExportService:
             logger.error(f"Fehler beim Erstellen des Verbrauchsmaterial-Arbeitsblatts: {str(e)}")
     
     def _create_workers_sheet(self):
-        """Erstellt das Mitarbeiter-Arbeitsblatt"""
+        """Erstellt das Mitarbeitende-Arbeitsblatt"""
         try:
-            ws = self.workbook.create_sheet("Mitarbeiter")
+            ws = self.workbook.create_sheet("Mitarbeitende")
             
             headers = [
                 'Barcode', 'Vorname', 'Nachname', 'Abteilung', 'Position',
@@ -357,7 +357,7 @@ class ExcelExportService:
                 cell = ws.cell(row=1, column=col, value=header)
                 self._apply_style(cell, 'header')
             
-            # Lade Mitarbeiter
+            # Lade Mitarbeitende
             workers = list(mongodb.find('workers', {'deleted': {'$ne': True}}, sort=[('lastname', 1), ('firstname', 1)]))
             
             # Schreibe Daten
@@ -382,14 +382,14 @@ class ExcelExportService:
                     cell = ws.cell(row=row, column=col, value=value)
                     self._apply_style(cell, 'data')
                     
-                    # Markiere inaktive Mitarbeiter
+                    # Markiere inaktive Mitarbeitende
                     if not worker.get('is_active', True):
                         self._apply_style(cell, 'highlight')
             
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Mitarbeiter-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Mitarbeitende-Arbeitsblatts: {str(e)}")
     
     def _create_lendings_sheet(self):
         """Erstellt das Ausleihen-Arbeitsblatt"""
@@ -397,8 +397,8 @@ class ExcelExportService:
             ws = self.workbook.create_sheet("Ausleihen")
             
             headers = [
-                'Werkzeug Barcode', 'Werkzeug Name', 'Mitarbeiter Barcode',
-                'Mitarbeiter Name', 'Ausgeliehen am', 'Geplante Rückgabe',
+                'Werkzeug Barcode', 'Werkzeug Name', 'Mitarbeitende Barcode',
+                'Mitarbeitende Name', 'Ausgeliehen am', 'Geplante Rückgabe',
                 'Zurückgegeben am', 'Status', 'Tage ausgeliehen'
             ]
             
@@ -416,7 +416,7 @@ class ExcelExportService:
                 tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode')})
                 tool_name = tool.get('name', 'Unbekannt') if tool else 'Unbekannt'
                 
-                # Hole Mitarbeiter-Info
+                # Hole Mitarbeitende-Info
                 worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode')})
                 worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}" if worker else 'Unbekannt'
                 
@@ -488,7 +488,7 @@ class ExcelExportService:
             
             headers = [
                 'Verbrauchsmaterial Barcode', 'Verbrauchsmaterial Name',
-                'Mitarbeiter Barcode', 'Mitarbeiter Name', 'Menge',
+                'Mitarbeitende Barcode', 'Mitarbeitende Name', 'Menge',
                 'Einheit', 'Ausgegeben am', 'Grund/Notiz'
             ]
             
@@ -507,7 +507,7 @@ class ExcelExportService:
                 consumable_name = consumable.get('name', 'Unbekannt') if consumable else 'Unbekannt'
                 unit = consumable.get('unit', '') if consumable else ''
                 
-                # Hole Mitarbeiter-Info
+                # Hole Mitarbeitende-Info
                 worker = mongodb.find_one('workers', {'barcode': consumption.get('worker_barcode')})
                 worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}" if worker else 'Unbekannt'
                 
@@ -606,7 +606,7 @@ class ExcelExportService:
             stats = [
                 ('Werkzeuge:', tool_count),
                 ('Verbrauchsmaterial:', consumable_count),
-                ('Mitarbeiter:', worker_count),
+                ('Mitarbeitende:', worker_count),
                 ('Ausleihen (gesamt):', lending_count),
                 ('Aktive Ausleihen:', active_lending_count),
                 ('Ausgaben:', consumption_count),
@@ -623,7 +623,7 @@ class ExcelExportService:
             descriptions = [
                 ('Werkzeuge:', 'Alle Werkzeuge mit Status und Ausleihinformationen'),
                 ('Verbrauchsmaterial:', 'Alle Verbrauchsmaterialien mit Bestandsinformationen'),
-                ('Mitarbeiter:', 'Alle Mitarbeiter mit Kontaktdaten und Status'),
+                ('Mitarbeitende:', 'Alle Mitarbeitende mit Kontaktdaten und Status'),
                 ('Ausleihen:', 'Alle Werkzeug-Ausleihen mit Zeiten und Status'),
                 ('Ausgaben:', 'Alle Verbrauchsmaterial-Ausgaben'),
                 ('Tickets:', 'Alle Support-Tickets und Anfragen')

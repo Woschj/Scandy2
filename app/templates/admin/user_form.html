@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-{% if user %}Benutzer bearbeiten{% else %}Neuen Benutzer erstellen{% endif %}
+{% if user %}Nutzende bearbeiten{% else %}Neuen Nutzende erstellen{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -10,16 +10,16 @@
         <div class="card-body">
             <h2 class="card-title mb-6">
                 <i class="fas fa-user-plus text-primary"></i>
-                {% if user %}Benutzer bearbeiten{% else %}Neuen Benutzer erstellen{% endif %}
+                {% if user %}Nutzende bearbeiten{% else %}Neuen Nutzende erstellen{% endif %}
             </h2>
 
             <form method="POST" class="form-compact">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Benutzername -->
+                    <!-- Nutzendename -->
                     <div class="form-control">
                         <label class="label" for="username">
-                            <span class="label-text">Benutzername <span class="text-error">*</span></span>
+                            <span class="label-text">Nutzendename <span class="text-error">*</span></span>
                         </label>
                         <input type="text" id="username" name="username" 
                                value="{{ request.form.username or (user.username if user) or '' }}" 
@@ -34,9 +34,9 @@
                         <select id="role" name="role" required class="select select-bordered w-full">
                             <option value="">Rolle auswählen</option>
                             <option value="admin" {% if (request.form.role or (user.role if user) or '') == 'admin' %}selected{% endif %}>Admin</option>
-                            <option value="mitarbeiter" {% if (request.form.role or (user.role if user) or '') == 'mitarbeiter' %}selected{% endif %}>Mitarbeiter</option>
+                            <option value="mitarbeiter" {% if (request.form.role or (user.role if user) or '') == 'mitarbeiter' %}selected{% endif %}>Mitarbeitende</option>
                             <option value="anwender" {% if (request.form.role or (user.role if user) or '') == 'anwender' %}selected{% endif %}>Anwender</option>
-                            <option value="teilnehmer" {% if (request.form.role or (user.role if user) or '') == 'teilnehmer' %}selected{% endif %}>Teilnehmer</option>
+                            <option value="teilnehmer" {% if (request.form.role or (user.role if user) or '') == 'teilnehmer' %}selected{% endif %}>Teilnehmende</option>
                         </select>
                     </div>
 
@@ -121,12 +121,12 @@
                     
                     <div class="form-control mt-4">
                         <label class="label cursor-pointer">
-                            <span class="label-text">Benutzerkonto aktiv</span>
+                            <span class="label-text">Nutzendekonto aktiv</span>
                             <input type="checkbox" name="is_active" class="checkbox checkbox-primary" 
                                    {% if (request.form and request.form.is_active == 'on') or (not request.form and user and user.is_active) or (not request.form and not user) %}checked{% endif %} />
                         </label>
                         <label class="label">
-                            <span class="label-text-alt text-info">Inaktive Benutzer können sich nicht anmelden.</span>
+                            <span class="label-text-alt text-info">Inaktive Nutzende können sich nicht anmelden.</span>
                         </label>
                     </div>
                     
@@ -191,8 +191,8 @@
                         Handlungsfeld-Zuweisungen
                     </h3>
                     <p class="text-sm text-base-content/70 mb-4">
-                        Wählen Sie die Handlungsfelder aus, für die dieser Benutzer Tickets sehen und bearbeiten kann.
-                        Benutzer können nur Tickets aus ihren zugewiesenen Handlungsfeldern einsehen.
+                        Wählen Sie die Handlungsfelder aus, für die dieser Nutzende Tickets sehen und bearbeiten kann.
+                        Nutzende können nur Tickets aus ihren zugewiesenen Handlungsfeldern einsehen.
                     </p>
                     
                     <div id="handlungsfelderGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

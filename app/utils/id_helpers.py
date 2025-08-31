@@ -109,15 +109,15 @@ def find_document_by_id(collection: str, id_value: str, mongodb_instance=None):
 
 def find_user_by_id(user_id: str, mongodb_instance=None):
     """
-    Spezielle Funktion zum Finden von Benutzern mit robuster ID-Behandlung.
+    Spezielle Funktion zum Finden von Nutzenden mit robuster ID-Behandlung.
     Unterstützt String-IDs und ObjectIds.
     
     Args:
-        user_id: Die zu suchende Benutzer-ID
+        user_id: Die zu suchende Nutzende-ID
         mongodb_instance: MongoDB-Instanz (optional)
         
     Returns:
-        Der gefundene Benutzer oder None
+        Der gefundene Nutzende oder None
     """
     try:
         logger.debug(f"Suche User mit ID: {user_id}")

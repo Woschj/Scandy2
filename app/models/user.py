@@ -41,7 +41,7 @@ class User(UserMixin):
             else:
                 # Feld existiert nicht - setze Standard basierend auf Rolle
                 if user_data.get('role') in ['anwender', 'teilnehmer']:
-                    self.timesheet_enabled = True  # Anwender und Teilnehmer standardmäßig aktiviert
+                    self.timesheet_enabled = True  # Anwender und Teilnehmende standardmäßig aktiviert
                 else:
                     self.timesheet_enabled = False  # Andere Rollen standardmäßig deaktiviert
                 
@@ -55,7 +55,7 @@ class User(UserMixin):
             else:
                 # Feld existiert nicht - setze Standard basierend auf Rolle
                 if user_data.get('role') in ['admin', 'mitarbeiter']:
-                    self.canteen_plan_enabled = True  # Admins und Mitarbeiter standardmäßig aktiviert
+                    self.canteen_plan_enabled = True  # Admins und Mitarbeitende standardmäßig aktiviert
                 else:
                     self.canteen_plan_enabled = False  # Andere Rollen standardmäßig deaktiviert
                 

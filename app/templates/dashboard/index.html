@@ -67,14 +67,14 @@
             </div>
         </div>
 
-        <!-- Mitarbeiter -->
+        <!-- Mitarbeitende -->
         {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
         <div class="card bg-base-100 shadow-lg card-compact">
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-lg">
                         <i class="fas fa-users text-primary"></i>
-                        Mitarbeiter
+                        Mitarbeitende
                     </h2>
                     <div class="badge badge-primary">{{ worker_stats.total }}</div>
                 </div>

@@ -18,7 +18,7 @@ mongodb = MongoDB()
 def setup_admin():
     current_config = config['default']()
     
-    # Prüfe ob bereits ein Admin-Benutzer existiert
+    # Prüfe ob bereits ein Admin-Nutzende existiert
     if is_admin_user_present():
         return redirect(url_for('auth.login'))
     
@@ -28,14 +28,14 @@ def setup_admin():
         password_confirm = request.form.get('password_confirm')
         
         if not username or len(username) < 3:
-            return render_template('setup_admin.html', error='Der Benutzername muss mindestens 3 Zeichen lang sein.')
+            return render_template('setup_admin.html', error='Der Nutzendename muss mindestens 3 Zeichen lang sein.')
         if len(username) > 50:
-            return render_template('setup_admin.html', error='Der Benutzername darf maximal 50 Zeichen lang sein.')
+            return render_template('setup_admin.html', error='Der Nutzendename darf maximal 50 Zeichen lang sein.')
         if len(password) < 8:
             return render_template('setup_admin.html', error='Das Passwort muss mindestens 8 Zeichen lang sein.')
         if password != password_confirm:
             return render_template('setup_admin.html', error='Die Passwörter stimmen nicht überein.')
-        # Erstelle den Admin-Benutzer
+        # Erstelle den Admin-Nutzende
         success, message = create_admin_user(username, password, 'admin')
         if success:
             return redirect(url_for('setup.settings'))
@@ -203,7 +203,7 @@ def create_admin_user(username, password, role):
             'is_active': True
         }
         mongodb.insert_one('users', user_data)
-        return True, "Admin-Benutzer erfolgreich erstellt"
+        return True, "Admin-Nutzende erfolgreich erstellt"
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des Admin-Benutzers: {str(e)}")
-        return False, f"Fehler beim Erstellen des Admin-Benutzers: {str(e)}" 
+        logger.error(f"Fehler beim Erstellen des Admin-Nutzendes: {str(e)}")
+        return False, f"Fehler beim Erstellen des Admin-Nutzendes: {str(e)}" 

@@ -36,17 +36,17 @@
     </div>
 
     <div class="flex flex-col gap-8">
-        <!-- Benutzerhandbuch – Inhaltsverzeichnis -->
+        <!-- Nutzendehandbuch – Inhaltsverzeichnis -->
         <div class="card bg-base-100 shadow-lg border border-base-300">
             <div class="card-body">
-                <h2 class="card-title text-xl"><i class="fas fa-book mr-2"></i>Benutzerhandbuch – Inhaltsverzeichnis</h2>
+                <h2 class="card-title text-xl"><i class="fas fa-book mr-2"></i>Nutzendehandbuch – Inhaltsverzeichnis</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                     <a class="link" href="#manual-roles">1. Rollen & Berechtigungen</a>
                     <a class="link" href="#manual-auth">2. Anmeldung & Navigation</a>
                     <a class="link" href="#manual-dashboard">3. Dashboard</a>
                     <a class="link" href="#manual-tools">4. {{ app_labels.tools.name }}</a>
                     <a class="link" href="#manual-consumables">5. {{ app_labels.consumables.name }}</a>
-                    <a class="link" href="#manual-workers">6. Mitarbeiter</a>
+                    <a class="link" href="#manual-workers">6. Mitarbeitende</a>
                     <a class="link" href="#manual-lending">7. Ausleihe & Rückgabe</a>
                     <a class="link" href="#manual-tickets">8. {{ app_labels.tickets.name }}</a>
                     <a class="link" href="#manual-media">9. Medienverwaltung</a>
@@ -68,10 +68,10 @@
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li><strong>Admin</strong>: System verwalten (Benutzer, Abteilungen, Feature‑Schalter, Backups). Sieht/bearbeitet alle Abteilungen.</li>
-                    <li><strong>Mitarbeiter</strong>: In der eigenen Abteilung arbeiten ({{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Tickets, Ausleihen/Rückgaben).</li>
+                    <li><strong>Admin</strong>: System verwalten (Nutzende, Abteilungen, Feature‑Schalter, Backups). Sieht/bearbeitet alle Abteilungen.</li>
+                    <li><strong>Mitarbeitende</strong>: In der eigenen Abteilung arbeiten ({{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Tickets, Ausleihen/Rückgaben).</li>
                     <li><strong>Anwender</strong>: Eingeschränkte Bedienung in der eigenen Abteilung (Ansichten, einfache Aktionen).</li>
-                    <li><strong>Teilnehmer</strong>: Eigene Tickets/Zeiterfassung (falls aktiviert). Kein Admin‑Zugriff.</li>
+                    <li><strong>Teilnehmende</strong>: Eigene Tickets/Zeiterfassung (falls aktiviert). Kein Admin‑Zugriff.</li>
                 </ul>
                 <p class="text-sm opacity-75 mt-2"><strong>Wichtig:</strong> Die <em>Abteilung</em> steuert Sicht und Datenkontext. Oben im Admin‑Bereich immer die gewünschte Abteilung wählen.</p>
                 </div>
@@ -87,7 +87,7 @@
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li><strong>Anmeldung</strong>: Benutzername/Passwort eingeben; bei Erfolg Navigation zu Dashboard.</li>
+                    <li><strong>Anmeldung</strong>: Nutzendename/Passwort eingeben; bei Erfolg Navigation zu Dashboard.</li>
                     <li><strong>Abmeldung</strong>: Über den Abmelden-Link im Menü.</li>
                     <li><strong>Filter/Suche</strong>: Listen besitzen Filter (Kategorie/Standort/Status) und Suchfelder.</li>
                 </ul>
@@ -104,8 +104,8 @@
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li><strong>Kacheln</strong>: Kennzahlen zu {{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Mitarbeitern, {{ app_labels.tickets.name }}.</li>
-                    <li><strong>Überfällige Ausleihen</strong>: Liste mit Tagen „überfällig“ – direkt auf Werkzeug/Mitarbeiter klickbar.</li>
+                    <li><strong>Kacheln</strong>: Kennzahlen zu {{ app_labels.tools.name }}, {{ app_labels.consumables.name }}, Mitarbeitenden, {{ app_labels.tickets.name }}.</li>
+                    <li><strong>Überfällige Ausleihen</strong>: Liste mit Tagen „überfällig“ – direkt auf Werkzeug/Mitarbeitende klickbar.</li>
                     <li><strong>Doppelte Barcodes</strong>: Hinweis, wenn Barcodes mehrfach vergeben sind. Barcodes in den Datensätzen korrigieren.</li>
                     <li><strong>Wichtige Hinweise</strong>: Admin‑pflegbar pro Abteilung (Admin → Startseiten‑Hinweise).</li>
                 </ul>
@@ -128,7 +128,7 @@
                     <li>Pflicht: Name, Barcode, Kategorie, Standort, Status.</li>
                     <li>Optional (falls aktiviert): Seriennummer, Rechnungsnummer, MAC LAN/WLAN.</li>
                     <li>Software-Management aktiv: Nutzergruppen/Software zuweisen.</li>
-                    <li>Benutzerdefinierte Felder, wenn konfiguriert.</li>
+                    <li>Nutzendedefinierte Felder, wenn konfiguriert.</li>
                 </ul>
                 <h3 class="font-semibold mt-3">Details & Medien</h3>
                 <ul class="list-disc list-inside text-sm">
@@ -155,17 +155,17 @@
             </div>
         </div>
 
-        <!-- 6. Mitarbeiter -->
+        <!-- 6. Mitarbeitende -->
         <div id="manual-workers" class="card bg-base-100 shadow-lg collapse collapse-arrow border border-base-300">
             <input type="checkbox" class="peer" />
             <div class="collapse-title text-xl font-medium peer-checked:bg-base-200">
-                <i class="fas fa-users mr-2"></i>6. Mitarbeiter
+                <i class="fas fa-users mr-2"></i>6. Mitarbeitende
             </div>
             <div class="collapse-content bg-base-100 peer-checked:bg-base-200">
                 <div class="card-body">
                 <ul class="list-disc list-inside text-sm space-y-1">
-                    <li>Liste mit Abteilungsfilter; zeigt Barcode, E-Mail, Benutzer/Rolle, aktive Ausleihen.</li>
-                    <li>Details: Benutzerkonto, aktive Ausleihen (Rückgabe-Button), Ausleihhistorie.</li>
+                    <li>Liste mit Abteilungsfilter; zeigt Barcode, E-Mail, Nutzende/Rolle, aktive Ausleihen.</li>
+                    <li>Details: Nutzendekonto, aktive Ausleihen (Rückgabe-Button), Ausleihhistorie.</li>
                 </ul>
                 </div>
             </div>
@@ -182,16 +182,16 @@
                 <h3 class="font-semibold">Quick‑Scan (Stationär)</h3>
                 <ol class="list-decimal list-inside text-sm space-y-1">
                     <li>Menü „Quick‑Scan“ öffnen.</li>
-                    <li><strong>Ausleihe</strong>: Zuerst Mitarbeiter‑Barcode scannen, dann {{ app_labels.tools.name }}‑Barcode.</li>
+                    <li><strong>Ausleihe</strong>: Zuerst Mitarbeitende‑Barcode scannen, dann {{ app_labels.tools.name }}‑Barcode.</li>
                     <li><strong>Rückgabe</strong>: {{ app_labels.tools.name }}‑Barcode scannen.</li>
                 </ol>
                 <h3 class="font-semibold mt-3">Manuelle Vorgänge</h3>
                 <ol class="list-decimal list-inside text-sm space-y-1">
                     <li>Admin → „Manuelle Ausleihe/Ausgabe“.</li>
                     <li>Aktion wählen (Ausleihen, Zurückgeben, Materialausgabe).</li>
-                    <li>Artikel und ggf. Mitarbeiter auswählen, Menge angeben → Ausführen.</li>
+                    <li>Artikel und ggf. Mitarbeitende auswählen, Menge angeben → Ausführen.</li>
                 </ol>
-                <p class="text-sm opacity-75 mt-2">Rückgaben sind auch über Mitarbeiter‑Details möglich.</p>
+                <p class="text-sm opacity-75 mt-2">Rückgaben sind auch über Mitarbeitende‑Details möglich.</p>
                 </div>
             </div>
         </div>
@@ -244,7 +244,7 @@
                 <div class="card-body">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                        <h3 class="font-semibold mb-1">Benutzerverwaltung</h3>
+                        <h3 class="font-semibold mb-1">Nutzendeverwaltung</h3>
                         <ul class="list-disc list-inside">
                             <li>Liste mit Suche/Filtern/Sortierung.</li>
                             <li>Anlegen/Bearbeiten: Rolle, E-Mail/Name, aktiv/Ablaufdatum, Wochenplan/Kantinenplan-Rechte.</li>

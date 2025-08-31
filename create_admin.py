@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Skript zum Erstellen des Admin-Benutzers.
+Skript zum Erstellen des Admin-Nutzendes.
 """
 
 import sys
@@ -19,7 +19,7 @@ def generate_secure_password(length=16):
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 def create_admin_user():
-    """Erstellt den Admin-Benutzer in der Datenbank"""
+    """Erstellt den Admin-Nutzende in der Datenbank"""
     try:
         mongodb = MongoDB()
         
@@ -40,13 +40,13 @@ def create_admin_user():
         # Prüfe ob Admin bereits existiert
         existing_admin = mongodb.find_one('users', {'username': 'Admin'})
         if existing_admin:
-            print("Admin-Benutzer existiert bereits!")
+            print("Admin-Nutzende existiert bereits!")
             print("⚠️  WICHTIG: Ändern Sie das Admin-Passwort nach dem ersten Login!")
             return
         
         # Admin erstellen
         result = mongodb.insert_one('users', admin_data)
-        print(f"Admin-Benutzer erfolgreich erstellt mit ID: {result.inserted_id}")
+        print(f"Admin-Nutzende erfolgreich erstellt mit ID: {result.inserted_id}")
         
         # Systemeinstellungen
         settings = [
@@ -69,7 +69,7 @@ def create_admin_user():
         print("   Gehen Sie zu: Admin → Profil → Passwort ändern")
         
     except Exception as e:
-        print(f"Fehler beim Erstellen des Admin-Benutzers: {e}")
+        print(f"Fehler beim Erstellen des Admin-Nutzendes: {e}")
 
 if __name__ == "__main__":
     create_admin_user() 

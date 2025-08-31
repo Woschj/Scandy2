@@ -21,7 +21,7 @@ class ValidationService:
     @staticmethod
     def validate_user_form(data: Dict[str, Any], is_edit: bool = False) -> Tuple[bool, List[str], Dict[str, Any]]:
         """
-        Validiert Benutzer-Formulardaten
+        Validiert Nutzende-Formulardaten
         
         Args:
             data: Formulardaten
@@ -40,13 +40,13 @@ class ValidationService:
         role = data.get('role', '').strip()
         email = data.get('email', '').strip()
         
-        # Pflichtfelder (nur Benutzername und Rolle)
+        # Pflichtfelder (nur Nutzendename und Rolle)
         if not username:
-            errors.append('Benutzername ist erforderlich')
+            errors.append('Nutzendename ist erforderlich')
         elif len(username) < ValidationService.MIN_USERNAME_LENGTH:
-            errors.append(f'Benutzername muss mindestens {ValidationService.MIN_USERNAME_LENGTH} Zeichen lang sein')
+            errors.append(f'Nutzendename muss mindestens {ValidationService.MIN_USERNAME_LENGTH} Zeichen lang sein')
         elif len(username) > ValidationService.MAX_USERNAME_LENGTH:
-            errors.append(f'Benutzername darf maximal {ValidationService.MAX_USERNAME_LENGTH} Zeichen lang sein')
+            errors.append(f'Nutzendename darf maximal {ValidationService.MAX_USERNAME_LENGTH} Zeichen lang sein')
         
         if not role:
             errors.append('Rolle ist erforderlich')

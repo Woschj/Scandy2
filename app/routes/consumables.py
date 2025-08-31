@@ -70,7 +70,7 @@ def add():
                 'description': request.form.get('description', '')
             }
             
-            # Benutzerdefinierte Felder verarbeiten
+            # Nutzendedefinierte Felder verarbeiten
             try:
                 from app.services.custom_fields_service import CustomFieldsService
                 success_custom, error_msg, custom_values = CustomFieldsService.process_custom_fields_from_form('consumables', request.form)
@@ -86,7 +86,7 @@ def add():
                                          form_data=data)
             except Exception as e:
                 logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
-                # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
+                # Nutzendedefinierte Felder sind optional, daher kein Fehler-Return
                 data['custom_fields'] = {}
             success, message = ConsumableService.add_consumable(data)
             if success:
@@ -115,7 +115,7 @@ def detail(barcode):
             # Form-Daten in Dictionary konvertieren für bessere Handhabung
             data = dict(request.form)
             
-            # Benutzerdefinierte Felder verarbeiten
+            # Nutzendedefinierte Felder verarbeiten
             try:
                 from app.services.custom_fields_service import CustomFieldsService
                 success_custom, error_msg, custom_values = CustomFieldsService.process_custom_fields_from_form('consumables', request.form)
@@ -125,7 +125,7 @@ def detail(barcode):
                     return jsonify({'success': False, 'message': f'Fehler bei benutzerdefinierten Feldern: {error_msg}'}), 400
             except Exception as e:
                 logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
-                # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
+                # Nutzendedefinierte Felder sind optional, daher kein Fehler-Return
                 data['custom_fields'] = {}
             
             success, message, new_barcode = ConsumableService.update_consumable(barcode, data)

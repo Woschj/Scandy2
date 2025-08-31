@@ -243,7 +243,7 @@ echo "🌐 Port-Auswahl für Scandy:"
 echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
 echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
 echo "3) Port 5001 (Standard-Scandy-Port)"
-echo "4) Benutzerdefinierter Port"
+echo "4) Nutzendedefinierter Port"
 echo "5) Port 80 erzwingen (stoppt andere Webserver)"
 echo ""
 read -p "Wähle Port (1-5): " PORT_CHOICE
@@ -263,7 +263,7 @@ case $PORT_CHOICE in
         ;;
     4)
         read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT
-        PORT_NAME="Benutzerdefiniert"
+        PORT_NAME="Nutzendedefiniert"
         ;;
     5)
         WEB_PORT=80

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Migrationsskript für Handlungsfelder
-Stellt sicher, dass alle Benutzer das handlungsfelder Feld haben
+Stellt sicher, dass alle Nutzende das handlungsfelder Feld haben
 """
 
 import sys
@@ -16,13 +16,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def migrate_handlungsfelder():
-    """Migriert alte Benutzerdaten für Handlungsfelder"""
+    """Migriert alte Nutzendedaten für Handlungsfelder"""
     try:
         logger.info("Starte Handlungsfeld-Migration...")
         
-        # Hole alle Benutzer
+        # Hole alle Nutzende
         users = list(mongodb.find('users', {}))
-        logger.info(f"Gefundene Benutzer: {len(users)}")
+        logger.info(f"Gefundene Nutzende: {len(users)}")
         
         migrated_count = 0
         
@@ -31,19 +31,19 @@ def migrate_handlungsfelder():
             
             # Prüfe ob handlungsfelder Feld fehlt
             if 'handlungsfelder' not in user:
-                logger.info(f"Migriere Benutzer: {user.get('username', 'Unknown')} (ID: {user_id})")
+                logger.info(f"Migriere Nutzende: {user.get('username', 'Unknown')} (ID: {user_id})")
                 
                 # Setze Standard-Handlungsfelder basierend auf Rolle
                 default_handlungsfelder = []
                 
                 if user.get('role') in ['admin', 'mitarbeiter']:
-                    # Admins und Mitarbeiter bekommen alle Handlungsfelder
+                    # Admins und Mitarbeitende bekommen alle Handlungsfelder
                     default_handlungsfelder = get_ticket_categories_from_settings()
                 else:
-                    # Andere Benutzer bekommen keine Handlungsfelder (sehen alle Tickets)
+                    # Andere Nutzende bekommen keine Handlungsfelder (sehen alle Tickets)
                     default_handlungsfelder = []
                 
-                # Aktualisiere Benutzer
+                # Aktualisiere Nutzende
                 mongodb.update_one('users', {'_id': user_id}, {
                     '$set': {'handlungsfelder': default_handlungsfelder}
                 })
@@ -51,7 +51,7 @@ def migrate_handlungsfelder():
                 migrated_count += 1
                 logger.info(f"  → Handlungsfelder gesetzt: {default_handlungsfelder}")
         
-        logger.info(f"Migration abgeschlossen! {migrated_count} Benutzer migriert.")
+        logger.info(f"Migration abgeschlossen! {migrated_count} Nutzende migriert.")
         return True
         
     except Exception as e:
@@ -63,7 +63,7 @@ def check_handlungsfelder():
     try:
         logger.info("Prüfe Handlungsfeld-Status...")
         
-        # Hole alle Benutzer
+        # Hole alle Nutzende
         users = list(mongodb.find('users', {}))
         
         users_with_handlungsfelder = 0
@@ -77,7 +77,7 @@ def check_handlungsfelder():
                 users_without_handlungsfelder += 1
                 logger.warning(f"✗ {user.get('username', 'Unknown')}: Keine Handlungsfelder")
         
-        logger.info(f"Status: {users_with_handlungsfelder} Benutzer mit Handlungsfeldern, {users_without_handlungsfelder} ohne")
+        logger.info(f"Status: {users_with_handlungsfelder} Nutzende mit Handlungsfeldern, {users_without_handlungsfelder} ohne")
         
         return users_without_handlungsfelder == 0
         

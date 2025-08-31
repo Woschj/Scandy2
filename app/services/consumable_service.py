@@ -54,7 +54,7 @@ class ConsumableService:
                 'deleted': False
             }
             
-            # Benutzerdefinierte Felder hinzufügen, falls vorhanden
+            # Nutzendedefinierte Felder hinzufügen, falls vorhanden
             if 'custom_fields' in data:
                 consumable_data['custom_fields'] = data['custom_fields']
             mongodb.insert_one('consumables', consumable_data)
@@ -91,7 +91,7 @@ class ConsumableService:
                 'updated_at': datetime.now()
             }
             
-            # Benutzerdefinierte Felder hinzufügen, falls vorhanden
+            # Nutzendedefinierte Felder hinzufügen, falls vorhanden
             if 'custom_fields' in data:
                 update_data['custom_fields'] = data['custom_fields']
             update_filter = {'barcode': barcode}
@@ -188,7 +188,7 @@ class ConsumableService:
             # Verwendung protokollieren
             usage_data = {
                 'consumable_barcode': barcode,
-                'worker_barcode': getattr(g, 'current_user', {}).get('username', 'admin'),  # Aktuellen Benutzer verwenden
+                'worker_barcode': getattr(g, 'current_user', {}).get('username', 'admin'),  # Aktuellen Nutzende verwenden
                 'quantity': quantity_change,  # Positiv für Hinzufügung, negativ für Entnahme
                 'reason': reason,
                 'used_at': datetime.now()

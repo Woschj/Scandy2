@@ -112,7 +112,7 @@ def get_email_config():
         
         # Prüfe ob Konfiguration vollständig ist
         if not config['mail_username'] or not config['mail_password']:
-            logger.warning("E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt")
+            logger.warning("E-Mail-Konfiguration unvollständig - Nutzendename oder Passwort fehlt")
             return None
         
         return config
@@ -163,8 +163,8 @@ def test_email_config(config_data):
     try:
         # Prüfe ob Konfiguration vollständig ist
         if not config_data.get('mail_username') or not config_data.get('mail_password'):
-            logger.error("E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt")
-            return False, "E-Mail-Konfiguration unvollständig - Benutzername oder Passwort fehlt"
+            logger.error("E-Mail-Konfiguration unvollständig - Nutzendename oder Passwort fehlt")
+            return False, "E-Mail-Konfiguration unvollständig - Nutzendename oder Passwort fehlt"
         
         # Passwort entschlüsseln falls verschlüsselt
         password = config_data['mail_password']
@@ -811,7 +811,7 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
         
         logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail wird vorbereitet: Empfänger={recipient}, Passwort={bool(password)}, Reset_Link={bool(reset_link)}")
         
-        # Zusätzliche Kontextdaten ermitteln (z. B. Benutzername) für bessere Template-Kompatibilität
+        # Zusätzliche Kontextdaten ermitteln (z. B. Nutzendename) für bessere Template-Kompatibilität
         username = None
         try:
             from app.models.mongodb_database import mongodb as _mdb

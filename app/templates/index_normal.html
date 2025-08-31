@@ -149,13 +149,13 @@
             </div>
         </div>
 
-        <!-- Mitarbeiter-Statistiken -->
+        <!-- Mitarbeitende-Statistiken -->
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <div class="mb-4">
                     <h2 class="card-title">
                         <i class="fas fa-users text-accent mr-2"></i>
-                        Mitarbeiter
+                        Mitarbeitende
                     </h2>
                     <div class="text-center mt-2">
                         <span class="badge badge-accent badge-lg">{{ worker_stats.total }} Gesamt</span>
@@ -243,7 +243,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save mr-2"></i>Speichern
                         </button>
-                        <a href="{{ url_for('workers.timesheet_list') }}" class="btn btn-ghost">Wochenberichte öffnen</a>
+                        <a href="{{ url_for('workers.timesheets') }}" class="btn btn-ghost">Wochenberichte öffnen</a>
                     </div>
                 </form>
                 {% else %}

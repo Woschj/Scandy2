@@ -169,7 +169,7 @@
         <!-- Vertikales Seitenmenü -->
         <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
-            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
+            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Nutzende){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmende){% else %}Quick Scan öffnen{% endif %}">
                 <div class="w-full h-20 rounded-tl-xl overflow-hidden transition-all duration-300 flex items-center justify-center group
                     {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}">
                     <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-90">
@@ -184,7 +184,7 @@
             
             <!-- Navigation Items -->
             {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
-            <!-- Werkzeuge - nur für Nicht-Teilnehmer -->
+            <!-- Werkzeuge - nur für Nicht-Teilnehmende -->
             <a href="{{ url_for('tools.index') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tools' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
@@ -192,7 +192,7 @@
                  </div>
                  <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">{{ app_labels['tools']['name'] }}</span>
             </a>
-            <!-- Verbrauchsgüter - nur für Nicht-Teilnehmer -->
+            <!-- Verbrauchsgüter - nur für Nicht-Teilnehmende -->
             <a href="{{ url_for('consumables.index') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'consumables' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
@@ -202,21 +202,21 @@
             </a>
             {% endif %}
             
-            {# Mitarbeiter-Link: für alle außer Teilnehmer (Benutzer dürfen ihn sehen) #}
+            {# Mitarbeitende-Link: für alle außer Teilnehmende (Nutzende dürfen ihn sehen) #}
             {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
             <a href="{{ url_for('workers.index') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'workers.index' %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-users text-xl"></i>
                  </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Mitarbeiter</span>
+                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Mitarbeitende</span>
             </a>
             {% endif %}
             
-            {# Ticketsystem für alle eingeloggten Benutzer - nur wenn Feature aktiviert #}
+            {# Ticketsystem für alle eingeloggten Nutzende - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
-            <a href="{{ url_for('tickets.create') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tickets.create' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+            <a href="{{ url_for('tickets.create_ticket') }}"
+               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tickets.create_ticket' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
                      <i class="{{ app_labels.tickets.icon }} text-xl"></i>
                      {% if unread_tickets_count and unread_tickets_count > 0 %}
@@ -227,9 +227,9 @@
             </a>
             {% endif %}
 
-            {# Wochenplan-Link für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
+            {# Wochenplan-Link für alle authentifizierten Nutzende - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and current_user.timesheet_enabled and features_enabled.get('weekly_reports', False) %}
-            <a href="{{ url_for('workers.timesheet_list') }}" 
+            <a href="{{ url_for('workers.timesheets') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('workers.timesheet') %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
                      <i class="fas fa-clock text-xl"></i>
@@ -241,18 +241,18 @@
             </a>
             {% endif %}
             
-            {# Auftragserstellung - für alle Benutzer - nur wenn Ticketsystem aktiviert #}
-            {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
-            <a href="{{ url_for('tickets.public_create_order') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'tickets.public_create_order' %}active{% else %}text-gray-700{% endif %}">
+            {# Auftragserstellung wurde entfernt - Route existiert nicht mehr #}
+            {# {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
+            <a href="{{ url_for('tickets.create_extern_auftrag_ticket') }}"
+               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'tickets.create_extern_auftrag_ticket' %}active{% else %}text-gray-700{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-file-alt text-xl"></i>
                  </div>
                  <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Auftragserstellung</span>
             </a>
-            {% endif %}
+            {% endif %} #}
             
-            {# Jobbörse - für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
+            {# Jobbörse - für alle authentifizierten Nutzende - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('job_board', False) %}
             <a href="{{ url_for('jobs.job_list') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'jobs' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
@@ -263,7 +263,7 @@
             </a>
             {% endif %}
 
-            {# Kantinenplan - nur für berechtigte Benutzer wenn Feature aktiviert #}
+            {# Kantinenplan - nur für berechtigte Nutzende wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('canteen_plan', False) and current_user.canteen_plan_enabled %}
             <a href="{{ url_for('canteen.index') }}" 
                class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'canteen' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
@@ -326,7 +326,7 @@
                 <div class="w-24 flex-shrink-0"></div>
                 <h1 class="text-xl font-bold truncate">
                     {% if request.endpoint and 'tools' in request.endpoint %}{{ app_labels.tools.name }}
-                    {% elif request.endpoint and 'workers' in request.endpoint %}Mitarbeiter
+                    {% elif request.endpoint and 'workers' in request.endpoint %}Mitarbeitende
                     {% elif request.endpoint and 'consumables' in request.endpoint %}{{ app_labels.consumables.name }}
                     {% elif request.endpoint and 'tickets' in request.endpoint %}{{ app_labels.tickets.name }}
                     {% elif request.endpoint and request.endpoint == 'main.about' %}Über Scandy
@@ -342,7 +342,7 @@
                     <i class="fas fa-home text-xl text-primary"></i>
                     {% if app_labels.custom_logo %}
                     <img src="{{ url_for('static', filename=app_labels.custom_logo) }}" 
-                         alt="Benutzerdefiniertes Logo" 
+                         alt="Nutzendedefiniertes Logo" 
                          class="h-12 w-auto object-contain">
                     {% else %}
                     <img src="{{ url_for('static', filename='images/BTZ_logo.jpg') }}" 
@@ -408,7 +408,7 @@
                         {# Entfernt: Department-Features Menüeintrag #}
                         <li>
                             <a href="{{ url_for('admin.manage_users') }}" class="{% if request.endpoint and 'admin.manage_users' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-users-cog mr-2"></i>Benutzerverwaltung
+                                <i class="fas fa-users-cog mr-2"></i>Nutzendeverwaltung
                             </a>
                         </li>
                         {# E-Mail-Debug entfernt #}

@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}Benutzerverwaltung - Scandy{% endblock %}
+{% block title %}Nutzendeverwaltung - Scandy{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">Benutzerverwaltung</h1>
+        <h1 class="text-3xl font-bold">Nutzendeverwaltung</h1>
         <div class="flex gap-2">
             {# Button Rollen & Rechte entfernt (Rechte sind fest im System) #}
             <a href="{{ url_for('admin.add_user') }}" class="btn btn-primary">
-                <i class="fas fa-plus mr-2"></i>Neuen Benutzer hinzufügen
+                <i class="fas fa-plus mr-2"></i>Neuen Nutzende hinzufügen
             </a>
         </div>
     </div>
@@ -42,15 +42,15 @@
                     <p class="text-sm">Darf alles im System. Keine Einschränkungen.</p>
                 </div>
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2">Mitarbeiter</h3>
+                    <h3 class="font-bold mb-2">Mitarbeitende</h3>
                     <p class="text-sm">Darf fast alles, aber nur in der eigenen Abteilung. Kein Zugriff auf die Systemeinstellungen.</p>
                 </div>
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2">Benutzer</h3>
-                    <p class="text-sm">Darf Werkzeuge, Verbrauchsmaterial, Mitarbeiter und Tickets in der eigenen Abteilung sehen und bearbeiten. Kein Zugriff auf die Systemeinstellungen.</p>
+                    <h3 class="font-bold mb-2">Nutzende</h3>
+                    <p class="text-sm">Darf Werkzeuge, Verbrauchsmaterial, Mitarbeitende und Tickets in der eigenen Abteilung sehen und bearbeiten. Kein Zugriff auf die Systemeinstellungen.</p>
                 </div>
                 <div class="bg-base-200 p-4 rounded-lg">
-                    <h3 class="font-bold mb-2">Teilnehmer</h3>
+                    <h3 class="font-bold mb-2">Teilnehmende</h3>
                     <p class="text-sm">Darf eigene Tickets sehen und erstellen. Darf die Jobbörse sehen.</p>
                 </div>
             </div>
@@ -69,9 +69,9 @@
                 <select id="roleFilter" class="select select-bordered w-full">
                     <option value="">Alle Rollen</option>
                     <option value="admin">Admin</option>
-                    <option value="mitarbeiter">Mitarbeiter</option>
-                    <option value="anwender">Benutzer</option>
-                    <option value="teilnehmer">Teilnehmer</option>
+                    <option value="mitarbeiter">Mitarbeitende</option>
+                    <option value="anwender">Nutzende</option>
+                    <option value="teilnehmer">Teilnehmende</option>
                 </select>
             </div>
             <div>
@@ -126,11 +126,11 @@
                         {% if user.role == 'admin' %}
                             <span class="badge badge-error">Admin</span>
                         {% elif user.role == 'mitarbeiter' %}
-                            <span class="badge badge-warning">Mitarbeiter</span>
+                            <span class="badge badge-warning">Mitarbeitende</span>
                         {% elif user.role == 'teilnehmer' %}
-                            <span class="badge badge-secondary">Teilnehmer</span>
+                            <span class="badge badge-secondary">Teilnehmende</span>
                         {% else %}
-                            <span class="badge badge-info">Benutzer</span>
+                            <span class="badge badge-info">Nutzende</span>
                         {% endif %}
                     </td>
                     <td>
@@ -177,7 +177,7 @@
                             
                             {# Löschen in Papierkorb #}
                             <form action="{{ url_for('admin.delete_user', user_id=user._id) }}" method="post" class="inline-block"
-                                  onsubmit="return confirm('Benutzer {{ user.username|e }} in den Papierkorb verschieben?');">
+                                  onsubmit="return confirm('Nutzende {{ user.username|e }} in den Papierkorb verschieben?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline btn-warning" title="In Papierkorb verschieben">
                                     <i class="fas fa-trash-alt"></i>
@@ -189,7 +189,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center">Keine Benutzer gefunden.</td>
+                    <td colspan="5" class="text-center">Keine Nutzende gefunden.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -2,7 +2,7 @@
 Service für Ticket-Kategorien-Verwaltung
 
 Dieser Service verwaltet Ticket-Kategorien pro Abteilung
-und stellt sicher, dass Benutzer nur die Ticket-Kategorien ihrer Abteilung sehen.
+und stellt sicher, dass Nutzende nur die Ticket-Kategorien ihrer Abteilung sehen.
 """
 
 from typing import List, Dict, Any, Optional

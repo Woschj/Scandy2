@@ -2,7 +2,7 @@
 Service für Standorte-Verwaltung
 
 Dieser Service verwaltet Standorte pro Abteilung
-und stellt sicher, dass Benutzer nur die Standorte ihrer Abteilung sehen.
+und stellt sicher, dass Nutzende nur die Standorte ihrer Abteilung sehen.
 """
 
 from typing import List, Dict, Any, Optional

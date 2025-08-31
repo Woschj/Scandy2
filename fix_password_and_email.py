@@ -69,7 +69,7 @@ try:
         else:
             print("❌ Fehler beim Zurücksetzen")
     else:
-        print("❌ Kein Admin-Benutzer gefunden")
+        print("❌ Kein Admin-Nutzende gefunden")
 except Exception as e:
     print(f"❌ Fehler: {e}")
 '''
