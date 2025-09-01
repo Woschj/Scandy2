@@ -21,34 +21,54 @@ bp = Blueprint('backup', __name__, url_prefix='/backup')
 @login_required
 @admin_required
 def create_backup():
-    """Erstellt ein neues vereinheitlichtes Backup"""
+    """
+    🚀 Erstellt ein neues optimiertes Backup mit Fortschritts-Tracking
+    """
     try:
         # Parameter aus Request
         include_media = request.json.get('include_media', True)
         compress = request.json.get('compress', True)
-        
-        # Backup erstellen
+
+        # Fortschritts-Callback für WebSocket oder Response
+        progress_updates = []
+
+        def progress_callback(message: str, percentage: int):
+            """Sammelt Fortschritts-Updates"""
+            progress_updates.append({
+                'message': message,
+                'percentage': percentage,
+                'timestamp': datetime.now().isoformat()
+            })
+            # Hier könnte man WebSocket-Updates senden
+            print(f"📊 Backup-Fortschritt: {percentage}% - {message}")
+
+        # 🚀 Optimiertes Backup erstellen
         backup_filename = unified_backup_manager.create_backup(
             include_media=include_media,
-            compress=compress
+            compress=compress,
+            progress_callback=progress_callback
         )
-        
+
         if backup_filename:
             return jsonify({
                 'success': True,
-                'message': 'Backup erfolgreich erstellt',
-                'filename': backup_filename
+                'message': '🚀 Optimiertes Backup erfolgreich erstellt',
+                'filename': backup_filename,
+                'progress': progress_updates,
+                'optimized': True,
+                'parallel_processing': True
             })
         else:
             return jsonify({
                 'success': False,
-                'message': 'Backup fehlgeschlagen'
+                'message': 'Backup fehlgeschlagen',
+                'progress': progress_updates
             }), 500
-            
+
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Erstellen des Backups: {str(e)}'
+            'message': f'Fehler beim Erstellen des optimierten Backups: {str(e)}'
         }), 500
 
 @bp.route('/list', methods=['GET'])
