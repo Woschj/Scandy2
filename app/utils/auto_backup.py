@@ -11,7 +11,7 @@ import socket
 import random
 from datetime import datetime, time as dt_time, timedelta
 from pathlib import Path
-from app.utils.backup_manager import BackupManager
+from app.utils.unified_backup_manager import unified_backup_manager
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class AutoBackupScheduler:
     """Automatischer Backup-Scheduler"""
     
     def __init__(self):
-        self.backup_manager = BackupManager()
+        self.backup_manager = unified_backup_manager  # Verwende optimierten BackupManager
         self.running = False
         self.thread = None
         
@@ -348,8 +348,7 @@ class AutoBackupScheduler:
                 logger.info(f"Worker {self.worker_id} überspringt Backup (nicht primär)")
                 return
 
-            # Backup erstellen über vereinheitlichtes System
-            from app.utils.unified_backup_manager import unified_backup_manager
+            # Backup erstellen über optimiertes System
             backup_filename = unified_backup_manager.create_backup(include_media=True, compress=True)
             
             if backup_filename:
@@ -383,7 +382,7 @@ class AutoBackupScheduler:
                 return
 
             # Alle aktuellen ZIP-Backups finden
-            backup_files = list(self.backup_manager.backup_dir.glob('scandy_backup_*.zip'))
+            backup_files = list(unified_backup_manager.backup_dir.glob('scandy_backup_*.zip'))
             
             if not backup_files:
                 logger.warning("Keine ZIP-Backup-Dateien für wöchentliches Archiv gefunden")
@@ -395,7 +394,7 @@ class AutoBackupScheduler:
             
             # Erstelle ZIP-Archiv
             archive_filename = f"scandy_weekly_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-            archive_path = self.backup_manager.backup_dir / archive_filename
+            archive_path = unified_backup_manager.backup_dir / archive_filename
             
             with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for backup_file in backup_files:
@@ -513,7 +512,7 @@ class AutoBackupScheduler:
             
             if success and backup_filename:
                 # Backup-Pfad ermitteln
-                backup_path = self.backup_manager.get_backup_path(backup_filename)
+                backup_path = unified_backup_manager.backup_dir / backup_filename
                 
                 # E-Mail an Admin senden
                 admin_email = self._get_admin_email()
