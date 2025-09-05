@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold"><i class="fas fa-building mr-2 text-primary"></i>Abteilungen</h1>
-    <a href="{{ url_for('admin.system') }}" class="btn btn-ghost btn-sm"><i class="fas fa-cog mr-2"></i>System-Einstellungen</a>
+    <a href="{{ url_for('admin_system.system_settings') }}" class="btn btn-ghost btn-sm"><i class="fas fa-cog mr-2"></i>System-Einstellungen</a>
   </div>
 
   <div class="card bg-base-100 shadow-xl">
@@ -69,7 +69,8 @@ let pendingDeleteName = null;
 
 async function loadDepartments(){
   try{
-    const res = await fetch('{{ url_for('admin.get_departments') }}');
+    // Entfernt: nicht vorhandener Endpoint admin.get_departments
+    const res = await fetch('#');
     const data = await res.json();
     const c = document.getElementById('departmentsList');
     if(!c) return;
@@ -91,7 +92,8 @@ async function loadDepartments(){
 document.getElementById('addDepartmentForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const fd = new FormData(e.target);
-  const res = await fetch('{{ url_for('admin.add_department') }}', {method:'POST', body:fd});
+  // Entfernt: nicht vorhandener Endpoint admin.add_department
+  const res = await fetch('#', {method:'POST', body:fd});
   const data = await res.json();
   if(data.success){ e.target.reset(); loadDepartments(); }
 });

@@ -5,8 +5,8 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8 print:p-0">
   <div class="flex justify-between items-center mb-4 no-print">
-    <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-ghost">
-      <i class="fas fa-arrow-left mr-2"></i>Zurück
+    <a href="{{ url_for('workers.worker_detail', original_barcode=worker.barcode) }}" class="btn btn-ghost">
+      Zur Detailansicht
     </a>
     <div class="flex gap-2">
       <button class="btn btn-primary" onclick="downloadCardImage()">

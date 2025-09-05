@@ -11,8 +11,8 @@ bp = Blueprint('admin_email_templates', __name__, url_prefix='/admin/email-templ
 @login_required
 @admin_required
 def index():
-    # Übersicht entfernt – leite zur zentralen E-Mail-Einstellungsseite um
-    return redirect(url_for('admin.email_settings'))
+    # Übersicht entfernt – leite zur Admin-Dashboard-Seite um
+    return redirect(url_for('admin_core.dashboard'))
 
 
 # 'create' Route entfernt – Vorlagen werden systemseitig bereitgestellt

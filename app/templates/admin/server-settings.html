@@ -75,9 +75,7 @@
                         <button id="stopAutoBackup" class="btn btn-error btn-sm">
                             <i class="fas fa-stop mr-2"></i>Stoppen
                         </button>
-                        <a href="{{ url_for('admin.auto_backup') }}" class="btn btn-info btn-sm">
-                            <i class="fas fa-cog mr-2"></i>Verwalten
-                        </a>
+                        <!-- Entfernt: admin.auto_backup nicht vorhanden -->
                     </div>
                 </div>
             </div>
@@ -162,9 +160,7 @@
                             <button type="submit" class="btn btn-accent w-full">
                                 <i class="fas fa-undo mr-2"></i>Backup hochladen und anwenden
                             </button>
-                            <a href="{{ url_for('admin.import_json_backup_scoped') }}" class="btn btn-outline w-full">
-                                <i class="fas fa-file-import mr-2"></i>JSON-Backup importieren (Abteilung zuweisen)
-                            </a>
+                            <!-- Entfernt: admin.import_json_backup_scoped nicht vorhanden -->
                         </div>
                     </form>
 
@@ -192,7 +188,7 @@
                         System-Labels
                     </h2>
                     
-                    <form method="POST" action="{{ url_for('admin.system') }}" class="space-y-6">
+                    <form method="POST" action="{{ url_for('admin_system.system_settings') }}" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Tools -->
                         <div class="bg-base-200 rounded-lg p-4">

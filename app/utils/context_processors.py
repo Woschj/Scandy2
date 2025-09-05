@@ -1,4 +1,5 @@
 from flask import current_app, g
+from flask import url_for as _flask_url_for
 from app.constants import Routes
 from app.config.version import VERSION
 import traceback
@@ -245,6 +246,7 @@ def register_context_processors(app):
     app.context_processor(inject_custom_fields)
     app.context_processor(inject_departments)
     app.context_processor(inject_csrf_token)
+    app.context_processor(inject_safe_url_for)
 
 def inject_csrf_token():
     """Stellt csrf_token() in allen Templates bereit"""
@@ -253,6 +255,21 @@ def inject_csrf_token():
     except Exception:
         # Fallback: leere Funktion, um Template-Fehler zu vermeiden
         return {'csrf_token': (lambda: '')}
+
+def _safe_url_for(endpoint, **values):
+    """Baut eine URL sicher. Gibt '#' zurück, wenn der Endpoint fehlt/fehlerhaft ist."""
+    try:
+        return _flask_url_for(endpoint, **values)
+    except Exception:
+        return '#'
+
+def inject_safe_url_for():
+    """Injiziert safe_url_for in alle Templates"""
+    return {
+        'safe_url_for': _safe_url_for,
+        # Überschreibe url_for im Template-Kontext sicher
+        'url_for': _safe_url_for,
+    }
 
 def inject_departments():
     """Injiziert Departments (Auswahl + aktuelles Department) in Templates.

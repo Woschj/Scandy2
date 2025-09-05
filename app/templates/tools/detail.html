@@ -207,7 +207,7 @@
                                 <tr>
                                     <td>{{ lending.lent_at | datetime if lending.lent_at else 'Unbekannt' }}</td>
                                     <td>
-                                        <a href="{{ url_for('workers.details', original_barcode=lending.worker_barcode) }}" class="link link-primary">
+                                        <a href="{{ url_for('workers.worker_detail', original_barcode=lending.worker_barcode) }}" class="link link-primary">
                                             {{ lending.worker_name }}
                                         </a>
                                     </td>
@@ -283,7 +283,7 @@
                             <label class="label">
                                 <span class="label-text font-semibold">Ausgeliehen an</span>
                             </label>
-                            <a href="{{ url_for('workers.details', original_barcode=tool.lent_to_worker_barcode) }}" class="link link-primary">
+                            <a href="{{ url_for('workers.worker_detail', original_barcode=tool.lent_to_worker_barcode) }}" class="link link-primary">
                                 {{ tool.lent_to_worker_name }}
                             </a>
                         </div>
@@ -512,7 +512,7 @@
                         {% if not software_presets %}
                         <p class="text-sm text-base-content/60 text-center py-2">
                             Keine Software verfügbar.<br>
-                            <a href="{{ url_for('admin.software_management') }}" class="link link-primary">
+                            <a href="{{ url_for('admin_system.software_management') }}" class="link link-primary">
                                 → Software-Verwaltung öffnen
                             </a>
                         </p>

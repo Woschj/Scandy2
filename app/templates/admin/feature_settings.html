@@ -12,7 +12,7 @@
         </h1>
         <p class="text-base-content/70">
             Aktivieren oder deaktivieren Sie System-Features für 
-            <strong class="text-primary">{{ current_department }}</strong>
+            <strong class="text-primary">{{ departments_ctx.current }}</strong>
         </p>
         
         <!-- Abteilungsauswahl -->
@@ -20,8 +20,8 @@
             <div class="flex items-center space-x-4">
                 <label class="text-sm font-medium">Abteilung wechseln:</label>
                 <select id="departmentSelector" class="select select-bordered select-sm">
-                    {% for dept in available_departments %}
-                    <option value="{{ dept }}" {% if dept == current_department %}selected{% endif %}>
+                    {% for dept in departments_ctx.allowed %}
+                    <option value="{{ dept }}" {% if dept == departments_ctx.current %}selected{% endif %}>
                         {{ dept }}
                     </option>
                     {% endfor %}
@@ -126,7 +126,8 @@
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <h2 class="text-xl font-semibold">Feldverwaltung</h2>
-                        <a href="{{ url_for('admin.custom_fields') }}" class="btn btn-primary btn-sm">
+                        <!-- Link entfernt: admin.custom_fields existiert nicht -->
+                        <a href="#" class="btn btn-primary btn-sm" aria-disabled="true" title="Nicht verfügbar">
                             <i class="fas fa-puzzle-piece mr-2"></i>Alle Felder verwalten
                         </a>
                     </div>
@@ -159,19 +160,16 @@
 <script>
 document.getElementById('departmentSelector').addEventListener('change', function() {
     const selectedDepartment = this.value;
-    if (selectedDepartment && selectedDepartment !== '{{ current_department }}') {
-        // Session mit neuer Abteilung aktualisieren
-        fetch('{{ url_for("admin.change_department") }}', {
+    if (selectedDepartment && selectedDepartment !== '{{ departments_ctx.current }}') {
+        // Session mit neuer Abteilung aktualisieren (Form-encoded POST, erwartet von admin_core.change_department)
+        fetch('{{ url_for("admin_core.change_department") }}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
             },
-            body: JSON.stringify({
-                department: selectedDepartment
-            })
+            body: new URLSearchParams({ department: selectedDepartment }).toString()
         }).then(response => {
             if (response.ok) {
-                // Seite neu laden mit neuer Abteilung
                 window.location.reload();
             }
         });

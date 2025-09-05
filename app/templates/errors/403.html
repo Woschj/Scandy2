@@ -21,9 +21,10 @@
     </div>
   </div>
   <div class="text-center mt-6">
-    <a href="{{ url_for('admin.switch_department', department=(departments_ctx.allowed|first if departments_ctx.allowed else None)) }}" class="link">
-      Abteilung wechseln
-    </a>
+    <form method="post" action="{{ url_for('admin_core.change_department') }}">
+      <input type="hidden" name="department" value="{{ (departments_ctx.allowed|first if departments_ctx.allowed else '') }}">
+      <button type="submit" class="link">Abteilung wechseln</button>
+    </form>
   </div>
 </div>
 {% endblock %}
