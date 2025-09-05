@@ -37,7 +37,6 @@ from dotenv import load_dotenv
 # from flask_wtf.csrf import CSRFProtect  # CSRF deaktiviert
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask import g, session
 
 # .env-Datei laden
 load_dotenv()
