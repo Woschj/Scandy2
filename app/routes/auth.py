@@ -361,8 +361,8 @@ def setup():
             logger.info(f"Setup: Versuche Admin-Benutzer '{username}' zu erstellen")
             logger.info(f"Setup: Admin-Daten: {admin_data}")
             
-            result = mongodb.insert_one('users', admin_data)
-            logger.info(f"Setup: Benutzer erfolgreich erstellt mit ID: {result.inserted_id}")
+            inserted_id = mongodb.insert_one('users', admin_data)
+            logger.info(f"Setup: Benutzer erfolgreich erstellt mit ID: {inserted_id}")
             
             # ===== SYSTEMEINSTELLUNGEN SPEICHERN =====
             settings = [
@@ -376,11 +376,11 @@ def setup():
             
             logger.info(f"Setup: Speichere {len(settings)} Systemeinstellungen")
             for setting in settings:
-                result = mongodb.update_one('settings', 
+                ok = mongodb.update_one('settings', 
                                  {'key': setting['key']}, 
                                  {'$set': setting}, 
                                  upsert=True)
-                logger.info(f"Setup: Einstellung '{setting['key']}' gespeichert: {result.modified_count} geändert, {result.upserted_id} neu")
+                logger.info(f"Setup: Einstellung '{setting['key']}' gespeichert: success={ok}")
             
             logger.info("Setup: Erfolgreich abgeschlossen")
             flash('Setup erfolgreich abgeschlossen! Sie können sich jetzt anmelden.', 'success')
@@ -432,8 +432,8 @@ def setup_api():
             'updated_at': datetime.now()
         }
         
-        result = mongodb.insert_one('users', admin_data)
-        logger.info(f"Setup-API: Admin-Benutzer '{username}' erstellt mit ID: {result.inserted_id}")
+        inserted_id = mongodb.insert_one('users', admin_data)
+        logger.info(f"Setup-API: Admin-Benutzer '{username}' erstellt mit ID: {inserted_id}")
         
         # Systemeinstellungen
         settings = [
@@ -489,8 +489,8 @@ def setup_simple():
                 'updated_at': datetime.now()
             }
             
-            result = mongodb.insert_one('users', admin_data)
-            logger.info(f"Setup-Simple: Admin '{username}' erstellt mit ID: {result.inserted_id}")
+            inserted_id = mongodb.insert_one('users', admin_data)
+            logger.info(f"Setup-Simple: Admin '{username}' erstellt mit ID: {inserted_id}")
             
             # Systemeinstellungen
             settings = [

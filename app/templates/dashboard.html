@@ -6,11 +6,11 @@
 {% endblock %}
 
 {% block content %}
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">Synchronisation</h5>
+    <div class="card bg-white shadow-lg">
+        <div class="card-header bg-gradient-to-r from-blue-600 to-blue-700">
+            <h5 class="card-title text-white font-semibold">Synchronisation</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-6">
             {% if config.SERVER_MODE %}
                 <h6>Server-Modus aktiv</h6>
                 <p>Server-URL: http://{{ config.LOCAL_IP }}:5000</p>
@@ -58,18 +58,18 @@
                             Letzte Synchronisation: {{ last_sync }}
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Einstellungen speichern</button>
-                    <button type="button" class="btn btn-secondary" onclick="syncNow()">Jetzt synchronisieren</button>
+                    <button type="submit" class="btn btn-primary hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">Einstellungen speichern</button>
+                    <button type="button" class="btn btn-secondary hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200" onclick="syncNow()">Jetzt synchronisieren</button>
                 </form>
             {% endif %}
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">Aktuelle Ausleihen</h5>
+    <div class="card bg-white shadow-lg">
+        <div class="card-header bg-gradient-to-r from-blue-600 to-blue-700">
+            <h5 class="card-title text-white font-semibold">Aktuelle Ausleihen</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-6">
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -90,10 +90,10 @@
                             <td>{{ lending.action_date }}</td>
                             <td>
                                 {% if lending.category == 'Werkzeug' %}
-                                    <button class="btn btn-sm btn-error" 
+                                    <button class="btn btn-sm btn-danger hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200"
                                             data-barcode="{{ lending.item_barcode }}"
                                             title="Werkzeug zurückgeben">
-                                        <i class="fas fa-undo-alt"></i> Zurückgeben
+                                        <i class="fas fa-undo-alt me-1"></i> Zurückgeben
                                     </button>
                                 {% endif %}
                             </td>

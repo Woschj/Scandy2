@@ -92,8 +92,8 @@ Anwendungslogs sind in `/logs` verfügbar.
 
 - Session-Management mit Flask-Session
 - Rate-Limiting für API-Endpunkte
-- Input-Validierung und CSRF-Schutz
-- Sichere Passwort-Hashes (bcrypt)
+- Input-Validierung; CSRF ist deaktiviert (nur lokale Nutzung)
+- Sichere Passwort-Hashes (Werkzeug/bcrypt)
 
 ## 📊 Features
 

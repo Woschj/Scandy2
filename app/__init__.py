@@ -241,11 +241,23 @@ def create_app(test_config=None):
     # ===== MONGODB-INITIALISIERUNG =====
     try:
         from app.models.mongodb_models import create_mongodb_indexes
+        from app.models.mongodb_database import mongodb
+
+        # Schneller Health Check vor Index-Erstellung
+        try:
+            mongodb._client.admin.command('ping')
+            logging.info("MongoDB-Verbindung erfolgreich getestet")
+        except Exception as e:
+            logging.warning(f"MongoDB-Health-Check fehlgeschlagen: {e}")
+            raise Exception(f"MongoDB nicht verfügbar: {e}")
+
         with app.app_context():
             create_mongodb_indexes()
             logging.info("MongoDB-Indizes erstellt")
     except Exception as e:
         logging.error(f"Fehler bei MongoDB-Initialisierung: {e}")
+        # Bei MongoDB-Fehlern trotzdem fortfahren (App kann ohne DB funktionieren)
+        logging.warning("App startet ohne vollständige MongoDB-Initialisierung fort")
     
     # ===== ID-NORMALISIERUNG BEIM START (opt-in) =====
     # Standard: deaktiviert, kann über ENABLE_ID_NORMALIZATION_ON_START=true aktiviert werden
@@ -309,42 +321,73 @@ def create_app(test_config=None):
         """Bereinigt alte Session-Dateien"""
         try:
             session_dir = app.config['SESSION_FILE_DIR']
-            if os.path.exists(session_dir):
-                current_time = datetime.now()
-                session_lifetime = app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(days=7))
-                cutoff_time = current_time - session_lifetime
-                
-                cleaned_count = 0
-                for filename in os.listdir(session_dir):
-                    file_path = os.path.join(session_dir, filename)
-                    if os.path.isfile(file_path):
-                        try:
-                            file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
-                            if file_mtime < cutoff_time:
-                                os.remove(file_path)
-                                cleaned_count += 1
-                        except Exception:
-                            pass
-                
-                if cleaned_count > 0:
-                    app.logger.info(f"Session-Bereinigung: {cleaned_count} alte Session-Dateien gelöscht")
-                
-                # Stelle sicher, dass alle verbleibenden Session-Dateien die richtigen Berechtigungen haben
-                for filename in os.listdir(session_dir):
-                    file_path = os.path.join(session_dir, filename)
-                    if os.path.isfile(file_path):
-                        try:
-                            os.chmod(file_path, 0o644)  # rw-r--r--
-                            # Setze Besitzer auf root für Gunicorn
-                            import pwd
-                            root_uid = pwd.getpwnam('root').pw_uid
-                            root_gid = pwd.getpwnam('root').pw_gid
-                            os.chown(file_path, root_uid, root_gid)
-                        except Exception:
-                            pass
+            if not os.path.exists(session_dir):
+                return
+
+            current_time = datetime.now()
+            session_lifetime = app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(days=7))
+            cutoff_time = current_time - session_lifetime
+
+            cleaned_count = 0
+            permission_fixed_count = 0
+            max_files_to_check = 1000  # Begrenze Anzahl der zu prüfenden Dateien
+
+            try:
+                filenames = os.listdir(session_dir)
+            except PermissionError:
+                app.logger.warning("Keine Berechtigung für Session-Verzeichnis")
+                return
+
+            # Begrenze Anzahl der zu verarbeitenden Dateien
+            filenames = filenames[:max_files_to_check]
+
+            for filename in filenames:
+                file_path = os.path.join(session_dir, filename)
+                if not os.path.isfile(file_path):
+                    continue
+
+                try:
+                    file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                    if file_mtime < cutoff_time:
+                        os.remove(file_path)
+                        cleaned_count += 1
+                except (OSError, PermissionError):
+                    # Überspringe Dateien, die nicht gelöscht werden können
+                    pass
+
+            if cleaned_count > 0:
+                app.logger.info(f"Session-Bereinigung: {cleaned_count} alte Session-Dateien gelöscht")
+
+            # Stelle sicher, dass alle verbleibenden Session-Dateien die richtigen Berechtigungen haben
+            # Aber nur für eine begrenzte Anzahl
+            remaining_files = os.listdir(session_dir)[:100]  # Max 100 Dateien für Berechtigungskorrektur
+            for filename in remaining_files:
+                file_path = os.path.join(session_dir, filename)
+                if not os.path.isfile(file_path):
+                    continue
+
+                try:
+                    os.chmod(file_path, 0o644)  # rw-r--r--
+                    # Setze Besitzer auf root für Gunicorn (nur wenn möglich)
+                    import pwd
+                    try:
+                        root_uid = pwd.getpwnam('root').pw_uid
+                        root_gid = pwd.getpwnam('root').pw_gid
+                        os.chown(file_path, root_uid, root_gid)
+                    except (KeyError, PermissionError):
+                        # Root-Benutzer nicht verfügbar oder keine Berechtigung
+                        pass
+                    permission_fixed_count += 1
+                except (OSError, PermissionError):
+                    # Überspringe Dateien mit Berechtigungsproblemen
+                    pass
+
+            if permission_fixed_count > 0:
+                app.logger.debug(f"Session-Berechtigungen: {permission_fixed_count} Dateien korrigiert")
+
         except Exception as e:
             app.logger.warning(f"Fehler bei Session-Bereinigung: {e}")
-    
+
     # Führe Session-Bereinigung beim Start aus
     cleanup_old_sessions()
     
@@ -503,27 +546,45 @@ def create_app(test_config=None):
     logging.info("CSRF-Schutz deaktiviert - alle Routen ohne CSRF-Validierung")
 
     
-    # ===== AUTOMATISCHES BACKUP-SYSTEM STARTEN =====
-    try:
-        from app.utils.auto_backup import start_auto_backup
-        with app.app_context():
-            start_auto_backup()
-            logging.info("Automatisches Backup-System gestartet")
-    except Exception as e:
-        logging.error(f"Fehler beim Starten des automatischen Backup-Systems: {e}")
+    # ===== AUTOMATISCHES BACKUP-SYSTEM STARTEN (mit sicherer Fehlerbehandlung) =====
+    def start_backup_system_safe():
+        """Startet das Backup-System mit besserer Fehlerbehandlung"""
+        try:
+            from app.utils.auto_backup import start_auto_backup
+            with app.app_context():
+                start_auto_backup()
+                logging.info("Automatisches Backup-System gestartet")
+        except ImportError:
+            logging.warning("Backup-System-Module nicht verfügbar, überspringe Backup-System-Start")
+        except Exception as e:
+            logging.error(f"Fehler beim Starten des automatischen Backup-Systems: {e}")
+            logging.info("App startet trotzdem ohne Backup-System fort")
+
+    # Starte Backup-System in separatem Thread (nicht-blockierend bei Fehlern)
+    import threading
+    backup_thread = threading.Thread(target=start_backup_system_safe, daemon=True, name="BackupSystem")
+    backup_thread.start()
     
-    # ===== AUTOMATISCHE DASHBOARD-REPARATUR BEIM START =====
-    try:
-        from app.services.admin_debug_service import AdminDebugService
-        with app.app_context():
-            # Führe umfassende Dashboard-Reparatur beim Start aus
-            fixes = AdminDebugService.fix_dashboard_comprehensive()
-            if fixes.get('total', 0) > 0:
-                logging.info(f"Automatische Dashboard-Reparatur beim Start durchgeführt: {fixes}")
-            else:
-                logging.info("Dashboard-Reparatur beim Start: Keine Probleme gefunden")
-    except Exception as e:
-        logging.error(f"Fehler bei automatischer Dashboard-Reparatur beim Start: {e}")
+    # ===== AUTOMATISCHE DASHBOARD-REPARATUR BEIM START (im Hintergrund) =====
+    def run_dashboard_repair():
+        """Führt Dashboard-Reparatur in einem separaten Thread aus"""
+        try:
+            from app.services.admin_debug_service import AdminDebugService
+            with app.app_context():
+                # Führe umfassende Dashboard-Reparatur aus
+                fixes = AdminDebugService.fix_dashboard_comprehensive()
+                if fixes.get('total', 0) > 0:
+                    logging.info(f"Automatische Dashboard-Reparatur durchgeführt: {fixes}")
+                else:
+                    logging.info("Dashboard-Reparatur: Keine Probleme gefunden")
+        except Exception as e:
+            logging.error(f"Fehler bei automatischer Dashboard-Reparatur: {e}")
+
+    # Starte Dashboard-Reparatur in Hintergrund-Thread (nicht-blockierend)
+    import threading
+    repair_thread = threading.Thread(target=run_dashboard_repair, daemon=True, name="DashboardRepair")
+    repair_thread.start()
+    logging.info("Dashboard-Reparatur-Thread gestartet")
     
     # ===== HEALTH CHECK ROUTE =====
     @app.route('/health')

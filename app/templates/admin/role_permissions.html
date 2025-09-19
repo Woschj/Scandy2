@@ -1,67 +1,10 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="p-4">
-  <h1 class="text-2xl font-bold mb-4">Rollen & Berechtigungen</h1>
-  <form method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-    <div class="overflow-x-auto bg-base-100 rounded-lg shadow p-4">
-      {# Tabelle mit Rollen als Spalten-Gruppen und Aktionen als Unterspalten #}
-      <table class="table table-zebra w-full">
-        <thead>
-          <tr>
-            <th class="align-bottom" rowspan="2">Bereich</th>
-            {% for role in roles %}
-              <th class="text-center align-bottom border-l-2" colspan="{{ actions|length }}">
-                {{ role|capitalize }}
-              </th>
-            {% endfor %}
-          </tr>
-          <tr>
-            {% for role in roles %}
-              {% for action in actions %}
-                <th class="text-center border-l{% if loop.index0 == 0 %}-2{% endif %}">{{ action }}</th>
-              {% endfor %}
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for area in areas %}
-          <tr>
-            <td class="font-medium sticky left-0 bg-base-100">{{ area }}</td>
-            {% for role in roles %}
-              {% for action in actions %}
-                {% set area_allowed = allowed_actions.get(area, []) %}
-                {% set is_allowed = action in area_allowed %}
-                {% set checked = action in (permissions.get(role, {}).get(area, [])) %}
-                {% if is_allowed %}
-                  <td class="text-center border-l{% if loop.index0 == 0 %}-2{% endif %}">
-                    <input type="checkbox"
-                           name="perm[{{ role }}][{{ area }}][{{ action }}]"
-                           class="checkbox checkbox-sm"
-                           {% if checked %}checked{% endif %}
-                           {% if role == 'admin' %}disabled{% endif %}>
-                  </td>
-                {% else %}
-                  <td class="text-center text-base-content/40 border-l{% if loop.index0 == 0 %}-2{% endif %}" title="Nicht verfügbar">
-                    &mdash;
-                  </td>
-                {% endif %}
-              {% endfor %}
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="mt-4 flex gap-2">
-      <button class="btn btn-primary" type="submit"><i class="fas fa-save mr-2"></i>Speichern</button>
-      <a class="btn" href="{{ url_for('admin.manage_users') }}">Abbrechen</a>
-    </div>
-  </form>
+<div class="p-6">
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle mr-2"></i>
+    <span>Die Funktion „Rollen & Berechtigungen“ ist derzeit deaktiviert.</span>
+  </div>
+  <a href="{{ url_for('admin.system') }}" class="btn btn-primary mt-4"><i class="fas fa-arrow-left mr-2"></i>Zurück zu den System-Einstellungen</a>
 </div>
 {% endblock %}
-
-

@@ -13,7 +13,13 @@ os.environ['FLASK_CONFIG'] = 'production'
 
 # Importiere und erstelle die Flask-App
 from app import create_app
+from app.config.version import get_version
 app = create_app()
+# Starte mit Versions-Log
+try:
+    app.logger.info(f"Scandy Version {get_version()} gestartet (WSGI)")
+except Exception:
+    pass
 
 # Gunicorn erwartet eine 'application' Variable
 application = app

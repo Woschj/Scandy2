@@ -18,38 +18,38 @@ success() { echo "✅ $*"; }
 error() { echo "❌ $*"; }
 info() { echo "ℹ️  $*"; }
 
-# Port-Auswahl
+# Port-Auswahl (ENV/Noninteractive bevorzugt)
 echo ""
-echo "🌐 Port-Auswahl für Scandy:"
-echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
-echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
-echo "3) Port 5001 (Standard-Scandy-Port)"
-echo "4) Benutzerdefinierter Port"
-echo ""
-read -p "Wähle Port (1-4): " PORT_CHOICE
+if [ -n "${SCANDY_WEB_PORT:-}" ]; then
+    WEB_PORT="$SCANDY_WEB_PORT"; PORT_NAME="ENV";
+elif [ -n "${WEB_PORT:-}" ]; then
+    PORT_NAME="ENV";
+elif [ "${SCANDY_NONINTERACTIVE:-0}" = "1" ] || [ ! -t 0 ]; then
+    WEB_PORT=5001; PORT_NAME="Noninteractive";
+fi
 
-case $PORT_CHOICE in
-    1)
-        WEB_PORT=80
-        PORT_NAME="Standard-HTTP"
-        ;;
-    2)
-        WEB_PORT=443
-        PORT_NAME="Standard-HTTPS"
-        ;;
-    3)
-        WEB_PORT=5001
-        PORT_NAME="Standard-Scandy"
-        ;;
-    4)
-        read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT
-        PORT_NAME="Benutzerdefiniert"
-        ;;
-    *)
-        WEB_PORT=80
-        PORT_NAME="Standard-HTTP (Standardauswahl)"
-        ;;
-esac
+if [ -z "${WEB_PORT:-}" ]; then
+    echo "🌐 Port-Auswahl für Scandy:"
+    echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
+    echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
+    echo "3) Port 5001 (Standard-Scandy-Port)"
+    echo "4) Benutzerdefinierter Port"
+    echo ""
+    read -p "Wähle Port (1-4): " PORT_CHOICE
+
+    case $PORT_CHOICE in
+        1)
+            WEB_PORT=80; PORT_NAME="Standard-HTTP";;
+        2)
+            WEB_PORT=443; PORT_NAME="Standard-HTTPS";;
+        3)
+            WEB_PORT=5001; PORT_NAME="Standard-Scandy";;
+        4)
+            read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT; PORT_NAME="Benutzerdefiniert";;
+        *)
+            WEB_PORT=80; PORT_NAME="Standard-HTTP (Standardauswahl)";;
+    esac
+fi
 
 # Prüfe ob Port verfügbar ist; wenn belegt, versuche Scandy zu stoppen und erneut zu prüfen
 if [ "$WEB_PORT" = "80" ] || [ "$WEB_PORT" = "443" ]; then
@@ -140,6 +140,26 @@ if [ -f ".env" ]; then
         echo "WEB_PORT=$WEB_PORT" >> .env
         success "WEB_PORT=$WEB_PORT zu .env hinzugefügt"
     fi
+    # Ergänze fehlende Schlüssel
+    if ! grep -q "^ENABLE_EMERGENCY_ADMIN=" .env; then
+        echo "ENABLE_EMERGENCY_ADMIN=false" >> .env
+    fi
+    if ! grep -q "^EMERGENCY_ADMIN_TOKEN=" .env; then
+        if command -v python3 >/dev/null 2>&1; then
+            EM_TOKEN=$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(24))
+PY
+)
+        else
+            EM_TOKEN=$(head -c 18 /dev/urandom | base64 | tr -d '\n' 2>/dev/null || echo "emergtoken")
+        fi
+        echo "EMERGENCY_ADMIN_TOKEN=$EM_TOKEN" >> .env
+    fi
+    MONGODUMP_BIN_PATH=$(command -v mongodump || true)
+    MONGORESTORE_BIN_PATH=$(command -v mongorestore || true)
+    if ! grep -q "^MONGODUMP_BIN=" .env; then echo "MONGODUMP_BIN=$MONGODUMP_BIN_PATH" >> .env; fi
+    if ! grep -q "^MONGORESTORE_BIN=" .env; then echo "MONGORESTORE_BIN=$MONGORESTORE_BIN_PATH" >> .env; fi
 else
     # Erstelle .env neu falls nicht vorhanden
             cat > .env << EOF
@@ -157,6 +177,14 @@ SESSION_COOKIE_HTTPONLY=true
 REMEMBER_COOKIE_HTTPONLY=true
 SESSION_TYPE=filesystem
 PERMANENT_SESSION_LIFETIME=604800
+ENABLE_EMERGENCY_ADMIN=false
+EMERGENCY_ADMIN_TOKEN=$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(24))
+PY
+)
+MONGODUMP_BIN=$(command -v mongodump || true)
+MONGORESTORE_BIN=$(command -v mongorestore || true)
 EOF
         success ".env-Datei erstellt mit WEB_PORT=$WEB_PORT"
 fi
@@ -251,18 +279,37 @@ log "Verwende App-Datei: $APP_FILE"
 log "Aktualisiere Systemd-Service..."
 
 # Entscheide ob Gunicorn oder Python direkt verwenden
+# Erzeuge/aktualisiere Wrapper-Skripte
+install -d -m 755 /opt/scandy/bin
+cat > /opt/scandy/bin/prestart.sh << 'EOF'
+#!/usr/bin/env bash
+set -e
+DIR=/opt/scandy/app/flask_session
+mkdir -p "$DIR"
+chown -R root:root "$DIR" || true
+chmod 755 "$DIR" || true
+find "$DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
+exit 0
+EOF
+chmod +x /opt/scandy/bin/prestart.sh
+
 if [[ "$APP_FILE" == *"wsgi.py" ]]; then
-    # WSGI-Datei gefunden - verwende Gunicorn
-    # Extrahiere den Modulnamen ohne .py
     MODULE_NAME=$(echo "$APP_FILE" | sed 's/\.py$//' | sed 's/\//\./g')
-    # Scandy verwendet 'app' als Variable, nicht 'application'
-    EXEC_START="/opt/scandy/venv/bin/gunicorn --bind 0.0.0.0:\${WEB_PORT} --workers 2 --timeout 120 --chdir /opt/scandy $MODULE_NAME:app"
-    log "Verwende Gunicorn für WSGI-App: $MODULE_NAME:app"
+    WRAP_CMD="/opt/scandy/venv/bin/gunicorn --bind \"0.0.0.0:\${WEB_PORT}\" --workers 2 --timeout 120 --chdir /opt/scandy $MODULE_NAME:app"
 else
-    # Normale Python-Datei - verwende Python direkt
-    EXEC_START="/opt/scandy/venv/bin/python3 $APP_FILE"
-    log "Verwende Python direkt für App"
+    WRAP_CMD="/opt/scandy/venv/bin/python3 $APP_FILE"
 fi
+
+cat > /opt/scandy/bin/start_scandy.sh << EOF
+#!/usr/bin/env bash
+set -e
+cd /opt/scandy
+set -a
+[ -f /opt/scandy/.env ] && . /opt/scandy/.env
+set +a
+exec $WRAP_CMD
+EOF
+chmod +x /opt/scandy/bin/start_scandy.sh
 
 cat > /etc/systemd/system/scandy.service << EOF
 [Unit]
@@ -277,7 +324,9 @@ WorkingDirectory=/opt/scandy
 Environment=PATH=/opt/scandy/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONPATH=/opt/scandy
 EnvironmentFile=/opt/scandy/.env
-ExecStart=$EXEC_START
+ExecStart=/opt/scandy/bin/start_scandy.sh
+ExecStartPre=/opt/scandy/bin/prestart.sh
+ExecStartPost=/opt/scandy/bin/prestart.sh
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -289,6 +338,13 @@ EOF
 
 systemctl daemon-reload
 success "Systemd-Service aktualisiert"
+
+# Optional: MongoDB Database Tools installieren (falls fehlen)
+if ! command -v mongodump >/dev/null 2>&1 || ! command -v mongorestore >/dev/null 2>&1; then
+    info "Installiere MongoDB Database Tools (optional)..."
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install -y mongodb-database-tools >/dev/null 2>&1 || true
+fi
 
 # 7. Services starten
 log "Starte Services neu..."

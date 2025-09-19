@@ -42,20 +42,20 @@ class MongoDBDatabase:
                 uri += '&authSource=admin'
             else:
                 uri += '?authSource=admin'
-        for attempt in range(10):
+        for attempt in range(3):  # Reduziert von 10 auf 3 Versuche
             try:
                 password = os.environ.get("MONGO_INITDB_ROOT_PASSWORD", "")
                 safe_uri = uri.replace(password, "***") if password and uri else uri
-                print(f"[MongoDB] Verbindungsversuch {attempt+1}/10 zu {safe_uri}")
-                self._client = MongoClient(uri, serverSelectionTimeoutMS=10000, connectTimeoutMS=10000, retryWrites=True, w='majority')
+                print(f"[MongoDB] Verbindungsversuch {attempt+1}/3 zu {safe_uri}")
+                self._client = MongoClient(uri, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000, retryWrites=True, w='majority')
                 self._client.admin.command('ping')
                 self._db = self._client[db_name]
                 print(f"[MongoDB] Verbindung erfolgreich zu {safe_uri}")
                 return
             except (ServerSelectionTimeoutError, OperationFailure) as e:
-                print(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/10): {e}")
-                time.sleep(3)
-        raise Exception("MongoDB-Verbindung nach 10 Versuchen fehlgeschlagen!")
+                print(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/3): {e}")
+                time.sleep(1)  # Reduziert von 3 auf 1 Sekunde
+        raise Exception("MongoDB-Verbindung nach 3 Versuchen fehlgeschlagen!")
     
     @property
     def db(self):
@@ -271,29 +271,50 @@ class MongoDBDatabase:
         
         for key, value in filter_dict.items():
             if key == '_id':
-                # Fall 1: Direkter String -> zu ObjectId konvertieren
+                # Robust: Unterstütze sowohl String-IDs als auch ObjectId parallel
                 if isinstance(value, str):
-                    try:
-                        from bson import ObjectId
-                        processed_filter[key] = ObjectId(value)
-                    except Exception:
+                    # Wenn wie ObjectId aussehender String: baue $or auf String und ObjectId
+                    if len(value) == 24:
+                        try:
+                            from bson import ObjectId
+                            oid = ObjectId(value)
+                            processed_filter['$or'] = processed_filter.get('$or', []) + [
+                                {'_id': value},
+                                {'_id': oid}
+                            ]
+                            continue
+                        except Exception:
+                            # Kein gültiger ObjectId-String
+                            processed_filter[key] = value
+                    else:
                         processed_filter[key] = value
-                # Fall 2: Operatoren ($in/$nin) mit Liste
                 elif isinstance(value, dict):
+                    # Operatoren ($in/$nin) mit Liste
                     converted = dict(value)
                     for op in ('$in', '$nin'):
                         if op in converted and isinstance(converted[op], list):
-                            new_list = []
+                            str_list = []
+                            oid_list = []
                             for v in converted[op]:
-                                if isinstance(v, str):
+                                if isinstance(v, str) and len(v) == 24:
                                     try:
                                         from bson import ObjectId
-                                        new_list.append(ObjectId(v))
+                                        oid_list.append(ObjectId(v))
+                                        str_list.append(v)
                                     except Exception:
-                                        new_list.append(v)
+                                        str_list.append(v)
                                 else:
-                                    new_list.append(v)
-                            converted[op] = new_list
+                                    str_list.append(v)
+                            # Baue $or mit beiden Varianten
+                            ors = []
+                            if str_list:
+                                ors.append({'_id': {op: str_list}})
+                            if oid_list:
+                                ors.append({'_id': {op: oid_list}})
+                            if ors:
+                                processed_filter['$or'] = processed_filter.get('$or', []) + ors
+                                continue
+                    # Fallback falls keine Listen gefunden
                     processed_filter[key] = converted
                 else:
                     processed_filter[key] = value

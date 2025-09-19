@@ -848,6 +848,21 @@ class MongoDBTicket:
 def create_mongodb_indexes():
     """Erstellt alle notwendigen MongoDB-Indizes und initialisiert die Datenbank"""
     try:
+        # Prüfe ob Indizes bereits erstellt wurden (schneller Start)
+        try:
+            from app.models.mongodb_database import mongodb
+            # Teste einen bekannten Index
+            collection = mongodb.get_collection('tools')
+            existing_indexes = list(collection.list_indexes())
+            index_names = [idx.get('name', '') for idx in existing_indexes]
+
+            # Wenn wichtige Indizes bereits existieren, überspringe die Erstellung
+            if 'name_1' in index_names and 'barcode_1' in index_names:
+                logger.info("MongoDB-Indizes sind bereits vorhanden, überspringe Erstellung")
+                return
+        except Exception:
+            # Bei Fehlern fahre mit normaler Index-Erstellung fort
+            pass
         # Legacy-Index-Bereinigung: entferne eindeutige Barcode-Indexe ohne Department
         def _drop_legacy_barcode_unique(collection_name: str):
             try:
@@ -970,6 +985,22 @@ def create_mongodb_indexes():
         mongodb.create_index('ticket_history', 'created_at')
         # Compound-Index für Ticket + Datum
         mongodb.create_index('ticket_history', [('ticket_id', 1), ('created_at', -1)])
+        
+        # System-Locks (Auto-Backup Koordination)
+        try:
+            mongodb.create_index('system_locks', 'created_at', expire_after_seconds=3600)
+        except Exception:
+            pass
+        try:
+            mongodb.create_index('system_locks', 'key')
+        except Exception:
+            pass
+        
+        # Backup-Runs Protokoll
+        try:
+            mongodb.create_index('backup_runs', 'created_at')
+        except Exception:
+            pass
         
         logger.info("MongoDB-Indizes erfolgreich erstellt")
         

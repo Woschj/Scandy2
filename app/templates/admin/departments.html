@@ -69,8 +69,7 @@ let pendingDeleteName = null;
 
 async function loadDepartments(){
   try{
-    // Entfernt: nicht vorhandener Endpoint admin.get_departments
-    const res = await fetch('#');
+    const res = await fetch('/admin/departments');
     const data = await res.json();
     const c = document.getElementById('departmentsList');
     if(!c) return;
@@ -92,10 +91,15 @@ async function loadDepartments(){
 document.getElementById('addDepartmentForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const fd = new FormData(e.target);
-  // Entfernt: nicht vorhandener Endpoint admin.add_department
-  const res = await fetch('#', {method:'POST', body:fd});
+  const res = await fetch('/admin/departments/add', {method:'POST', body:fd, headers: csrfToken ? { 'X-CSRFToken': csrfToken } : {}});
   const data = await res.json();
-  if(data.success){ e.target.reset(); loadDepartments(); }
+  if(data.success){
+    e.target.reset();
+    loadDepartments();
+    window.showToast && window.showToast('success', data.message||'Abteilung hinzugefügt');
+  }else{
+    window.showToast && window.showToast('error', data.message||'Hinzufügen fehlgeschlagen');
+  }
 });
 
 function openDeleteDialog(name){

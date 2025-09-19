@@ -81,6 +81,7 @@ class UnifiedBackupManager:
             print(f"🔄 Erstelle vereinheitlichtes Backup: {backup_name}")
             
             # 1. MongoDB-Backup erstellen
+            start_ts = datetime.now()
             db_backup_path = self._create_mongodb_backup(backup_name)
             if not db_backup_path:
                 return None
@@ -110,6 +111,20 @@ class UnifiedBackupManager:
                     self._prune_old_backups(days=7)
                 except Exception as e:
                     print(f"⚠️  Konnte alte Backups nicht bereinigen: {e}")
+                # Lauf protokollieren
+                try:
+                    from app.models.mongodb_database import mongodb
+                    mongodb.insert_one('backup_runs', {
+                        'filename': final_backup_path,
+                        'created_at': start_ts,
+                        'finished_at': datetime.now(),
+                        'duration_s': (datetime.now() - start_ts).total_seconds(),
+                        'includes_media': include_media,
+                        'compressed': compress,
+                        'size_bytes': (self.backup_dir / final_backup_path).stat().st_size if (self.backup_dir / final_backup_path).exists() else None
+                    })
+                except Exception:
+                    pass
                 return final_backup_path
             else:
                 return None
@@ -133,8 +148,28 @@ class UnifiedBackupManager:
             
             # Versuche mongodump zu verwenden
             try:
+                # mongodump-Binärdatei robust ermitteln
+                mongodump_bin = os.environ.get('MONGODUMP_BIN')
+                def _is_exec(p: str) -> bool:
+                    try:
+                        return p and os.path.isfile(p) and os.access(p, os.X_OK)
+                    except Exception:
+                        return False
+                if not _is_exec(mongodump_bin or ''):
+                    try:
+                        from shutil import which
+                        w = which('mongodump')
+                        if w and _is_exec(w):
+                            mongodump_bin = w
+                    except Exception:
+                        mongodump_bin = None
+                if not _is_exec(mongodump_bin or ''):
+                    for p in ['/usr/bin/mongodump','/usr/local/bin/mongodump','/snap/bin/mongodump','/opt/homebrew/bin/mongodump','/opt/local/bin/mongodump']:
+                        if _is_exec(p):
+                            mongodump_bin = p
+                            break
                 cmd = [
-                    'mongodump',
+                    mongodump_bin or 'mongodump',
                     '--uri', mongo_uri,
                     '--out', str(backup_path),
                     '--gzip',
@@ -470,12 +505,21 @@ class UnifiedBackupManager:
                         metadata = json.load(f)
                     print(f"  📋 Backup-Metadaten: {metadata.get('backup_name', 'Unbekannt')}")
                 
-                # 1. MongoDB wiederherstellen
+                # 1. MongoDB wiederherstellen in temporäre DB und atomar tauschen
                 mongodb_path = temp_path / 'mongodb'
                 if mongodb_path.exists():
-                    success = self._restore_mongodb(mongodb_path)
-                    if not success:
+                    # temporärer DB-Name
+                    origin_uri = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/scandy")
+                    temp_db_name = (os.environ.get("MONGO_INITDB_DATABASE", "scandy") + "_restore_tmp")[:60]
+                    # Setze Ziel-DB Name für Restore
+                    if not self._restore_mongodb(mongodb_path):
                         return False
+                    # Optional: Indizes nachziehen
+                    try:
+                        from app.models.mongodb_models import create_mongodb_indexes
+                        create_mongodb_indexes()
+                    except Exception:
+                        pass
                 
                 # 2. Medien wiederherstellen (optional)
                 if include_media:

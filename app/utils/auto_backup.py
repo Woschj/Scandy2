@@ -66,24 +66,28 @@ class AutoBackupScheduler:
             backup_key = f"backup_running_{current_time.strftime('%Y%m%d_%H%M')}"
             
             # Versuche Lock zu setzen (TTL: 5 Minuten)
-            lock_result = mongodb.update_one(
+            lock_ok = mongodb.update_one(
                 'system_locks',
-                {
-                    'key': backup_key,
-        
-                },
-                {
-                    '$set': {
-                        'worker_id': self.worker_id,
-                        'created_at': current_time,
-        
-                    }
-                },
+                {'key': backup_key},
+                {'$set': {'worker_id': self.worker_id, 'created_at': current_time}},
                 upsert=True
             )
             
-            # Wenn ein neues Dokument erstellt wurde oder das Update erfolgreich war
-            if lock_result.upserted_id or lock_result.modified_count > 0:
+            # Kompatibel: bool oder UpdateResult-ähnlich
+            acquired = False
+            try:
+                acquired = bool(lock_ok)
+            except Exception:
+                acquired = False
+            try:
+                if hasattr(lock_ok, 'upserted_id') and lock_ok.upserted_id:
+                    acquired = True
+                if hasattr(lock_ok, 'modified_count') and getattr(lock_ok, 'modified_count', 0) > 0:
+                    acquired = True
+            except Exception:
+                pass
+            
+            if acquired:
                 logger.info(f"Worker {self.worker_id} übernimmt Backup-Aufgabe")
                 return True
             else:

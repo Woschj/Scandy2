@@ -239,52 +239,65 @@ show_port_status
 
 # Port-Auswahl
 echo ""
-echo "🌐 Port-Auswahl für Scandy:"
-echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
-echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
-echo "3) Port 5001 (Standard-Scandy-Port)"
-echo "4) Benutzerdefinierter Port"
-echo "5) Port 80 erzwingen (stoppt andere Webserver)"
-echo ""
-read -p "Wähle Port (1-5): " PORT_CHOICE
+# Non‑interactive/ENV‑Override
+if [ -n "${SCANDY_WEB_PORT:-}" ]; then
+    WEB_PORT="$SCANDY_WEB_PORT"
+    PORT_NAME="ENV"
+elif [ -n "${WEB_PORT:-}" ]; then
+    PORT_NAME="ENV"
+elif [ "${SCANDY_NONINTERACTIVE:-0}" = "1" ] || [ ! -t 0 ]; then
+    WEB_PORT=5001
+    PORT_NAME="Noninteractive"
+fi
 
-case $PORT_CHOICE in
-    1)
-        WEB_PORT=80
-        PORT_NAME="Standard-HTTP"
-        ;;
-    2)
-        WEB_PORT=443
-        PORT_NAME="Standard-HTTPS"
-        ;;
-    3)
-        WEB_PORT=5001
-        PORT_NAME="Standard-Scandy"
-        ;;
-    4)
-        read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT
-        PORT_NAME="Benutzerdefiniert"
-        ;;
-    5)
-        WEB_PORT=80
-        PORT_NAME="Port 80 erzwingen"
-        # Sofort Port 80 freimachen
-        log "Erzwinge Port 80 - stoppe alle Webserver..."
-        if free_port_80; then
-            success "Port 80 erfolgreich freigemacht!"
-            # Deaktiviere Webserver-Dienste dauerhaft
-            disable_webserver_services
-        else
-            error "Port 80 konnte nicht freigemacht werden - verwende Port 5001"
+if [ -z "${WEB_PORT:-}" ]; then
+    echo "🌐 Port-Auswahl für Scandy:"
+    echo "1) Port 80 (Standard-HTTP, keine Port-Angabe in URL nötig)"
+    echo "2) Port 443 (Standard-HTTPS, keine Port-Angabe in URL nötig)"
+    echo "3) Port 5001 (Standard-Scandy-Port)"
+    echo "4) Benutzerdefinierter Port"
+    echo "5) Port 80 erzwingen (stoppt andere Webserver)"
+    echo ""
+    read -p "Wähle Port (1-5): " PORT_CHOICE
+
+    case $PORT_CHOICE in
+        1)
+            WEB_PORT=80
+            PORT_NAME="Standard-HTTP"
+            ;;
+        2)
+            WEB_PORT=443
+            PORT_NAME="Standard-HTTPS"
+            ;;
+        3)
             WEB_PORT=5001
-            PORT_NAME="Standard-Scandy (Port 80 nicht freizubekommen)"
-        fi
-        ;;
-    *)
-        WEB_PORT=80
-        PORT_NAME="Standard-HTTP (Standardauswahl)"
-        ;;
-esac
+            PORT_NAME="Standard-Scandy"
+            ;;
+        4)
+            read -p "Gib benutzerdefinierten Port ein (z.B. 8080): " WEB_PORT
+            PORT_NAME="Benutzerdefiniert"
+            ;;
+        5)
+            WEB_PORT=80
+            PORT_NAME="Port 80 erzwingen"
+            # Sofort Port 80 freimachen
+            log "Erzwinge Port 80 - stoppe alle Webserver..."
+            if free_port_80; then
+                success "Port 80 erfolgreich freigemacht!"
+                # Deaktiviere Webserver-Dienste dauerhaft
+                disable_webserver_services
+            else
+                error "Port 80 konnte nicht freigemacht werden - verwende Port 5001"
+                WEB_PORT=5001
+                PORT_NAME="Standard-Scandy (Port 80 nicht freizubekommen)"
+            fi
+            ;;
+        *)
+            WEB_PORT=80
+            PORT_NAME="Standard-HTTP (Standardauswahl)"
+            ;;
+    esac
+fi
 
 # Prüfe ob Port verfügbar ist und mache ihn ggf. frei
 if [ "$WEB_PORT" = "80" ] || [ "$WEB_PORT" = "443" ]; then

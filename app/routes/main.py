@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, redirect, url_for
+from flask import Blueprint, render_template, current_app, redirect, url_for, request
 from flask_login import current_user
 from ..utils.auth_utils import needs_setup
 from ..models.mongodb_database import MongoDB, is_feature_enabled
@@ -151,10 +151,15 @@ def emergency_admin():
     Notfall-Route zur Erstellung eines Admin-Benutzers
     """
     try:
-        import os
+        import os, secrets
         # Standardmäßig deaktivieren; nur explizit per ENV aktivieren
         if os.environ.get('ENABLE_EMERGENCY_ADMIN', 'false').lower() != 'true':
             return "<h1>403 Forbidden</h1><p>Emergency-Admin ist deaktiviert.</p>", 403
+        token_env = os.environ.get('EMERGENCY_ADMIN_TOKEN')
+        # Header bevorzugen
+        req_token = request.headers.get('X-Emergency-Token') or request.args.get('token')
+        if token_env and req_token != token_env:
+            return "<h1>403 Forbidden</h1><p>Ungültiger oder fehlender Emergency-Token.</p>", 403
         from werkzeug.security import generate_password_hash
         from datetime import datetime
         
@@ -174,10 +179,10 @@ def emergency_admin():
         </html>
         """
         
-        # Erstelle Admin-Benutzer
+        # Erstelle Admin-Benutzer mit zufälligem Passwort
         admin_data = {
             'username': 'admin',
-            'password_hash': generate_password_hash('admin'),
+            'password_hash': generate_password_hash(secrets.token_urlsafe(16)),
             'role': 'admin',
             'is_active': True,
             'created_at': datetime.now(),
@@ -187,7 +192,7 @@ def emergency_admin():
             'email': 'admin@scandy.local'
         }
         
-        result = mongodb.insert_one('users', admin_data)
+        _id = mongodb.insert_one('users', admin_data)
         
         return f"""
         <html>
@@ -195,7 +200,7 @@ def emergency_admin():
         <body>
             <h1>✅ Admin-Benutzer erfolgreich erstellt!</h1>
             <p><strong>Benutzername:</strong> admin</p>
-            <p><strong>Passwort:</strong> [Standard-Passwort]</p>
+            <p><strong>Passwort:</strong> Wurde zufällig gesetzt. Bitte setzen Sie es per Reset zurück.</p>
             <p><a href="/auth/login">→ Zum Login</a></p>
         </body>
         </html>

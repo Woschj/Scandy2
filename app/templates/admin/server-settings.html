@@ -21,6 +21,20 @@
         <p class="text-base-content/70">Backup-Verwaltung, Labels und Systemkonfiguration</p>
     </div>
 
+    <!-- Inhaltsverzeichnis -->
+    <div class="card bg-base-100 shadow mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-lg mb-3"><i class="fas fa-list-ul mr-2 text-primary"></i>Übersicht</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <a href="#section-backup" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-robot mr-2"></i>Automatisches Backup</a>
+                <a href="#section-create-backup" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-plus-circle mr-2"></i>Backup erstellen</a>
+                <a href="#section-restore" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-upload mr-2"></i>Backup wiederherstellen</a>
+                <a href="#section-labels" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-tags mr-2"></i>System‑Labels</a>
+                <a href="#section-backup-list" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-list mr-2"></i>Verfügbare Backups</a>
+            </div>
+        </div>
+    </div>
+
     <!-- 2-Spalten Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
@@ -28,67 +42,69 @@
         <div class="space-y-6">
             
             <!-- Auto-Backup Status -->
-            <div class="card bg-base-100 shadow-xl">
+            <div id="section-backup" class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title text-xl mb-4">
-                        <i class="fas fa-robot text-primary mr-2"></i>
-                        Automatisches Backup
-                    </h2>
-                    
-                    <!-- Status Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="stat bg-base-200 rounded-lg p-4">
-                            <div class="stat-figure text-primary">
-                                <i class="fas fa-heartbeat text-2xl"></i>
-                            </div>
-                            <div class="stat-title text-sm">Status</div>
-                            <div class="stat-value text-lg" id="autoBackupStatus">Lade...</div>
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="checkbox" checked />
+                        <div class="collapse-title text-lg font-semibold">
+                            <i class="fas fa-robot text-primary mr-2"></i> Automatisches Backup
                         </div>
-                        
-                        <div class="stat bg-base-200 rounded-lg p-4">
-                            <div class="stat-figure text-secondary">
-                                <i class="fas fa-clock text-2xl"></i>
-                            </div>
-                            <div class="stat-title text-sm">Backup-Zeiten</div>
-                            <div class="stat-value text-lg" id="backupTimesDisplay">06:00, 18:00</div>
-                        </div>
-                    </div>
-
-                    <!-- Nächstes Backup -->
-                    <div class="bg-base-200 rounded-lg p-4 mb-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar-alt text-info mr-3"></i>
-                                <div>
-                                    <div class="font-medium">Nächstes Backup</div>
-                                    <div class="text-sm opacity-70" id="nextBackupTime">Berechnet...</div>
+                        <div class="collapse-content">
+                            <!-- Status Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="stat bg-base-200 rounded-lg p-4">
+                                    <div class="stat-figure text-primary">
+                                        <i class="fas fa-heartbeat text-2xl"></i>
+                                    </div>
+                                    <div class="stat-title text-sm">Status</div>
+                                    <div class="stat-value text-lg" id="autoBackupStatus">Lade...</div>
+                                </div>
+                                
+                                <div class="stat bg-base-200 rounded-lg p-4">
+                                    <div class="stat-figure text-secondary">
+                                        <i class="fas fa-clock text-2xl"></i>
+                                    </div>
+                                    <div class="stat-title text-sm">Backup-Zeiten</div>
+                                    <div class="stat-value text-lg" id="backupTimesDisplay">06:00, 18:00</div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Steuerung -->
-                    <div class="flex flex-wrap gap-2">
-                        <button id="startAutoBackup" class="btn btn-success btn-sm">
-                            <i class="fas fa-play mr-2"></i>Starten
-                        </button>
-                        <button id="stopAutoBackup" class="btn btn-error btn-sm">
-                            <i class="fas fa-stop mr-2"></i>Stoppen
-                        </button>
-                        <!-- Entfernt: admin.auto_backup nicht vorhanden -->
+                            <!-- Nächstes Backup -->
+                            <div class="bg-base-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar-alt text-info mr-3"></i>
+                                        <div>
+                                            <div class="font-medium">Nächstes Backup</div>
+                                            <div class="text-sm opacity-70" id="nextBackupTime">Berechnet...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Steuerung -->
+                            <div class="flex flex-wrap gap-2">
+                                <button id="startAutoBackup" class="btn btn-success btn-sm">
+                                    <i class="fas fa-play mr-2"></i>Starten
+                                </button>
+                                <button id="stopAutoBackup" class="btn btn-error btn-sm">
+                                    <i class="fas fa-stop mr-2"></i>Stoppen
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Backup erstellen -->
-            <div class="card bg-base-100 shadow-xl">
+            <div id="section-create-backup" class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title text-xl mb-4">
-                        <i class="fas fa-plus-circle text-primary mr-2"></i>
-                        Backup erstellen
-                    </h2>
-                    
-                    <div class="space-y-4">
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="checkbox" />
+                        <div class="collapse-title text-lg font-semibold">
+                            <i class="fas fa-plus-circle text-primary mr-2"></i> Backup erstellen
+                        </div>
+                        <div class="collapse-content space-y-4">
                         <!-- Vollständiges Backup -->
                         <div class="bg-base-200 rounded-lg p-4">
                             <div class="flex justify-between items-center">
@@ -132,19 +148,20 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
+                        </div>
                 </div>
             </div>
 
             <!-- Backup hochladen (ZIP oder JSON) -->
-            <div class="card bg-base-100 shadow-xl">
+            <div id="section-restore" class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title text-xl mb-4">
-                        <i class="fas fa-upload text-primary mr-2"></i>
-                        Backup wiederherstellen
-                    </h2>
-                    
-                    <form id="uploadBackupForm" class="space-y-4">
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="checkbox" />
+                        <div class="collapse-title text-lg font-semibold">
+                            <i class="fas fa-upload text-primary mr-2"></i> Backup wiederherstellen
+                        </div>
+                        <div class="collapse-content">
+                            <form id="uploadBackupForm" class="space-y-4">
                         <div class="border-2 border-dashed border-base-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
                             <div class="flex flex-col items-center">
                                 <i class="fas fa-cloud-upload-alt text-4xl text-base-content/40 mb-3"></i>
@@ -162,13 +179,15 @@
                             </button>
                             <!-- Entfernt: admin.import_json_backup_scoped nicht vorhanden -->
                         </div>
-                    </form>
+                            </form>
 
-                    <div class="alert alert-warning mt-4">
+                            <div class="alert alert-warning mt-4">
                         <i class="fas fa-exclamation-triangle"></i>
                         <div>
                             <h3 class="font-bold">Wichtiger Hinweis</h3>
                             <div class="text-sm">Das Backup wird sofort angewendet und überschreibt aktuelle Daten!</div>
+                        </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -181,14 +200,15 @@
             <!-- Abteilungen sind in einen eigenen Menüpunkt ausgelagert -->
 
             <!-- System-Labels -->
-            <div class="card bg-base-100 shadow-xl">
+            <div id="section-labels" class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title text-xl mb-4">
-                        <i class="fas fa-tags text-primary mr-2"></i>
-                        System-Labels
-                    </h2>
-                    
-                    <form method="POST" action="{{ url_for('admin_system.system_settings') }}" class="space-y-6">
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="checkbox" checked />
+                        <div class="collapse-title text-lg font-semibold">
+                            <i class="fas fa-tags text-primary mr-2"></i> System-Labels
+                        </div>
+                        <div class="collapse-content">
+                            <form method="POST" action="{{ url_for('admin_system.system_settings') }}" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Tools -->
                         <div class="bg-base-200 rounded-lg p-4">
@@ -295,7 +315,9 @@
                         <button type="submit" class="btn btn-primary w-full">
                             <i class="fas fa-save mr-2"></i>Einstellungen speichern
                         </button>
-                    </form>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -304,7 +326,7 @@
     </div>
 
     <!-- Backup-Liste (Vollbreite unter den Spalten) -->
-    <div class="card bg-base-100 shadow-xl mt-8">
+    <div id="section-backup-list" class="card bg-base-100 shadow-xl mt-8">
         <div class="card-body">
             <h2 class="card-title text-xl mb-6">
                 <i class="fas fa-list text-primary mr-2"></i>
