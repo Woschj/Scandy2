@@ -14,8 +14,62 @@ from werkzeug.exceptions import BadRequest
 
 from app.utils.unified_backup_manager import unified_backup_manager
 from app.utils.decorators import admin_required
+from app.utils.auto_backup import get_auto_backup_status, start_auto_backup, stop_auto_backup, auto_backup_scheduler
 
 bp = Blueprint('backup', __name__, url_prefix='/backup')
+@bp.route('/status', methods=['GET'])
+@login_required
+@admin_required
+def backup_status():
+    """Liefert Statusinformationen zum Auto-Backup."""
+    try:
+        status = get_auto_backup_status()
+        return jsonify({'success': True, 'status': status})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@bp.route('/start', methods=['POST'])
+@login_required
+@admin_required
+def start_scheduler():
+    try:
+        start_auto_backup()
+        return jsonify({'success': True, 'message': 'Auto-Backup gestartet'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@bp.route('/stop', methods=['POST'])
+@login_required
+@admin_required
+def stop_scheduler():
+    try:
+        stop_auto_backup()
+        return jsonify({'success': True, 'message': 'Auto-Backup gestoppt'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@bp.route('/schedule', methods=['POST'])
+@login_required
+@admin_required
+def update_schedule():
+    try:
+        payload = request.get_json(silent=True) or {}
+        times = payload.get('times')  # Liste oder Komma-getrennter String
+        weekly = payload.get('weekly_time')  # HH:MM
+        result = {}
+        if times:
+            if isinstance(times, str):
+                times_list = [t.strip() for t in times.split(',') if t.strip()]
+            else:
+                times_list = [str(t).strip() for t in times if str(t).strip()]
+            ok, msg = auto_backup_scheduler.save_backup_times(times_list)
+            result['times'] = {'success': ok, 'message': msg}
+        if weekly:
+            ok, msg = auto_backup_scheduler.save_weekly_backup_time(str(weekly))
+            result['weekly'] = {'success': ok, 'message': msg}
+        return jsonify({'success': True, 'result': result})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @bp.route('/create', methods=['POST'])
 @login_required
@@ -24,8 +78,9 @@ def create_backup():
     """Erstellt ein neues vereinheitlichtes Backup"""
     try:
         # Parameter aus Request
-        include_media = request.json.get('include_media', True)
-        compress = request.json.get('compress', True)
+        payload = request.get_json(silent=True) or {}
+        include_media = payload.get('include_media', True)
+        compress = payload.get('compress', True)
         
         # Backup erstellen
         backup_filename = unified_backup_manager.create_backup(
@@ -76,8 +131,10 @@ def list_backups():
 def restore_backup():
     """Stellt ein Backup wieder her"""
     try:
-        backup_filename = request.json.get('filename')
-        include_media = request.json.get('include_media', True)
+        payload = request.get_json(silent=True) or {}
+        backup_filename = payload.get('filename')
+        include_media = payload.get('include_media', True)
+        mode = payload.get('mode', 'replace')  # 'replace' oder 'merge'
         
         if not backup_filename:
             return jsonify({
@@ -88,7 +145,8 @@ def restore_backup():
         # Backup wiederherstellen
         success = unified_backup_manager.restore_backup(
             backup_filename,
-            include_media=include_media
+            include_media=include_media,
+            mode=mode
         )
         
         if success:
@@ -114,7 +172,9 @@ def restore_backup():
 def download_backup(filename):
     """Lädt ein Backup herunter"""
     try:
-        backup_path = Path('backups') / secure_filename(filename)
+        # Einheitliches Backup-Verzeichnis aus Manager übernehmen
+        from app.utils.unified_backup_manager import unified_backup_manager
+        backup_path = unified_backup_manager.backup_dir / secure_filename(filename)
         
         if not backup_path.exists():
             return jsonify({
@@ -164,13 +224,32 @@ def upload_backup():
         
         # Datei speichern
         filename = secure_filename(file.filename)
-        backup_path = Path('backups') / filename
-        
+        backup_dir = unified_backup_manager.backup_dir
+        backup_dir.mkdir(exist_ok=True)
+        backup_path = backup_dir / filename
         file.save(backup_path)
+
+        # Nach Upload direkt anwenden: ZIP → unified restore; JSON → unified import
+        applied = False
+        apply_message = ''
+        try:
+            if filename.lower().endswith('.zip'):
+                # Modus und Medienflag optional aus Form lesen
+                mode = request.form.get('mode', 'replace')
+                include_media = request.form.get('include_media', 'true').lower() in ('1','true','yes','on')
+                applied = unified_backup_manager.restore_backup(filename, include_media=include_media, mode=mode)
+                apply_message = 'Backup angewendet' if applied else 'Backup-Anwendung fehlgeschlagen'
+            elif filename.lower().endswith('.json'):
+                applied = unified_backup_manager.import_json_backup(str(backup_path))
+                apply_message = 'JSON-Backup importiert' if applied else 'JSON-Import fehlgeschlagen'
+        except Exception as _e:
+            applied = False
+            apply_message = f'Fehler bei der Anwendung: {_e}'
         
         return jsonify({
             'success': True,
-            'message': 'Backup erfolgreich hochgeladen',
+            'message': f'Backup hochgeladen. {apply_message}'.strip(),
+            'applied': applied,
             'filename': filename
         })
         

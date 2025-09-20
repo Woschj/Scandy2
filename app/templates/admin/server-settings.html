@@ -6,8 +6,7 @@
 {{ super() }}
 <!-- Toast Script -->
 <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/toast.js') }}" defer></script>
-<!-- Backup Script -->
-<script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/backup.js') }}" defer></script>
+<!-- Entfernt: veraltetes Backup-Script; inline-Handler unten verwenden -->
 {% endblock %}
 
 {% block content %}
@@ -21,28 +20,18 @@
         <p class="text-base-content/70">Backup-Verwaltung, Labels und Systemkonfiguration</p>
     </div>
 
-    <!-- Inhaltsverzeichnis -->
-    <div class="card bg-base-100 shadow mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-lg mb-3"><i class="fas fa-list-ul mr-2 text-primary"></i>Übersicht</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                <a href="#section-backup" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-robot mr-2"></i>Automatisches Backup</a>
-                <a href="#section-create-backup" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-plus-circle mr-2"></i>Backup erstellen</a>
-                <a href="#section-restore" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-upload mr-2"></i>Backup wiederherstellen</a>
-                <a href="#section-labels" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-tags mr-2"></i>System‑Labels</a>
-                <a href="#section-backup-list" class="btn btn-ghost btn-sm justify-start"><i class="fas fa-list mr-2"></i>Verfügbare Backups</a>
-            </div>
-        </div>
-    </div>
+    
 
-    <!-- 2-Spalten Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Grid Layout: linke Spalte Funktionen, rechte Spalte Einstellungen/Labels -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <!-- Linke 2 Spalten: Backup Funktionen -->
+        <div class="xl:col-span-2 space-y-6">
         
         <!-- Linke Spalte: Backup-Verwaltung -->
         <div class="space-y-6">
             
             <!-- Auto-Backup Status -->
-            <div id="section-backup" class="card bg-base-100 shadow-xl">
+            <div id="section-backup" class="card bg-base-100 shadow">
                 <div class="card-body">
                     <div class="collapse collapse-arrow bg-base-200">
                         <input type="checkbox" checked />
@@ -65,7 +54,7 @@
                                         <i class="fas fa-clock text-2xl"></i>
                                     </div>
                                     <div class="stat-title text-sm">Backup-Zeiten</div>
-                                    <div class="stat-value text-lg" id="backupTimesDisplay">06:00, 18:00</div>
+                                    <div class="stat-value text-lg" id="backupTimesDisplay">–</div>
                                 </div>
                             </div>
 
@@ -76,20 +65,28 @@
                                         <i class="fas fa-calendar-alt text-info mr-3"></i>
                                         <div>
                                             <div class="font-medium">Nächstes Backup</div>
-                                            <div class="text-sm opacity-70" id="nextBackupTime">Berechnet...</div>
+                                            <div class="text-sm opacity-70" id="nextBackupTime">–</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Steuerung -->
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex flex-wrap gap-2 items-end">
                                 <button id="startAutoBackup" class="btn btn-success btn-sm">
                                     <i class="fas fa-play mr-2"></i>Starten
                                 </button>
                                 <button id="stopAutoBackup" class="btn btn-error btn-sm">
                                     <i class="fas fa-stop mr-2"></i>Stoppen
                                 </button>
+                                <div class="form-control ml-auto">
+                                    <label class="label"><span class="label-text">Zeiten (CSV)</span></label>
+                                    <div class="flex gap-2">
+                                        <input id="scheduleTimes" type="text" placeholder="06:00,18:00" class="input input-bordered input-sm w-40">
+                                        <input id="weeklyTime" type="text" placeholder="17:00" class="input input-bordered input-sm w-28">
+                                        <button id="saveSchedule" class="btn btn-primary btn-sm">Speichern</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -97,14 +94,10 @@
             </div>
 
             <!-- Backup erstellen -->
-            <div id="section-create-backup" class="card bg-base-100 shadow-xl">
+            <div id="section-create-backup" class="card bg-base-100 shadow">
                 <div class="card-body">
-                    <div class="collapse collapse-arrow bg-base-200">
-                        <input type="checkbox" />
-                        <div class="collapse-title text-lg font-semibold">
-                            <i class="fas fa-plus-circle text-primary mr-2"></i> Backup erstellen
-                        </div>
-                        <div class="collapse-content space-y-4">
+                    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-plus-circle text-primary mr-2"></i> Backup erstellen</h2>
+                    <div class="space-y-4">
                         <!-- Vollständiges Backup -->
                         <div class="bg-base-200 rounded-lg p-4">
                             <div class="flex justify-between items-center">
@@ -149,19 +142,16 @@
                             </div>
                         </div>
                         </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Backup hochladen (ZIP oder JSON) -->
-            <div id="section-restore" class="card bg-base-100 shadow-xl">
+            <div id="section-restore" class="card bg-base-100 shadow">
                 <div class="card-body">
-                    <div class="collapse collapse-arrow bg-base-200">
-                        <input type="checkbox" />
-                        <div class="collapse-title text-lg font-semibold">
-                            <i class="fas fa-upload text-primary mr-2"></i> Backup wiederherstellen
-                        </div>
-                        <div class="collapse-content">
-                            <form id="uploadBackupForm" class="space-y-4">
+                    <h2 class="text-lg font-semibold mb-3"><i class="fas fa-upload text-primary mr-2"></i> Backup wiederherstellen</h2>
+                    <div>
+                            <form id="uploadBackupForm" class="space-y-4" enctype="multipart/form-data" onsubmit="return uploadBackup(event)">
                         <div class="border-2 border-dashed border-base-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
                             <div class="flex flex-col items-center">
                                 <i class="fas fa-cloud-upload-alt text-4xl text-base-content/40 mb-3"></i>
@@ -173,11 +163,22 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Restore‑Modus</span></label>
+                                <select name="mode" id="restoreMode" class="select select-bordered select-sm">
+                                    <option value="replace" selected>Ersetzen (Drop & Restore)</option>
+                                    <option value="merge">Zusammenführen (Upsert)</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label cursor-pointer"><span class="label-text">Medien wiederherstellen</span>
+                                    <input name="include_media" id="restoreIncludeMedia" type="checkbox" class="toggle toggle-sm" checked>
+                                </label>
+                            </div>
                             <button type="submit" class="btn btn-accent w-full">
                                 <i class="fas fa-undo mr-2"></i>Backup hochladen und anwenden
                             </button>
-                            <!-- Entfernt: admin.import_json_backup_scoped nicht vorhanden -->
                         </div>
                             </form>
 
@@ -194,8 +195,8 @@
             </div>
         </div>
 
-        <!-- Rechte Spalte: System-Konfiguration -->
-        <div class="space-y-6">
+        <!-- Rechte Spalte: System-Konfiguration/Labels -->
+        <div class="xl:col-span-1 space-y-6">
             
             <!-- Abteilungen sind in einen eigenen Menüpunkt ausgelagert -->
 
@@ -655,9 +656,130 @@ function editUserGroup(id) {
     alert('Edit-Funktion wird noch implementiert');
 }
 
-// Seite laden
+// Backup-UI Logik
+async function refreshBackupList() {
+    try {
+        const res = await fetch('/backup/list');
+        const data = await res.json();
+        const tbody = document.getElementById('backupsList');
+        if (!tbody) return;
+        if (!data.success) { tbody.innerHTML = `<tr><td colspan="5" class="text-error">${data.message||'Fehler'}</td></tr>`; return; }
+        const rows = (data.backups||[]).map(b => `
+            <tr>
+                <td>${b.filename}</td>
+                <td>${b.includes_media ? 'Voll' : 'DB'}</td>
+                <td>${b.size}</td>
+                <td>${b.created_at}</td>
+                <td class="text-right space-x-1">
+                    <a class="btn btn-xs" href="/backup/download/${encodeURIComponent(b.filename)}"><i class="fas fa-download"></i></a>
+                    <button class="btn btn-xs btn-warning" onclick="restoreBackup('${b.filename}')"><i class="fas fa-undo"></i></button>
+                    <button class="btn btn-xs btn-error" onclick="deleteBackup('${b.filename}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+        tbody.innerHTML = rows || '<tr><td colspan="5" class="text-center py-8">Keine Backups gefunden</td></tr>';
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function refreshBackupStatus() {
+    try {
+        const res = await fetch('/backup/status');
+        const data = await res.json();
+        if (!data.success) return;
+        const st = document.getElementById('autoBackupStatus');
+        const bt = document.getElementById('backupTimesDisplay');
+        const nb = document.getElementById('nextBackupTime');
+        if (st) st.textContent = (data.status.running ? 'Aktiv' : 'Inaktiv') + ' (2× täglich, 7 Tage Retention)';
+        if (bt && Array.isArray(data.status.backup_times)) bt.textContent = data.status.backup_times.join(', ');
+        if (nb && data.status.next_backup) nb.textContent = data.status.next_backup;
+    } catch(e) { /* ignore */ }
+}
+
+async function restoreBackup(filename) {
+    try {
+        const modeSel = document.getElementById('restoreMode');
+        const mode = modeSel ? modeSel.value : 'replace';
+        const includeMediaEl = document.getElementById('restoreIncludeMedia');
+        const include_media = includeMediaEl ? !!includeMediaEl.checked : true;
+        const res = await fetch('/backup/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({filename, include_media, mode})});
+        const data = await res.json();
+        showToast(data.success ? 'success' : 'error', data.message || (data.success?'Wiederhergestellt':'Fehler'));
+    } catch (e) {
+        showToast('error', 'Fehler beim Wiederherstellen');
+    }
+}
+
+async function deleteBackup(filename) {
+    try {
+        const res = await fetch('/backup/delete/'+encodeURIComponent(filename), {method:'DELETE'});
+        const data = await res.json();
+        showToast(data.success ? 'success' : 'error', data.message || (data.success?'Gelöscht':'Fehler'));
+        if (data.success) refreshBackupList();
+    } catch (e) {
+        showToast('error', 'Fehler beim Löschen');
+    }
+}
+
+async function uploadBackup(ev) {
+    ev.preventDefault();
+    const form = ev.target;
+    const fd = new FormData(form);
+    try {
+        const res = await fetch('/backup/upload', {method:'POST', body: fd});
+        const data = await res.json();
+        showToast(data.success ? 'success' : 'error', data.message || (data.success?'Upload ok':'Fehler'));
+        if (data.success) refreshBackupList();
+    } catch (e) {
+        showToast('error', 'Fehler beim Upload');
+    }
+    return false;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Platzhalter – keine Abteilungsverwaltung mehr auf dieser Seite
+    refreshBackupList();
+    refreshBackupStatus();
+    // Create buttons
+    const btnFull = document.getElementById('createUnifiedBackupBtn');
+    if (btnFull) btnFull.addEventListener('click', async () => {
+        try {
+            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:true, compress:true})});
+            const data = await res.json();
+            showToast(data.success ? 'success' : 'error', data.message || (data.success?'Backup erstellt':'Fehler'));
+            if (data.success) refreshBackupList();
+        } catch (e) { showToast('error', 'Fehler beim Erstellen'); }
+    });
+    const btnDb = document.getElementById('createBackupNoMediaBtn');
+    if (btnDb) btnDb.addEventListener('click', async () => {
+        try {
+            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:false, compress:true})});
+            const data = await res.json();
+            showToast(data.success ? 'success' : 'error', data.message || (data.success?'Backup erstellt':'Fehler'));
+            if (data.success) refreshBackupList();
+        } catch (e) { showToast('error', 'Fehler beim Erstellen'); }
+    });
+    // Start/Stop Scheduler
+    const btnStart = document.getElementById('startAutoBackup');
+    if (btnStart) btnStart.addEventListener('click', async () => {
+        try { const r = await fetch('/backup/start', {method:'POST'}); const d = await r.json(); showToast(d.success?'success':'error', d.message||''); refreshBackupStatus(); } catch(e){ showToast('error','Start fehlgeschlagen'); }
+    });
+    const btnStop = document.getElementById('stopAutoBackup');
+    if (btnStop) btnStop.addEventListener('click', async () => {
+        try { const r = await fetch('/backup/stop', {method:'POST'}); const d = await r.json(); showToast(d.success?'success':'error', d.message||''); refreshBackupStatus(); } catch(e){ showToast('error','Stop fehlgeschlagen'); }
+    });
+    // Save schedule
+    const btnSave = document.getElementById('saveSchedule');
+    if (btnSave) btnSave.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        const times = (document.getElementById('scheduleTimes')||{}).value || '';
+        const weekly = (document.getElementById('weeklyTime')||{}).value || '';
+        try {
+            const r = await fetch('/backup/schedule', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({times, weekly_time: weekly})});
+            const d = await r.json();
+            showToast(d.success?'success':'error', d.success?'Zeitplan gespeichert':'Fehler beim Speichern');
+            refreshBackupStatus();
+        } catch(e){ showToast('error','Zeitplan speichern fehlgeschlagen'); }
+    });
 });
 
 </script>
