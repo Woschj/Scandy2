@@ -66,14 +66,19 @@ def inject_routes():
     return {'routes': Routes}
 
 def inject_version():
-    """Fügt die aktuelle Version zu allen Templates hinzu"""
+    """Fügt die aktuelle Version zu allen Templates hinzu - OPTIMIERT ohne GitHub-Aufruf"""
     try:
-        from app.utils.version_checker import get_version_info
-        version_info = get_version_info()
-        
+        # OPTIMIERT: Kein GitHub-Aufruf bei jedem Request
+        # Nur lokale Version verwenden, GitHub-Check nur bei expliziter Anfrage
         return {
             'version': VERSION,
-            'version_info': version_info
+            'version_info': {
+                'local_version': VERSION,
+                'github_version': None,
+                'is_up_to_date': None,
+                'update_available': False,
+                'cached': True  # Kennzeichnung dass es gecacht ist
+            }
         }
     except Exception as e:
         logger.error(f"Fehler beim Laden der Versionsinformationen: {str(e)}")
@@ -125,11 +130,12 @@ def inject_app_labels():
         }
 
 def inject_unfilled_timesheet_days():
-    """Berechnet die Anzahl fehlender Wochenberichte für alle Templates"""
+    """Berechnet die Anzahl fehlender Wochenberichte für alle Templates - OPTIMIERT mit Caching"""
     try:
         from flask import current_app, g
         from flask_login import current_user
         from datetime import datetime, timedelta
+        from app.utils.cache_manager import cache
         
         # Nur für eingeloggte Benutzer mit aktiviertem Wochenbericht-Feature berechnen
         if not hasattr(current_user, 'is_authenticated') or not current_user.is_authenticated:
@@ -139,8 +145,15 @@ def inject_unfilled_timesheet_days():
         if not hasattr(current_user, 'timesheet_enabled') or not current_user.timesheet_enabled:
             return {'unfilled_timesheet_days': 0}
         
-        # Berechne unausgefüllte Tage für den aktuellen Benutzer
+        # OPTIMIERT: Cache für 5 Minuten
         user_id = current_user.username
+        cache_key = f"timesheet_days_{user_id}"
+        
+        cached_result = cache.get(cache_key)
+        if cached_result is not None:
+            return {'unfilled_timesheet_days': cached_result}
+        
+        # Berechne unausgefüllte Tage für den aktuellen Benutzer
         today = datetime.now()
         
         # Hole alle Timesheets des Benutzers
@@ -163,6 +176,9 @@ def inject_unfilled_timesheet_days():
                     has_tasks = ts.get(f'{day}_tasks')
                     if not (has_times and has_tasks):
                         unfilled_days += 1
+        
+        # Cache das Ergebnis für 5 Minuten
+        cache.set(cache_key, unfilled_days, 300)
         
         return {'unfilled_timesheet_days': unfilled_days}
         

@@ -69,10 +69,10 @@
             navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(r => r.unregister()); });
         }
     </script>
-    <!-- ZXing lokal: Library-UMD (Decoder Kern) -->
-    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/vendor/zxing/zxing-library.min.js') }}"></script>
-    <!-- Quagga2: robuster Barcode-Scanner (lokal) -->
-    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/vendor/quagga/quagga.min.js') }}"></script>
+    <!-- ZXing lokal: Library-UMD (Decoder Kern) - Lazy Loading -->
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/vendor/zxing/zxing-library.min.js') }}" defer></script>
+    <!-- Quagga2: robuster Barcode-Scanner (lokal) - Lazy Loading -->
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/vendor/quagga/quagga.min.js') }}" defer></script>
     <!-- HTML5-QR-Code (Fallback-Scanner, stabil auf Mobilgeräten) -->
     <script nonce="{{ csp_nonce }}" src="https://unpkg.com/html5-qrcode"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/quickscan.js') }}?v=2"></script>

@@ -83,17 +83,12 @@
 <!-- JsBarcode Library -->
 <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
-<!-- VIBE Easter Egg Overlay -->
+<!-- VIBE Easter Egg Overlay - OPTIMIERT: Videos werden nur bei Bedarf geladen -->
 <div id="vibeOverlay" class="fixed inset-0 bg-black/80 z-[9999999] hidden">
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-4xl font-bold">
         VIBE MODE ACTIVATED! 🎵
     </div>
-    <video id="vibeVideoLeft" class="fixed top-1/2 left-[5%] -translate-y-1/2 w-[400px] h-auto" loop>
-        <source src="{{ url_for('static', filename='videos/vibe.mp4') }}" type="video/mp4">
-    </video>
-    <video id="vibeVideoRight" class="fixed top-1/2 right-[5%] -translate-y-1/2 w-[400px] h-auto" loop>
-        <source src="{{ url_for('static', filename='videos/vibe.mp4') }}" type="video/mp4">
-    </video>
+    <!-- Videos werden dynamisch erstellt, nicht im HTML geladen -->
 </div>
 
 <script nonce="{{ csp_nonce }}">
@@ -133,26 +128,39 @@
             e.target.value = '';
         }
         
-        // VIBE Easter Egg
+        // VIBE Easter Egg - OPTIMIERT: Lazy Loading
         if (lastInput === vibeCode) {
             const overlay = document.createElement('div');
             overlay.className = 'zebra-overlay';
             document.body.appendChild(overlay);
             
+            // OPTIMIERT: Videos erst bei Bedarf laden
             const videoLeft = document.createElement('video');
-            videoLeft.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
             videoLeft.className = 'dancing-zebra left';
             videoLeft.loop = true;
             videoLeft.autoplay = true;
+            videoLeft.preload = 'none'; // Wichtig: Nicht vorladen!
             
             const videoRight = document.createElement('video');
-            videoRight.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
             videoRight.className = 'dancing-zebra right';
             videoRight.loop = true;
             videoRight.autoplay = true;
+            videoRight.preload = 'none'; // Wichtig: Nicht vorladen!
+            
+            // Videos erst laden wenn sie benötigt werden
+            videoLeft.onloadstart = () => {
+                videoLeft.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
+            };
+            videoRight.onloadstart = () => {
+                videoRight.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
+            };
             
             document.body.appendChild(videoLeft);
             document.body.appendChild(videoRight);
+            
+            // Sofort laden
+            videoLeft.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
+            videoRight.src = "{{ url_for('static', filename='videos/vibe.mp4') }}";
             
             setTimeout(() => {
                 overlay.remove();

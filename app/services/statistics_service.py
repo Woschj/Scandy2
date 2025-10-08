@@ -6,6 +6,8 @@ from typing import Dict, Any, List
 from datetime import datetime
 from app.models.mongodb_database import mongodb
 from app.models.mongodb_models import MongoDBTool
+from app.utils.performance_optimizer import QueryOptimizer
+from app.utils.cache_manager import cached, invalidate_cache_pattern
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,14 +16,16 @@ class StatisticsService:
     """Zentraler Service für alle Statistiken"""
     
     @staticmethod
+    @cached(ttl_seconds=60, key_prefix="dashboard_stats_")  # 1 Minute Cache
     def get_all_statistics() -> Dict[str, Any]:
         """
         Lädt alle Statistiken auf einmal.
         Wiederverwendbar für Dashboard, Admin-Dashboard und Startseite.
+        OPTIMIERT: Verwendet QueryOptimizer für bessere Performance
         """
         try:
-            # Basis-Statistiken von MongoDBTool
-            base_stats = MongoDBTool.get_statistics()
+            # OPTIMIERT: Verwende optimierte Dashboard-Statistiken
+            base_stats = QueryOptimizer.get_dashboard_statistics_optimized()
             
             # Ticket-Statistiken
             ticket_stats = StatisticsService._get_ticket_statistics()
@@ -160,6 +164,7 @@ class StatisticsService:
         }
     
     @staticmethod
+    @cached(ttl_seconds=300, key_prefix="notices_")  # 5 Minuten Cache
     def get_notices() -> List[Dict[str, Any]]:
         """Lädt aktive Hinweise aus der Datenbank"""
         try:
@@ -174,4 +179,15 @@ class StatisticsService:
             return notices_list
         except Exception as e:
             logger.error(f"Fehler beim Laden der Hinweise: {str(e)}")
-            return [] 
+            return []
+    
+    @staticmethod
+    def invalidate_dashboard_cache():
+        """Invalidiert Dashboard-Cache bei Datenänderungen"""
+        try:
+            invalidated = invalidate_cache_pattern("dashboard_stats_")
+            logger.info(f"Invalidated {invalidated} dashboard cache entries")
+            return invalidated
+        except Exception as e:
+            logger.error(f"Error invalidating dashboard cache: {e}")
+            return 0 
