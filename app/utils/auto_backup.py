@@ -66,24 +66,28 @@ class AutoBackupScheduler:
             backup_key = f"backup_running_{current_time.strftime('%Y%m%d_%H%M')}"
             
             # Versuche Lock zu setzen (TTL: 5 Minuten)
-            lock_result = mongodb.update_one(
+            lock_ok = mongodb.update_one(
                 'system_locks',
-                {
-                    'key': backup_key,
-        
-                },
-                {
-                    '$set': {
-                        'worker_id': self.worker_id,
-                        'created_at': current_time,
-        
-                    }
-                },
+                {'key': backup_key},
+                {'$set': {'worker_id': self.worker_id, 'created_at': current_time}},
                 upsert=True
             )
             
-            # Wenn ein neues Dokument erstellt wurde oder das Update erfolgreich war
-            if lock_result.upserted_id or lock_result.modified_count > 0:
+            # Kompatibel: bool oder UpdateResult-ähnlich
+            acquired = False
+            try:
+                acquired = bool(lock_ok)
+            except Exception:
+                acquired = False
+            try:
+                if hasattr(lock_ok, 'upserted_id') and lock_ok.upserted_id:
+                    acquired = True
+                if hasattr(lock_ok, 'modified_count') and getattr(lock_ok, 'modified_count', 0) > 0:
+                    acquired = True
+            except Exception:
+                pass
+            
+            if acquired:
                 logger.info(f"Worker {self.worker_id} übernimmt Backup-Aufgabe")
                 return True
             else:
@@ -284,6 +288,23 @@ class AutoBackupScheduler:
         
         logger.info("Auto-Backup-Scheduler gestartet")
         self._log_backup_event("Auto-Backup-Scheduler gestartet")
+        # Catch-up: wenn letzte 12h verpasst wurden, sofort ein Backup anstoßen
+        try:
+            from app.utils.unified_backup_manager import unified_backup_manager
+            # Führe nur ein zusätzliches Backup aus, wenn in den letzten 12h keins erstellt wurde
+            bdir = Path('backups')
+            latest = None
+            for f in bdir.glob('scandy_backup_*.zip'):
+                if not latest or f.stat().st_mtime > latest.stat().st_mtime:
+                    latest = f
+            if not latest:
+                unified_backup_manager.create_backup(include_media=True, compress=True)
+            else:
+                from datetime import datetime as _dt
+                if (_dt.now().timestamp() - latest.stat().st_mtime) > 12*3600:
+                    unified_backup_manager.create_backup(include_media=True, compress=True)
+        except Exception as _e:
+            logger.warning(f"Catch-up-Backup übersprungen: {_e}")
         
     def stop(self):
         """Stoppt den automatischen Backup-Scheduler"""
@@ -356,6 +377,11 @@ class AutoBackupScheduler:
                 logger.info(f"Automatisches ZIP-Backup erfolgreich erstellt: {backup_filename}")
                 self._log_backup_event(f"ZIP-Backup erfolgreich: {backup_filename}")
                 
+                # Retention (7 Tage) sicherstellen – bereits durch Manager, zusätzlich harte Grenze
+                try:
+                    unified_backup_manager._prune_old_backups(days=7)
+                except Exception:
+                    pass
                 # Optional: E-Mail-Benachrichtigung
                 self._send_backup_notification(backup_filename, success=True)
             else:

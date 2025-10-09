@@ -10,66 +10,104 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import base64
 import os
 import hashlib
+try:
+    from cryptography.fernet import Fernet
+except Exception:
+    Fernet = None
 import traceback
 
 mail = None
 logger = logging.getLogger(__name__)
 
 def _get_encryption_key():
-    """Generiert einen einfachen Verschlüsselungsschlüssel für E-Mail-Passwörter"""
+    """Leitet einen stabilen 32-Byte Key aus SECRET_KEY ab (base64 urlsafe)."""
     try:
-        # Prüfe ob App-Kontext verfügbar ist
         if not has_app_context():
             logger.warning("Kein App-Kontext verfügbar für E-Mail-Verschlüsselung")
             return None
-        
-        # Verwende SECRET_KEY als Basis für den Verschlüsselungsschlüssel
         secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
-        # Erstelle einen 32-Byte-Schlüssel aus dem Secret Key
         key = hashlib.sha256(secret_key.encode()).digest()
         return base64.urlsafe_b64encode(key)
     except Exception as e:
         logger.error(f"Fehler beim Generieren des Verschlüsselungsschlüssels: {e}")
         return None
 
+def _get_fernet():
+    """Gibt eine Fernet-Instanz zurück, falls verfügbar, sonst None."""
+    try:
+        if Fernet is None:
+            return None
+        key = _get_encryption_key()
+        if not key:
+            return None
+        return Fernet(key)
+    except Exception as e:
+        logger.error(f"Fehler beim Initialisieren von Fernet: {e}")
+        return None
+
 def _encrypt_password(password):
-    """Verschlüsselt ein E-Mail-Passwort mit XOR und Base64"""
+    """Verschlüsselt E-Mail-Passwort. Bevorzugt Fernet, Fallback XOR+Base64.
+    Gibt Wert mit Präfix 'fernet:' zurück, wenn Fernet genutzt wird.
+    """
     if not password:
         return None
+    # Versuche Fernet
+    f = _get_fernet()
+    if f is not None:
+        try:
+            token = f.encrypt(password.encode('utf-8')).decode('utf-8')
+            return f"fernet:{token}"
+        except Exception as e:
+            logger.warning(f"Fernet-Verschlüsselung fehlgeschlagen, verwende XOR-Fallback: {e}")
+    # Fallback XOR
     try:
         key = _get_encryption_key()
-        # Einfache XOR-Verschlüsselung mit dem Schlüssel
         key_bytes = base64.urlsafe_b64decode(key)
         password_bytes = password.encode('utf-8')
-        
-        # XOR-Verschlüsselung
         encrypted = bytearray()
         for i, byte in enumerate(password_bytes):
             encrypted.append(byte ^ key_bytes[i % len(key_bytes)])
-        
         return base64.urlsafe_b64encode(bytes(encrypted)).decode()
     except Exception as e:
         logger.error(f"Fehler beim Verschlüsseln des Passworts: {e}")
         return None
 
 def _decrypt_password(encrypted_password):
-    """Entschlüsselt ein E-Mail-Passwort"""
+    """Entschlüsselt E-Mail-Passwort. Unterstützt 'fernet:' Präfix und alten XOR.
+    Akzeptiert außerdem rohe Fernet-Tokens (beginnend mit 'gAAAAA').
+    """
     if not encrypted_password:
         return None
+    # Fernet mit Präfix
+    try:
+        if isinstance(encrypted_password, str) and encrypted_password.startswith('fernet:'):
+            token = encrypted_password.split(':', 1)[1]
+            f = _get_fernet()
+            if f is None:
+                logger.error("Fernet nicht verfügbar für Entschlüsselung")
+                return None
+            return f.decrypt(token.encode('utf-8')).decode('utf-8')
+        # Kompatibilität: rohe Fernet Tokens ohne Präfix
+        if isinstance(encrypted_password, str) and encrypted_password.startswith('gAAAAA'):
+            f = _get_fernet()
+            if f is None:
+                logger.error("Fernet nicht verfügbar für Entschlüsselung (raw token)")
+                return None
+            return f.decrypt(encrypted_password.encode('utf-8')).decode('utf-8')
+    except Exception as e:
+        logger.error(f"Fernet-Entschlüsselung fehlgeschlagen: {e}")
+        return None
+    # Fallback XOR
     try:
         key = _get_encryption_key()
         if not key:
             logger.warning("Verschlüsselungsschlüssel konnte nicht generiert werden")
             return None
-            
         key_bytes = base64.urlsafe_b64decode(key)
         encrypted_bytes = base64.urlsafe_b64decode(encrypted_password.encode())
-        
-        # XOR-Entschlüsselung
         decrypted = bytearray()
         for i, byte in enumerate(encrypted_bytes):
             decrypted.append(byte ^ key_bytes[i % len(key_bytes)])
-        
         return bytes(decrypted).decode('utf-8')
     except Exception as e:
         logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
@@ -99,7 +137,7 @@ def get_email_config():
                 if key != '_id':  # Überspringe MongoDB _id
                     if key == 'mail_password' and value:
                         # Passwort entschlüsseln, falls es verschlüsselt ist
-                        if not value.startswith('$2b$'):  # Nicht gehasht
+                        if not value.startswith('$2b$'):
                             config[key] = _decrypt_password(value)
                         else:
                             config[key] = value  # Bereits gehasht (alte Daten)
@@ -133,7 +171,7 @@ def save_email_config(config_data):
         # Passwort verschlüsseln, falls vorhanden
         if 'mail_password' in config_data and config_data['mail_password']:
             # Prüfe ob das Passwort bereits verschlüsselt ist
-            if not config_data['mail_password'].startswith('$2b$') and not config_data['mail_password'].startswith('gAAAAA'):
+            if not config_data['mail_password'].startswith('$2b$') and not config_data['mail_password'].startswith('fernet:') and not config_data['mail_password'].startswith('gAAAAA'):
                 encrypted_password = _encrypt_password(config_data['mail_password'])
                 if encrypted_password:
                     config_data['mail_password'] = encrypted_password

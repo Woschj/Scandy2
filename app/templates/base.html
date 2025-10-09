@@ -49,6 +49,62 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        /* BTZ-Köln Farbschema */
+        :root {
+            --btz-primary: #0066cc;
+            --btz-primary-light: #338fff;
+            --btz-primary-dark: #004d99;
+            --btz-secondary: #f8f9fa;
+            --btz-accent: #e3f2fd;
+            --btz-text: #212529;
+            --btz-text-light: #6c757d;
+        }
+
+        /* DaisyUI Theme Override für BTZ-Design - HELLE, LESBARE VERSION */
+        [data-theme="scandy"] {
+            /* Primary colors - BTZ Blau */
+            --p: #0066cc;
+            --pf: #ffffff;
+            --pc: #ffffff;
+
+            /* Secondary colors - Hell und kontrastreich */
+            --s: #f8f9fa;
+            --sf: #212529;
+            --sc: #212529;
+
+            /* Accent colors - Sehr hell */
+            --a: #e3f2fd;
+            --af: #0066cc;
+            --ac: #0066cc;
+
+            /* Success, Warning, Error, Info */
+            --su: #28a745;
+            --suc: #ffffff;
+            --wa: #ffc107;
+            --wac: #212529;
+            --er: #dc3545;
+            --erc: #ffffff;
+            --in: #17a2b8;
+            --inc: #ffffff;
+
+            /* Neutral/Base colors - Sehr helle Hintergründe */
+            --b1: #ffffff;  /* Reines Weiß für beste Lesbarkeit */
+            --b2: #f8f9fa;  /* Sehr heller Grau */
+            --b3: #e9ecef;  /* Noch hellerer Grau */
+            --bc: #212529;  /* Dunkler Text für Kontrast */
+            --n: #6c757d;   /* Mittlerer Text */
+            --nc: #212529;  /* Dunkler Text */
+
+            /* Rounded corners */
+            --rounded-box: 0.5rem;
+            --rounded-btn: 0.375rem;
+            --rounded-badge: 0.25rem;
+
+            /* Animation/Transition */
+            --animation-btn: 0.2s;
+            --animation-input: 0.2s;
+        }
         
         .nav-text {
             font-weight: 600;
@@ -359,7 +415,7 @@
                         <i class="fas fa-building mr-2"></i>
                         {{ departments_ctx.current or departments.current or 'Abteilung wählen' }}
                     </label>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-60">
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-60">
                         {% for dep in (departments_ctx.allowed or departments.allowed) %}
                         <li>
                             <a href="{{ url_for('admin.switch_department', department=dep) }}" class="{% if departments.current == dep %}active{% endif %}">
@@ -375,7 +431,7 @@
                     <label tabindex="0" class="btn btn-ghost btn-sm">
                         <i class="fas fa-bars"></i>
                     </label>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52">
                         <li>
                             <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and 'admin.dashboard' in request.endpoint %}active{% endif %}">
                                 <i class="fas fa-tachometer-alt mr-2"></i>Dashboard

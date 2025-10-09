@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-1">
         <h1 class="text-2xl font-bold">Startseiten-Hinweise</h1>
-        <a href="{{ url_for('admin.create_notice') }}" class="btn btn-primary">
+        <a href="{{ url_for('api.create_notice') }}" class="btn btn-primary">
             <i class="fas fa-plus mr-2"></i>
             Neuer Hinweis
         </a>
@@ -38,11 +38,8 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ url_for('admin.edit_notice', id=notice.id) }}" 
-                                   class="btn btn-ghost btn-sm">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ url_for('admin.delete_notice', id=notice.id) }}" 
+                                <!-- Entfernt: edit_notice nicht vorhanden -->
+                                <form action="{{ url_for('api.delete_notice', id=notice.id) }}" 
                                       method="POST" class="inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-ghost btn-sm text-error"

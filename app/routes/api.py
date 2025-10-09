@@ -360,7 +360,7 @@ def get_notices():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@bp.route('/notices/<int:id>', methods=['GET'])
+@bp.route('/notices/<id>', methods=['GET'])
 @admin_required
 def get_notice(id):
     """Gibt einen spezifischen Hinweis zurück"""
@@ -391,7 +391,7 @@ def create_notice():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/notices/<int:id>', methods=['PUT'])
+@bp.route('/notices/<id>', methods=['PUT'])
 @admin_required
 def update_notice(id):
     """Aktualisiert einen Hinweis"""
@@ -409,7 +409,7 @@ def update_notice(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/notices/<int:id>', methods=['DELETE'])
+@bp.route('/notices/<id>', methods=['DELETE'])
 @admin_required
 def delete_notice(id):
     """Löscht einen Hinweis"""

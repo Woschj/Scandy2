@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold"><i class="fas fa-building mr-2 text-primary"></i>Abteilungen</h1>
-    <a href="{{ url_for('admin.system') }}" class="btn btn-ghost btn-sm"><i class="fas fa-cog mr-2"></i>System-Einstellungen</a>
+    <a href="{{ url_for('admin_system.system_settings') }}" class="btn btn-ghost btn-sm"><i class="fas fa-cog mr-2"></i>System-Einstellungen</a>
   </div>
 
   <div class="card bg-base-100 shadow-xl">
@@ -69,7 +69,7 @@ let pendingDeleteName = null;
 
 async function loadDepartments(){
   try{
-    const res = await fetch('{{ url_for('admin.get_departments') }}');
+    const res = await fetch('/admin/departments');
     const data = await res.json();
     const c = document.getElementById('departmentsList');
     if(!c) return;
@@ -91,9 +91,15 @@ async function loadDepartments(){
 document.getElementById('addDepartmentForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const fd = new FormData(e.target);
-  const res = await fetch('{{ url_for('admin.add_department') }}', {method:'POST', body:fd});
+  const res = await fetch('/admin/departments/add', {method:'POST', body:fd, headers: csrfToken ? { 'X-CSRFToken': csrfToken } : {}});
   const data = await res.json();
-  if(data.success){ e.target.reset(); loadDepartments(); }
+  if(data.success){
+    e.target.reset();
+    loadDepartments();
+    window.showToast && window.showToast('success', data.message||'Abteilung hinzugefügt');
+  }else{
+    window.showToast && window.showToast('error', data.message||'Hinzufügen fehlgeschlagen');
+  }
 });
 
 function openDeleteDialog(name){

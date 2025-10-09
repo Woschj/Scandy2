@@ -170,27 +170,36 @@ const QuickScan = {
                         return;
                     }
                     if (upperValue === 'VIBE') {
-                        // VIBE Easter Egg (wie in handleScannerInput)
+                        // VIBE Easter Egg - OPTIMIERT: Lazy Loading
                         const overlay = document.createElement('div');
                         overlay.className = 'zebra-overlay';
                         document.body.appendChild(overlay);
+                        
                         const videoLeft = document.createElement('video');
-                        videoLeft.src = "/static/videos/vibe.mp4";
                         videoLeft.className = 'dancing-zebra left';
                         videoLeft.loop = true;
                         videoLeft.autoplay = true;
+                        videoLeft.preload = 'none'; // Wichtig: Nicht vorladen!
+                        
                         const videoRight = document.createElement('video');
-                        videoRight.src = "/static/videos/vibe.mp4";
                         videoRight.className = 'dancing-zebra right';
                         videoRight.loop = true;
                         videoRight.autoplay = true;
+                        videoRight.preload = 'none'; // Wichtig: Nicht vorladen!
+                        
+                        // Videos erst laden wenn sie benötigt werden
+                        videoLeft.src = "/static/videos/vibe.mp4";
+                        videoRight.src = "/static/videos/vibe.mp4";
+                        
                         document.body.appendChild(videoLeft);
                         document.body.appendChild(videoRight);
+                        
                         setTimeout(() => {
                             overlay.remove();
                             videoLeft.remove();
                             videoRight.remove();
                         }, 10000);
+                        
                         activeInput.value = '';
                         return;
                     }

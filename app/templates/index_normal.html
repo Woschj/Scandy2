@@ -225,7 +225,7 @@
                 </h2>
                 <p class="text-sm opacity-70 mb-4">Start-/Endzeit und Tätigkeiten für den heutigen Tag. Teil-Eingaben möglich; bisherige Eingaben werden angezeigt.</p>
                 {% set _ts = timesheet_prefill %}
-                <form method="POST" action="{{ url_for('workers.timesheet_quick_update') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form method="POST" action="{{ url_for('workers.quick_update_timesheet') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-control">
                         <label class="label"><span class="label-text">Startzeit</span></label>

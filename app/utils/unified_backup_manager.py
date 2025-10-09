@@ -29,8 +29,22 @@ class UnifiedBackupManager:
     """
     
     def __init__(self):
-        self.backup_dir = Path("backups")
-        self.backup_dir.mkdir(exist_ok=True)
+        # Robustes Backupverzeichnis bestimmen (Projektwurzel bevorzugen)
+        try:
+            project_root = Path(__file__).resolve().parents[2]
+        except Exception:
+            project_root = Path.cwd()
+        env_dir = os.environ.get('SCANDY_BACKUP_DIR')
+        default_dir = Path(env_dir) if env_dir else (project_root / 'backups')
+        legacy_dir = project_root / 'app' / 'backups'
+        chosen = default_dir
+        try:
+            if not default_dir.exists() and legacy_dir.exists():
+                chosen = legacy_dir
+        except Exception:
+            pass
+        self.backup_dir = chosen
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
         
         # Medien-Verzeichnisse
         self.media_dirs = [
@@ -81,6 +95,7 @@ class UnifiedBackupManager:
             print(f"🔄 Erstelle vereinheitlichtes Backup: {backup_name}")
             
             # 1. MongoDB-Backup erstellen
+            start_ts = datetime.now()
             db_backup_path = self._create_mongodb_backup(backup_name)
             if not db_backup_path:
                 return None
@@ -110,6 +125,20 @@ class UnifiedBackupManager:
                     self._prune_old_backups(days=7)
                 except Exception as e:
                     print(f"⚠️  Konnte alte Backups nicht bereinigen: {e}")
+                # Lauf protokollieren
+                try:
+                    from app.models.mongodb_database import mongodb
+                    mongodb.insert_one('backup_runs', {
+                        'filename': final_backup_path,
+                        'created_at': start_ts,
+                        'finished_at': datetime.now(),
+                        'duration_s': (datetime.now() - start_ts).total_seconds(),
+                        'includes_media': include_media,
+                        'compressed': compress,
+                        'size_bytes': (self.backup_dir / final_backup_path).stat().st_size if (self.backup_dir / final_backup_path).exists() else None
+                    })
+                except Exception:
+                    pass
                 return final_backup_path
             else:
                 return None
@@ -133,8 +162,28 @@ class UnifiedBackupManager:
             
             # Versuche mongodump zu verwenden
             try:
+                # mongodump-Binärdatei robust ermitteln
+                mongodump_bin = os.environ.get('MONGODUMP_BIN')
+                def _is_exec(p: str) -> bool:
+                    try:
+                        return p and os.path.isfile(p) and os.access(p, os.X_OK)
+                    except Exception:
+                        return False
+                if not _is_exec(mongodump_bin or ''):
+                    try:
+                        from shutil import which
+                        w = which('mongodump')
+                        if w and _is_exec(w):
+                            mongodump_bin = w
+                    except Exception:
+                        mongodump_bin = None
+                if not _is_exec(mongodump_bin or ''):
+                    for p in ['/usr/bin/mongodump','/usr/local/bin/mongodump','/snap/bin/mongodump','/opt/homebrew/bin/mongodump','/opt/local/bin/mongodump']:
+                        if _is_exec(p):
+                            mongodump_bin = p
+                            break
                 cmd = [
-                    'mongodump',
+                    mongodump_bin or 'mongodump',
                     '--uri', mongo_uri,
                     '--out', str(backup_path),
                     '--gzip',
@@ -415,7 +464,7 @@ class UnifiedBackupManager:
             print(f"  ❌ Fehler beim Erstellen des finalen Backups: {e}")
             return None
     
-    def restore_backup(self, backup_filename: str, include_media: bool = True) -> bool:
+    def restore_backup(self, backup_filename: str, include_media: bool = True, mode: str = 'replace') -> bool:
         """
         Stellt ein Backup wieder her
         
@@ -470,12 +519,17 @@ class UnifiedBackupManager:
                         metadata = json.load(f)
                     print(f"  📋 Backup-Metadaten: {metadata.get('backup_name', 'Unbekannt')}")
                 
-                # 1. MongoDB wiederherstellen
+                # 1. MongoDB wiederherstellen (modusgesteuert)
                 mongodb_path = temp_path / 'mongodb'
                 if mongodb_path.exists():
-                    success = self._restore_mongodb(mongodb_path)
-                    if not success:
+                    if not self._restore_mongodb(mongodb_path, mode=mode):
                         return False
+                    # Optional: Indizes nachziehen
+                    try:
+                        from app.models.mongodb_models import create_mongodb_indexes
+                        create_mongodb_indexes()
+                    except Exception:
+                        pass
                 
                 # 2. Medien wiederherstellen (optional)
                 if include_media:
@@ -499,7 +553,7 @@ class UnifiedBackupManager:
             print(f"❌ Fehler beim Wiederherstellen des Backups: {e}")
             return False
     
-    def _restore_mongodb(self, mongodb_path: Path) -> bool:
+    def _restore_mongodb(self, mongodb_path: Path, mode: str = 'replace') -> bool:
         """Stellt MongoDB-Backup wieder her"""
         try:
             print(f"  📊 Stelle MongoDB wieder her...")
@@ -538,10 +592,14 @@ class UnifiedBackupManager:
                     mongorestore_bin,
                     '--uri', mongo_uri,
                     '--gzip',
-                    '--drop',  # Bestehende Collections löschen
-                    '--nsExclude', f"{db_name}.users",  # Benutzer niemals überschreiben
-                    str(mongodb_path / db_name)
                 ]
+                if mode == 'replace':
+                    cmd.extend(['--drop'])  # Bestehende Collections löschen
+                elif mode == 'merge':
+                    # mongorestore hat kein globales --upsert in allen Versionen; Merge wird ggf. per Python-Fallback erledigt
+                    pass
+                # Benutzer niemals überschreiben und Pfad anfügen
+                cmd.extend(['--nsExclude', f"{db_name}.users", str(mongodb_path / db_name)])
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
                 if result.returncode == 0:
                     print(f"  ✅ MongoDB erfolgreich wiederhergestellt")
@@ -549,16 +607,16 @@ class UnifiedBackupManager:
                 else:
                     print(f"  ❌ MongoDB-Wiederherstellung fehlgeschlagen: {result.stderr}")
                     # Fallback auf Python-Restore
-                    return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name)
+                    return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name, mode=mode)
             else:
                 print("  ⚠️ mongorestore nicht gefunden – verwende Python-Fallback")
-                return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name)
+                return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name, mode=mode)
                 
         except Exception as e:
             print(f"  ❌ Fehler bei MongoDB-Wiederherstellung: {e}")
             return False
 
-    def _python_restore_mongodb(self, mongo_uri, db_name, dir_path) -> bool:
+    def _python_restore_mongodb(self, mongo_uri, db_name, dir_path, mode: str = 'replace') -> bool:
         """Fallback: Stellt Collections aus BSON/BSON.GZ per PyMongo wieder her."""
         try:
             import gzip
@@ -594,8 +652,9 @@ class UnifiedBackupManager:
                     continue
                 print(f"  → Stelle Collection: {coll}")
                 try:
-                    # Drop bestehende Collection
-                    db[coll].drop()
+                    if mode == 'replace':
+                        # Drop bestehende Collection
+                        db[coll].drop()
                 except Exception:
                     pass
                 # Stream-basiertes Einlesen
@@ -607,12 +666,40 @@ class UnifiedBackupManager:
                     for doc in decode_file_iter(fh):
                         batch.append(doc)
                         if len(batch) >= batch_size:
-                            db[coll].insert_many(batch, ordered=False)
-                            inserted += len(batch)
+                            if mode == 'merge':
+                                # Upsert per _id
+                                ops = []
+                                from pymongo import UpdateOne
+                                for d in batch:
+                                    if d.get('_id') is not None:
+                                        ops.append(UpdateOne({'_id': d['_id']}, {'$set': d}, upsert=True))
+                                    else:
+                                        # Ohne _id: Insert
+                                        db[coll].insert_one(d)
+                                        inserted += 1
+                                if ops:
+                                    res = db[coll].bulk_write(ops, ordered=False)
+                                    inserted += getattr(res, 'upserted_count', 0) + getattr(res, 'modified_count', 0)
+                            else:
+                                db[coll].insert_many(batch, ordered=False)
+                                inserted += len(batch)
                             batch.clear()
                     if batch:
-                        db[coll].insert_many(batch, ordered=False)
-                        inserted += len(batch)
+                        if mode == 'merge':
+                            from pymongo import UpdateOne
+                            ops = []
+                            for d in batch:
+                                if d.get('_id') is not None:
+                                    ops.append(UpdateOne({'_id': d['_id']}, {'$set': d}, upsert=True))
+                                else:
+                                    db[coll].insert_one(d)
+                                    inserted += 1
+                            if ops:
+                                res = db[coll].bulk_write(ops, ordered=False)
+                                inserted += getattr(res, 'upserted_count', 0) + getattr(res, 'modified_count', 0)
+                        else:
+                            db[coll].insert_many(batch, ordered=False)
+                            inserted += len(batch)
                 print(f"    ✓ {inserted} Dokumente in {coll} eingefügt")
             print("  ✅ MongoDB per Python-Fallback wiederhergestellt")
             return True
@@ -631,6 +718,7 @@ class UnifiedBackupManager:
             
             # Medien kopieren
             copied_files = 0
+            mismatches = 0
             for root, dirs, files in os.walk(media_path):
                 # Relativen Pfad berechnen
                 rel_path = Path(root).relative_to(media_path)
@@ -644,7 +732,21 @@ class UnifiedBackupManager:
                     # Datei kopieren
                     shutil.copy2(source_file, target_file)
                     copied_files += 1
+                    # einfache Hash-Prüfung (kleine Dateien) – große Dateien überspringen
+                    try:
+                        size = target_file.stat().st_size
+                        if size <= 5 * 1024 * 1024:  # bis 5MB prüfen
+                            import hashlib
+                            with open(source_file, 'rb') as sf, open(target_file, 'rb') as tf:
+                                sh = hashlib.sha256(sf.read()).hexdigest()
+                                th = hashlib.sha256(tf.read()).hexdigest()
+                                if sh != th:
+                                    mismatches += 1
+                    except Exception:
+                        pass
             
+            if mismatches:
+                print(f"  ⚠️  {mismatches} Medien-Checksum-Abweichungen erkannt")
             print(f"  ✅ {copied_files} Mediendateien wiederhergestellt")
             return True
             

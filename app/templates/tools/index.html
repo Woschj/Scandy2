@@ -13,29 +13,29 @@
 {% block actions %}
 {% if current_user.is_authenticated %}
 <div class="flex gap-2">
-    <a href="{{ url_for('tools.add') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> {{ app_labels.tools.name }} hinzufügen
+    <a href="{{ url_for('tools.add') }}" class="btn btn-primary hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+        <i class="fas fa-plus me-2"></i> {{ app_labels.tools.name }} hinzufügen
     </a>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block filters %}
-<select class="select select-bordered w-full max-w-xs" id="categoryFilter">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="categoryFilter">
     <option value="">Alle Kategorien</option>
     {% for category in categories %}
     <option value="{{ category }}">{{ category }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs" id="locationFilter">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="locationFilter">
     <option value="">Alle Standorte</option>
     {% for location in locations %}
     <option value="{{ location }}">{{ location }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs" id="statusFilter">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="statusFilter">
     <option value="">Alle Status</option>
     <option value="verfügbar">Verfügbar</option>
     <option value="ausgeliehen">Ausgeliehen</option>

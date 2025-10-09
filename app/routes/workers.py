@@ -5,6 +5,7 @@ from app.models.mongodb_database import mongodb, is_feature_enabled
 from app.utils.decorators import login_required, admin_required, mitarbeiter_required, teilnehmer_required
 from app.utils.permissions import permission_required
 from app.utils.database_helpers import get_departments_from_settings
+from app.services.statistics_service import StatisticsService
 from datetime import datetime, timedelta
 from flask_login import current_user
 import os
@@ -226,6 +227,8 @@ def add():
             }
             
             mongodb.insert_one('workers', worker_data)
+            # Cache invalidieren nach Datenänderung
+            StatisticsService.invalidate_dashboard_cache()
             flash('Mitarbeiter erfolgreich hinzugefügt', 'success')
             return redirect(url_for('workers.index'))
         except Exception as e:
@@ -309,6 +312,8 @@ def details(original_barcode):
                              {'barcode': original_barcode}, 
                              {'$set': update_data})
 
+            # Cache invalidieren nach Datenänderung
+            StatisticsService.invalidate_dashboard_cache()
             flash('Mitarbeiter erfolgreich aktualisiert', 'success')
             return redirect(url_for('workers.details', original_barcode=new_barcode))
 

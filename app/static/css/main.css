@@ -1,3 +1,41 @@
+/* ========================================
+   BTZ-KÖLN CORPORATE DESIGN SYSTEM
+   ======================================== */
+
+:root {
+  /* BTZ-Köln Farbpalette */
+  --btz-primary: #0066cc;
+  --btz-primary-light: #338fff;
+  --btz-primary-dark: #004d99;
+  --btz-primary-hover: #005bb3;
+  --btz-secondary: #f8f9fa;
+  --btz-secondary-dark: #e9ecef;
+  --btz-accent: #e3f2fd;
+  --btz-accent-dark: #bbdefb;
+  --btz-text: #212529;
+  --btz-text-light: #6c757d;
+  --btz-text-muted: #9ca3af;
+  --btz-success: #28a745;
+  --btz-warning: #ffc107;
+  --btz-danger: #dc3545;
+  --btz-info: #17a2b8;
+
+  /* Schatten und Effekte */
+  --btz-shadow-sm: 0 1px 2px 0 rgba(0, 102, 204, 0.05);
+  --btz-shadow: 0 1px 3px 0 rgba(0, 102, 204, 0.1), 0 1px 2px 0 rgba(0, 102, 204, 0.06);
+  --btz-shadow-lg: 0 10px 15px -3px rgba(0, 102, 204, 0.1), 0 4px 6px -2px rgba(0, 102, 204, 0.05);
+  --btz-shadow-xl: 0 20px 25px -5px rgba(0, 102, 204, 0.1), 0 10px 10px -5px rgba(0, 102, 204, 0.04);
+
+  /* Abstände */
+  --btz-radius-sm: 0.25rem;
+  --btz-radius: 0.375rem;
+  --btz-radius-lg: 0.5rem;
+  --btz-radius-xl: 0.75rem;
+
+  /* Übergänge */
+  --btz-transition: all 0.2s ease-in-out;
+}
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -104,6 +142,568 @@
   --tw-contain-layout:  ;
   --tw-contain-paint:  ;
   --tw-contain-style:  ;
+}
+
+/* ========================================
+   BTZ-KÖLN COMPONENT STYLES
+   ======================================== */
+
+/* Body Background - Sicherstellen, dass er hell ist */
+body {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+}
+
+/* Hauptinhaltsbereich */
+.main-content-with-sidebar {
+  background-color: #ffffff !important;
+}
+
+/* ========================================
+   BTZ-KÖLN COMPONENT STYLES
+   ======================================== */
+
+/* Button Styles */
+.btn-primary {
+  background-color: var(--btz-primary) !important;
+  border-color: var(--btz-primary) !important;
+  color: white !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--btz-primary-hover) !important;
+  border-color: var(--btz-primary-hover) !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-secondary {
+  background-color: var(--btz-secondary) !important;
+  border-color: var(--btz-secondary-dark) !important;
+  color: var(--btz-text) !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--btz-secondary-dark) !important;
+  border-color: var(--btz-secondary-dark) !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-success {
+  background-color: var(--btz-success) !important;
+  border-color: var(--btz-success) !important;
+  color: white !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-success:hover {
+  background-color: #218838 !important;
+  border-color: #218838 !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-danger {
+  background-color: var(--btz-danger) !important;
+  border-color: var(--btz-danger) !important;
+  color: white !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-danger:hover {
+  background-color: #c82333 !important;
+  border-color: #c82333 !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-warning {
+  background-color: var(--btz-warning) !important;
+  border-color: var(--btz-warning) !important;
+  color: var(--btz-text) !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800 !important;
+  border-color: #e0a800 !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-info {
+  background-color: var(--btz-info) !important;
+  border-color: var(--btz-info) !important;
+  color: white !important;
+  transition: var(--btz-transition) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.btn-info:hover {
+  background-color: #138496 !important;
+  border-color: #138496 !important;
+  box-shadow: var(--btz-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Card Styles */
+.card {
+  border: none !important;
+  border-radius: var(--btz-radius-lg) !important;
+  box-shadow: var(--btz-shadow) !important;
+  transition: var(--btz-transition) !important;
+  background: white !important;
+}
+
+.card:hover {
+  box-shadow: var(--btz-shadow-lg) !important;
+  transform: translateY(-2px) !important;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+  color: #0066cc !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  border-bottom: 2px solid #0066cc !important;
+  padding: 1.25rem 1.5rem !important;
+  box-shadow: 0 1px 3px rgba(0, 102, 204, 0.1) !important;
+}
+
+.card-title {
+  margin: 0 !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important;
+  letter-spacing: -0.01em !important;
+  color: #0066cc !important;
+}
+
+.card-body {
+  padding: 1.5rem !important;
+  background: white !important;
+}
+
+/* Form Styles */
+.form-control {
+  border: 2px solid #e1e5e9 !important;
+  border-radius: var(--btz-radius) !important;
+  padding: 0.75rem 1rem !important;
+  transition: var(--btz-transition) !important;
+  background-color: white !important;
+  font-size: 0.875rem !important;
+}
+
+.form-control:focus {
+  border-color: var(--btz-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1) !important;
+  outline: none !important;
+}
+
+.form-control:hover {
+  border-color: var(--btz-primary-light) !important;
+}
+
+.form-label {
+  font-weight: 600 !important;
+  color: var(--btz-text) !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Table Styles - HELLE, LESBARE VERSION */
+.table {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.08) !important;
+  background: #ffffff !important;
+  border: 1px solid #e3f2fd !important;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+  border: none !important;
+  color: #0066cc !important;
+  font-weight: 600 !important;
+  padding: 1rem !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #0066cc !important;
+}
+
+.table tbody tr {
+  transition: all 0.2s ease-in-out !important;
+  border-bottom: 1px solid #f1f3f4 !important;
+  background: #ffffff !important;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa !important;
+  box-shadow: 0 1px 3px rgba(0, 102, 204, 0.05) !important;
+}
+
+.table tbody td {
+  padding: 1rem !important;
+  border: none !important;
+  vertical-align: middle !important;
+  color: #212529 !important;
+  background: transparent !important;
+}
+
+/* Navigation Styles - HELLE, LESBARE VERSION */
+.navbar {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+  border: none !important;
+  border-bottom: 2px solid #e3f2fd !important;
+  box-shadow: 0 2px 10px rgba(0, 102, 204, 0.08) !important;
+  padding: 0 !important;
+}
+
+.navbar-brand {
+  color: #0066cc !important;
+  font-weight: 700 !important;
+  font-size: 1.25rem !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: none !important;
+}
+
+.navbar-brand:hover {
+  color: #004d99 !important;
+  text-decoration: none !important;
+}
+
+/* Alert Styles */
+.alert {
+  border: none !important;
+  border-radius: var(--btz-radius) !important;
+  box-shadow: var(--btz-shadow-sm) !important;
+}
+
+.alert-success {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  color: var(--btz-success) !important;
+  border-left: 4px solid var(--btz-success) !important;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  color: var(--btz-danger) !important;
+  border-left: 4px solid var(--btz-danger) !important;
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  color: #856404 !important;
+  border-left: 4px solid var(--btz-warning) !important;
+}
+
+.alert-info {
+  background-color: rgba(23, 162, 184, 0.1) !important;
+  color: var(--btz-info) !important;
+  border-left: 4px solid var(--btz-info) !important;
+}
+
+/* Badge Styles */
+.badge {
+  border-radius: var(--btz-radius-sm) !important;
+  font-weight: 600 !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.75rem !important;
+}
+
+.badge-primary {
+  background-color: var(--btz-primary) !important;
+  color: white !important;
+}
+
+.badge-success {
+  background-color: var(--btz-success) !important;
+  color: white !important;
+}
+
+.badge-danger {
+  background-color: var(--btz-danger) !important;
+  color: white !important;
+}
+
+.badge-danger.badge-sm {
+  background-color: var(--btz-danger) !important;
+  color: white !important;
+  border-radius: var(--btz-radius-sm) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
+}
+
+.badge-warning {
+  background-color: var(--btz-warning) !important;
+  color: #212529 !important;
+}
+
+.badge-error {
+  background-color: var(--btz-danger) !important;
+  color: white !important;
+}
+
+.badge-error.badge-sm {
+  background-color: var(--btz-danger) !important;
+  color: white !important;
+  border-radius: 50% !important;
+  min-width: 1.25rem !important;
+  height: 1.25rem !important;
+  padding: 0.125rem 0.375rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Sidebar Styles - HELLE, LESBARE VERSION */
+.sidebar {
+  background: #ffffff !important;
+  border-right: 2px solid #e3f2fd !important;
+  box-shadow: 0 0 10px rgba(0, 102, 204, 0.05) !important;
+}
+
+.sidebar .nav-link {
+  color: #212529 !important;
+  border-radius: 0.5rem !important;
+  margin: 0.25rem 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.2s ease-in-out !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.sidebar .nav-link:hover {
+  background-color: #e3f2fd !important;
+  color: #0066cc !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1) !important;
+}
+
+.sidebar .nav-link.active {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+  color: #0066cc !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15) !important;
+  font-weight: 600 !important;
+}
+
+/* Modal Styles */
+.modal-content {
+  border: none !important;
+  border-radius: var(--btz-radius-lg) !important;
+  box-shadow: var(--btz-shadow-xl) !important;
+}
+
+.modal-header {
+  background: var(--btz-accent) !important;
+  border-bottom: 2px solid var(--btz-primary-light) !important;
+  border-radius: var(--btz-radius-lg) var(--btz-radius-lg) 0 0 !important;
+}
+
+.modal-title {
+  color: var(--btz-text) !important;
+  font-weight: 600 !important;
+}
+
+/* Loading States */
+.loading {
+  position: relative !important;
+}
+
+.loading::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin: -10px 0 0 -10px !important;
+  border: 2px solid var(--btz-primary-light) !important;
+  border-top: 2px solid var(--btz-primary) !important;
+  border-radius: 50% !important;
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   BTZ-KÖLN FORM ELEMENTS - IMPROVED
+   ======================================== */
+
+/* Checkbox Styles - Verbesserte Sichtbarkeit */
+input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border: 2px solid #6c757d !important;
+  background: white !important;
+  border-radius: 0.25rem !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1) !important;
+}
+
+input[type="checkbox"]:checked {
+  background: #0066cc !important;
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2) !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✓" !important;
+  color: white !important;
+  font-size: 0.75rem !important;
+  font-weight: bold !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Radio Button Styles */
+input[type="radio"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border: 2px solid #6c757d !important;
+  background: white !important;
+  border-radius: 50% !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+input[type="radio"]:hover {
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1) !important;
+}
+
+input[type="radio"]:checked {
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2) !important;
+}
+
+input[type="radio"]:checked::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  background: #0066cc !important;
+  border-radius: 50% !important;
+}
+
+/* Checkbox Styles - Verbesserte Sichtbarkeit (DaisyUI) */
+.checkbox {
+  border: 2px solid #6c757d !important;
+  background: white !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border-radius: 0.25rem !important;
+}
+
+.checkbox:hover {
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1) !important;
+}
+
+.checkbox:checked {
+  background: #0066cc !important;
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2) !important;
+}
+
+.checkbox:checked::after {
+  content: "✓" !important;
+  color: white !important;
+  font-size: 0.75rem !important;
+  font-weight: bold !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Dropdown Menu Styles - Weißer Hintergrund für Admin-Menü */
+.dropdown-content {
+  background: white !important;
+  border: 1px solid #e3f2fd !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 25px rgba(0, 102, 204, 0.1) !important;
+  color: #212529 !important;
+}
+
+.dropdown-content .menu li a {
+  color: #212529 !important;
+  transition: all 0.2s ease-in-out !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.25rem !important;
+}
+
+.dropdown-content .menu li a:hover {
+  background: #e3f2fd !important;
+  color: #0066cc !important;
+}
+
+.dropdown-content .menu li a.active {
+  background: #bbdefb !important;
+  color: #0066cc !important;
+  font-weight: 600 !important;
+}
+
+.dropdown-content .divider {
+  border-color: #e3f2fd !important;
+}
+
+/* Menu Styles für bessere Konsistenz */
+.menu {
+  background: white !important;
+}
+
+.menu li a {
+  color: #212529 !important;
+}
+
+.menu li a:hover {
+  background: #e3f2fd !important;
+  color: #0066cc !important;
+}
+
+/* Modal/Dialog Hintergrund - Sicherstellen, dass er nicht transparent ist */
+.modal {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-box {
+  background: white !important;
+  border: 1px solid #e3f2fd !important;
+  box-shadow: 0 20px 25px rgba(0, 102, 204, 0.1) !important;
 }
 
 /*
@@ -2626,11 +3226,11 @@ input.tab:checked + .tab-content,
 }
 
 .badge-error {
-  border-color: transparent;
+  border-color: transparent !important;
   --tw-bg-opacity: 1;
-  background-color: var(--fallback-er,oklch(var(--er)/var(--tw-bg-opacity)));
+  background-color: var(--btz-danger) !important;
   --tw-text-opacity: 1;
-  color: var(--fallback-erc,oklch(var(--erc)/var(--tw-text-opacity)));
+  color: white !important;
 }
 
 .badge-ghost {
@@ -2686,7 +3286,12 @@ input.tab:checked + .tab-content,
 
 .badge-outline.badge-error {
   --tw-text-opacity: 1;
-  color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity)));
+  color: var(--btz-danger) !important;
+}
+
+.badge-outline.badge-danger {
+  --tw-text-opacity: 1;
+  color: var(--btz-danger) !important;
 }
 
 .btm-nav > *:where(.active) {
@@ -4640,6 +5245,20 @@ details.collapse summary::-webkit-details-marker {
   line-height: 1rem;
   padding-left: 0.438rem;
   padding-right: 0.438rem;
+}
+
+.badge-error.badge-sm {
+  height: 1.25rem !important;
+  min-width: 1.25rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1.25rem !important;
+  padding-left: 0.375rem !important;
+  padding-right: 0.375rem !important;
+  border-radius: 50% !important;
+  background-color: var(--btz-danger) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
 }
 
 .badge-lg {

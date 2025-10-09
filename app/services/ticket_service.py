@@ -20,6 +20,32 @@ class TicketService:
     def __init__(self):
         self.notification_service = NotificationService()
         self.utility_service = UtilityService()
+        # Erlaubte Stati und Transitionen (robuste Statusmaschine)
+        self.ALLOWED_STATUSES = ['offen', 'zugewiesen', 'in_bearbeitung', 'wartet_auf_antwort', 'gelöst', 'geschlossen']
+        self.ALLOWED_TRANSITIONS = {
+            'offen': {'zugewiesen', 'in_bearbeitung', 'geschlossen'},
+            'zugewiesen': {'in_bearbeitung', 'wartet_auf_antwort', 'gelöst', 'geschlossen'},
+            'in_bearbeitung': {'wartet_auf_antwort', 'gelöst', 'geschlossen'},
+            'wartet_auf_antwort': {'in_bearbeitung', 'gelöst', 'geschlossen'},
+            'gelöst': {'geschlossen', 'offen'},  # Reopen erlaubt
+            'geschlossen': {'offen'}             # Reopen
+        }
+
+    def _get_required_fields_for_category(self, department: str, category: str) -> list:
+        """Ermittelt Pflichtfelder aus Settings je Abteilung/Kategorie."""
+        try:
+            # Department‑spezifisch
+            if department:
+                s = mongodb.find_one('settings', {'key': 'ticket_required_fields', 'department': department})
+                if s and isinstance(s.get('value'), dict):
+                    return s['value'].get(category, []) or []
+            # Global
+            s = mongodb.find_one('settings', {'key': 'ticket_required_fields'})
+            if s and isinstance(s.get('value'), dict):
+                return s['value'].get(category, []) or []
+        except Exception:
+            pass
+        return []
     
     def create_ticket(self, ticket_data: Dict[str, Any], created_by: str) -> Tuple[bool, str, Optional[str]]:
         """
@@ -45,6 +71,13 @@ class TicketService:
                 if category not in allowed:
                     return False, 'Kategorie ist für diese Abteilung nicht zulässig', None
             
+            # Pflichtfelder prüfen (aus Settings)
+            required_fields = self._get_required_fields_for_category(current_department, category or '')
+            for field in required_fields:
+                val = (ticket_data.get(field) if isinstance(ticket_data, dict) else None)
+                if val is None or (isinstance(val, str) and not val.strip()):
+                    return False, f'Pflichtfeld fehlt: {field}', None
+            
             # Fälligkeitsdatum formatieren
             due_date = ticket_data.get('due_date')
             if due_date:
@@ -66,7 +99,8 @@ class TicketService:
                 'department': current_department,
                 'created_at': datetime.now(),
                 'updated_at': datetime.now(),
-                'ticket_number': get_next_ticket_number()
+                'ticket_number': get_next_ticket_number(),
+                'version': 0
             }
             
             # Ticket in Datenbank speichern
@@ -246,7 +280,13 @@ class TicketService:
                     ticket['id'] = str(ticket['_id'])
                     
                     # Nachrichtenanzahl laden (korrekte Collection)
-                    messages = mongodb.find('ticket_messages', {'ticket_id': str(ticket['_id'])})
+                    # Unterstütze Messages, deren ticket_id als String oder ObjectId gespeichert ist
+                    messages = mongodb.find('ticket_messages', {
+                        '$or': [
+                            {'ticket_id': str(ticket['_id'])},
+                            {'ticket_id': ticket.get('_id')}
+                        ]
+                    })
                     ticket['message_count'] = len(list(messages))
                     
                     # Auftragsdetails laden (falls vorhanden)
@@ -347,8 +387,14 @@ class TicketService:
             if not ticket:
                 return False, 'Ticket nicht gefunden'
             
+            # Validierung Status
+            if new_status not in self.ALLOWED_STATUSES:
+                return False, 'Ungültiger Status'
             # Speichere alten Status für History
             old_status = ticket.get('status', 'unbekannt')
+            allowed_next = self.ALLOWED_TRANSITIONS.get(old_status, set())
+            if new_status not in allowed_next:
+                return False, f'Statuswechsel nicht erlaubt: {old_status} → {new_status}'
             
             # Status aktualisieren
             mongodb.update_one('tickets', 
@@ -425,11 +471,31 @@ class TicketService:
                     else:
                         logger.warning(f"Benutzer {username} nicht gefunden")
             
-            # Lösche bestehende Zuweisungen
-            mongodb.delete_many('ticket_assignments', {'ticket_id': ticket_id})
+            # Bestehende Zuweisungen auflösen: set‑basiert aktualisieren (idempotent)
+            existing = list(mongodb.find('ticket_assignments', {
+                '$or': [
+                    {'ticket_id': ticket_id},
+                    {'ticket_id': str(ticket_id)}
+                ]
+            }))
+            existing_users = {a.get('assigned_to') for a in existing if a.get('assigned_to')}
+            target_users = set(valid_users)
+            to_add = target_users - existing_users
+            to_remove = existing_users - target_users
+            # Entfernen
+            if to_remove:
+                mongodb.delete_many('ticket_assignments', {
+                    '$and': [
+                        {'assigned_to': {'$in': list(to_remove)}},
+                        {'$or': [
+                            {'ticket_id': ticket_id},
+                            {'ticket_id': str(ticket_id)}
+                        ]}
+                    ]
+                })
             
             # Erstelle neue Zuweisungen
-            for username in valid_users:
+            for username in to_add:
                 assignment = {
                     'ticket_id': ticket_id,
                     'assigned_to': username,
@@ -439,7 +505,7 @@ class TicketService:
                 mongodb.insert_one('ticket_assignments', assignment)
             
             # Aktualisiere das Ticket mit der ersten Zuweisung (für Kompatibilität)
-            primary_assignment = valid_users[0] if valid_users else None
+            primary_assignment = (list(target_users)[0] if target_users else None)
             mongodb.update_one('tickets', 
                              {'_id': ticket_id}, 
                              {'$set': {
@@ -687,8 +753,13 @@ class TicketService:
                     # In Mehrfachzuweisungen hinzufügen, falls noch nicht vorhanden
                     ticket_id_for_assign = str(self.utility_service.convert_id_for_query(ticket_id))
                     existing = mongodb.find_one('ticket_assignments', {
-                        'ticket_id': ticket_id_for_assign,
-                        'assigned_to': responsible_username
+                        '$and': [
+                            {'assigned_to': responsible_username},
+                            {'$or': [
+                                {'ticket_id': ticket_id_for_assign},
+                                {'ticket_id': ticket_id}
+                            ]}
+                        ]
                     })
                     if not existing:
                         mongodb.insert_one('ticket_assignments', {

@@ -1108,8 +1108,29 @@ class BackupManager:
                 db_name = 'scandy'
             
             # mongodump Befehl ausführen
+            # mongodump-Binärdatei robust ermitteln
+            mongodump_bin = os.environ.get('MONGODUMP_BIN')
+            def _is_exec(p: str) -> bool:
+                try:
+                    return p and os.path.isfile(p) and os.access(p, os.X_OK)
+                except Exception:
+                    return False
+            if not _is_exec(mongodump_bin or ''):
+                try:
+                    from shutil import which
+                    w = which('mongodump')
+                    if w and _is_exec(w):
+                        mongodump_bin = w
+                except Exception:
+                    mongodump_bin = None
+            if not _is_exec(mongodump_bin or ''):
+                # Gängige Pfade testen
+                for p in ['/usr/bin/mongodump','/usr/local/bin/mongodump','/snap/bin/mongodump','/opt/homebrew/bin/mongodump','/opt/local/bin/mongodump']:
+                    if _is_exec(p):
+                        mongodump_bin = p
+                        break
             cmd = [
-                '/usr/bin/mongodump',
+                mongodump_bin or '/usr/bin/mongodump',
                 '--uri', mongo_uri,
                 '--out', str(backup_path),
                 '--gzip'  # Komprimierung für kleinere Dateien

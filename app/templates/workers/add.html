@@ -19,7 +19,7 @@
         <!-- Formular -->
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
-                <form method="POST" action="{{ url_for('workers.add') }}">
+                <form method="POST" action="{{ url_for('workers.add_worker') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="form-control">

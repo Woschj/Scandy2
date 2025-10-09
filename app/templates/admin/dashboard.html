@@ -19,10 +19,12 @@
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold">Admin Dashboard</h1>
             <div class="flex gap-2">
-                <a href="{{ url_for('admin.export_all_data') }}" class="btn btn-outline btn-sm">
+                <!-- Entfernt: export_all_data nicht vorhanden -->
+                <!-- <a href="#" class="btn btn-outline btn-sm"> -->
                     <i class="fas fa-download mr-2"></i>Standard Export
                 </a>
-                <a href="{{ url_for('admin.export_excel_detailed') }}" class="btn btn-primary btn-sm">
+                <!-- Entfernt: export_excel_detailed nicht vorhanden -->
+                <!-- <a href="#" class="btn btn-primary btn-sm"> -->
                     <i class="fas fa-file-excel mr-2"></i>Detaillierter Excel Export
                 </a>
                 {% if has_permission(current_user.role, 'settings', 'manage') %}
@@ -245,7 +247,7 @@
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('workers.details', original_barcode=loan.worker_barcode) }}" class="link link-primary">
+                                    <a href="{{ url_for('workers.worker_detail', original_barcode=loan.worker_barcode) }}" class="link link-primary">
                                         {{ loan.worker_name }}
                                     </a>
                                 </td>
@@ -275,7 +277,7 @@
                     <i class="fas fa-bullhorn text-info"></i>
                     Startseiten-Hinweise (aktuelle Abteilung)
                 </h2>
-                <a href="{{ url_for('admin.create_notice') }}" class="btn btn-primary btn-sm">
+                <a href="{{ url_for('api.create_notice') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus mr-2"></i> Neuer Hinweis
                 </a>
             </div>
@@ -300,7 +302,8 @@
                                 <span class="badge badge-{{ 'success' if n.is_active else 'error' }}">{{ 'Aktiv' if n.is_active else 'Inaktiv' }}</span>
                             </td>
                             <td class="text-right">
-                                <a href="{{ url_for('admin.edit_notice', id=n._id if n._id else n.id) }}" class="btn btn-ghost btn-sm">
+                                <!-- Entfernt: edit_notice nicht vorhanden -->
+                                <!-- <a href="#" class="btn btn-ghost btn-sm"> -->
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </td>

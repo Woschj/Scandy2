@@ -49,7 +49,7 @@
                 </div>
             </div>
             <div class="flex justify-center gap-4">
-                <a href="{{ url_for('workers.teilnehmer_timesheet_list') }}" class="btn btn-primary">
+                <a href="{{ url_for('workers.teilnehmer_timesheets') }}" class="btn btn-primary">
                     <i class="fas fa-clock mr-2"></i>Zu den Wochenberichten
                 </a>
                 <a href="{{ url_for('tickets.public_create_order') }}" class="btn btn-secondary">
@@ -73,7 +73,7 @@
                 </h2>
                 <p class="text-sm opacity-70 mb-4">Teil-Eingaben möglich; bisherige Eingaben werden angezeigt.</p>
                 {% set _ts = timesheet_prefill %}
-                <form method="POST" action="{{ url_for('workers.timesheet_quick_update') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form method="POST" action="{{ url_for('workers.quick_update_timesheet') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-control">
                         <label class="label"><span class="label-text">Startzeit</span></label>
@@ -91,7 +91,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save mr-2"></i>Speichern
                         </button>
-                        <a href="{{ url_for('workers.teilnehmer_timesheet_list') }}" class="btn btn-ghost">Wochenberichte öffnen</a>
+                        <a href="{{ url_for('workers.teilnehmer_timesheets') }}" class="btn btn-ghost">Wochenberichte öffnen</a>
                     </div>
                 </form>
                 {% else %}

@@ -3,12 +3,14 @@
 {% block title %}Anmeldung - {{ config.SYSTEM_NAME }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-base-200">
-    <div class="card w-96 bg-base-100 shadow-xl">
-        <div class="card-body">
+<div class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+    <div class="card w-96 bg-white shadow-xl border-0" style="border-radius: 1rem; border: 1px solid #e3f2fd;">
+        <div class="card-body p-8">
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold">
-                    <i class="fas fa-sign-in-alt text-primary mr-2"></i>
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4" style="box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);">
+                    <i class="fas fa-sign-in-alt text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">
                     Anmeldung
                 </h1>
                 <p class="text-sm text-gray-600">{{ config.SYSTEM_NAME }}</p>
@@ -46,8 +48,8 @@
                 </div>
 
                 <div class="form-control">
-                    <button type="submit" class="btn btn-primary w-full">
-                        <i class="fas fa-sign-in-alt mr-2"></i>
+                    <button type="submit" class="btn btn-primary w-full hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-sign-in-alt me-2"></i>
                         Anmelden
                     </button>
                 </div>
@@ -56,8 +58,8 @@
             <div class="divider">Passwort vergessen?</div>
 
             <div class="text-center">
-                <a href="{{ url_for('auth.reset_password') }}" class="btn btn-outline btn-sm">
-                    <i class="fas fa-unlock-alt mr-2"></i>
+                <a href="{{ url_for('auth.reset_password') }}" class="btn btn-secondary btn-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                    <i class="fas fa-unlock-alt me-2"></i>
                     Passwort zurücksetzen
                 </a>
             </div>
