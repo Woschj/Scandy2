@@ -328,35 +328,46 @@ success "Verwende Port: $WEB_PORT ($PORT_NAME)"
 # 1. System-Pakete installieren
 log "Installiere System-Pakete..."
 
-# Deaktiviere pipefail für apt-Befehle
+# Deaktiviere strict error handling für apt-Befehle
+set +e
 set +o pipefail
 
 # apt update (ignoriere Errors, da apt manchmal Warnings als Errors meldet)
 log "Aktualisiere Paketliste..."
-APT_OUTPUT=$(apt update -y 2>&1)
+apt update -y >/dev/null 2>&1
 APT_EXIT=$?
 
 if [ $APT_EXIT -eq 0 ]; then
     success "Paketliste aktualisiert"
 else
-    log "apt update gab Exit-Code $APT_EXIT zurück"
-    echo "$APT_OUTPUT" | grep -E "Err|fail|error" || true
-    log "Setze trotzdem fort..."
+    log "apt update gab Exit-Code $APT_EXIT zurück (oft nur Warnings)"
+    apt update -y 2>&1 | grep -E "^Err:|error" || log "Keine kritischen Fehler gefunden"
+    log "Setze mit Installation fort..."
 fi
 
 # Installiere System-Pakete
 log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync 2>&1 || {
-    set -o pipefail
-    error "Paket-Installation fehlgeschlagen - das könnte ein echtes Problem sein"
-    error "Bitte manuell versuchen: sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
-    exit 1
-}
+apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync >/dev/null 2>&1
+INSTALL_EXIT=$?
 
-# Reaktiviere pipefail
+if [ $INSTALL_EXIT -eq 0 ]; then
+    success "System-Pakete installiert"
+else
+    # Reaktiviere strict mode für Fehlerbehandlung
+    set -e
+    set -o pipefail
+    error "Paket-Installation fehlgeschlagen (Exit-Code: $INSTALL_EXIT)"
+    error "Bitte manuell versuchen:"
+    error "  sudo apt update"
+    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
+    exit 1
+fi
+
+# Reaktiviere strict error handling
+set -e
 set -o pipefail
 
-success "System-Pakete installiert"
+success "System-Pakete erfolgreich installiert"
 
 # 2. MongoDB installieren (einfach)
 log "Installiere MongoDB..."
