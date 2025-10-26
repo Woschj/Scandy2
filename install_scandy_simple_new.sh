@@ -401,9 +401,17 @@ if ! command -v mongod >/dev/null 2>&1; then
     if [ $INSTALL_MONGO_EXIT -eq 0 ] && command -v mongod >/dev/null 2>&1; then
         success "MongoDB installiert"
     else
-        error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
-        log "MongoDB könnte bereits installiert sein oder es gab ein Problem"
-        log "Fortsetzen..."
+        if command -v mongod >/dev/null 2>&1; then
+            log "MongoDB ist installiert, obwohl Installation Fehler meldete"
+        else
+            error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
+            error "CRITICAL: MongoDB ist erforderlich für die App!"
+            error "Bitte manuell installieren:"
+            error "  sudo apt update"
+            error "  sudo apt install -y mongodb-org"
+            error "  sudo systemctl start mongod"
+            exit 1
+        fi
     fi
 else
     info "MongoDB bereits installiert"
@@ -548,7 +556,7 @@ else
 fi
 set -e
 
-# Prüfen ob MongoDB läuft
+# Prüfen ob MongoDB läuft - CRITICAL CHECK
 log "Prüfe MongoDB-Verbindung..."
 set +e
 MONGODB_CONNECTED=0
@@ -566,7 +574,7 @@ for i in {1..60}; do
     fi
     
     if [ $i -eq 60 ]; then
-        log "MongoDB-Verbindung nach 60 Versuchen fehlgeschlagen"
+        error "MongoDB-Verbindung nach 60 Versuchen fehlgeschlagen"
         
         # Zeige MongoDB-Status
         log "MongoDB-Status:"
@@ -581,12 +589,27 @@ for i in {1..60}; do
         log "Port 27017 Status:"
         ss -tlnp | grep 27017 || echo "Port 27017 nicht geöffnet"
         
-        log "WARNUNG: MongoDB könnte nicht korrekt laufen"
-        log "Aber Fortsetzen der Installation..."
+        error "CRITICAL: MongoDB läuft nicht - die App benötigt MongoDB!"
+        error "Bitte manuell starten:"
+        error "  sudo systemctl start mongod"
+        error "  oder: sudo mongod --config /etc/mongod.conf"
+        error ""
+        error "Installation wird beendet - MongoDB ist erforderlich!"
+        set -e
+        exit 1
     fi
     sleep 1
 done
 set -e
+
+# Finale Prüfung
+if ! mongosh --quiet --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+    error "CRITICAL: MongoDB-Verbindung fehlgeschlagen!"
+    error "Die App kann ohne MongoDB nicht funktionieren."
+    error "Bitte beheben Sie das Problem und starten Sie die Installation erneut."
+    exit 1
+fi
+success "MongoDB ist erreichbar und funktioniert!"
 
 # 4. Scandy-Verzeichnis einrichten
 log "Richte Scandy ein..."
