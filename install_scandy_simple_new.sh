@@ -421,17 +421,42 @@ if ! command -v mongod >/dev/null 2>&1; then
     fi
     
     log "Aktualisiere Paketliste für MongoDB..."
-    apt update -y >/dev/null 2>&1
+    APT_UPDATE_OUTPUT=$(apt update -y 2>&1)
+    
+    # Prüfe auf Repository-Fehler
+    if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "NO_PUBKEY"; then
+        log "Repository-Problem erkannt - entferne MongoDB-Repository und verwende Ubuntu-Pakete"
+        rm -f /etc/apt/sources.list.d/mongodb-org-*.list 2>/dev/null || true
+        rm -f /usr/share/keyrings/mongodb-server-*.gpg 2>/dev/null || true
+        apt update -y >/dev/null 2>&1
+    fi
     
     log "Installiere MongoDB (das kann einige Minuten dauern)..."
     
     # Versuche verschiedene Installationsmethoden
+    INSTALL_MONGO_EXIT=1
+    
+    # Methode 1: Offizielles mongodb-org Paket
     if apt install -y mongodb-org >/dev/null 2>&1; then
         INSTALL_MONGO_EXIT=0
+        log "MongoDB erfolgreich mit mongodb-org installiert"
+    # Methode 2: Ubuntu mongodb Paket
     elif apt install -y mongodb >/dev/null 2>&1; then
         INSTALL_MONGO_EXIT=0
+        log "MongoDB erfolgreich mit mongodb installiert"
+    # Methode 3: Einzelne Pakete
     else
-        INSTALL_MONGO_EXIT=$?
+        log "Standard-Installation fehlgeschlagen - versuche Einzelpakete..."
+        
+        # Installiere mongodb direkt ohne Repository
+        apt update -y >/dev/null 2>&1
+        
+        if apt install -y mongodb-server mongodb-clients >/dev/null 2>&1; then
+            INSTALL_MONGO_EXIT=0
+            log "MongoDB erfolgreich mit mongodb-server installiert"
+        else
+            INSTALL_MONGO_EXIT=$?
+        fi
     fi
     
     # Reaktiviere Fehlerbehandlung
@@ -444,13 +469,22 @@ if ! command -v mongod >/dev/null 2>&1; then
         error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
         error "CRITICAL: MongoDB ist erforderlich für die App!"
         error ""
-        error "Bitte manuell installieren:"
+        error "Versuchen Sie eine der folgenden Methoden:"
         error ""
-        error "Füge MongoDB-Repository hinzu:"
-        error "  curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg"
+        error "Method 1 - Ubuntu MongoDB (einfacher):"
+        error "  sudo apt update"
+        error "  sudo apt install -y mongodb mongodb-server"
+        error "  sudo systemctl start mongod"
+        error ""
+        error "Method 2 - Offizielle MongoDB (neuester Stand):"
+        error "  sudo curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg"
         error "  echo \"deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse\" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list"
         error "  sudo apt update"
         error "  sudo apt install -y mongodb-org"
+        error ""
+        error "Nach der manuellen Installation:"
+        error "  sudo systemctl start mongod"
+        error "  sudo systemctl enable mongod"
         exit 1
     fi
 else
