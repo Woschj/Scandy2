@@ -346,8 +346,8 @@ else
 fi
 
 # Installiere System-Pakete
-log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync >/dev/null 2>&1
+log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
+apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget >/dev/null 2>&1
 INSTALL_EXIT=$?
 
 if [ $INSTALL_EXIT -eq 0 ]; then
@@ -378,40 +378,80 @@ if ! command -v mongod >/dev/null 2>&1; then
     set +e
     set +o pipefail
     
-    log "Füge MongoDB-Repository hinzu..."
-    if curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg 2>/dev/null; then
-        success "MongoDB GPG-Schlüssel hinzugefügt"
-    else
-        log "GPG-Schlüssel konnte nicht hinzugefügt werden - versuche Fortsetzung..."
+    # Prüfe ob MongoDB-Repository bereits konfiguriert ist
+    MONGO_REPO_EXISTS=0
+    if [ -f "/etc/apt/sources.list.d/mongodb-org-*.list" ] || ls /etc/apt/sources.list.d/mongodb* 2>/dev/null | grep -q mongodb; then
+        log "MongoDB-Repository bereits konfiguriert"
+        MONGO_REPO_EXISTS=1
     fi
     
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
+    # Füge MongoDB-Repository hinzu falls nicht vorhanden
+    if [ $MONGO_REPO_EXISTS -eq 0 ]; then
+        log "Füge MongoDB-Repository hinzu..."
+        
+        # Installiere wget falls nicht vorhanden
+        if ! command -v wget >/dev/null 2>&1; then
+            apt install -y wget 2>/dev/null || true
+        fi
+        
+        # Erstelle Verzeichnisse
+        mkdir -p /usr/share/keyrings
+        
+        # Füge MongoDB GPG-Schlüssel hinzu
+        if curl -fsSL https://pgp.mongodb.com/server-7.0.asc -o /tmp/mongodb-gpg.asc 2>/dev/null; then
+            if gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg /tmp/mongodb-gpg.asc 2>/dev/null; then
+                success "MongoDB GPG-Schlüssel hinzugefügt"
+            else
+                log "Fallback: Verwende wget für GPG-Schlüssel..."
+                wget -qO - https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg 2>/dev/null || true
+            fi
+            rm -f /tmp/mongodb-gpg.asc 2>/dev/null || true
+        else
+            log "GPG-Schlüssel konnte nicht heruntergeladen werden"
+        fi
+        
+        # Füge Repository hinzu
+        UBUNTU_CODENAME=$(lsb_release -cs)
+        if [ -n "$UBUNTU_CODENAME" ]; then
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
+            log "MongoDB-Repository für $UBUNTU_CODENAME hinzugefügt"
+        else
+            log "Konnte Ubuntu-Codename nicht ermitteln"
+        fi
+    fi
     
     log "Aktualisiere Paketliste für MongoDB..."
     apt update -y >/dev/null 2>&1
     
     log "Installiere MongoDB (das kann einige Minuten dauern)..."
-    apt install -y mongodb-org >/dev/null 2>&1
-    INSTALL_MONGO_EXIT=$?
+    
+    # Versuche verschiedene Installationsmethoden
+    if apt install -y mongodb-org >/dev/null 2>&1; then
+        INSTALL_MONGO_EXIT=0
+    elif apt install -y mongodb >/dev/null 2>&1; then
+        INSTALL_MONGO_EXIT=0
+    else
+        INSTALL_MONGO_EXIT=$?
+    fi
     
     # Reaktiviere Fehlerbehandlung
     set -e
     set -o pipefail
     
-    if [ $INSTALL_MONGO_EXIT -eq 0 ] && command -v mongod >/dev/null 2>&1; then
+    if command -v mongod >/dev/null 2>&1; then
         success "MongoDB installiert"
     else
-        if command -v mongod >/dev/null 2>&1; then
-            log "MongoDB ist installiert, obwohl Installation Fehler meldete"
-        else
-            error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
-            error "CRITICAL: MongoDB ist erforderlich für die App!"
-            error "Bitte manuell installieren:"
-            error "  sudo apt update"
-            error "  sudo apt install -y mongodb-org"
-            error "  sudo systemctl start mongod"
-            exit 1
-        fi
+        error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
+        error "CRITICAL: MongoDB ist erforderlich für die App!"
+        error ""
+        error "Bitte manuell installieren:"
+        error ""
+        error "Füge MongoDB-Repository hinzu:"
+        error "  curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg"
+        error "  echo \"deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse\" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list"
+        error "  sudo apt update"
+        error "  sudo apt install -y mongodb-org"
+        exit 1
     fi
 else
     info "MongoDB bereits installiert"
