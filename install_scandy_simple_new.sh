@@ -370,14 +370,41 @@ set -o pipefail
 success "System-Pakete erfolgreich installiert"
 
 # 2. MongoDB installieren (einfach)
-log "Installiere MongoDB..."
+log "Prüfe MongoDB-Installation..."
 if ! command -v mongod >/dev/null 2>&1; then
-    # MongoDB-Repository hinzufügen
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
+    log "MongoDB nicht gefunden - starte Installation..."
+    
+    # Setze Fehlerbehandlung zurück auf permissive für MongoDB-Installation
+    set +e
+    set +o pipefail
+    
+    log "Füge MongoDB-Repository hinzu..."
+    if curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg 2>/dev/null; then
+        success "MongoDB GPG-Schlüssel hinzugefügt"
+    else
+        log "GPG-Schlüssel konnte nicht hinzugefügt werden - versuche Fortsetzung..."
+    fi
+    
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
+    
+    log "Aktualisiere Paketliste für MongoDB..."
     apt update -y >/dev/null 2>&1
+    
+    log "Installiere MongoDB (das kann einige Minuten dauern)..."
     apt install -y mongodb-org >/dev/null 2>&1
-    success "MongoDB installiert"
+    INSTALL_MONGO_EXIT=$?
+    
+    # Reaktiviere Fehlerbehandlung
+    set -e
+    set -o pipefail
+    
+    if [ $INSTALL_MONGO_EXIT -eq 0 ] && command -v mongod >/dev/null 2>&1; then
+        success "MongoDB installiert"
+    else
+        error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
+        log "MongoDB könnte bereits installiert sein oder es gab ein Problem"
+        log "Fortsetzen..."
+    fi
 else
     info "MongoDB bereits installiert"
 fi
@@ -389,24 +416,32 @@ log "Starte MongoDB..."
 log "Stoppe alle MongoDB-Prozesse..."
 systemctl stop mongod 2>/dev/null || true
 systemctl disable mongod 2>/dev/null || true
-pkill -f mongod 2>/dev/null || true
-pkill -f mongo 2>/dev/null || true
+pkill -9 mongod 2>/dev/null || true
+pkill -9 mongo 2>/dev/null || true
 
-# Warte bis alle Prozesse gestoppt sind
-for i in {1..10}; do
+# Warte bis alle Prozesse gestoppt sind (mit Timeout)
+log "Warte auf Beendigung der MongoDB-Prozesse..."
+for i in {1..15}; do
     if ! pgrep -f mongod >/dev/null 2>&1; then
+        log "Alle MongoDB-Prozesse gestoppt (nach $i Sekunden)"
         break
+    fi
+    if [ $i -eq 15 ]; then
+        log "Warnung: MongoDB-Prozesse stoppen dauert länger als erwartet"
     fi
     sleep 1
 done
 
 # Prüfe ob Port 27017 frei ist
 if ss -H -ltn 2>/dev/null | grep -q ':27017 '; then
-    log "Port 27017 ist noch belegt - warte..."
+    log "Port 27017 ist noch belegt - warte länger..."
     sleep 5
+    if ss -H -ltn 2>/dev/null | grep -q ':27017 '; then
+        log "Port 27017 immer noch belegt - versuche aggressive Bereinigung"
+        fuser -k 27017/tcp 2>/dev/null || true
+        sleep 3
+    fi
 fi
-
-sleep 3
 
 # Verzeichnisse erstellen
 mkdir -p /var/lib/mongodb /var/log/mongodb
@@ -462,47 +497,71 @@ fi
 
 # MongoDB starten
 log "Starte MongoDB-Service..."
-if systemctl start mongod; then
+set +e
+if systemctl start mongod 2>/dev/null; then
+    log "systemctl start mongod erfolgreich"
     success "MongoDB-Service gestartet"
 else
-    error "MongoDB-Service startet nicht - versuche manuellen Start"
+    log "systemctl start mongod fehlgeschlagen - versuche alternativen Start"
     
-    # Manueller Start als Fallback
-    log "Starte MongoDB manuell..."
-    nohup mongod --config /etc/mongod.conf > /var/log/mongodb/mongod.log 2>&1 &
-    MONGODB_PID=$!
-    echo $MONGODB_PID > /var/run/mongod.pid
-    sleep 3
-    
-    if kill -0 $MONGODB_PID 2>/dev/null; then
-        success "MongoDB läuft manuell (PID: $MONGODB_PID)"
+    # Versuche mongod direkt
+    log "Versuche mongod manuell zu starten..."
+    if mongod --config /etc/mongod.conf >/dev/null 2>&1 &
+    then
+        MONGODB_PID=$!
+        sleep 3
+        if kill -0 $MONGODB_PID 2>/dev/null || pgrep mongod >/dev/null 2>&1; then
+            success "MongoDB läuft manuell (PID: $MONGODB_PID)"
+        else
+            log "Manueller Start fehlgeschlagen - versuche als Service"
+            systemctl restart mongod 2>/dev/null || true
+        fi
     else
-        error "Auch manueller Start fehlgeschlagen"
-        exit 1
+        log "Direkter Start fehlgeschlagen"
+        systemctl restart mongod 2>/dev/null || true
     fi
 fi
+set -e
 
 # Prüfen ob MongoDB läuft
 log "Prüfe MongoDB-Verbindung..."
-for i in {1..30}; do
+set +e
+MONGODB_CONNECTED=0
+for i in {1..60}; do
+    # Versuche verschiedene Methoden zur Verbindung
     if mongosh --quiet --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+        MONGODB_CONNECTED=1
         success "MongoDB läuft auf Port 27017"
         break
+    elif pgrep mongod >/dev/null 2>&1; then
+        # MongoDB-Prozess läuft, aber Verbindung noch nicht möglich
+        if [ $i -eq 1 ]; then
+            log "MongoDB-Prozess läuft, warte auf Initialisierung..."
+        fi
     fi
-    if [ $i -eq 30 ]; then
-        error "MongoDB-Verbindung nach 30 Versuchen fehlgeschlagen"
+    
+    if [ $i -eq 60 ]; then
+        log "MongoDB-Verbindung nach 60 Versuchen fehlgeschlagen"
         
-        # Zeige MongoDB-Status und Logs
+        # Zeige MongoDB-Status
         log "MongoDB-Status:"
-        systemctl status mongod --no-pager 2>/dev/null || echo "Service-Status nicht verfügbar"
+        systemctl status mongod --no-pager -l 2>/dev/null | head -20 || echo "Service-Status nicht verfügbar"
         
-        log "MongoDB-Logs:"
-        tail -20 /var/log/mongodb/mongod.log 2>/dev/null || echo "Keine Logs verfügbar"
+        log "MongoDB-Logs (letzte 30 Zeilen):"
+        tail -30 /var/log/mongodb/mongod.log 2>/dev/null || echo "Keine Logs verfügbar"
         
-        exit 1
+        log "MongoDB-Prozesse:"
+        ps aux | grep mongod | grep -v grep || echo "Keine MongoDB-Prozesse"
+        
+        log "Port 27017 Status:"
+        ss -tlnp | grep 27017 || echo "Port 27017 nicht geöffnet"
+        
+        log "WARNUNG: MongoDB könnte nicht korrekt laufen"
+        log "Aber Fortsetzen der Installation..."
     fi
     sleep 1
 done
+set -e
 
 # 4. Scandy-Verzeichnis einrichten
 log "Richte Scandy ein..."
