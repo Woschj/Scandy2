@@ -327,8 +327,14 @@ success "Verwende Port: $WEB_PORT ($PORT_NAME)"
 
 # 1. System-Pakete installieren
 log "Installiere System-Pakete..."
-apt update -y >/dev/null 2>&1
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc >/dev/null 2>&1
+apt update -y >/dev/null 2>&1 || {
+    error "apt update fehlgeschlagen"
+    exit 1
+}
+apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync >/dev/null 2>&1 || {
+    error "Paket-Installation fehlgeschlagen"
+    exit 1
+}
 success "System-Pakete installiert"
 
 # 2. MongoDB installieren (einfach)
@@ -480,10 +486,13 @@ copy_without_venv() {
     local SRC_DIR="$1"
     local DST_DIR="$2"
     
+    log "Kopiere von $SRC_DIR nach $DST_DIR (ohne venv)..."
+    
     # Erstelle DST-Verzeichnis
     mkdir -p "$DST_DIR"
     
     # Kopiere alles außer venv, __pycache__ und andere temporäre Verzeichnisse
+    set +o pipefail
     rsync -av --progress \
         --exclude='venv' \
         --exclude='__pycache__' \
@@ -491,7 +500,18 @@ copy_without_venv() {
         --exclude='.git' \
         --exclude='node_modules' \
         --exclude='.venv' \
-        "$SRC_DIR/" "$DST_DIR/"
+        "$SRC_DIR/" "$DST_DIR/" >/dev/null 2>&1
+    RSYNC_EXIT=$?
+    set -o pipefail
+    
+    if [ $RSYNC_EXIT -eq 0 ]; then
+        log "Kopieren mit rsync erfolgreich"
+        return 0
+    else
+        log "Kopieren mit rsync fehlgeschlagen - verwende cp als Fallback"
+        # Fallback: Verwende cp mit find
+        (cd "$SRC_DIR" && find . -not -path './venv*' -not -path './.git*' -not -path './node_modules*' -not -name '*.pyc' -not -path './__pycache__*' -exec cp --parent {} "$DST_DIR/" \;)
+    fi
 }
 
 if [ -d "/home/$(logname)/Scandy2" ]; then
