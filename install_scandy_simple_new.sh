@@ -325,6 +325,33 @@ fi
 
 success "Verwende Port: $WEB_PORT ($PORT_NAME)"
 
+# 0. Prüfe ob apt bereits läuft
+log "Prüfe ob apt-Sperre frei ist..."
+WAIT_COUNT=0
+while fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/lib/dpkg/lock >/dev/null 2>&1 || pgrep -x "apt" >/dev/null 2>&1 || pgrep -x "apt-get" >/dev/null 2>&1; do
+    if [ $WAIT_COUNT -eq 0 ]; then
+        log "apt-Sperre erkannt - warte auf freigabe..."
+    fi
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+    if [ $WAIT_COUNT -gt 60 ]; then
+        log "Warte zu lange auf apt-Sperre - versuche hartnäckige Prozesse zu beenden..."
+        pkill -9 apt 2>/dev/null || true
+        pkill -9 apt-get 2>/dev/null || true
+        pkill -9 dpkg 2>/dev/null || true
+        rm -f /var/lib/apt/lists/lock 2>/dev/null || true
+        rm -f /var/lib/dpkg/lock 2>/dev/null || true
+        rm -f /var/lib/dpkg/lock-frontend 2>/dev/null || true
+        sleep 3
+    else
+        log "Warte auf apt-Sperre... ($WAIT_COUNT/60)"
+        sleep 1
+    fi
+done
+
+if [ $WAIT_COUNT -gt 0 ]; then
+    success "apt-Sperre ist jetzt frei"
+fi
+
 # 1. System-Pakete installieren
 log "Installiere System-Pakete..."
 
