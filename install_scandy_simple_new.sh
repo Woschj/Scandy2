@@ -449,21 +449,25 @@ if ! command -v mongod >/dev/null 2>&1; then
     fi
     
     log "Installiere MongoDB (das kann einige Minuten dauern)..."
+    log "ZEIGE DETAILS während der Installation..."
     
     # Versuche verschiedene Installationsmethoden
     INSTALL_MONGO_EXIT=1
     
-    # Methode 1: Offizielles mongodb-org Paket
-    if apt install -y mongodb-org >/dev/null 2>&1; then
+    # Methode 1: Offizielles mongodb-org Paket mit Timeout
+    log "Versuche mongodb-org zu installieren..."
+    if timeout 300 apt install -y mongodb-org 2>&1 | tee /tmp/mongo_install.log; then
         INSTALL_MONGO_EXIT=0
         log "MongoDB erfolgreich mit mongodb-org installiert"
     # Methode 2: Nur mongodb-server Paket (falls verfügbar)
-    elif apt install -y mongodb-server >/dev/null 2>&1; then
+    elif timeout 300 apt install -y mongodb-server 2>&1 | tee /tmp/mongo_install.log; then
         INSTALL_MONGO_EXIT=0
         log "MongoDB erfolgreich mit mongodb-server installiert"
     else
         INSTALL_MONGO_EXIT=$?
-        log "Keine MongoDB-Pakete verfügbar"
+        log "Installations-Log (letzte 20 Zeilen):"
+        tail -20 /tmp/mongo_install.log 2>/dev/null || echo "Kein Log verfügbar"
+        log "Keine MongoDB-Pakete verfügbar (Exit: $INSTALL_MONGO_EXIT)"
     fi
     
     # Reaktiviere Fehlerbehandlung
