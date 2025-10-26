@@ -496,30 +496,55 @@ EOF
 fi
 
 # MongoDB starten
-log "Starte MongoDB-Service..."
-set +e
-if systemctl start mongod 2>/dev/null; then
-    log "systemctl start mongod erfolgreich"
-    success "MongoDB-Service gestartet"
-else
-    log "systemctl start mongod fehlgeschlagen - versuche alternativen Start"
+log "Starte MongoDB..."
+
+# Prüfe ob mongod verfügbar ist
+if ! command -v mongod >/dev/null 2>&1; then
+    error "MongoDB ist nicht installiert!"
+    log "Versuche MongoDB-Installation erneut..."
     
-    # Versuche mongod direkt
-    log "Versuche mongod manuell zu starten..."
-    if mongod --config /etc/mongod.conf >/dev/null 2>&1 &
-    then
-        MONGODB_PID=$!
-        sleep 3
-        if kill -0 $MONGODB_PID 2>/dev/null || pgrep mongod >/dev/null 2>&1; then
-            success "MongoDB läuft manuell (PID: $MONGODB_PID)"
+    # Versuche MongoDB zu installieren
+    set +e
+    apt install -y mongodb mongodb-server 2>/dev/null || apt install -y mongodb-org 2>/dev/null || true
+    set -e
+    
+    if ! command -v mongod >/dev/null 2>&1; then
+        error "MongoDB konnte nicht installiert werden"
+        log "Installation wird ohne MongoDB fortgesetzt..."
+        log "Bitte manuell installieren: sudo apt install -y mongodb-org"
+    fi
+fi
+
+# Starte MongoDB nur wenn es verfügbar ist
+set +e
+if command -v mongod >/dev/null 2>&1; then
+    # Prüfe ob mongod.service existiert
+    if systemctl list-unit-files | grep -q mongod.service; then
+        log "Starte MongoDB-Service (systemd)..."
+        if systemctl start mongod 2>/dev/null; then
+            log "systemctl start mongod erfolgreich"
+            success "MongoDB-Service gestartet"
         else
-            log "Manueller Start fehlgeschlagen - versuche als Service"
+            log "systemctl start mongod fehlgeschlagen - versuche manuellen Start"
             systemctl restart mongod 2>/dev/null || true
         fi
     else
-        log "Direkter Start fehlgeschlagen"
-        systemctl restart mongod 2>/dev/null || true
+        log "MongoDB systemd-Service nicht gefunden - starte manuell..."
+        
+        # Starte mongod manuell im Hintergrund
+        log "Starte mongod im Hintergrund..."
+        mongod --config /etc/mongod.conf >/var/log/mongodb/mongod.log 2>&1 &
+        MONGODB_PID=$!
+        sleep 3
+        
+        if kill -0 $MONGODB_PID 2>/dev/null || pgrep mongod >/dev/null 2>&1; then
+            success "MongoDB läuft manuell (PID: $MONGODB_PID)"
+        else
+            log "MongoDB-Start fehlgeschlagen - aber Fortsetzen..."
+        fi
     fi
+else
+    log "MongoDB nicht installiert - überspringe Start"
 fi
 set -e
 
