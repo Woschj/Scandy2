@@ -475,16 +475,35 @@ log "Kopiere Scandy-Code..."
 CURRENT_DIR=$(pwd)
 log "Aktuelles Verzeichnis: $CURRENT_DIR"
 
+# Funktion zum Kopieren ohne venv
+copy_without_venv() {
+    local SRC_DIR="$1"
+    local DST_DIR="$2"
+    
+    # Erstelle DST-Verzeichnis
+    mkdir -p "$DST_DIR"
+    
+    # Kopiere alles außer venv, __pycache__ und andere temporäre Verzeichnisse
+    rsync -av --progress \
+        --exclude='venv' \
+        --exclude='__pycache__' \
+        --exclude='*.pyc' \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='.venv' \
+        "$SRC_DIR/" "$DST_DIR/"
+}
+
 if [ -d "/home/$(logname)/Scandy2" ]; then
-    cp -r /home/$(logname)/Scandy2/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "/home/$(logname)/Scandy2" /opt/scandy
     success "Code von /home/$(logname)/Scandy2 kopiert"
 elif [ -d "/home/woschj/Scandy2" ]; then
-    cp -r /home/woschj/Scandy2/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "/home/woschj/Scandy2" /opt/scandy
     success "Code von /home/woschj/Scandy2 kopiert"
 elif [ -d "$CURRENT_DIR/app" ] || [ -f "$CURRENT_DIR/app.py" ] || [ -f "$CURRENT_DIR/requirements.txt" ]; then
     # Aktuelles Verzeichnis enthält Scandy-Code
     log "Scandy-Code im aktuellen Verzeichnis gefunden - kopiere nach /opt/scandy"
-    cp -r "$CURRENT_DIR"/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "$CURRENT_DIR" /opt/scandy
     success "Code vom aktuellen Verzeichnis ($CURRENT_DIR) kopiert"
 else
     error "Kein Scandy-Code gefunden!"
@@ -516,6 +535,14 @@ chmod -R 755 /opt/scandy
 
 # 5. Python-Umgebung einrichten
 log "Erstelle Python-Umgebung..."
+
+# Lösche altes venv falls es existiert (kann Symlinks enthalten)
+if [ -d "/opt/scandy/venv" ]; then
+    log "Lösche altes venv..."
+    rm -rf /opt/scandy/venv
+fi
+
+log "Erstelle neues venv..."
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip >/dev/null 2>&1
