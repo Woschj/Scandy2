@@ -327,14 +327,35 @@ success "Verwende Port: $WEB_PORT ($PORT_NAME)"
 
 # 1. System-Pakete installieren
 log "Installiere System-Pakete..."
-apt update -y >/dev/null 2>&1 || {
-    error "apt update fehlgeschlagen"
+
+# Deaktiviere pipefail für apt-Befehle
+set +o pipefail
+
+# apt update (ignoriere Errors, da apt manchmal Warnings als Errors meldet)
+log "Aktualisiere Paketliste..."
+APT_OUTPUT=$(apt update -y 2>&1)
+APT_EXIT=$?
+
+if [ $APT_EXIT -eq 0 ]; then
+    success "Paketliste aktualisiert"
+else
+    log "apt update gab Exit-Code $APT_EXIT zurück"
+    echo "$APT_OUTPUT" | grep -E "Err|fail|error" || true
+    log "Setze trotzdem fort..."
+fi
+
+# Installiere System-Pakete
+log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
+apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync 2>&1 || {
+    set -o pipefail
+    error "Paket-Installation fehlgeschlagen - das könnte ein echtes Problem sein"
+    error "Bitte manuell versuchen: sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
     exit 1
 }
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync >/dev/null 2>&1 || {
-    error "Paket-Installation fehlgeschlagen"
-    exit 1
-}
+
+# Reaktiviere pipefail
+set -o pipefail
+
 success "System-Pakete installiert"
 
 # 2. MongoDB installieren (einfach)
