@@ -347,11 +347,19 @@ fi
 
 # Installiere System-Pakete
 log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget >/dev/null 2>&1
+log "DIESE INSTALLATION KANN EINIGE MINUTEN DAUERN - Bitte warten..."
+
+# Installiere mit Output und Timeout von 10 Minuten
+timeout 600 apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget
 INSTALL_EXIT=$?
 
 if [ $INSTALL_EXIT -eq 0 ]; then
     success "System-Pakete installiert"
+elif [ $INSTALL_EXIT -eq 124 ]; then
+    error "Timeout: System-Paket-Installation dauerte länger als 10 Minuten"
+    error "Bitte manuell ausführen:"
+    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
+    exit 1
 else
     # Reaktiviere strict mode für Fehlerbehandlung
     set -e
@@ -359,7 +367,7 @@ else
     error "Paket-Installation fehlgeschlagen (Exit-Code: $INSTALL_EXIT)"
     error "Bitte manuell versuchen:"
     error "  sudo apt update"
-    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync"
+    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
     exit 1
 fi
 
