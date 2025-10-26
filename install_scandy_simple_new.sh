@@ -361,24 +361,33 @@ set +o pipefail
 
 # apt update (ignoriere Errors, da apt manchmal Warnings als Errors meldet)
 log "Aktualisiere Paketliste..."
-apt update -y >/dev/null 2>&1
+log "HINWEIS: apt update läuft jetzt (kann 1-2 Minuten dauern)..."
+
+# apt update mit sichtbarem Output und Timeout
+timeout 120 apt update -y
 APT_EXIT=$?
 
 if [ $APT_EXIT -eq 0 ]; then
     success "Paketliste aktualisiert"
-else
+elif [ $APT_EXIT -eq 124 ]; then
+    error "apt update timeout - Paketlisten-Update dauerte zu lange"
+    error "Dies könnte auf Netzwerkprobleme hinweisen"
+    log "Setze trotzdem mit Installation fort..."
+elif [ $APT_EXIT -ne 0 ]; then
     log "apt update gab Exit-Code $APT_EXIT zurück (oft nur Warnings)"
-    apt update -y 2>&1 | grep -E "^Err:|error" || log "Keine kritischen Fehler gefunden"
     log "Setze mit Installation fort..."
 fi
 
 # Installiere System-Pakete
 log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
 log "DIESE INSTALLATION KANN EINIGE MINUTEN DAUERN - Bitte warten..."
+log "FORTLAUFEND: apt install läuft jetzt..."
 
 # Installiere mit Output und Timeout von 10 Minuten
 timeout 600 apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget
 INSTALL_EXIT=$?
+
+log "apt install beendet mit Exit-Code: $INSTALL_EXIT"
 
 if [ $INSTALL_EXIT -eq 0 ]; then
     success "System-Pakete installiert"
