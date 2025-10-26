@@ -410,13 +410,20 @@ if ! command -v mongod >/dev/null 2>&1; then
             log "GPG-Schlüssel konnte nicht heruntergeladen werden"
         fi
         
-        # Füge Repository hinzu
+        # Füge Repository hinzu - verwende jammy (Ubuntu 22.04) als Fallback
         UBUNTU_CODENAME=$(lsb_release -cs)
+        UBUNTU_VERSION=$(lsb_release -rs | cut -d. -f1)
+        
         if [ -n "$UBUNTU_CODENAME" ]; then
+            # Verwende jammy als Standard für MongoDB Repository
+            MONGO_REPO_CODENAME="jammy"
+            
+            # Versuche erst die aktuelle Ubuntu-Version
             echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
             log "MongoDB-Repository für $UBUNTU_CODENAME hinzugefügt"
         else
-            log "Konnte Ubuntu-Codename nicht ermitteln"
+            log "Konnte Ubuntu-Codename nicht ermitteln - verwende jammy als Fallback"
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
         fi
     fi
     
@@ -424,11 +431,21 @@ if ! command -v mongod >/dev/null 2>&1; then
     APT_UPDATE_OUTPUT=$(apt update -y 2>&1)
     
     # Prüfe auf Repository-Fehler
-    if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "NO_PUBKEY"; then
-        log "Repository-Problem erkannt - entferne MongoDB-Repository und verwende Ubuntu-Pakete"
-        rm -f /etc/apt/sources.list.d/mongodb-org-*.list 2>/dev/null || true
-        rm -f /usr/share/keyrings/mongodb-server-*.gpg 2>/dev/null || true
-        apt update -y >/dev/null 2>&1
+    if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "NO_PUBKEY" || echo "$APT_UPDATE_OUTPUT" | grep -qi "Release file"; then
+        log "Repository-Problem erkannt - versuche jammy als Fallback..."
+        
+        # Verwende jammy (Ubuntu 22.04) - funktioniert auf den meisten Systemen
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
+        
+        log "Neue Paketliste mit jammy..."
+        APT_UPDATE_OUTPUT=$(apt update -y 2>&1)
+        
+        # Wenn immer noch Probleme, versuche focal (Ubuntu 20.04)
+        if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "Release file"; then
+            log "Versuche focal (Ubuntu 20.04) als Alternative..."
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
+            apt update -y >/dev/null 2>&1
+        fi
     fi
     
     log "Installiere MongoDB (das kann einige Minuten dauern)..."
@@ -440,23 +457,13 @@ if ! command -v mongod >/dev/null 2>&1; then
     if apt install -y mongodb-org >/dev/null 2>&1; then
         INSTALL_MONGO_EXIT=0
         log "MongoDB erfolgreich mit mongodb-org installiert"
-    # Methode 2: Ubuntu mongodb Paket
-    elif apt install -y mongodb >/dev/null 2>&1; then
+    # Methode 2: Nur mongodb-server Paket (falls verfügbar)
+    elif apt install -y mongodb-server >/dev/null 2>&1; then
         INSTALL_MONGO_EXIT=0
-        log "MongoDB erfolgreich mit mongodb installiert"
-    # Methode 3: Einzelne Pakete
+        log "MongoDB erfolgreich mit mongodb-server installiert"
     else
-        log "Standard-Installation fehlgeschlagen - versuche Einzelpakete..."
-        
-        # Installiere mongodb direkt ohne Repository
-        apt update -y >/dev/null 2>&1
-        
-        if apt install -y mongodb-server mongodb-clients >/dev/null 2>&1; then
-            INSTALL_MONGO_EXIT=0
-            log "MongoDB erfolgreich mit mongodb-server installiert"
-        else
-            INSTALL_MONGO_EXIT=$?
-        fi
+        INSTALL_MONGO_EXIT=$?
+        log "Keine MongoDB-Pakete verfügbar"
     fi
     
     # Reaktiviere Fehlerbehandlung
