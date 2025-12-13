@@ -325,21 +325,223 @@ fi
 
 success "Verwende Port: $WEB_PORT ($PORT_NAME)"
 
+# 0. Prüfe ob apt bereits läuft
+log "Prüfe ob apt-Sperre frei ist..."
+WAIT_COUNT=0
+while fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/lib/dpkg/lock >/dev/null 2>&1 || pgrep -x "apt" >/dev/null 2>&1 || pgrep -x "apt-get" >/dev/null 2>&1; do
+    if [ $WAIT_COUNT -eq 0 ]; then
+        log "apt-Sperre erkannt - warte auf freigabe..."
+    fi
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+    if [ $WAIT_COUNT -gt 60 ]; then
+        log "Warte zu lange auf apt-Sperre - versuche hartnäckige Prozesse zu beenden..."
+        pkill -9 apt 2>/dev/null || true
+        pkill -9 apt-get 2>/dev/null || true
+        pkill -9 dpkg 2>/dev/null || true
+        rm -f /var/lib/apt/lists/lock 2>/dev/null || true
+        rm -f /var/lib/dpkg/lock 2>/dev/null || true
+        rm -f /var/lib/dpkg/lock-frontend 2>/dev/null || true
+        sleep 3
+    else
+        log "Warte auf apt-Sperre... ($WAIT_COUNT/60)"
+        sleep 1
+    fi
+done
+
+if [ $WAIT_COUNT -gt 0 ]; then
+    success "apt-Sperre ist jetzt frei"
+fi
+
 # 1. System-Pakete installieren
 log "Installiere System-Pakete..."
-apt update -y >/dev/null 2>&1
-apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc >/dev/null 2>&1
-success "System-Pakete installiert"
+
+# Deaktiviere strict error handling für apt-Befehle
+set +e
+set +o pipefail
+
+# apt update (ignoriere Errors, da apt manchmal Warnings als Errors meldet)
+log "Aktualisiere Paketliste..."
+log "HINWEIS: apt update läuft jetzt (kann 1-2 Minuten dauern)..."
+
+# apt update mit sichtbarem Output und Timeout
+timeout 120 apt update -y
+APT_EXIT=$?
+
+if [ $APT_EXIT -eq 0 ]; then
+    success "Paketliste aktualisiert"
+elif [ $APT_EXIT -eq 124 ]; then
+    error "apt update timeout - Paketlisten-Update dauerte zu lange"
+    error "Dies könnte auf Netzwerkprobleme hinweisen"
+    log "Setze trotzdem mit Installation fort..."
+elif [ $APT_EXIT -ne 0 ]; then
+    log "apt update gab Exit-Code $APT_EXIT zurück (oft nur Warnings)"
+    log "Setze mit Installation fort..."
+fi
+
+# Installiere System-Pakete
+log "Installiere System-Pakete: python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
+log "DIESE INSTALLATION KANN EINIGE MINUTEN DAUERN - Bitte warten..."
+log "FORTLAUFEND: apt install läuft jetzt..."
+
+# Installiere mit Output und Timeout von 10 Minuten
+timeout 600 apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget
+INSTALL_EXIT=$?
+
+log "apt install beendet mit Exit-Code: $INSTALL_EXIT"
+
+if [ $INSTALL_EXIT -eq 0 ]; then
+    success "System-Pakete installiert"
+elif [ $INSTALL_EXIT -eq 124 ]; then
+    error "Timeout: System-Paket-Installation dauerte länger als 10 Minuten"
+    error "Bitte manuell ausführen:"
+    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
+    exit 1
+else
+    # Reaktiviere strict mode für Fehlerbehandlung
+    set -e
+    set -o pipefail
+    error "Paket-Installation fehlgeschlagen (Exit-Code: $INSTALL_EXIT)"
+    error "Bitte manuell versuchen:"
+    error "  sudo apt update"
+    error "  sudo apt install -y python3 python3-pip python3-venv git curl gnupg lsb-release bc rsync wget"
+    exit 1
+fi
+
+# Reaktiviere strict error handling
+set -e
+set -o pipefail
+
+success "System-Pakete erfolgreich installiert"
 
 # 2. MongoDB installieren (einfach)
-log "Installiere MongoDB..."
+log "Prüfe MongoDB-Installation..."
 if ! command -v mongod >/dev/null 2>&1; then
-    # MongoDB-Repository hinzufügen
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
-    apt update -y >/dev/null 2>&1
-    apt install -y mongodb-org >/dev/null 2>&1
-    success "MongoDB installiert"
+    log "MongoDB nicht gefunden - starte Installation..."
+    
+    # Setze Fehlerbehandlung zurück auf permissive für MongoDB-Installation
+    set +e
+    set +o pipefail
+    
+    # Prüfe ob MongoDB-Repository bereits konfiguriert ist
+    MONGO_REPO_EXISTS=0
+    if [ -f "/etc/apt/sources.list.d/mongodb-org-*.list" ] || ls /etc/apt/sources.list.d/mongodb* 2>/dev/null | grep -q mongodb; then
+        log "MongoDB-Repository bereits konfiguriert"
+        MONGO_REPO_EXISTS=1
+    fi
+    
+    # Füge MongoDB-Repository hinzu falls nicht vorhanden
+    if [ $MONGO_REPO_EXISTS -eq 0 ]; then
+        log "Füge MongoDB-Repository hinzu..."
+        
+        # Installiere wget falls nicht vorhanden
+        if ! command -v wget >/dev/null 2>&1; then
+            apt install -y wget 2>/dev/null || true
+        fi
+        
+        # Erstelle Verzeichnisse
+        mkdir -p /usr/share/keyrings
+        
+        # Füge MongoDB GPG-Schlüssel hinzu
+        if curl -fsSL https://pgp.mongodb.com/server-7.0.asc -o /tmp/mongodb-gpg.asc 2>/dev/null; then
+            if gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg /tmp/mongodb-gpg.asc 2>/dev/null; then
+                success "MongoDB GPG-Schlüssel hinzugefügt"
+            else
+                log "Fallback: Verwende wget für GPG-Schlüssel..."
+                wget -qO - https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg 2>/dev/null || true
+            fi
+            rm -f /tmp/mongodb-gpg.asc 2>/dev/null || true
+        else
+            log "GPG-Schlüssel konnte nicht heruntergeladen werden"
+        fi
+        
+        # Füge Repository hinzu - verwende jammy (Ubuntu 22.04) als Fallback
+        UBUNTU_CODENAME=$(lsb_release -cs)
+        UBUNTU_VERSION=$(lsb_release -rs | cut -d. -f1)
+        
+        if [ -n "$UBUNTU_CODENAME" ]; then
+            # Verwende jammy als Standard für MongoDB Repository
+            MONGO_REPO_CODENAME="jammy"
+            
+            # Versuche erst die aktuelle Ubuntu-Version
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
+            log "MongoDB-Repository für $UBUNTU_CODENAME hinzugefügt"
+        else
+            log "Konnte Ubuntu-Codename nicht ermitteln - verwende jammy als Fallback"
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list 2>/dev/null || true
+        fi
+    fi
+    
+    log "Aktualisiere Paketliste für MongoDB..."
+    APT_UPDATE_OUTPUT=$(apt update -y 2>&1)
+    
+    # Prüfe auf Repository-Fehler
+    if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "NO_PUBKEY" || echo "$APT_UPDATE_OUTPUT" | grep -qi "Release file"; then
+        log "Repository-Problem erkannt - versuche jammy als Fallback..."
+        
+        # Verwende jammy (Ubuntu 22.04) - funktioniert auf den meisten Systemen
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
+        
+        log "Neue Paketliste mit jammy..."
+        APT_UPDATE_OUTPUT=$(apt update -y 2>&1)
+        
+        # Wenn immer noch Probleme, versuche focal (Ubuntu 20.04)
+        if echo "$APT_UPDATE_OUTPUT" | grep -qi "E:" || echo "$APT_UPDATE_OUTPUT" | grep -qi "Release file"; then
+            log "Versuche focal (Ubuntu 20.04) als Alternative..."
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-7.0.list
+            apt update -y >/dev/null 2>&1
+        fi
+    fi
+    
+    log "Installiere MongoDB (das kann einige Minuten dauern)..."
+    log "ZEIGE DETAILS während der Installation..."
+    
+    # Versuche verschiedene Installationsmethoden
+    INSTALL_MONGO_EXIT=1
+    
+    # Methode 1: Offizielles mongodb-org Paket mit Timeout
+    log "Versuche mongodb-org zu installieren..."
+    if timeout 300 apt install -y mongodb-org 2>&1 | tee /tmp/mongo_install.log; then
+        INSTALL_MONGO_EXIT=0
+        log "MongoDB erfolgreich mit mongodb-org installiert"
+    # Methode 2: Nur mongodb-server Paket (falls verfügbar)
+    elif timeout 300 apt install -y mongodb-server 2>&1 | tee /tmp/mongo_install.log; then
+        INSTALL_MONGO_EXIT=0
+        log "MongoDB erfolgreich mit mongodb-server installiert"
+    else
+        INSTALL_MONGO_EXIT=$?
+        log "Installations-Log (letzte 20 Zeilen):"
+        tail -20 /tmp/mongo_install.log 2>/dev/null || echo "Kein Log verfügbar"
+        log "Keine MongoDB-Pakete verfügbar (Exit: $INSTALL_MONGO_EXIT)"
+    fi
+    
+    # Reaktiviere Fehlerbehandlung
+    set -e
+    set -o pipefail
+    
+    if command -v mongod >/dev/null 2>&1; then
+        success "MongoDB installiert"
+    else
+        error "MongoDB-Installation fehlgeschlagen (Exit-Code: $INSTALL_MONGO_EXIT)"
+        error "CRITICAL: MongoDB ist erforderlich für die App!"
+        error ""
+        error "Versuchen Sie eine der folgenden Methoden:"
+        error ""
+        error "Method 1 - Ubuntu MongoDB (einfacher):"
+        error "  sudo apt update"
+        error "  sudo apt install -y mongodb mongodb-server"
+        error "  sudo systemctl start mongod"
+        error ""
+        error "Method 2 - Offizielle MongoDB (neuester Stand):"
+        error "  sudo curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg"
+        error "  echo \"deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse\" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list"
+        error "  sudo apt update"
+        error "  sudo apt install -y mongodb-org"
+        error ""
+        error "Nach der manuellen Installation:"
+        error "  sudo systemctl start mongod"
+        error "  sudo systemctl enable mongod"
+        exit 1
+    fi
 else
     info "MongoDB bereits installiert"
 fi
@@ -351,24 +553,32 @@ log "Starte MongoDB..."
 log "Stoppe alle MongoDB-Prozesse..."
 systemctl stop mongod 2>/dev/null || true
 systemctl disable mongod 2>/dev/null || true
-pkill -f mongod 2>/dev/null || true
-pkill -f mongo 2>/dev/null || true
+pkill -9 mongod 2>/dev/null || true
+pkill -9 mongo 2>/dev/null || true
 
-# Warte bis alle Prozesse gestoppt sind
-for i in {1..10}; do
+# Warte bis alle Prozesse gestoppt sind (mit Timeout)
+log "Warte auf Beendigung der MongoDB-Prozesse..."
+for i in {1..15}; do
     if ! pgrep -f mongod >/dev/null 2>&1; then
+        log "Alle MongoDB-Prozesse gestoppt (nach $i Sekunden)"
         break
+    fi
+    if [ $i -eq 15 ]; then
+        log "Warnung: MongoDB-Prozesse stoppen dauert länger als erwartet"
     fi
     sleep 1
 done
 
 # Prüfe ob Port 27017 frei ist
 if ss -H -ltn 2>/dev/null | grep -q ':27017 '; then
-    log "Port 27017 ist noch belegt - warte..."
+    log "Port 27017 ist noch belegt - warte länger..."
     sleep 5
+    if ss -H -ltn 2>/dev/null | grep -q ':27017 '; then
+        log "Port 27017 immer noch belegt - versuche aggressive Bereinigung"
+        fuser -k 27017/tcp 2>/dev/null || true
+        sleep 3
+    fi
 fi
-
-sleep 3
 
 # Verzeichnisse erstellen
 mkdir -p /var/lib/mongodb /var/log/mongodb
@@ -423,48 +633,112 @@ EOF
 fi
 
 # MongoDB starten
-log "Starte MongoDB-Service..."
-if systemctl start mongod; then
-    success "MongoDB-Service gestartet"
-else
-    error "MongoDB-Service startet nicht - versuche manuellen Start"
+log "Starte MongoDB..."
+
+# Prüfe ob mongod verfügbar ist
+if ! command -v mongod >/dev/null 2>&1; then
+    error "MongoDB ist nicht installiert!"
+    log "Versuche MongoDB-Installation erneut..."
     
-    # Manueller Start als Fallback
-    log "Starte MongoDB manuell..."
-    nohup mongod --config /etc/mongod.conf > /var/log/mongodb/mongod.log 2>&1 &
-    MONGODB_PID=$!
-    echo $MONGODB_PID > /var/run/mongod.pid
-    sleep 3
+    # Versuche MongoDB zu installieren
+    set +e
+    apt install -y mongodb mongodb-server 2>/dev/null || apt install -y mongodb-org 2>/dev/null || true
+    set -e
     
-    if kill -0 $MONGODB_PID 2>/dev/null; then
-        success "MongoDB läuft manuell (PID: $MONGODB_PID)"
-    else
-        error "Auch manueller Start fehlgeschlagen"
-        exit 1
+    if ! command -v mongod >/dev/null 2>&1; then
+        error "MongoDB konnte nicht installiert werden"
+        log "Installation wird ohne MongoDB fortgesetzt..."
+        log "Bitte manuell installieren: sudo apt install -y mongodb-org"
     fi
 fi
 
-# Prüfen ob MongoDB läuft
+# Starte MongoDB nur wenn es verfügbar ist
+set +e
+if command -v mongod >/dev/null 2>&1; then
+    # Prüfe ob mongod.service existiert
+    if systemctl list-unit-files | grep -q mongod.service; then
+        log "Starte MongoDB-Service (systemd)..."
+        if systemctl start mongod 2>/dev/null; then
+            log "systemctl start mongod erfolgreich"
+            success "MongoDB-Service gestartet"
+        else
+            log "systemctl start mongod fehlgeschlagen - versuche manuellen Start"
+            systemctl restart mongod 2>/dev/null || true
+        fi
+    else
+        log "MongoDB systemd-Service nicht gefunden - starte manuell..."
+        
+        # Starte mongod manuell im Hintergrund
+        log "Starte mongod im Hintergrund..."
+        mongod --config /etc/mongod.conf >/var/log/mongodb/mongod.log 2>&1 &
+        MONGODB_PID=$!
+        sleep 3
+        
+        if kill -0 $MONGODB_PID 2>/dev/null || pgrep mongod >/dev/null 2>&1; then
+            success "MongoDB läuft manuell (PID: $MONGODB_PID)"
+        else
+            log "MongoDB-Start fehlgeschlagen - aber Fortsetzen..."
+        fi
+    fi
+else
+    log "MongoDB nicht installiert - überspringe Start"
+fi
+set -e
+
+# Prüfen ob MongoDB läuft - CRITICAL CHECK
 log "Prüfe MongoDB-Verbindung..."
-for i in {1..30}; do
+set +e
+MONGODB_CONNECTED=0
+for i in {1..60}; do
+    # Versuche verschiedene Methoden zur Verbindung
     if mongosh --quiet --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+        MONGODB_CONNECTED=1
         success "MongoDB läuft auf Port 27017"
         break
+    elif pgrep mongod >/dev/null 2>&1; then
+        # MongoDB-Prozess läuft, aber Verbindung noch nicht möglich
+        if [ $i -eq 1 ]; then
+            log "MongoDB-Prozess läuft, warte auf Initialisierung..."
+        fi
     fi
-    if [ $i -eq 30 ]; then
-        error "MongoDB-Verbindung nach 30 Versuchen fehlgeschlagen"
+    
+    if [ $i -eq 60 ]; then
+        error "MongoDB-Verbindung nach 60 Versuchen fehlgeschlagen"
         
-        # Zeige MongoDB-Status und Logs
+        # Zeige MongoDB-Status
         log "MongoDB-Status:"
-        systemctl status mongod --no-pager 2>/dev/null || echo "Service-Status nicht verfügbar"
+        systemctl status mongod --no-pager -l 2>/dev/null | head -20 || echo "Service-Status nicht verfügbar"
         
-        log "MongoDB-Logs:"
-        tail -20 /var/log/mongodb/mongod.log 2>/dev/null || echo "Keine Logs verfügbar"
+        log "MongoDB-Logs (letzte 30 Zeilen):"
+        tail -30 /var/log/mongodb/mongod.log 2>/dev/null || echo "Keine Logs verfügbar"
         
+        log "MongoDB-Prozesse:"
+        ps aux | grep mongod | grep -v grep || echo "Keine MongoDB-Prozesse"
+        
+        log "Port 27017 Status:"
+        ss -tlnp | grep 27017 || echo "Port 27017 nicht geöffnet"
+        
+        error "CRITICAL: MongoDB läuft nicht - die App benötigt MongoDB!"
+        error "Bitte manuell starten:"
+        error "  sudo systemctl start mongod"
+        error "  oder: sudo mongod --config /etc/mongod.conf"
+        error ""
+        error "Installation wird beendet - MongoDB ist erforderlich!"
+        set -e
         exit 1
     fi
     sleep 1
 done
+set -e
+
+# Finale Prüfung
+if ! mongosh --quiet --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+    error "CRITICAL: MongoDB-Verbindung fehlgeschlagen!"
+    error "Die App kann ohne MongoDB nicht funktionieren."
+    error "Bitte beheben Sie das Problem und starten Sie die Installation erneut."
+    exit 1
+fi
+success "MongoDB ist erreichbar und funktioniert!"
 
 # 4. Scandy-Verzeichnis einrichten
 log "Richte Scandy ein..."
@@ -475,16 +749,49 @@ log "Kopiere Scandy-Code..."
 CURRENT_DIR=$(pwd)
 log "Aktuelles Verzeichnis: $CURRENT_DIR"
 
+# Funktion zum Kopieren ohne venv
+copy_without_venv() {
+    local SRC_DIR="$1"
+    local DST_DIR="$2"
+    
+    log "Kopiere von $SRC_DIR nach $DST_DIR (ohne venv)..."
+    
+    # Erstelle DST-Verzeichnis
+    mkdir -p "$DST_DIR"
+    
+    # Kopiere alles außer venv, __pycache__ und andere temporäre Verzeichnisse
+    set +o pipefail
+    rsync -av --progress \
+        --exclude='venv' \
+        --exclude='__pycache__' \
+        --exclude='*.pyc' \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='.venv' \
+        "$SRC_DIR/" "$DST_DIR/" >/dev/null 2>&1
+    RSYNC_EXIT=$?
+    set -o pipefail
+    
+    if [ $RSYNC_EXIT -eq 0 ]; then
+        log "Kopieren mit rsync erfolgreich"
+        return 0
+    else
+        log "Kopieren mit rsync fehlgeschlagen - verwende cp als Fallback"
+        # Fallback: Verwende cp mit find
+        (cd "$SRC_DIR" && find . -not -path './venv*' -not -path './.git*' -not -path './node_modules*' -not -name '*.pyc' -not -path './__pycache__*' -exec cp --parent {} "$DST_DIR/" \;)
+    fi
+}
+
 if [ -d "/home/$(logname)/Scandy2" ]; then
-    cp -r /home/$(logname)/Scandy2/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "/home/$(logname)/Scandy2" /opt/scandy
     success "Code von /home/$(logname)/Scandy2 kopiert"
 elif [ -d "/home/woschj/Scandy2" ]; then
-    cp -r /home/woschj/Scandy2/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "/home/woschj/Scandy2" /opt/scandy
     success "Code von /home/woschj/Scandy2 kopiert"
 elif [ -d "$CURRENT_DIR/app" ] || [ -f "$CURRENT_DIR/app.py" ] || [ -f "$CURRENT_DIR/requirements.txt" ]; then
     # Aktuelles Verzeichnis enthält Scandy-Code
     log "Scandy-Code im aktuellen Verzeichnis gefunden - kopiere nach /opt/scandy"
-    cp -r "$CURRENT_DIR"/* /opt/scandy/ 2>/dev/null || true
+    copy_without_venv "$CURRENT_DIR" /opt/scandy
     success "Code vom aktuellen Verzeichnis ($CURRENT_DIR) kopiert"
 else
     error "Kein Scandy-Code gefunden!"
@@ -516,6 +823,14 @@ chmod -R 755 /opt/scandy
 
 # 5. Python-Umgebung einrichten
 log "Erstelle Python-Umgebung..."
+
+# Lösche altes venv falls es existiert (kann Symlinks enthalten)
+if [ -d "/opt/scandy/venv" ]; then
+    log "Lösche altes venv..."
+    rm -rf /opt/scandy/venv
+fi
+
+log "Erstelle neues venv..."
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip >/dev/null 2>&1
