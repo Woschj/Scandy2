@@ -35,6 +35,7 @@ def get_workers():
         }), 500
 
 @bp.route('/inventory/tools/<barcode>', methods=['GET'])
+@login_required
 def get_tool(barcode):
     """Gibt Details zu einem Werkzeug zurück"""
     try:
@@ -65,6 +66,7 @@ def get_tool(barcode):
         }), 500
 
 @bp.route('/inventory/workers/<barcode>', methods=['GET'])
+@login_required
 def get_worker(barcode):
     """Gibt Details zu einem Mitarbeiter zurück"""
     try:
@@ -223,6 +225,7 @@ def return_tool():
         }), 500
 
 @bp.route('/inventory/consumables/<barcode>', methods=['GET'])
+@login_required
 def get_consumable(barcode):
     """Gibt Details zu einem Verbrauchsmaterial zurück"""
     try:

@@ -190,7 +190,8 @@ def setup_optional():
         return render_template('setup_optional.html', error='Fehler beim Laden der Einstellungen')
 
 def is_admin_user_present():
-    count = mongodb.count_documents('users', {})
+    """Prüft ob ein Admin-Benutzer existiert."""
+    count = mongodb.count_documents('users', {'role': 'admin'})
     return count > 0
 
 def create_admin_user(username, password, role):

@@ -24,10 +24,10 @@ def login_required(f):
         # Importiere needs_setup hier, um Zirkelimporte zu vermeiden
         from app.utils.auth_utils import needs_setup
 
-        # Wenn Setup benötigt wird, zur Login-Seite weiterleiten
+        # Wenn Setup benötigt wird, zur Setup-Seite weiterleiten
         if needs_setup():
-            flash('System-Setup erforderlich. Bitte als Administrator anmelden.', 'info')
-            return redirect(url_for('auth.login'))
+            flash('System-Setup erforderlich. Bitte erstellen Sie einen Administrator-Account.', 'info')
+            return redirect(url_for('setup.setup_admin'))
 
         # Wenn nicht eingeloggt, zum Login weiterleiten
         if not current_user.is_authenticated:
