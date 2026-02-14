@@ -14,23 +14,23 @@ module.exports = {
     daisyui: {
         themes: [{
             "scandy": {
-                "primary": "#374151",      // Dunkelgrau statt Orange
+                "primary": "#004d99",      // NetBox Blue
                 "primary-content": "#ffffff",
-                "secondary": "#6b7280",    // Mittleres Grau
+                "secondary": "#6c757d",    // Gray
                 "secondary-content": "#ffffff",
-                "accent": "#ff6600",       // Orange nur für Akzente
-                "accent-content": "#ffffff",
-                "neutral": "#1f2937",      // Dunkelgrau/Schwarz
+                "accent": "#ffc107",       // Warning/Yellow
+                "accent-content": "#2b333d",
+                "neutral": "#2b333d",      // NetBox Dark Sidebar color
                 "neutral-content": "#ffffff",
-                "base-100": "#ffffff",     // Weiß
-                "base-200": "#f9fafb",     // Sehr helles Grau
-                "base-300": "#f3f4f6",     // Hellgrau
-                "base-content": "#374151", // Dunkelgrau für Text
-                "info": "#3abff8",
-                "success": "#36d399",
-                "warning": "#fbbd23",
-                "error": "#f87272",
+                "base-100": "#ffffff",     // White
+                "base-200": "#f5f8fa",     // NetBox background
+                "base-300": "#e9ecef",     // Light gray borders
+                "base-content": "#333333", // Dark text
+                "info": "#17a2b8",
+                "success": "#28a745",
+                "warning": "#ffc107",
+                "error": "#dc3545",
             }
         }],
     }
-} 
+}

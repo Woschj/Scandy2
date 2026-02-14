@@ -61,49 +61,48 @@
             --btz-text-light: #6c757d;
         }
 
-        /* DaisyUI Theme Override für BTZ-Design - HELLE, LESBARE VERSION */
+        /* DaisyUI Theme Override for NetBox-inspired Design */
         [data-theme="scandy"] {
-            /* Primary colors - BTZ Blau */
-            --p: #0066cc;
+            /* Primary colors - NetBox Blue */
+            --p: #004d99;
             --pf: #ffffff;
             --pc: #ffffff;
 
-            /* Secondary colors - Hell und kontrastreich */
-            --s: #f8f9fa;
-            --sf: #212529;
-            --sc: #212529;
+            /* Secondary colors */
+            --s: #6c757d;
+            --sf: #ffffff;
+            --sc: #ffffff;
 
-            /* Accent colors - Sehr hell */
-            --a: #e3f2fd;
-            --af: #0066cc;
-            --ac: #0066cc;
+            /* Accent colors - NetBox Yellow/Warning */
+            --a: #ffc107;
+            --af: #2b333d;
+            --ac: #2b333d;
 
             /* Success, Warning, Error, Info */
             --su: #28a745;
             --suc: #ffffff;
             --wa: #ffc107;
-            --wac: #212529;
+            --wac: #2b333d;
             --er: #dc3545;
             --erc: #ffffff;
             --in: #17a2b8;
             --inc: #ffffff;
 
-            /* Neutral/Base colors - Sehr helle Hintergründe */
-            --b1: #ffffff;  /* Reines Weiß für beste Lesbarkeit */
-            --b2: #f8f9fa;  /* Sehr heller Grau */
-            --b3: #e9ecef;  /* Noch hellerer Grau */
-            --bc: #212529;  /* Dunkler Text für Kontrast */
-            --n: #6c757d;   /* Mittlerer Text */
-            --nc: #212529;  /* Dunkler Text */
+            /* Neutral/Base colors */
+            --b1: #ffffff;
+            --b2: #f5f8fa;
+            --b3: #e9ecef;
+            --bc: #333333;
+            --n: #2b333d;
+            --nc: #ffffff;
 
-            /* Rounded corners */
-            --rounded-box: 0.5rem;
-            --rounded-btn: 0.375rem;
-            --rounded-badge: 0.25rem;
+            /* Rectangular corners like NetBox */
+            --rounded-box: 0.25rem;
+            --rounded-btn: 0.25rem;
+            --rounded-badge: 0.125rem;
 
-            /* Animation/Transition */
-            --animation-btn: 0.2s;
-            --animation-input: 0.2s;
+            --animation-btn: 0.1s;
+            --animation-input: 0.1s;
         }
         
         .nav-text {
@@ -120,8 +119,9 @@
 
         .navbar-with-sidebar {
             margin-left: 226px;
-            height: 4rem;
-            min-height: 4rem;
+            height: 3.5rem;
+            min-height: 3.5rem;
+            border-bottom: 1px solid #e9ecef;
         }
 
         /* Kompakte Cards */
@@ -157,48 +157,54 @@
             gap: 1rem;
         }
 
-        /* Optimierte Sidebar */
+        /* Optimized NetBox Sidebar */
         .sidebar-permanent {
             width: 226px;
-            background: #ffffff;
-            border-right: 2px solid #e5e7eb;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            background: #2b333d;
+            border-right: none;
+            box-shadow: none;
+            color: #d2d3d3;
         }
 
-        /* Kompakte Navigation */
+        /* Compact Navigation */
         .sidebar-nav-item {
-            height: 3rem;
-            margin-bottom: 0.25rem;
-            border-radius: 0.5rem;
-            margin-right: 0.5rem;
-            transition: all 0.2s ease;
+            height: 2.5rem;
+            margin-bottom: 0.125rem;
+            border-radius: 0;
+            margin-right: 0;
+            padding-left: 1rem !important;
+            transition: all 0.1s ease;
+            color: #d2d3d3 !important;
+            border-left: 3px solid transparent;
         }
 
         .sidebar-nav-item:hover {
-            background-color: #f3f4f6;
-            transform: translateX(4px);
+            background-color: #3d4852;
+            color: #ffffff !important;
+            transform: none;
         }
 
         .sidebar-nav-item.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            background-color: #3d4852;
+            color: #ffffff !important;
+            border-left: 3px solid #004d99;
+            box-shadow: none;
         }
 
         /* QuickScan Button Styling */
         #quickScanTrigger {
-            background: #ffffff;
+            background: #2b333d;
         }
 
         #quickScanTrigger:hover {
-            background: #f9fafb;
+            background: #3d4852;
         }
 
         /* Trennlinie */
         .sidebar-divider {
             width: 80%;
             height: 1px;
-            background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+            background: linear-gradient(to right, transparent, #3d4852, transparent);
             margin: 1rem auto;
         }
 
@@ -226,10 +232,10 @@
         <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
             <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
-                <div class="w-full h-20 rounded-tl-xl overflow-hidden transition-all duration-300 flex items-center justify-center group
-                    {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}">
-                    <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-90">
-                    <span class="ml-4 text-base font-semibold text-gray-700 group-hover:text-primary transition-colors duration-300">Scan</span>
+                <div class="w-full h-20 overflow-hidden transition-all duration-300 flex items-center justify-center group
+                    {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-[#3d4852] cursor-pointer{% endif %}">
+                    <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-110">
+                    <span class="ml-4 text-base font-semibold text-[#d2d3d3] group-hover:text-white transition-colors duration-300">Scan</span>
                     <!-- Scanner Animation -->
                     <div class="absolute w-full h-0.5 bg-primary/50 -top-1 left-0 animate-scanner after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-primary/30"></div>
                 </div>
@@ -242,7 +248,7 @@
             {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
             <!-- Werkzeuge - nur für Nicht-Teilnehmer -->
             <a href="{{ url_for('tools.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tools' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tools' in request.endpoint %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="{{ app_labels['tools']['icon'] }} text-xl"></i>
                  </div>
@@ -250,7 +256,7 @@
             </a>
             <!-- Verbrauchsgüter - nur für Nicht-Teilnehmer -->
             <a href="{{ url_for('consumables.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'consumables' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'consumables' in request.endpoint %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="{{ app_labels['consumables']['icon'] }} text-xl"></i>
                  </div>
@@ -261,7 +267,7 @@
             {# Mitarbeiter-Link: für alle außer Teilnehmer (Benutzer dürfen ihn sehen) #}
             {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
             <a href="{{ url_for('workers.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'workers.index' %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'workers.index' %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-users text-xl"></i>
                  </div>
@@ -272,7 +278,7 @@
             {# Ticketsystem für alle eingeloggten Benutzer - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
             <a href="{{ url_for('tickets.create') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tickets.create' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tickets.create' in request.endpoint %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
                      <i class="{{ app_labels.tickets.icon }} text-xl"></i>
                      {% if unread_tickets_count and unread_tickets_count > 0 %}
@@ -286,7 +292,7 @@
             {# Wochenplan-Link für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and current_user.timesheet_enabled and features_enabled.get('weekly_reports', False) %}
             <a href="{{ url_for('workers.timesheet_list') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('workers.timesheet') %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('workers.timesheet') %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
                      <i class="fas fa-clock text-xl"></i>
                      {% if unfilled_timesheet_days is defined and unfilled_timesheet_days > 0 %}
@@ -300,7 +306,7 @@
             {# Auftragserstellung - für alle Benutzer - nur wenn Ticketsystem aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
             <a href="{{ url_for('tickets.public_create_order') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'tickets.public_create_order' %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'tickets.public_create_order' %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-file-alt text-xl"></i>
                  </div>
@@ -310,7 +316,7 @@
             
             {# Jobbörse - global sichtbar #}
             <a href="{{ url_for('jobs.job_list') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'jobs' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'jobs' in request.endpoint %}active{% endif %}">
               <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                   <i class="fas fa-briefcase text-xl"></i>
               </div>
@@ -320,7 +326,7 @@
             {# Kantinenplan - nur für berechtigte Benutzer wenn Feature aktiviert #}
             {% if current_user.is_authenticated and features_enabled.get('canteen_plan', False) and current_user.canteen_plan_enabled %}
             <a href="{{ url_for('canteen.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'canteen' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'canteen' in request.endpoint %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-utensils text-xl"></i>
                  </div>
@@ -330,7 +336,7 @@
 
             <!-- Über Scandy (öffentlich) -->
             <a href="{{ url_for('main.about') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'main.about' %}active{% else %}text-gray-700{% endif %}">
+               class="flex items-center h-12 pl-2 mb-1 transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'main.about' %}active{% endif %}">
                  <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
                      <i class="fas fa-question-circle text-xl"></i>
                  </div>
@@ -374,11 +380,10 @@
         </div>
 
         <!-- Horizontale Navbar -->
-        <div class="navbar bg-base-100 px-4 relative z-[100] w-full min-h-[4rem] flex items-center ml-[226px] navbar-with-sidebar">
+        <div class="navbar bg-white px-4 relative z-[100] flex items-center navbar-with-sidebar">
             <!-- Linker Bereich -->
-            <div class="flex-1 flex items-center min-w-0">
-                <div class="w-24 flex-shrink-0"></div>
-                <h1 class="text-xl font-bold truncate">
+            <div class="flex-1 flex items-center min-w-0 gap-4">
+                <h1 class="text-lg font-bold truncate ml-4">
                     {% if request.endpoint and 'tools' in request.endpoint %}{{ app_labels.tools.name }}
                     {% elif request.endpoint and 'workers' in request.endpoint %}Mitarbeiter
                     {% elif request.endpoint and 'consumables' in request.endpoint %}{{ app_labels.consumables.name }}
@@ -388,27 +393,22 @@
                 </h1>
             </div>
 
-            <!-- Mittlerer Bereich: Logo -->
-            <div class="flex-1 flex justify-center items-center min-w-0">
+            <!-- Rechter Bereich -->
+            <div class="flex-none flex items-center justify-end gap-4 min-w-0 pr-4">
+                <!-- Logo -->
                 <a href="{{ url_for('main.index') }}" 
-                   class="hover:opacity-80 transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-base-200"
+                   class="hover:opacity-80 transition-all duration-300 flex items-center"
                    title="Zurück zur Startseite">
-                    <i class="fas fa-home text-xl text-primary"></i>
                     {% if app_labels.custom_logo %}
                     <img src="{{ url_for('static', filename=app_labels.custom_logo) }}" 
                          alt="Benutzerdefiniertes Logo" 
-                         class="h-12 w-auto object-contain">
+                         class="h-6 w-auto object-contain">
                     {% else %}
                     <img src="{{ url_for('static', filename='images/BTZ_logo.jpg') }}" 
                          alt="BTZ Logo" 
-                         class="h-12 w-auto object-contain">
+                         class="h-6 w-auto object-contain">
                     {% endif %}
-                    <i class="fas fa-home text-xl text-primary"></i>
                 </a>
-            </div>
-
-            <!-- Rechter Bereich -->
-            <div class="flex-1 flex items-center justify-end gap-2 min-w-0">
                 {% if current_user.is_authenticated %}
                 <div class="dropdown dropdown-end">
                     <label tabindex="0" class="btn btn-ghost btn-sm">
@@ -620,13 +620,13 @@
         /* Verbessertes Scandy Logo Styling - ohne @apply (Browser versteht das nicht) */
         /* QuickScan-Trigger als rechteckiger Button */
         #quickScanTrigger {
-            width: 100%; height: 4rem; border-radius: .75rem; overflow: hidden;
+            width: 100%; height: 4rem; border-radius: 0; overflow: hidden;
             transition: background-color .2s, box-shadow .2s; display: flex; align-items: center; justify-content: center;
-            background: var(--fallback-b1, #fff);
-            cursor: pointer; position: relative; box-shadow: 0 4px 6px -2px rgba(0,0,0,.1);
+            background: #2b333d;
+            cursor: pointer; position: relative;
             margin-top: 0; z-index: 100; padding: 0 .5rem;
         }
-        #quickScanTrigger:hover { background: var(--fallback-b2, #f9fafb); }
+        #quickScanTrigger:hover { background: #3d4852; }
         
         /* Deaktivierter QuickScan Button */
         #quickScanTrigger.disabled { opacity: .5; cursor: not-allowed; }
