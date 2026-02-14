@@ -122,8 +122,8 @@ class TicketService:
             return True, 'Ticket wurde erfolgreich erstellt', ticket_id
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Tickets: {str(e)}")
-            return False, f'Fehler beim Erstellen des Tickets: {str(e)}', None
+            logger.error(f"Fehler beim Erstellen des Tickets: [Interner Fehler]")
+            return False, f'Fehler beim Erstellen des Tickets: [Interner Fehler]', None
     
     def get_tickets_by_user(self, username: str, role: str, handlungsfelder: List[str] = None) -> Dict[str, List[Dict[str, Any]]]:
         """
@@ -305,7 +305,7 @@ class TicketService:
                     try:
                         return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: [Interner Fehler]")
                         return datetime.min
                 elif isinstance(updated_at, datetime):
                     return updated_at
@@ -323,7 +323,7 @@ class TicketService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Tickets: {str(e)}")
+            logger.error(f"Fehler beim Laden der Tickets: [Interner Fehler]")
             return {
                 'open_tickets': [],
                 'assigned_tickets': [],
@@ -348,7 +348,7 @@ class TicketService:
             try:
                 ticket = mongodb.find_one('tickets', {'_id': ticket_id})
             except Exception as e:
-                logger.warning(f"Fehler bei String-ID-Suche für Ticket {ticket_id}: {e}")
+                logger.warning(f"Fehler bei String-ID-Suche für Ticket {ticket_id}: [Interner Fehler]")
                 pass
             
             # Falls nicht gefunden, versuche mit ObjectId
@@ -358,7 +358,7 @@ class TicketService:
                     obj_id = ObjectId(ticket_id)
                     ticket = mongodb.find_one('tickets', {'_id': obj_id})
                 except Exception as e:
-                    logger.warning(f"Fehler bei ObjectId-Suche für Ticket {ticket_id}: {e}")
+                    logger.warning(f"Fehler bei ObjectId-Suche für Ticket {ticket_id}: [Interner Fehler]")
                     pass
             
             if ticket:
@@ -367,7 +367,7 @@ class TicketService:
             return ticket
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Tickets {ticket_id}: {str(e)}")
+            logger.error(f"Fehler beim Laden des Tickets {ticket_id}: [Interner Fehler]")
             return None
     
     def update_ticket_status(self, ticket_id: str, new_status: str, updated_by: str) -> Tuple[bool, str]:
@@ -427,8 +427,8 @@ class TicketService:
             return True, f'Status erfolgreich auf "{new_status}" geändert'
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Ticket-Status: {str(e)}")
-            return False, f'Fehler beim Aktualisieren: {str(e)}'
+            logger.error(f"Fehler beim Aktualisieren des Ticket-Status: [Interner Fehler]")
+            return False, f'Fehler beim Aktualisieren: [Interner Fehler]'
     
     def assign_ticket(self, ticket_id: str, assigned_to: str, assigned_by: str) -> Tuple[bool, str]:
         """
@@ -538,8 +538,8 @@ class TicketService:
             return True, f'Ticket erfolgreich {len(valid_users)} Benutzern zugewiesen'
             
         except Exception as e:
-            logger.error(f"Fehler beim Mehrfachzuweisen des Tickets: {str(e)}")
-            return False, f'Fehler beim Zuweisen: {str(e)}'
+            logger.error(f"Fehler beim Mehrfachzuweisen des Tickets: [Interner Fehler]")
+            return False, f'Fehler beim Zuweisen: [Interner Fehler]'
     
     def get_ticket_assignments(self, ticket_id: str) -> List[Dict[str, Any]]:
         """
@@ -555,7 +555,7 @@ class TicketService:
             assignments = mongodb.find('ticket_assignments', {'ticket_id': ticket_id})
             return list(assignments)
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Zuweisungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Ticket-Zuweisungen: [Interner Fehler]")
             return []
     
     def get_assigned_users(self, ticket_id: str) -> List[str]:
@@ -607,8 +607,8 @@ class TicketService:
             return True, 'Nachricht erfolgreich hinzugefügt'
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Nachricht: {str(e)}")
-            return False, f'Fehler beim Hinzufügen: {str(e)}'
+            logger.error(f"Fehler beim Hinzufügen der Nachricht: [Interner Fehler]")
+            return False, f'Fehler beim Hinzufügen: [Interner Fehler]'
     
     def get_ticket_messages(self, ticket_id: str) -> List[Dict[str, Any]]:
         """
@@ -634,7 +634,7 @@ class TicketService:
             return messages
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Nachrichten: {str(e)}")
+            logger.error(f"Fehler beim Laden der Ticket-Nachrichten: [Interner Fehler]")
             return []
     
     def delete_ticket(self, ticket_id: str, deleted_by: str, permanent: bool = False) -> Tuple[bool, str]:
@@ -678,8 +678,8 @@ class TicketService:
                 return True, 'Ticket gelöscht'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Tickets: {str(e)}")
-            return False, f'Fehler beim Löschen: {str(e)}'
+            logger.error(f"Fehler beim Löschen des Tickets: [Interner Fehler]")
+            return False, f'Fehler beim Löschen: [Interner Fehler]'
     
     def get_unassigned_ticket_count(self) -> int:
         """
@@ -705,7 +705,7 @@ class TicketService:
             return count
             
         except Exception as e:
-            logger.error(f"Fehler beim Zählen der nicht zugewiesenen Tickets: {str(e)}")
+            logger.error(f"Fehler beim Zählen der nicht zugewiesenen Tickets: [Interner Fehler]")
             return 0
 
     def update_responsible(self, ticket_id: str, responsible_username: Optional[str], updated_by: str) -> Tuple[bool, str]:
@@ -785,8 +785,8 @@ class TicketService:
 
             return True, 'Verantwortliche Person wurde aktualisiert'
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
-            return False, f'Fehler beim Aktualisieren: {str(e)}'
+            logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: [Interner Fehler]")
+            return False, f'Fehler beim Aktualisieren: [Interner Fehler]'
     
     def _convert_datetime_fields(self, ticket: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -82,7 +82,7 @@ def send_test(template_id: str):
             return jsonify({'success': False, 'message': message})
         
     except Exception as e:
-        error_message = f"Fehler beim Senden der Test-E-Mail: {str(e)}"
+        error_message = f"Fehler beim Senden der Test-E-Mail: [Interner Fehler]"
         return jsonify({'success': False, 'message': error_message})
 
 

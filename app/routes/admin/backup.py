@@ -43,7 +43,7 @@ def backup_list():
                     'version': backup.get('version', '2.0')
                 })
             except Exception as e:
-                logger.error(f"Fehler beim Konvertieren von ZIP-Backup {backup}: {e}")
+                logger.error(f"Fehler beim Konvertieren von ZIP-Backup {backup}: [Interner Fehler]")
                 continue
 
         # Kombiniere alle Backups
@@ -61,7 +61,7 @@ def backup_list():
             'total_count': len(all_backups)
         })
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Backups: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Backups: [Interner Fehler]", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Laden der Backups: [Interner Fehler]'
@@ -89,7 +89,7 @@ def create_backup():
                         'filename': backup_filename
                     })
                 except Exception as e:
-                    logger.error(f"Fehler beim E-Mail-Versand: {str(e)}")
+                    logger.error(f"Fehler beim E-Mail-Versand: [Interner Fehler]")
                     return jsonify({
                         'status': 'success',
                         'message': f'{message}, aber E-Mail-Versand fehlgeschlagen',
@@ -108,7 +108,7 @@ def create_backup():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des Backups: {str(e)}")
+        logger.error(f"Fehler beim Erstellen des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Erstellen des Backups: [Interner Fehler]'
@@ -212,7 +212,7 @@ def upload_backup():
             raise e
 
     except Exception as e:
-        logger.error(f"Fehler beim Hochladen des Backups: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Hochladen des Backups: [Interner Fehler]", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Hochladen des Backups: [Interner Fehler]'
@@ -280,7 +280,7 @@ def restore_backup(filename):
                 }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Wiederherstellen des Backups: {str(e)}")
+        logger.error(f"Fehler beim Wiederherstellen des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Wiederherstellen des Backups: [Interner Fehler]'
@@ -356,7 +356,7 @@ def download_backup(filename):
             )
 
     except Exception as e:
-        logger.error(f"Fehler beim Herunterladen des Backups: {str(e)}")
+        logger.error(f"Fehler beim Herunterladen des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Herunterladen des Backups: [Interner Fehler]'
@@ -382,7 +382,7 @@ def test_backup(filename):
             }), 400
 
     except Exception as e:
-        logger.error(f"Fehler beim Testen des Backups: {str(e)}")
+        logger.error(f"Fehler beim Testen des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Testen des Backups: [Interner Fehler]'
@@ -410,7 +410,7 @@ def create_json_backup():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des JSON-Backups: {str(e)}")
+        logger.error(f"Fehler beim Erstellen des JSON-Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Erstellen des JSON-Backups: [Interner Fehler]'
@@ -438,7 +438,7 @@ def create_native_backup():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des nativen Backups: {str(e)}")
+        logger.error(f"Fehler beim Erstellen des nativen Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Erstellen des nativen Backups: [Interner Fehler]'
@@ -465,7 +465,7 @@ def restore_native_backup(backup_name):
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Wiederherstellen des nativen Backups: {str(e)}")
+        logger.error(f"Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]'
@@ -493,7 +493,7 @@ def create_hybrid_backup():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des hybriden Backups: {str(e)}")
+        logger.error(f"Fehler beim Erstellen des hybriden Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Erstellen des hybriden Backups: [Interner Fehler]'
@@ -520,7 +520,7 @@ def convert_old_backup(filename):
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Konvertieren des Backups: {str(e)}")
+        logger.error(f"Fehler beim Konvertieren des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Konvertieren des Backups: [Interner Fehler]'
@@ -541,7 +541,7 @@ def convert_all_old_backups():
         })
 
     except Exception as e:
-        logger.error(f"Fehler bei der Massenkonvertierung: {str(e)}")
+        logger.error(f"Fehler bei der Massenkonvertierung: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler bei der Massenkonvertierung: [Interner Fehler]'
@@ -562,7 +562,7 @@ def list_old_backups():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Auflisten alter Backups: {str(e)}")
+        logger.error(f"Fehler beim Auflisten alter Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Auflisten alter Backups: [Interner Fehler]'
@@ -743,7 +743,7 @@ def import_all_data():
         return redirect(url_for('admin.system'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Importieren der Daten: {str(e)}")
+        logger.error(f"Fehler beim Importieren der Daten: [Interner Fehler]")
         flash(f'Fehler beim Importieren: [Interner Fehler]', 'error')
         return redirect(url_for('admin.system'))
 
@@ -760,7 +760,7 @@ def auto_backup_status():
             'status': status
         })
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen des Auto-Backup-Status: {str(e)}")
+        logger.error(f"Fehler beim Abrufen des Auto-Backup-Status: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Abrufen des Status: [Interner Fehler]'
@@ -779,7 +779,7 @@ def start_auto_backup():
             'message': 'Automatisches Backup-System gestartet'
         })
     except Exception as e:
-        logger.error(f"Fehler beim Starten des Auto-Backup-Systems: {str(e)}")
+        logger.error(f"Fehler beim Starten des Auto-Backup-Systems: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Starten: [Interner Fehler]'
@@ -798,7 +798,7 @@ def stop_auto_backup():
             'message': 'Automatisches Backup-System gestoppt'
         })
     except Exception as e:
-        logger.error(f"Fehler beim Stoppen des Auto-Backup-Systems: {str(e)}")
+        logger.error(f"Fehler beim Stoppen des Auto-Backup-Systems: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Stoppen: [Interner Fehler]'
@@ -828,7 +828,7 @@ def auto_backup_logs():
                 'logs': ['Keine Logs verfügbar']
             })
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Auto-Backup-Logs: {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Auto-Backup-Logs: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Abrufen der Logs: [Interner Fehler]'
@@ -881,7 +881,7 @@ def auto_backup():
                                          upsert=True)
                         flash('E-Mail-Adresse für wöchentliche Backups erfolgreich gespeichert.', 'success')
                     except Exception as e:
-                        logger.error(f"Fehler beim Speichern der wöchentlichen Backup-E-Mail: {e}")
+                        logger.error(f"Fehler beim Speichern der wöchentlichen Backup-E-Mail: [Interner Fehler]")
                         flash(f'Fehler beim Speichern der E-Mail-Adresse: [Interner Fehler]', 'error')
                 else:
                     flash('Bitte geben Sie eine gültige E-Mail-Adresse ein.', 'error')
@@ -897,7 +897,7 @@ def auto_backup():
                              weekly_backup_email=current_weekly_email)
 
     except Exception as e:
-        logger.error(f"Fehler bei Auto-Backup-Einstellungen: {e}")
+        logger.error(f"Fehler bei Auto-Backup-Einstellungen: [Interner Fehler]")
         flash('Fehler beim Laden der Auto-Backup-Einstellungen.', 'error')
         return render_template('admin/auto_backup.html',
                              backup_times=['06:00', '18:00'],
@@ -920,7 +920,7 @@ def test_weekly_backup():
             'message': 'Backup-Archiv erfolgreich erstellt, versendet und ZIP-Datei gelöscht'
         })
     except Exception as e:
-        logger.error(f"Fehler beim Versenden des Backup-Archivs: {str(e)}")
+        logger.error(f"Fehler beim Versenden des Backup-Archivs: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Versenden: [Interner Fehler]'
@@ -980,7 +980,7 @@ def import_json_backup_scoped():
 
         return render_template('admin/import_json_backup.html')
     except Exception as e:
-        logger.error(f"Fehler beim JSON-Import: {e}")
+        logger.error(f"Fehler beim JSON-Import: [Interner Fehler]")
         flash('Fehler beim Import', 'error')
         return redirect(url_for('admin.import_json_backup_scoped'))
 
@@ -1002,7 +1002,7 @@ def import_json_backup_status(job_id: str):
     try:
         return render_template('admin/import_json_backup_status.html', job_id=job_id)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Status-Seite: {e}")
+        logger.error(f"Fehler beim Laden der Status-Seite: [Interner Fehler]")
         flash('Fehler beim Laden des Status', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -1071,7 +1071,7 @@ def fix_backup_fields():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Korrigieren der Backup-Felder: {str(e)}")
+        logger.error(f"Fehler beim Korrigieren der Backup-Felder: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Korrigieren: [Interner Fehler]'

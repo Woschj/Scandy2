@@ -132,7 +132,7 @@ def test_email_simple():
                     logger.warning("Passwort konnte nicht entschlüsselt werden - verwende verschlüsseltes Passwort")
                     # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
             except Exception as e:
-                logger.warning(f"Fehler beim Entschlüsseln des Passworts: {e} - verwende verschlüsseltes Passwort")
+                logger.warning(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler] - verwende verschlüsseltes Passwort")
                 # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
 
         # Verwende die test_email_config aus email_utils direkt
@@ -179,7 +179,7 @@ def fix_lending_inconsistencies():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Beheben der Inkonsistenzen: {str(e)}")
+        logger.error(f"Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]'
@@ -202,7 +202,7 @@ def validate_lending_consistency():
         })
 
     except Exception as e:
-        logger.error(f"Fehler bei der Konsistenzprüfung: {str(e)}")
+        logger.error(f"Fehler bei der Konsistenzprüfung: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler bei der Konsistenzprüfung: [Interner Fehler]'
@@ -224,7 +224,7 @@ def fix_missing_created_at():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Korrigieren fehlender created_at Felder: {str(e)}")
+        logger.error(f"Fehler beim Korrigieren fehlender created_at Felder: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Korrigieren: [Interner Fehler]'
@@ -286,7 +286,7 @@ def test_dashboard_fix():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler beim Testen des Dashboard-Fixes: {str(e)}")
+        logger.error(f"Fehler beim Testen des Dashboard-Fixes: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Testen: [Interner Fehler]',
@@ -401,7 +401,7 @@ def fix_dashboard_complete():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei der umfassenden Dashboard-Korrektur: {str(e)}")
+        logger.error(f"Fehler bei der umfassenden Dashboard-Korrektur: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler bei der Dashboard-Korrektur: [Interner Fehler]',
@@ -506,7 +506,7 @@ def dashboard_status():
         return jsonify(status)
 
     except Exception as e:
-        logger.error(f"Fehler beim Prüfen des Dashboard-Status: {str(e)}")
+        logger.error(f"Fehler beim Prüfen des Dashboard-Status: [Interner Fehler]")
         return jsonify({
             'dashboard_working': False,
             'errors': [f"Status check failed: [Interner Fehler]"],
@@ -664,7 +664,7 @@ def dashboard_details():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Dashboard-Details: {str(e)}")
+        logger.error(f"Fehler beim Laden der Dashboard-Details: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Fehler beim Laden der Dashboard-Details: [Interner Fehler]'
@@ -767,7 +767,7 @@ def test_email_config_debug():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler beim E-Mail-Konfigurations-Test: {str(e)}")
+        logger.error(f"Fehler beim E-Mail-Konfigurations-Test: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Kritischer Fehler: [Interner Fehler]',
@@ -873,7 +873,7 @@ def fix_email_config():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei E-Mail-Konfigurations-Fix: {str(e)}")
+        logger.error(f"Fehler bei E-Mail-Konfigurations-Fix: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Kritischer Fehler: [Interner Fehler]',
@@ -933,7 +933,7 @@ def analyze_lendings():
         })
 
     except Exception as e:
-        logger.error(f"Fehler bei Ausleihen-Analyse: {e}")
+        logger.error(f"Fehler bei Ausleihen-Analyse: [Interner Fehler]")
         return jsonify({
             'success': False,
             'error': 'Ein interner Fehler ist aufgetreten.'
@@ -1018,7 +1018,7 @@ def fix_dashboard_simple():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei der einfachen Dashboard-Korrektur: {str(e)}")
+        logger.error(f"Fehler bei der einfachen Dashboard-Korrektur: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': f'Kritischer Fehler: [Interner Fehler]',

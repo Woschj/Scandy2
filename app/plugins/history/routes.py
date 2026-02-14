@@ -68,7 +68,7 @@ def history():
             })
 
     except Exception as e:
-        print(f"Fehler beim Laden der Historie: {e}")
+        print(f"Fehler beim Laden der Historie: [Interner Fehler]")
         history = []
 
     return render_template('history.html', history=history) 

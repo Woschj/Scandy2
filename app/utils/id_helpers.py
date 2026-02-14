@@ -28,14 +28,14 @@ def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
             try:
                 return ObjectId(id_value)
             except Exception as e:
-                logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
+                logger.warning(f"Fehler bei ObjectId-Konvertierung: [Interner Fehler]")
                 # Falls die Konvertierung fehlschlägt, gib die ursprüngliche ID zurück
                 return id_value
         else:
             # Für andere IDs (z.B. Barcodes) gib die ursprüngliche ID zurück
             return id_value
     except Exception as e:
-        logger.warning(f"Fehler bei ID-Behandlung: {e}")
+        logger.warning(f"Fehler bei ID-Behandlung: [Interner Fehler]")
         # Falls etwas schiefgeht, gib die ursprüngliche ID zurück
         return id_value
 
@@ -91,7 +91,7 @@ def find_document_by_id(collection: str, id_value: str, mongodb_instance=None):
                 logger.debug(f"Dokument mit ObjectId gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
                 return doc
         except Exception as e:
-            logger.debug(f"ObjectId-Konvertierung fehlgeschlagen: {e}")
+            logger.debug(f"ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
         
         # Falls immer noch nicht gefunden, versuche mit convert_id_for_query
         converted_id = convert_id_for_query(id_value)
@@ -104,7 +104,7 @@ def find_document_by_id(collection: str, id_value: str, mongodb_instance=None):
         return doc
         
     except Exception as e:
-        logger.error(f"Fehler beim Suchen von Dokument {id_value} in Collection {collection}: {str(e)}")
+        logger.error(f"Fehler beim Suchen von Dokument {id_value} in Collection {collection}: [Interner Fehler]")
         return None
 
 def find_user_by_id(user_id: str, mongodb_instance=None):
@@ -140,7 +140,7 @@ def find_user_by_id(user_id: str, mongodb_instance=None):
         return None
                 
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Users mit ID {user_id}: {e}")
+        logger.error(f"Fehler beim Laden des Users mit ID {user_id}: [Interner Fehler]")
         return None
 
 def normalize_all_ids_in_collection(collection_name: str, mongodb_instance=None):
@@ -184,7 +184,7 @@ def normalize_all_ids_in_collection(collection_name: str, mongodb_instance=None)
         return updated_count
         
     except Exception as e:
-        logger.error(f"Fehler beim Normalisieren der IDs in Collection {collection_name}: {str(e)}")
+        logger.error(f"Fehler beim Normalisieren der IDs in Collection {collection_name}: [Interner Fehler]")
         return 0
 
 def resolve_user_group_names(group_ids, mongodb_instance=None):

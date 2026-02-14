@@ -88,6 +88,6 @@ def delete_notice(id):
         return redirect(url_for('admin.notices'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Hinweises: {str(e)}")
+        logger.error(f"Fehler beim Löschen des Hinweises: [Interner Fehler]")
         flash('Fehler beim Löschen des Hinweises', 'error')
         return redirect(url_for('admin.notices'))

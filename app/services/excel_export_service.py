@@ -87,7 +87,7 @@ class ExcelExportService:
             return output
             
         except Exception as e:
-            logger.error(f"Fehler beim Generieren des Excel-Exports: {str(e)}")
+            logger.error(f"Fehler beim Generieren des Excel-Exports: [Interner Fehler]")
             raise
     
     def _create_tools_sheet(self):
@@ -219,7 +219,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Werkzeuge-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Werkzeuge-Arbeitsblatts: [Interner Fehler]")
     
     def _create_consumables_sheet(self):
         """Erstellt das Verbrauchsmaterial-Arbeitsblatt"""
@@ -231,7 +231,7 @@ class ExcelExportService:
                 from app.services.custom_fields_service import CustomFieldsService
                 custom_fields = CustomFieldsService.get_custom_fields_for_target('consumables')
             except Exception as e:
-                logger.warning(f"Fehler beim Laden der Custom Fields für Verbrauchsmaterial: {e}")
+                logger.warning(f"Fehler beim Laden der Custom Fields für Verbrauchsmaterial: [Interner Fehler]")
                 custom_fields = []
             
             headers = [
@@ -309,7 +309,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Verbrauchsmaterial-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Verbrauchsmaterial-Arbeitsblatts: [Interner Fehler]")
     
     def _create_workers_sheet(self):
         """Erstellt das Mitarbeiter-Arbeitsblatt"""
@@ -359,7 +359,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Mitarbeiter-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Mitarbeiter-Arbeitsblatts: [Interner Fehler]")
     
     def _create_lendings_sheet(self):
         """Erstellt das Ausleihen-Arbeitsblatt"""
@@ -449,7 +449,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Ausleihen-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Ausleihen-Arbeitsblatts: [Interner Fehler]")
     
     def _create_consumptions_sheet(self):
         """Erstellt das Ausgaben-Arbeitsblatt"""
@@ -499,7 +499,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Ausgaben-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Ausgaben-Arbeitsblatts: [Interner Fehler]")
     
     def _create_tickets_sheet(self):
         """Erstellt das Tickets-Arbeitsblatt"""
@@ -547,7 +547,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Tickets-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Tickets-Arbeitsblatts: [Interner Fehler]")
     
     def _create_summary_sheet(self):
         """Erstellt das Zusammenfassung-Arbeitsblatt"""
@@ -613,7 +613,7 @@ class ExcelExportService:
             self._auto_adjust_columns(ws)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Zusammenfassungs-Arbeitsblatts: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Zusammenfassungs-Arbeitsblatts: [Interner Fehler]")
     
     def _apply_style(self, cell, style_name: str):
         """Wendet einen Stil auf eine Zelle an"""
@@ -639,7 +639,7 @@ class ExcelExportService:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except Exception as e:
-                    logger.warning(f"Fehler bei Spaltenbreiten-Berechnung: {e}")
+                    logger.warning(f"Fehler bei Spaltenbreiten-Berechnung: [Interner Fehler]")
                     pass
             
             adjusted_width = min(max_length + 2, 50)  # Maximal 50 Zeichen

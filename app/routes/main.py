@@ -15,11 +15,11 @@ def index():
     # Prüfe ob Setup erforderlich ist
     if needs_setup():
         return redirect(url_for('setup.setup_admin'))
-    
+
     # Für eingeloggte Teilnehmer: Keine Weiterleitung - sie können die Startseite sehen
     # if current_user.is_authenticated and current_user.role == 'teilnehmer':
     #     return redirect(url_for('workers.timesheet_list'))
-        
+
     try:
         # Prüfe ob MongoDB verfügbar ist
         try:
@@ -53,7 +53,7 @@ def index():
                                timesheet_prefill=timesheet_prefill,
                                timesheet_quick_enabled=timesheet_quick_enabled,
                                weekly_reports_enabled=weekly_reports_enabled)
-        
+
         # Verwende den zentralen Statistics Service
         try:
             from app.services.statistics_service import StatisticsService
@@ -66,7 +66,7 @@ def index():
             overdue_loans = stats['overdue_loans']
             notices = StatisticsService.get_notices()
         except Exception as e:
-            current_app.logger.error(f"Fehler beim Laden der Statistiken: {str(e)}")
+            current_app.logger.error(f"Fehler beim Laden der Statistiken: [Interner Fehler]")
             import traceback
             current_app.logger.error(f"Traceback: {traceback.format_exc()}")
             tool_stats = {'total': 0, 'available': 0, 'lent': 0, 'defect': 0}
@@ -76,7 +76,7 @@ def index():
             duplicate_barcodes = []
             overdue_loans = []
             notices = []
-        
+
         # Optional: Prefill für heutige Timesheet-Eingabe ermitteln
         timesheet_prefill = None
         weekly_reports_enabled = False
@@ -116,7 +116,7 @@ def index():
             template_name = 'index_teilnehmer.html'
         else:
             template_name = 'index_normal.html'
-        
+
         return render_template(template_name,
                            tool_stats=tool_stats,
                            consumable_stats=consumable_stats,
@@ -128,9 +128,9 @@ def index():
                            timesheet_prefill=timesheet_prefill,
                            timesheet_quick_enabled=timesheet_quick_enabled,
                            weekly_reports_enabled=weekly_reports_enabled)
-        
+
     except Exception as e:
-        current_app.logger.error(f"Fehler beim Laden der Startseite: {str(e)}")
+        current_app.logger.error(f"Fehler beim Laden der Startseite: [Interner Fehler]")
         import traceback
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         return render_template('index_public.html',
@@ -162,10 +162,10 @@ def emergency_admin():
             return "<h1>403 Forbidden</h1><p>Ungültiger oder fehlender Emergency-Token.</p>", 403
         from werkzeug.security import generate_password_hash
         from datetime import datetime
-        
+
         # Prüfe ob Admin-Benutzer bereits existiert
         admin_user = mongodb.find_one('users', {'role': 'admin'})
-        
+
         if admin_user:
                     return f"""
         <html>
@@ -178,7 +178,7 @@ def emergency_admin():
         </body>
         </html>
         """
-        
+
         # Erstelle Admin-Benutzer mit zufälligem Passwort
         admin_data = {
             'username': 'admin',
@@ -191,9 +191,9 @@ def emergency_admin():
             'lastname': 'System',
             'email': 'admin@scandy.local'
         }
-        
+
         _id = mongodb.insert_one('users', admin_data)
-        
+
         return f"""
         <html>
         <head><title>Admin-Benutzer erstellt</title></head>
@@ -205,14 +205,14 @@ def emergency_admin():
         </body>
         </html>
         """
-        
+
     except Exception as e:
         return f"""
         <html>
         <head><title>Fehler</title></head>
         <body>
             <h1>❌ Fehler beim Erstellen des Admin-Benutzers</h1>
-            <p>Fehler: {str(e)}</p>
+            <p>Fehler: [Interner Fehler]</p>
         </body>
         </html>
         """

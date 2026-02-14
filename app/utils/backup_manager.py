@@ -56,7 +56,7 @@ class BackupManager:
                         except ValueError:
                             continue
                 except Exception as e:
-                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
+                    logger.warning(f"Fehler bei Datumskonvertierung: [Interner Fehler]")
                     pass  # Belasse als String wenn Konvertierung fehlschlägt
         
         return doc
@@ -79,7 +79,7 @@ class BackupManager:
                     try:
                         return ObjectId(obj['value'])
                     except Exception as e:
-                        logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung: [Interner Fehler]")
                         return obj['value']  # Fallback zu String
                 else:
                     return obj['value']
@@ -92,7 +92,7 @@ class BackupManager:
                         try:
                             result[k] = ObjectId(v)
                         except Exception as e:
-                            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
+                            logger.warning(f"Fehler bei ObjectId-Konvertierung: [Interner Fehler]")
                             result[k] = v  # Fallback zu String
                     # Datetime-Felder konvertieren - ERWEITERTE LISTE für ältere Versionen
                     elif k in ['created_at', 'updated_at', 'modified_at', 'deleted_at', 'date', 'timestamp', 
@@ -221,7 +221,7 @@ class BackupManager:
             return format_info
             
         except Exception as e:
-            logger.error(f"Fehler beim Erkennen des Backup-Formats: {e}")
+            logger.error(f"Fehler beim Erkennen des Backup-Formats: [Interner Fehler]")
             return {
                 'is_old_format': True,
                 'version_estimate': 'unknown',
@@ -343,7 +343,7 @@ class BackupManager:
                     serialized_docs = [self._serialize_for_backup(doc) for doc in documents]
                     backup_data[collection] = serialized_docs
                 except Exception as e:
-                    print(f"Fehler beim Sichern von {collection}: {e}")
+                    print(f"Fehler beim Sichern von {collection}: [Interner Fehler]")
                     backup_data[collection] = []
             
             # Backup-Datei mit Metadaten speichern
@@ -369,7 +369,7 @@ class BackupManager:
             return backup_filename
             
         except Exception as e:
-            print(f"Fehler beim Erstellen des Backups: {e}")
+            print(f"Fehler beim Erstellen des Backups: [Interner Fehler]")
             return None
     
     def restore_backup(self, file):
@@ -409,7 +409,7 @@ class BackupManager:
             return success
             
         except Exception as e:
-            print(f"Fehler beim Wiederherstellen des Backups: {e}")
+            print(f"Fehler beim Wiederherstellen des Backups: [Interner Fehler]")
             return False
         finally:
             # Temporäre Datei löschen
@@ -417,7 +417,7 @@ class BackupManager:
                 try:
                     temp_path.unlink()
                 except Exception as e:
-                    print(f"Fehler beim Löschen der temporären Datei: {e}")
+                    print(f"Fehler beim Löschen der temporären Datei: [Interner Fehler]")
     
     def restore_backup_by_filename(self, filename):
         """Stellt ein Backup anhand des Dateinamens wieder her"""
@@ -430,7 +430,7 @@ class BackupManager:
             return self._restore_from_file(backup_path)
             
         except Exception as e:
-            print(f"Fehler beim Wiederherstellen des Backups: {e}")
+            print(f"Fehler beim Wiederherstellen des Backups: [Interner Fehler]")
             return False
     
     def _restore_from_file(self, backup_path):
@@ -531,7 +531,7 @@ class BackupManager:
                                         try:
                                             fixed_doc['_id'] = ObjectId(fixed_doc['_id'])
                                         except Exception as e:
-                                            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
+                                            logger.warning(f"Fehler bei ObjectId-Konvertierung: [Interner Fehler]")
                                             # Falls keine gültige ObjectId, entferne das Feld
                                             del fixed_doc['_id']
                                     elif not isinstance(fixed_doc['_id'], ObjectId):
@@ -568,7 +568,7 @@ class BackupManager:
                                         break
                                         
                             except Exception as e:
-                                logger.error(f"Fehler bei Dokument-Konvertierung in {collection}: {e}")
+                                logger.error(f"Fehler bei Dokument-Konvertierung in {collection}: [Interner Fehler]")
                                 conversion_stats['errors'] += 1
                                 restore_stats['conversion_errors'] += 1
                                 # Versuche das ursprüngliche Dokument zu verwenden
@@ -586,7 +586,7 @@ class BackupManager:
                             logger.warning(f"  - ⚠️  Fehler: {conversion_stats['errors']}")
                         
                 except Exception as e:
-                    logger.error(f"❌ Fehler beim Wiederherstellen von {collection}: {e}")
+                    logger.error(f"❌ Fehler beim Wiederherstellen von {collection}: [Interner Fehler]")
                     restore_stats['failed_collections'] += 1
                     
                     # Bei Fehler: Versuche ohne ID-Korrektur (Fallback für sehr alte Backups)
@@ -613,7 +613,7 @@ class BackupManager:
                 logger.info(f"Umfassende Dashboard-Reparatur nach Backup angewendet: {fixes}")
                 
             except Exception as e:
-                logger.error(f"Fehler bei automatischen Dashboard-Fixes: {e}")
+                logger.error(f"Fehler bei automatischen Dashboard-Fixes: [Interner Fehler]")
             
             # ERWEITERTE Wiederherstellungs-Zusammenfassung
             print(f"\n📊 Backup-Wiederherstellung abgeschlossen:")
@@ -636,7 +636,7 @@ class BackupManager:
             return True
             
         except Exception as e:
-            print(f"Fehler beim Wiederherstellen aus Datei: {e}")
+            print(f"Fehler beim Wiederherstellen aus Datei: [Interner Fehler]")
             return False
     
     def _fix_category_inconsistency(self):
@@ -710,7 +710,7 @@ class BackupManager:
             print("Kategorien-Inkonsistenz behoben!")
             
         except Exception as e:
-            print(f"Fehler beim Beheben der Kategorien-Inkonsistenz: {e}")
+            print(f"Fehler beim Beheben der Kategorien-Inkonsistenz: [Interner Fehler]")
 
     def _fix_consumable_inconsistencies(self):
         """Behebt Inkonsistenzen bei Verbrauchsgütern nach Backup-Import"""
@@ -763,7 +763,7 @@ class BackupManager:
                         update_data['created_at'] = created_at_dt
                         updated = True
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung created_at: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung created_at: [Interner Fehler]")
                         pass
                 
                 # updated_at korrigieren
@@ -774,7 +774,7 @@ class BackupManager:
                         update_data['updated_at'] = updated_at_dt
                         updated = True
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: [Interner Fehler]")
                         pass
                 
                 if updated:
@@ -799,7 +799,7 @@ class BackupManager:
                         update_data['used_at'] = used_at_dt
                         updated = True
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung used_at: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung used_at: [Interner Fehler]")
                         pass
                 
                 # created_at korrigieren
@@ -810,7 +810,7 @@ class BackupManager:
                         update_data['created_at'] = created_at_dt
                         updated = True
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung created_at: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung created_at: [Interner Fehler]")
                         pass
                 
                 if updated:
@@ -826,7 +826,7 @@ class BackupManager:
             logger.info(f"  - Verbrauchseinträge korrigiert: {fixed_usages}")
             
         except Exception as e:
-            logger.error(f"Fehler beim Beheben der Verbrauchsgüter-Inkonsistenzen: {e}")
+            logger.error(f"Fehler beim Beheben der Verbrauchsgüter-Inkonsistenzen: [Interner Fehler]")
     
     def get_backup_path(self, filename):
         """Gibt den Pfad zu einer Backup-Datei zurück"""
@@ -841,7 +841,7 @@ class BackupManager:
                 return True
             return False
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Backups: {e}")
+            logger.error(f"Fehler beim Löschen des Backups: [Interner Fehler]")
             return False
     
     def test_backup(self, filename):
@@ -879,7 +879,7 @@ class BackupManager:
             }
             
         except Exception as e:
-            return False, f"Fehler beim Testen des Backups: {str(e)}"
+            return False, f"Fehler beim Testen des Backups: [Interner Fehler]"
     
     def test_old_backup_format(self, backup_filename):
         """
@@ -990,7 +990,7 @@ class BackupManager:
             return True, report
             
         except Exception as e:
-            return False, f"Fehler beim Testen des Backup-Formats: {str(e)}"
+            return False, f"Fehler beim Testen des Backup-Formats: [Interner Fehler]"
 
     def analyze_backup_compatibility(self, backup_filename):
         """
@@ -1022,7 +1022,7 @@ class BackupManager:
             return True, report
             
         except Exception as e:
-            return False, f"Fehler bei der Kompatibilitätsanalyse: {str(e)}"
+            return False, f"Fehler bei der Kompatibilitätsanalyse: [Interner Fehler]"
     
     def _cleanup_old_backups(self, keep_days=7):
         """Löscht Backups älter als 'keep_days' Tage"""
@@ -1064,7 +1064,7 @@ class BackupManager:
                             print(f"Altes JSON-Backup gelöscht: {backup.name} (vom {backup_time.strftime('%Y-%m-%d %H:%M')})")
                             
                 except Exception as e:
-                    print(f"Fehler beim Löschen von {backup.name}: {e}")
+                    print(f"Fehler beim Löschen von {backup.name}: [Interner Fehler]")
             
             if deleted_count > 0:
                 total_size_mb = total_size_freed / (1024 * 1024)
@@ -1076,7 +1076,7 @@ class BackupManager:
                 print(f"✅ Keine alten Backups gefunden (alle Backups sind neuer als {keep_days} Tage)")
                     
         except Exception as e:
-            print(f"Fehler beim Aufräumen alter Backups: {e}")
+            print(f"Fehler beim Aufräumen alter Backups: [Interner Fehler]")
 
     def create_native_backup(self):
         """
@@ -1159,7 +1159,7 @@ class BackupManager:
                 return None
                 
         except Exception as e:
-            print(f"Fehler beim Erstellen des nativen Backups: {e}")
+            print(f"Fehler beim Erstellen des nativen Backups: [Interner Fehler]")
             return None
     
     def restore_native_backup(self, backup_filename):
@@ -1218,7 +1218,7 @@ class BackupManager:
                 return False
                 
         except Exception as e:
-            print(f"Fehler beim Wiederherstellen des nativen Backups: {e}")
+            print(f"Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]")
             return False
 
     def _python_restore_mongodb(self, mongo_uri: str, bson_dir):
@@ -1280,7 +1280,7 @@ class BackupManager:
             print("✅ MongoDB per Python-Fallback wiederhergestellt")
             return True
         except Exception as e:
-            print(f"❌ Python-Fallback fehlgeschlagen: {e}")
+            print(f"❌ Python-Fallback fehlgeschlagen: [Interner Fehler]")
             return False
 
     def restore_native_backup_from_upload(self, uploaded_file):
@@ -1376,7 +1376,7 @@ class BackupManager:
                     return self._python_restore_mongodb(mongo_uri, bson_dir)
                     
         except Exception as e:
-            print(f"Fehler beim Wiederherstellen des nativen Backups aus Upload: {e}")
+            print(f"Fehler beim Wiederherstellen des nativen Backups aus Upload: [Interner Fehler]")
             return False
     
     def _get_dir_size(self, path):
@@ -1435,7 +1435,7 @@ class BackupManager:
             return backups
             
         except Exception as e:
-            print(f"Fehler beim Auflisten der nativen Backups: {e}")
+            print(f"Fehler beim Auflisten der nativen Backups: [Interner Fehler]")
             return []
     
     def create_hybrid_backup(self):
@@ -1461,7 +1461,7 @@ class BackupManager:
             }
             
         except Exception as e:
-            print(f"Fehler beim Erstellen des hybriden Backups: {e}")
+            print(f"Fehler beim Erstellen des hybriden Backups: [Interner Fehler]")
             return None
 
     def convert_old_backup(self, old_backup_filename):
@@ -1534,7 +1534,7 @@ class BackupManager:
             return new_backup_filename
                 
         except Exception as e:
-            print(f"Fehler beim Konvertieren des Backups: {e}")
+            print(f"Fehler beim Konvertieren des Backups: [Interner Fehler]")
             return None
 
     def list_old_backups(self):
@@ -1559,12 +1559,12 @@ class BackupManager:
                         })
                         
                 except Exception as e:
-                    print(f"Fehler beim Lesen von {backup_file.name}: {e}")
+                    print(f"Fehler beim Lesen von {backup_file.name}: [Interner Fehler]")
             
             return old_backups
             
         except Exception as e:
-            print(f"Fehler beim Auflisten alter Backups: {e}")
+            print(f"Fehler beim Auflisten alter Backups: [Interner Fehler]")
             return []
 
     def convert_all_old_backups(self):
@@ -1601,7 +1601,7 @@ class BackupManager:
             return converted_backups
             
         except Exception as e:
-            print(f"Fehler bei der Massenkonvertierung: {e}")
+            print(f"Fehler bei der Massenkonvertierung: [Interner Fehler]")
             return []
 
 # Globale Instanz

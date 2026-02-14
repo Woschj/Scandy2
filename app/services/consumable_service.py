@@ -22,7 +22,7 @@ class ConsumableService:
                 query['department'] = g.current_department
             return list(mongodb.find('consumables', query))
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterialien: {str(e)}")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterialien: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -60,7 +60,7 @@ class ConsumableService:
             mongodb.insert_one('consumables', consumable_data)
             return True, 'Verbrauchsmaterial wurde erfolgreich hinzugefügt'
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Verbrauchsmaterials: {str(e)}")
+            logger.error(f"Fehler beim Hinzufügen des Verbrauchsmaterials: [Interner Fehler]")
             return False, 'Fehler beim Hinzufügen des Verbrauchsmaterials'
     
     @staticmethod
@@ -109,8 +109,8 @@ class ConsumableService:
                 mongodb.insert_one('consumable_usages', usage_data)
             return True, 'Verbrauchsmaterial erfolgreich aktualisiert', new_barcode
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: {str(e)}")
-            return False, str(e), None
+            logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: [Interner Fehler]")
+            return False, 'Ein interner Fehler ist aufgetreten.', None
     
     @staticmethod
     def get_consumable_detail(barcode: str) -> Optional[Dict[str, Any]]:
@@ -120,7 +120,7 @@ class ConsumableService:
                 filter_query['department'] = g.current_department
             return mongodb.find_one('consumables', filter_query)
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Verbrauchsmaterials: {str(e)}")
+            logger.error(f"Fehler beim Laden des Verbrauchsmaterials: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -142,7 +142,7 @@ class ConsumableService:
             usages.sort(key=safe_date_key, reverse=True)
             return usages
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchshistorie: {str(e)}")
+            logger.error(f"Fehler beim Laden der Verbrauchshistorie: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -154,7 +154,7 @@ class ConsumableService:
             else:
                 return False, 'Fehler beim Löschen'
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: {str(e)}")
+            logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: [Interner Fehler]")
             return False, 'Fehler beim Löschen'
     
     @staticmethod
@@ -199,8 +199,8 @@ class ConsumableService:
             return True, f'{abs(quantity_change)} Stück {action}. Neuer Bestand: {new_quantity}'
             
         except Exception as e:
-            logger.error(f"Fehler beim Anpassen des Bestands: {str(e)}")
-            return False, f'Fehler beim Anpassen des Bestands: {str(e)}'
+            logger.error(f"Fehler beim Anpassen des Bestands: [Interner Fehler]")
+            return False, f'Fehler beim Anpassen des Bestands: [Interner Fehler]'
     
     @staticmethod
     def get_statistics() -> Dict[str, Any]:
@@ -241,7 +241,7 @@ class ConsumableService:
             return stats
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: [Interner Fehler]")
             return {
                 'total_consumables': 0,
                 'categories': {},

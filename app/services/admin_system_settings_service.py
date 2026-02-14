@@ -32,7 +32,7 @@ class AdminSystemSettingsService:
                 return settings['value']
             return []
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Abteilungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Abteilungen: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -50,7 +50,7 @@ class AdminSystemSettingsService:
                 return settings['value']
             return []
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Kategorien: {str(e)}")
+            logger.error(f"Fehler beim Laden der Kategorien: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -68,7 +68,7 @@ class AdminSystemSettingsService:
                 return settings['value']
             return []
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Standorte: {str(e)}")
+            logger.error(f"Fehler beim Laden der Standorte: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -86,7 +86,7 @@ class AdminSystemSettingsService:
                 return settings['value']
             return []
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Kategorien: {str(e)}")
+            logger.error(f"Fehler beim Laden der Ticket-Kategorien: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -127,8 +127,8 @@ class AdminSystemSettingsService:
             return True, f"Abteilung '{name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Abteilung '{name}': {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Abteilung: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Abteilung '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Abteilung: [Interner Fehler]"
 
     @staticmethod
     def delete_department(name: str) -> Tuple[bool, str]:
@@ -221,8 +221,8 @@ class AdminSystemSettingsService:
             return True, f"Abteilung '{name}' und alle zugehörigen Daten wurden gelöscht ({summary})."
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Abteilung '{name}': {str(e)}")
-            return False, f"Fehler beim Löschen der Abteilung: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Abteilung '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Abteilung: [Interner Fehler]"
 
     @staticmethod
     def rename_department(old_name: str, new_name: str) -> Tuple[bool, str]:
@@ -262,8 +262,8 @@ class AdminSystemSettingsService:
                     }
                 })
             except Exception as e:
-                logger.error(f"Fehler beim Aktualisieren der Abteilungsliste: {e}")
-                return False, f"Fehler beim Aktualisieren der Abteilungsliste: {e}"
+                logger.error(f"Fehler beim Aktualisieren der Abteilungsliste: [Interner Fehler]")
+                return False, f"Fehler beim Aktualisieren der Abteilungsliste: [Interner Fehler]"
 
             # 2) Collections mit direktem department-Feld migrieren
             direct_collections = [
@@ -317,8 +317,8 @@ class AdminSystemSettingsService:
             logger.info(f"Abteilung '{old_name}' in '{new_name}' umbenannt. Betroffene Dokumente ~{changed_total}.")
             return True, f"Abteilung umbenannt von '{old_name}' in '{new_name}'."
         except Exception as e:
-            logger.error(f"Fehler beim Umbenennen der Abteilung '{old_name}' in '{new_name}': {str(e)}")
-            return False, f"Fehler beim Umbenennen der Abteilung: {str(e)}"
+            logger.error(f"Fehler beim Umbenennen der Abteilung '{old_name}' in '{new_name}': [Interner Fehler]")
+            return False, f"Fehler beim Umbenennen der Abteilung: [Interner Fehler]"
 
     @staticmethod
     def add_category(name: str) -> Tuple[bool, str]:
@@ -358,8 +358,8 @@ class AdminSystemSettingsService:
             return True, f"Kategorie '{name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Kategorie '{name}': {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Kategorie '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Kategorie: [Interner Fehler]"
 
     @staticmethod
     def delete_category(name: str) -> Tuple[bool, str]:
@@ -407,8 +407,8 @@ class AdminSystemSettingsService:
             return True, f"Kategorie '{name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Kategorie '{name}': {str(e)}")
-            return False, f"Fehler beim Löschen der Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Kategorie '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Kategorie: [Interner Fehler]"
 
     @staticmethod
     def add_location(name: str) -> Tuple[bool, str]:
@@ -448,8 +448,8 @@ class AdminSystemSettingsService:
             return True, f"Standort '{name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Standorts '{name}': {str(e)}")
-            return False, f"Fehler beim Hinzufügen des Standorts: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen des Standorts '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen des Standorts: [Interner Fehler]"
 
     @staticmethod
     def delete_location(name: str) -> Tuple[bool, str]:
@@ -497,8 +497,8 @@ class AdminSystemSettingsService:
             return True, f"Standort '{name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Standorts '{name}': {str(e)}")
-            return False, f"Fehler beim Löschen des Standorts: {str(e)}"
+            logger.error(f"Fehler beim Löschen des Standorts '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Löschen des Standorts: [Interner Fehler]"
 
     @staticmethod
     def add_ticket_category(name: str) -> Tuple[bool, str]:
@@ -538,8 +538,8 @@ class AdminSystemSettingsService:
             return True, f"Ticket-Kategorie '{name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie '{name}': {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Ticket-Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Ticket-Kategorie: [Interner Fehler]"
 
     @staticmethod
     def delete_ticket_category(name: str) -> Tuple[bool, str]:
@@ -586,8 +586,8 @@ class AdminSystemSettingsService:
             return True, f"Ticket-Kategorie '{name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Ticket-Kategorie '{name}': {str(e)}")
-            return False, f"Fehler beim Löschen der Ticket-Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Ticket-Kategorie '{name}': [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Ticket-Kategorie: [Interner Fehler]"
 
     @staticmethod
     def get_system_settings_statistics() -> Dict[str, Any]:
@@ -659,7 +659,7 @@ class AdminSystemSettingsService:
             return stats
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der System-Einstellungs-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der System-Einstellungs-Statistiken: [Interner Fehler]")
             return {
                 'departments': {'count': 0, 'used_by_workers': 0},
                 'categories': {'count': 0, 'used_by_tools': 0},
@@ -724,11 +724,11 @@ class AdminSystemSettingsService:
             return validation_results
             
         except Exception as e:
-            logger.error(f"Fehler bei der System-Einstellungs-Validierung: {str(e)}")
+            logger.error(f"Fehler bei der System-Einstellungs-Validierung: [Interner Fehler]")
             return {
-                'departments': {'valid': False, 'issues': [f"Validierungsfehler: {str(e)}"]},
-                'categories': {'valid': False, 'issues': [f"Validierungsfehler: {str(e)}"]},
-                'locations': {'valid': False, 'issues': [f"Validierungsfehler: {str(e)}"]},
-                'ticket_categories': {'valid': False, 'issues': [f"Validierungsfehler: {str(e)}"]},
+                'departments': {'valid': False, 'issues': [f"Validierungsfehler: [Interner Fehler]"]},
+                'categories': {'valid': False, 'issues': [f"Validierungsfehler: [Interner Fehler]"]},
+                'locations': {'valid': False, 'issues': [f"Validierungsfehler: [Interner Fehler]"]},
+                'ticket_categories': {'valid': False, 'issues': [f"Validierungsfehler: [Interner Fehler]"]},
                 'overall_valid': False
             } 

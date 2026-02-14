@@ -47,7 +47,7 @@ def index():
                              embed_today_url=embed_today_url,
                              canteen_api_key=api_key_value)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Kantinenplan-Seite: {e}")
+        logger.error(f"Fehler beim Laden der Kantinenplan-Seite: [Interner Fehler]")
         flash('Fehler beim Laden der Daten', 'error')
         return redirect(url_for('dashboard.index'))
 
@@ -64,7 +64,7 @@ def embed():
             api_current = f"{api_current}{sep}api_key={api_key}"
         return render_template('canteen/embed.html', api_current=api_current)
     except Exception as e:
-        logger.error(f"Fehler beim Rendern der Canteen-Embed-Ansicht: {e}")
+        logger.error(f"Fehler beim Rendern der Canteen-Embed-Ansicht: [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Embed nicht verfügbar'}), 500
 
 @bp.route('/canteen/embed/today')
@@ -78,7 +78,7 @@ def embed_today():
             api_today = f"{api_today}{sep}api_key={api_key}"
         return render_template('canteen/embed_today.html', api_today=api_today)
     except Exception as e:
-        logger.error(f"Fehler beim Rendern der Canteen-Embed-Today-Ansicht: {e}")
+        logger.error(f"Fehler beim Rendern der Canteen-Embed-Today-Ansicht: [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Embed Today nicht verfügbar'}), 500
 
 @bp.route('/canteen/update', methods=['POST'])
@@ -134,8 +134,8 @@ def update_canteen_plan():
             return redirect(url_for('canteen.index'))
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Kantinenplans: {e}")
-        error_message = f'Fehler beim Speichern: {str(e)}'
+        logger.error(f"Fehler beim Aktualisieren des Kantinenplans: [Interner Fehler]")
+        error_message = f'Fehler beim Speichern: [Interner Fehler]'
         
         is_ajax = (request.headers.get('Content-Type', '').startswith('application/json') or 
                    request.headers.get('X-Requested-With') == 'XMLHttpRequest')
@@ -162,7 +162,7 @@ def canteen_status():
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen des Kantinenplan-Status: {e}")
+        logger.error(f"Fehler beim Abrufen des Kantinenplan-Status: [Interner Fehler]")
         return jsonify({'enabled': True, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/api/canteen/current_week', methods=['GET'])
@@ -193,7 +193,7 @@ def api_current_week():
                     date_obj = datetime.strptime(date, '%Y-%m-%d')
                     date_label = date_obj.strftime('%d.%m.%Y')
                 except Exception as e:
-                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
+                    logger.warning(f"Fehler bei Datumskonvertierung: [Interner Fehler]")
                     date_label = date
             else:
                 # Fallback: Datum anhand aktueller Woche bestimmen
@@ -217,7 +217,7 @@ def api_current_week():
         })
         
     except Exception as e:
-        logger.error(f"API-Fehler: {e}")
+        logger.error(f"API-Fehler: [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/today', methods=['GET'])
@@ -252,7 +252,7 @@ def api_today():
             'generated_at': datetime.now().isoformat()
         })
     except Exception as e:
-        logger.error(f"API-Fehler (today): {e}")
+        logger.error(f"API-Fehler (today): [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/two_weeks', methods=['GET'])
@@ -282,7 +282,7 @@ def api_two_weeks():
                     date_obj = datetime.strptime(date, '%Y-%m-%d')
                     date_label = date_obj.strftime('%d.%m.%Y')
                 except Exception as e:
-                    logger.warning(f"Fehler bei Datumskonvertierung: {e}")
+                    logger.warning(f"Fehler bei Datumskonvertierung: [Interner Fehler]")
                     date_label = date
             else:
                 today = datetime.now()
@@ -305,7 +305,7 @@ def api_two_weeks():
         })
         
     except Exception as e:
-        logger.error(f"API-Fehler: {e}")
+        logger.error(f"API-Fehler: [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/status', methods=['GET'])
@@ -332,7 +332,7 @@ def api_status():
         })
         
     except Exception as e:
-        logger.error(f"Status-API-Fehler: {e}")
+        logger.error(f"Status-API-Fehler: [Interner Fehler]")
         return jsonify({'error': 'Interner Server-Fehler'}), 500
 
 @bp.route('/canteen/debug', methods=['GET'])
@@ -346,7 +346,7 @@ def debug_canteen():
         try:
             mongodb.find_one('users', {})
         except Exception as e:
-            db_status = f"Fehler: {e}"
+            db_status = f"Fehler: [Interner Fehler]"
         
         # Prüfe Feature-Status
         feature_enabled = is_feature_enabled('canteen_plan')
@@ -412,7 +412,7 @@ def simple_save():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
     try:
@@ -432,7 +432,7 @@ def simple_save():
         
     except Exception as e:
         return jsonify({
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/canteen/debug_form', methods=['POST'])
@@ -464,7 +464,7 @@ def debug_form():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/canteen/debug_complete', methods=['POST'])
@@ -505,7 +505,7 @@ def debug_complete():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/canteen/direct_save', methods=['POST'])
@@ -569,7 +569,7 @@ def direct_save():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/canteen/test_save', methods=['POST'])
@@ -640,10 +640,10 @@ def test_save():
         })
         
     except Exception as e:
-        logger.error(f"Fehler in test_save: {e}")
+        logger.error(f"Fehler in test_save: [Interner Fehler]")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/canteen/debug_request', methods=['GET', 'POST'])
@@ -660,7 +660,7 @@ def debug_request():
             json_data = request.get_json()
             logger.info(f"JSON Data: {json_data}")
         except Exception as e:
-            logger.info(f"JSON Data: None (not JSON content-type) - {e}")
+            logger.info(f"JSON Data: None (not JSON content-type) - [Interner Fehler]")
     
     return jsonify({
         'method': request.method,

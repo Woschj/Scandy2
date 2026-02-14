@@ -73,14 +73,14 @@ def manual_lending():
                         'message': message
                     }), 400
             except Exception as e:
-                logger.error(f"Fehler bei der Ausleihe: {str(e)}")
+                logger.error(f"Fehler bei der Ausleihe: [Interner Fehler]")
                 return jsonify({
                     'success': False,
                     'message': f'Fehler: [Interner Fehler]'
                 }), 500
 
         except Exception as e:
-            logger.error(f"Fehler beim Verarbeiten der Anfrage: {str(e)}")
+            logger.error(f"Fehler beim Verarbeiten der Anfrage: [Interner Fehler]")
             return jsonify({
                 'success': False,
                 'message': 'Fehler beim Verarbeiten der Anfrage'
@@ -268,7 +268,7 @@ def system():
                              software_presets=software_presets,
                              user_groups=user_groups)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Systemeinstellungen: {str(e)}")
+        logger.error(f"Fehler beim Laden der Systemeinstellungen: [Interner Fehler]")
         flash('Fehler beim Laden der Systemeinstellungen', 'error')
         return redirect(url_for('admin.index'))
 
@@ -323,7 +323,7 @@ def feature_settings():
                              available_departments=available_departments)
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Feature-Einstellungen: {str(e)}")
+        logger.error(f"Fehler beim Laden der Feature-Einstellungen: [Interner Fehler]")
         flash('Fehler beim Laden der Feature-Einstellungen', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -343,7 +343,7 @@ def change_department():
             return jsonify({'success': False, 'error': 'Keine Abteilung angegeben'}), 400
 
     except Exception as e:
-        logger.error(f"Fehler beim Wechseln der Abteilung: {str(e)}")
+        logger.error(f"Fehler beim Wechseln der Abteilung: [Interner Fehler]")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/role_permissions', methods=['GET', 'POST'])
@@ -399,7 +399,7 @@ def role_permissions():
                                actions=actions,
                                allowed_actions=ALLOWED_ACTIONS)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Rollenrechte: {str(e)}")
+        logger.error(f"Fehler beim Laden der Rollenrechte: [Interner Fehler]")
         flash('Fehler beim Laden der Rollenrechte', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -415,7 +415,7 @@ def get_departments():
             'departments': [{'name': dept} for dept in departments]
         })
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Abteilungen: {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Abteilungen: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden der Abteilungen'
@@ -428,7 +428,7 @@ def departments_manage_page():
     try:
         return render_template('admin/departments.html')
     except Exception as e:
-        logger.error(f"Fehler beim Rendern der Abteilungsseite: {e}")
+        logger.error(f"Fehler beim Rendern der Abteilungsseite: [Interner Fehler]")
         flash('Fehler beim Laden der Abteilungsverwaltung', 'error')
         return redirect(url_for('admin.system'))
 
@@ -459,7 +459,7 @@ def add_department():
                 'message': message
         })
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Abteilung: {str(e)}")
+        logger.error(f"Fehler beim Hinzufügen der Abteilung: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -475,7 +475,7 @@ def rename_department():
         success, message = AdminSystemSettingsService.rename_department(old_name, new_name)
         return jsonify({'success': success, 'message': message})
     except Exception as e:
-        logger.error(f"Fehler beim Umbenennen der Abteilung: {str(e)}")
+        logger.error(f"Fehler beim Umbenennen der Abteilung: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Ein Fehler ist aufgetreten.'})
 
 @bp.route('/categories')
@@ -494,7 +494,7 @@ def get_categories_admin():
         categories = category_service.get_categories_for_department(current_dept)
         return jsonify({'success': True, 'categories': [{'name': n} for n in categories]})
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Kategorien: {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Kategorien: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Fehler beim Laden der Kategorien'})
 
 @bp.route('/categories/add', methods=['POST'])
@@ -527,7 +527,7 @@ def add_category():
             return jsonify({'success': False, 'message': 'Diese Kategorie existiert bereits in dieser Abteilung.'})
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Kategorie: {str(e)}")
+        logger.error(f"Fehler beim Hinzufügen der Kategorie: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -549,7 +549,7 @@ def get_locations():
         locations = location_service.get_locations_for_department(current_dept)
         return jsonify({'success': True, 'locations': [{'name': n} for n in locations]})
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Standorte: {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Standorte: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden der Standorte'
@@ -585,7 +585,7 @@ def add_location():
             return jsonify({'success': False, 'message': 'Dieser Standort existiert bereits in dieser Abteilung.'})
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen des Standorts: {str(e)}")
+        logger.error(f"Fehler beim Hinzufügen des Standorts: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -603,7 +603,7 @@ def available_logos():
             'logos': logos
         })
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Logos: {str(e)}")
+        logger.error(f"Fehler beim Laden der Logos: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden der Logos'
@@ -619,7 +619,7 @@ def email_settings():
             AdminDebugService.fix_email_configuration()
             logger.info("Automatische E-Mail-Reparatur durchgeführt")
         except Exception as e:
-            logger.warning(f"Automatische E-Mail-Reparatur fehlgeschlagen: {e}")
+            logger.warning(f"Automatische E-Mail-Reparatur fehlgeschlagen: [Interner Fehler]")
 
         # Session-Persistierung vor dem Speichern
         current_user_id = session.get('user_id')
@@ -752,7 +752,7 @@ def email_settings():
         return render_template('admin/email_settings.html', config=config, templates=templates, mappings=mappings, templates_by_key=templates_by_key)
 
     except Exception as e:
-        logger.error(f"Fehler bei E-Mail-Einstellungen: {e}")
+        logger.error(f"Fehler bei E-Mail-Einstellungen: [Interner Fehler]")
 
         # Session wiederherstellen bei Fehlern
         if current_user_id:
@@ -798,7 +798,7 @@ def switch_department(department):
             flash('Keine Berechtigung für diese Abteilung', 'error')
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.error(f"Fehler beim Wechseln des Departments: {e}")
+        logger.error(f"Fehler beim Wechseln des Departments: [Interner Fehler]")
         flash('Fehler beim Wechseln des Departments', 'error')
 
     from app.utils.auth_utils import is_safe_url
@@ -847,7 +847,7 @@ def check_version():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler beim Versionscheck: {str(e)}")
+        logger.error(f"Fehler beim Versionscheck: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Versionscheck: [Interner Fehler]'
@@ -876,7 +876,7 @@ def version_check():
             })
 
     except Exception as e:
-        logger.error(f"Fehler beim Versionscheck: {str(e)}")
+        logger.error(f"Fehler beim Versionscheck: [Interner Fehler]")
         return jsonify({
             'update_available': False,
             'error': 'Ein interner Fehler ist aufgetreten.'
@@ -894,7 +894,7 @@ def get_version_info():
         return jsonify(info)
 
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Versionsinformationen: {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Versionsinformationen: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Abrufen der Versionsinformationen: [Interner Fehler]'
@@ -908,6 +908,6 @@ def version_check_page():
     try:
         return render_template('admin/version_check.html')
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Versionscheck-Seite: {str(e)}")
+        logger.error(f"Fehler beim Laden der Versionscheck-Seite: [Interner Fehler]")
         flash(f'Fehler beim Laden der Seite: [Interner Fehler]', 'error')
         return redirect(url_for('admin.dashboard'))

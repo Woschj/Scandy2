@@ -26,7 +26,7 @@ def trash():
                            tickets=tickets,
                            users=deleted_users)
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Papierkorbs: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden des Papierkorbs: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden des Papierkorbs', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -120,7 +120,7 @@ def restore_item(type, barcode):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Wiederherstellen des Eintrags: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Wiederherstellen des Eintrags: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Wiederherstellen: [Interner Fehler]'
@@ -174,7 +174,7 @@ def delete_tool_soft_json():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Werkzeugs: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -223,7 +223,7 @@ def delete_tool_soft(barcode):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Werkzeugs: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -255,7 +255,7 @@ def delete_tool_permanent(barcode):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim endgültigen Löschen des Werkzeugs: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim endgültigen Löschen des Werkzeugs: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -288,7 +288,7 @@ def delete_consumable_soft():
         return jsonify({'success': True, 'message': 'Verbrauchsmaterial erfolgreich gelöscht'})
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: {e}")
+        logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Interner Serverfehler'}), 500
 
 @bp.route('/consumables/<barcode>/delete-permanent', methods=['DELETE'])
@@ -308,7 +308,7 @@ def delete_consumable_permanent(barcode):
         return jsonify({'success': True, 'message': 'Verbrauchsmaterial permanent gelöscht'})
 
     except Exception as e:
-        logger.error(f"Fehler beim permanenten Löschen des Verbrauchsmaterials: {e}")
+        logger.error(f"Fehler beim permanenten Löschen des Verbrauchsmaterials: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Interner Serverfehler'}), 500
 
 @bp.route('/workers/delete', methods=['DELETE'])
@@ -359,7 +359,7 @@ def delete_worker_soft_json():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Mitarbeiters: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -408,7 +408,7 @@ def delete_worker_soft(barcode):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Mitarbeiters: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -439,7 +439,7 @@ def delete_worker_permanent(barcode):
         return jsonify({'success': True, 'message': 'Mitarbeiter permanent gelöscht'})
 
     except Exception as e:
-        logger.error(f"Fehler beim permanenten Löschen des Mitarbeiters: {e}")
+        logger.error(f"Fehler beim permanenten Löschen des Mitarbeiters: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Interner Serverfehler'}), 500
 
 @bp.route('/delete-logo/<filename>', methods=['POST'])
@@ -459,7 +459,7 @@ def delete_logo(filename):
         else:
             return jsonify({'success': False, 'message': 'Logo nicht gefunden'}), 404
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Logos: {e}")
+        logger.error(f"Fehler beim Löschen des Logos: [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Fehler beim Löschen des Logos'}), 500
 
 @bp.route('/delete_ticket_category/<category>', methods=['POST'])
@@ -483,7 +483,7 @@ def delete_ticket_category(category):
         flash('Ticket-Kategorie erfolgreich gelöscht.', 'success')
         return redirect(url_for('tickets.create'))
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: {str(e)}")
+        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: [Interner Fehler]")
         flash('Ein Fehler ist aufgetreten.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -509,7 +509,7 @@ def delete_department(name):
                 'message': message
             })
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Abteilung: {str(e)}")
+        logger.error(f"Fehler beim Löschen der Abteilung: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -547,7 +547,7 @@ def delete_category(name):
             return jsonify({'success': False, 'message': 'Kategorie nicht gefunden (Abteilung prüfen).'}), 404
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Kategorie: {str(e)}")
+        logger.error(f"Fehler beim Löschen der Kategorie: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -585,7 +585,7 @@ def delete_location(name):
             return jsonify({'success': False, 'message': 'Standort nicht gefunden (Abteilung prüfen).'}), 404
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Standorts '{decoded_name}' in {current_dept}: {str(e)}")
+        logger.error(f"Fehler beim Löschen des Standorts '{decoded_name}' in {current_dept}: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -620,7 +620,7 @@ def delete_ticket_category_json(name):
             'message': 'Ticket-Kategorie erfolgreich gelöscht.'
         })
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: {str(e)}")
+        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -647,7 +647,7 @@ def delete_ticket_category_legacy(category):
         flash('Ticket-Kategorie erfolgreich gelöscht.', 'success')
         return redirect(url_for('tickets.create'))
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: {str(e)}")
+        logger.error(f"Fehler beim Löschen der Ticket-Kategorie: [Interner Fehler]")
         flash('Ein Fehler ist aufgetreten.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -691,7 +691,7 @@ def delete_backup(filename):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Backups: {str(e)}")
+        logger.error(f"Fehler beim Löschen des Backups: [Interner Fehler]")
         return jsonify({
             'status': 'error',
             'message': f'Fehler beim Löschen des Backups: [Interner Fehler]'
@@ -718,7 +718,7 @@ def delete_ticket(ticket_id):
             }), 400
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Tickets: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Tickets: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'
@@ -763,7 +763,7 @@ def delete_ticket_permanent(ticket_id):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim endgültigen Löschen des Tickets: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim endgültigen Löschen des Tickets: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
             'message': f'Fehler beim Löschen: [Interner Fehler]'

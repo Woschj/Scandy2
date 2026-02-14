@@ -208,7 +208,7 @@ class Job:
             
         except Exception as e:
             # Bei MongoDB-Fehlern: Fallback auf leere Liste
-            print(f"Fehler beim Abrufen der Jobs: {e}")
+            print(f"Fehler beim Abrufen der Jobs: [Interner Fehler]")
             return {
                 'jobs': [],
                 'total_count': 0,

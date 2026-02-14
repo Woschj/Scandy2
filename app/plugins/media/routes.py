@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 try:
     from app.utils.media_manager import MediaManager
 except ImportError as e:
-    print(f"MediaManager Import-Fehler: {e}")
+    print(f"MediaManager Import-Fehler: [Interner Fehler]")
     # Fallback: Einfache Implementierung
     class MediaManager:
         @staticmethod
@@ -261,7 +261,7 @@ def upload_media(entity_type, entity_id):
                     'file_size_mb': round(final_size_mb, 2)
                 })
         except Exception as e:
-            logger.warning(f"Fehler bei Bildverarbeitung: {e}")
+            logger.warning(f"Fehler bei Bildverarbeitung: [Interner Fehler]")
             # History-Logging für Medien-Upload (nur bei Tickets) - Fallback
             if entity_type == 'tickets':
                 try:
@@ -426,7 +426,7 @@ def get_media_count(entity_type, entity_id):
         loggers['errors'].error(f"Count-Fehler: [Interner Fehler]")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'Ein interner Fehler ist aufgetreten.',
             'count': 0
         })
 
@@ -446,7 +446,7 @@ def test_upload_route(entity_type, entity_id):
         loggers['errors'].error(f"Test-Upload-Fehler: [Interner Fehler]")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         })
 
 @bp.route('/simple-upload/<entity_type>/<entity_id>', methods=['GET', 'POST'])

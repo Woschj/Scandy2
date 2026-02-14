@@ -165,7 +165,7 @@ class MediaManager:
             
         except Exception as e:
             loggers['errors'].error(f"Upload-Fehler: [Interner Fehler]")
-            return None, f"Fehler beim Hochladen: {str(e)}"
+            return None, f"Fehler beim Hochladen: [Interner Fehler]"
     
     @staticmethod
     def delete_media(filename, entity_type, entity_id):

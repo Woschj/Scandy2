@@ -43,7 +43,7 @@ class UtilityService:
                     except ValueError:
                         continue
             except Exception as e:
-                logger.warning(f"Fehler bei Datumskonvertierung: {e}")
+                logger.warning(f"Fehler bei Datumskonvertierung: [Interner Fehler]")
                 pass
         elif isinstance(date_value, datetime):
             return date_value
@@ -98,7 +98,7 @@ class UtilityService:
                             except ValueError:
                                 continue
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         item[field] = None
                 elif isinstance(item[field], datetime):
@@ -109,7 +109,7 @@ class UtilityService:
                     try:
                         item[field] = datetime.fromisoformat(str(item[field]))
                     except Exception as e:
-                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         item[field] = None
             else:

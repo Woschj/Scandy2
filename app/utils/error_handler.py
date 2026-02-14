@@ -45,7 +45,7 @@ def setup_logging():
 
     except Exception as e:
         # Fallback: Verwende nur Console-Logging
-        print(f"Logging-Setup fehlgeschlagen: {e}")
+        print(f"Logging-Setup fehlgeschlagen: [Interner Fehler]")
         app_logger = logging.getLogger('app')
         app_logger.setLevel(logging.INFO)
         if not app_logger.handlers:
@@ -92,7 +92,7 @@ def handle_errors(app):
     @app.errorhandler(Exception)
     def handle_exception(e):
         # Logge den Fehler
-        logger.error(f"Unbehandelter Fehler: {str(e)}")
+        logger.error(f"Unbehandelter Fehler: [Interner Fehler]")
 
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Internal server error'}), 500
@@ -115,7 +115,7 @@ def handle_errors(app):
             # Für normale Antworten
             logger.info(f"Response: {response.status} {response.status_code} - Size: {len(response.get_data())} bytes")
         except Exception as e:
-            logger.error(f"Fehler beim Loggen der Antwort: {str(e)}")
+            logger.error(f"Fehler beim Loggen der Antwort: [Interner Fehler]")
         return response
 
 def safe_db_query(func):
@@ -125,11 +125,11 @@ def safe_db_query(func):
         try:
             return func(*args, **kwargs)
         except PyMongoError as e:
-            logger.error(f"Datenbankfehler in {func.__name__}: {str(e)}")
+            logger.error(f"Datenbankfehler in {func.__name__}: [Interner Fehler]")
             logger.error(f"Stacktrace: {traceback.format_exc()}")
             return []  # Leere Liste bei Datenbankfehlern
         except Exception as e:
-            logger.error(f"Unerwarteter Fehler in {func.__name__}: {str(e)}")
+            logger.error(f"Unerwarteter Fehler in {func.__name__}: [Interner Fehler]")
             logger.error(f"Stacktrace: {traceback.format_exc()}")
             return []
     return wrapper

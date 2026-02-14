@@ -58,7 +58,7 @@ class CanteenService:
             return output.getvalue()
             
         except Exception as e:
-            logger.error(f"Fehler beim Generieren der CSV: {e}")
+            logger.error(f"Fehler beim Generieren der CSV: [Interner Fehler]")
             return ""
     
     def get_current_week_meals(self) -> List[Dict]:
@@ -97,7 +97,7 @@ class CanteenService:
             return meals
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Mahlzeiten: {e}")
+            logger.error(f"Fehler beim Laden der Mahlzeiten: [Interner Fehler]")
             return []
     
     def get_two_weeks_meals(self) -> List[Dict]:
@@ -146,7 +146,7 @@ class CanteenService:
             return meals
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Mahlzeiten: {e}")
+            logger.error(f"Fehler beim Laden der Mahlzeiten: [Interner Fehler]")
             return []
 
     def get_today_meal(self) -> Dict:
@@ -177,7 +177,7 @@ class CanteenService:
                     'dessert': ''
                 }
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Tagesmahlzeit: {e}")
+            logger.error(f"Fehler beim Laden der Tagesmahlzeit: [Interner Fehler]")
             return {
                 'date': datetime.now().strftime('%Y-%m-%d'),
                 'meat_dish': '',
@@ -227,8 +227,8 @@ class CanteenService:
             return True, "Mahlzeiten erfolgreich gespeichert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der Mahlzeiten: {e}")
-            return False, f"Fehler beim Speichern: {str(e)}"
+            logger.error(f"Fehler beim Speichern der Mahlzeiten: [Interner Fehler]")
+            return False, f"Fehler beim Speichern: [Interner Fehler]"
     
     def update_canteen_plan(self, meals_data: List[Dict]) -> Tuple[bool, str]:
         """Aktualisiert Kantinenplan (API-basiert)"""
@@ -241,8 +241,8 @@ class CanteenService:
             return True, f"Kantinenplan erfolgreich aktualisiert (API-basiert)"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Kantinenplans: {e}")
-            return False, f"Fehler: {str(e)}"
+            logger.error(f"Fehler beim Aktualisieren des Kantinenplans: [Interner Fehler]")
+            return False, f"Fehler: [Interner Fehler]"
     
     def get_credentials_status(self) -> Dict:
         """Gibt Status der API-Konfiguration zurück"""
@@ -253,7 +253,7 @@ class CanteenService:
                 'message': 'API-basierte Kantinenplan-Verwaltung aktiv'
             }
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen des API-Status: {e}")
+            logger.error(f"Fehler beim Abrufen des API-Status: [Interner Fehler]")
             return {
                 'configured': False,
                 'api_enabled': False,
