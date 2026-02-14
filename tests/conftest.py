@@ -34,13 +34,12 @@ def mock_mongo():
 @pytest.fixture
 def app():
     """Create and configure a test app instance."""
-    from app.config import get_config
+    from app import create_app
 
-    config = get_config('testing')
-    flask_config = config.to_flask_config()
+    # Sicherstellen, dass FLASK_ENV auf testing steht
+    os.environ['FLASK_ENV'] = 'testing'
 
-    app = Flask(__name__)
-    app.config.update(flask_config)
+    app = create_app()
 
     # Initialize minimal app components for testing
     with app.app_context():
