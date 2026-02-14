@@ -10,7 +10,14 @@ def history():
     """Zeigt die Historie der Ausleihen an"""
     try:
         # Hole die letzten 50 Ausleihen mit Details
+        # Optimierung: Sort und Limit ZUERST, um Join-Workload zu minimieren
         pipeline = [
+            {
+                '$sort': {'lent_at': -1}
+            },
+            {
+                '$limit': 50
+            },
             {
                 '$lookup': {
                     'from': 'tools',
@@ -28,27 +35,33 @@ def history():
                 }
             },
             {
-                '$unwind': '$tool'
+                '$unwind': {
+                    'path': '$tool',
+                    'preserveNullAndEmptyArrays': True
+                }
             },
             {
-                '$unwind': '$worker'
+                '$unwind': {
+                    'path': '$worker',
+                    'preserveNullAndEmptyArrays': True
+                }
             },
             {
                 '$project': {
                     'id': '$_id',
                     'lent_at': 1,
                     'returned_at': 1,
-                    'tool_name': '$tool.name',
-                    'tool_barcode': '$tool.barcode',
-                    'worker_name': {'$concat': ['$worker.firstname', ' ', '$worker.lastname']},
-                    'worker_barcode': '$worker.barcode'
+                    'tool_name': {'$ifNull': ['$tool.name', 'Unbekanntes Werkzeug']},
+                    'tool_barcode': {'$ifNull': ['$tool.barcode', '$tool_barcode']},
+                    'worker_name': {
+                        '$cond': {
+                            'if': {'$and': [{'$gt': ['$worker.firstname', None]}, {'$gt': ['$worker.lastname', None]}]},
+                            'then': {'$concat': ['$worker.firstname', ' ', '$worker.lastname']},
+                            'else': 'Unbekannter Mitarbeiter'
+                        }
+                    },
+                    'worker_barcode': {'$ifNull': ['$worker.barcode', '$worker_barcode']}
                 }
-            },
-            {
-                '$sort': {'lent_at': -1}
-            },
-            {
-                '$limit': 50
             }
         ]
 
@@ -71,4 +84,4 @@ def history():
         print(f"Fehler beim Laden der Historie: [Interner Fehler]")
         history = []
 
-    return render_template('history.html', history=history) 
+    return render_template('history.html', history=history)
