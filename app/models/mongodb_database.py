@@ -35,7 +35,17 @@ class MongoDBDatabase:
     def _connect(self):
         """Stellt die Verbindung zur MongoDB her (robust mit Retry)"""
         uri = os.environ.get("MONGODB_URI")
-        db_name = os.environ.get("MONGO_INITDB_DATABASE", "scandy")
+
+        # Fallback for Docker environment if MONGODB_URI is not explicitly set
+        if not uri:
+            user = os.environ.get("MONGO_ROOT_USER", "admin")
+            password = os.environ.get("MONGO_ROOT_PASSWORD", "change_me_immediately")
+            db_name_fallback = os.environ.get("MONGODB_DB", "scandy")
+            host = "mongodb" # Service name in docker-compose.yml
+            uri = f"mongodb://{user}:{password}@{host}:27017/{db_name_fallback}?authSource=admin"
+
+        db_name = os.environ.get("MONGO_INITDB_DATABASE") or os.environ.get("MONGODB_DB", "scandy")
+
         if uri and 'authSource' not in uri:
             # Füge authSource=admin hinzu, falls nicht vorhanden
             if '?' in uri:
@@ -53,7 +63,7 @@ class MongoDBDatabase:
                 print(f"[MongoDB] Verbindung erfolgreich zu {safe_uri}")
                 return
             except (ServerSelectionTimeoutError, OperationFailure) as e:
-                print(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/3): [Interner Fehler]")
+                print(f"[MongoDB] Nicht erreichbar (Versuch {attempt+1}/3): {str(e)}")
                 time.sleep(1)  # Reduziert von 3 auf 1 Sekunde
         raise Exception("MongoDB-Verbindung nach 3 Versuchen fehlgeschlagen!")
     
@@ -262,7 +272,7 @@ class MongoDBDatabase:
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Fehler bei update_one: [Interner Fehler]")
+            logger.error(f"Fehler bei update_one: {str(e)}")
             return False
     
     def _process_filter_ids(self, filter_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -580,12 +590,12 @@ def _legacy_get_feature_settings():
             
             return settings
         except Exception as e:
-            logger.warning(f"Fehler beim Laden der Feature-Einstellungen: [Interner Fehler]")
+            logger.warning(f"Fehler beim Laden der Feature-Einstellungen: {str(e)}")
             # Fallback zu Standard-Einstellungen
             return default_settings
             
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Feature-Einstellungen: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Feature-Einstellungen: {str(e)}")
         return {
             'tools': True,
             'consumables': True,
@@ -624,7 +634,7 @@ def _legacy_set_feature_setting(feature_name, enabled):
                          upsert=True)
         return True
     except Exception as e:
-        print(f"Fehler beim Setzen der Feature-Einstellung: [Interner Fehler]")
+        print(f"Fehler beim Setzen der Feature-Einstellung: {str(e)}")
         return False
 
 def is_feature_enabled(feature_name):
@@ -670,10 +680,10 @@ def _legacy_is_feature_enabled(feature_name):
             setting = mongodb.find_one('settings', {'key': f'feature_{feature_name}'})
             return setting.get('value', default_settings.get(feature_name, False)) if setting else default_settings.get(feature_name, False)
         except Exception as e:
-            logger.warning(f"Fehler beim Lesen der Feature-Einstellung {feature_name}: [Interner Fehler]")
+            logger.warning(f"Fehler beim Lesen der Feature-Einstellung {feature_name}: {str(e)}")
             # Fallback zu Standard-Einstellungen
             return default_settings.get(feature_name, False)
             
     except Exception as e:
-        print(f"Fehler beim Prüfen der Feature-Einstellung: [Interner Fehler]")
+        print(f"Fehler beim Prüfen der Feature-Einstellung: {str(e)}")
         return True  # Standardmäßig aktiviert für Sicherheit 

@@ -92,7 +92,7 @@ def normalize_database_ids():
                 total_updated += updated_count
                 
             except Exception as e:
-                logging.warning(f"Fehler bei ID-Normalisierung in Collection {collection_name}: [Interner Fehler]")
+                logging.warning(f"Fehler bei ID-Normalisierung in Collection {collection_name}: {str(e)}")
         
         if total_updated > 0:
             logging.info(f"ID-Normalisierung abgeschlossen: {total_updated} IDs in allen Collections normalisiert")
@@ -100,7 +100,7 @@ def normalize_database_ids():
             logging.info("ID-Normalisierung: Alle IDs sind bereits normalisiert")
             
     except Exception as e:
-        logging.error(f"Fehler bei ID-Normalisierung: [Interner Fehler]")
+        logging.error(f"Fehler bei ID-Normalisierung: {str(e)}")
         # Nicht die Anwendung stoppen, nur loggen
 
 # Flask-Login Manager konfigurieren
@@ -251,14 +251,14 @@ def create_app(test_config=None):
             mongodb._client.admin.command('ping')
             logging.info("MongoDB-Verbindung erfolgreich getestet")
         except Exception as e:
-            logging.warning(f"MongoDB-Health-Check fehlgeschlagen: [Interner Fehler]")
-            raise Exception(f"MongoDB nicht verfügbar: [Interner Fehler]")
+            logging.warning(f"MongoDB-Health-Check fehlgeschlagen: {str(e)}")
+            raise Exception(f"MongoDB nicht verfügbar: {str(e)}")
 
         with app.app_context():
             create_mongodb_indexes()
             logging.info("MongoDB-Indizes erstellt")
     except Exception as e:
-        logging.error(f"Fehler bei MongoDB-Initialisierung: [Interner Fehler]")
+        logging.error(f"Fehler bei MongoDB-Initialisierung: {str(e)}")
         # Bei MongoDB-Fehlern trotzdem fortfahren (App kann ohne DB funktionieren)
         logging.warning("App startet ohne vollständige MongoDB-Initialisierung fort")
     
@@ -310,7 +310,7 @@ def create_app(test_config=None):
             os.chown(session_dir, root_uid, root_gid)
             app.logger.info(f"Session-Verzeichnis-Berechtigungen und Besitzer gesetzt: {session_dir}")
         except Exception as e:
-            app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: [Interner Fehler]")
+            app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: {str(e)}")
     
     # Debug: Zeige aktuelle Session-Konfiguration
     app.logger.info(f"Session-Konfiguration: SECURE={app.config.get('SESSION_COOKIE_SECURE')}, "
@@ -389,7 +389,7 @@ def create_app(test_config=None):
                 app.logger.debug(f"Session-Berechtigungen: {permission_fixed_count} Dateien korrigiert")
 
         except Exception as e:
-            app.logger.warning(f"Fehler bei Session-Bereinigung: [Interner Fehler]")
+            app.logger.warning(f"Fehler bei Session-Bereinigung: {str(e)}")
 
     # Führe Session-Bereinigung beim Start aus
     cleanup_old_sessions()
@@ -563,7 +563,7 @@ def create_app(test_config=None):
         except ImportError:
             logging.warning("Backup-System-Module nicht verfügbar, überspringe Backup-System-Start")
         except Exception as e:
-            logging.error(f"Fehler beim Starten des automatischen Backup-Systems: [Interner Fehler]")
+            logging.error(f"Fehler beim Starten des automatischen Backup-Systems: {str(e)}")
             logging.info("App startet trotzdem ohne Backup-System fort")
 
     # Starte Backup-System in separatem Thread (nicht-blockierend bei Fehlern)
@@ -584,7 +584,7 @@ def create_app(test_config=None):
                 else:
                     logging.info("Dashboard-Reparatur: Keine Probleme gefunden")
         except Exception as e:
-            logging.error(f"Fehler bei automatischer Dashboard-Reparatur: [Interner Fehler]")
+            logging.error(f"Fehler bei automatischer Dashboard-Reparatur: {str(e)}")
 
     # Starte Dashboard-Reparatur in Hintergrund-Thread (nicht-blockierend)
     import threading
@@ -616,11 +616,11 @@ def create_app(test_config=None):
                 'timestamp': datetime.now().isoformat()
             }), 200
         except Exception as e:
-            app.logger.error(f"Health check failed: [Interner Fehler]")
+            app.logger.error(f"Health check failed: {str(e)}")
             return jsonify({
                 'status': 'unhealthy',
                 'database': 'disconnected',
-                'error': 'Ein interner Fehler ist aufgetreten.',
+                'error': str(e),
                 'timestamp': datetime.now().isoformat()
             }), 503
     
@@ -652,7 +652,7 @@ def create_app(test_config=None):
         init_mail(app)
         app.logger.info("E-Mail-System initialisiert")
     except Exception as e:
-        app.logger.warning(f"E-Mail-System konnte nicht initialisiert werden: [Interner Fehler]")
+        app.logger.warning(f"E-Mail-System konnte nicht initialisiert werden: {str(e)}")
     
     # ===== CONTEXT PROCESSOR FÜR TEMPLATE-VARIABLEN =====
     @app.context_processor
@@ -683,7 +683,7 @@ def create_app(test_config=None):
             feature_settings = get_feature_settings()
             return {'feature_settings': feature_settings}
         except Exception as e:
-            app.logger.warning(f"Fehler beim Laden der Feature-Einstellungen: [Interner Fehler]")
+            app.logger.warning(f"Fehler beim Laden der Feature-Einstellungen: {str(e)}")
             return {'feature_settings': {}}
 
     # ===== CONTEXT PROCESSOR FÜR BERECHTIGUNGEN =====
