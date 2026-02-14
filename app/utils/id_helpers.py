@@ -185,4 +185,34 @@ def normalize_all_ids_in_collection(collection_name: str, mongodb_instance=None)
         
     except Exception as e:
         logger.error(f"Fehler beim Normalisieren der IDs in Collection {collection_name}: {str(e)}")
-        return 0 
+        return 0
+
+def resolve_user_group_names(group_ids, mongodb_instance=None):
+    """Löst Nutzergruppen-IDs zu Namen auf"""
+    try:
+        if not group_ids:
+            return ''
+
+        # MongoDB-Instanz holen falls nicht übergeben
+        if mongodb_instance is None:
+            from app.models.mongodb_database import mongodb
+            mongodb_instance = mongodb
+
+        group_names = []
+        for group_id in group_ids:
+            try:
+                # Versuche ObjectId Konvertierung
+                query_id = convert_id_for_query(group_id)
+
+                # Lade Nutzergruppe aus Datenbank
+                group = mongodb_instance.find_one('user_groups', {'_id': query_id})
+                if group:
+                    group_names.append(group.get('name', str(group_id)))
+                else:
+                    group_names.append(str(group_id))
+            except Exception:
+                group_names.append(str(group_id))
+
+        return ', '.join(group_names)
+    except Exception:
+        return ', '.join([str(gid) for gid in group_ids]) if group_ids else ''

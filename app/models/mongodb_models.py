@@ -1,3 +1,4 @@
+from app.utils.id_helpers import convert_id_for_query
 """
 MongoDB-Modelle für Scandy - Vollständige Implementierung
 """
@@ -10,23 +11,7 @@ from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return id_value
-    except Exception as e:
-        logger.warning(f"Fehler bei String-ID-Behandlung: {e}")
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            return ObjectId(id_value)
-        except Exception as e2:
-            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e2}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return id_value
+
 
 class BaseModel:
     """Basis-Klasse für MongoDB-Modelle"""

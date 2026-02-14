@@ -9,7 +9,7 @@ import logging
 from app.models.mongodb_database import mongodb, is_feature_enabled
 
 # Blueprint mit URL-Präfix definieren
-bp = Blueprint('tools', __name__, url_prefix='/tools')
+bp = Blueprint('tools', __name__)
 logger = logging.getLogger(__name__) # Logger für dieses Modul
 
 def get_feature_settings_safe():

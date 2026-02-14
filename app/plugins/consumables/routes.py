@@ -9,7 +9,7 @@ import logging
 from app.services.consumable_service import ConsumableService
 
 # Blueprint mit URL-Präfix definieren
-bp = Blueprint('consumables', __name__, url_prefix='/consumables')
+bp = Blueprint('consumables', __name__)
 logger = logging.getLogger(__name__)
 
 @bp.route('/')

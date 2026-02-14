@@ -1,3 +1,4 @@
+from app.utils.id_helpers import convert_id_for_query, find_document_by_id
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash, abort, send_file, render_template_string, current_app
 from app.models.mongodb_models import MongoDBTicket
 from app.models.mongodb_database import mongodb, is_feature_enabled
@@ -81,85 +82,8 @@ import os
 from bson import ObjectId
 from typing import Union
 
-bp = Blueprint('tickets', __name__, url_prefix='/tickets')
+bp = Blueprint('tickets', __name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    if not id_value:
-        return None
-        
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return str(id_value)
-    except Exception as e:
-        print(f"DEBUG: String-Konvertierung fehlgeschlagen für {id_value}: {e}")
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            from bson import ObjectId
-            return ObjectId(id_value)
-        except Exception as e2:
-            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen für {id_value}: {e2}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return str(id_value)
-
-def normalize_id_for_database(id_value):
-    """
-    Normalisiert eine ID für die Datenbank - konvertiert alles zu String
-    """
-    if isinstance(id_value, ObjectId):
-        return str(id_value)
-    elif isinstance(id_value, str):
-        return id_value
-    else:
-        return str(id_value)
-
-def find_document_by_id(collection: str, id_value: str):
-    """
-    Findet ein Dokument in einer Collection mit robuster ID-Behandlung.
-    Versucht verschiedene ID-Formate: String, ObjectId, convert_id_for_query
-    """
-    if not id_value:
-        print(f"DEBUG: Keine ID angegeben für Collection '{collection}'")
-        return None
-        
-    print(f"DEBUG: Suche Dokument in Collection '{collection}' mit ID: {id_value}")
-    
-    # Versuche zuerst mit String-ID
-    try:
-        doc = mongodb.find_one(collection, {'_id': id_value})
-        if doc:
-            print(f"DEBUG: Dokument mit String-ID gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-            return doc
-    except Exception as e:
-        print(f"DEBUG: String-ID-Suche fehlgeschlagen: {e}")
-    
-    # Falls nicht gefunden, versuche mit ObjectId
-    try:
-        from bson import ObjectId
-        obj_id = ObjectId(id_value)
-        doc = mongodb.find_one(collection, {'_id': obj_id})
-        if doc:
-            print(f"DEBUG: Dokument mit ObjectId gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-            return doc
-    except Exception as e:
-        print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {e}")
-    
-    # Falls immer noch nicht gefunden, versuche mit convert_id_for_query
-    try:
-        converted_id = convert_id_for_query(id_value)
-        if converted_id:
-            doc = mongodb.find_one(collection, {'_id': converted_id})
-            if doc:
-                print(f"DEBUG: Dokument mit convert_id_for_query gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-                return doc
-    except Exception as e:
-        print(f"DEBUG: convert_id_for_query-Suche fehlgeschlagen: {e}")
-    
-    print(f"DEBUG: Kein Dokument gefunden für ID: {id_value}")
-    return None
 
 @bp.route('/debug/tickets')
 @login_required

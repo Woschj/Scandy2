@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-bp = Blueprint('mobile', __name__, url_prefix='/mobile')
+bp = Blueprint('mobile', __name__)
 
 @bp.before_request
 def ensure_mobile_department():

@@ -54,38 +54,8 @@ class ExcelExportService:
     
     def _resolve_user_group_names(self, group_ids):
         """Löst Nutzergruppen-IDs zu Namen auf"""
-        try:
-            if not group_ids:
-                return ''
-            
-            group_names = []
-            for group_id in group_ids:
-                try:
-                    from bson import ObjectId
-                    # Versuche ObjectId Konvertierung
-                    query_id = group_id
-                    if isinstance(group_id, str) and len(group_id) == 24:
-                        try:
-                            query_id = ObjectId(group_id)
-                        except Exception as e:
-                            logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {e}")
-                            query_id = group_id
-                    
-                    # Lade Nutzergruppe aus Datenbank
-                    from app.models.mongodb_database import mongodb
-                    group = mongodb.find_one('user_groups', {'_id': query_id})
-                    if group:
-                        group_names.append(group.get('name', str(group_id)))
-                    else:
-                        group_names.append(str(group_id))
-                except Exception as e:
-                    logger.warning(f"Fehler bei Gruppenverarbeitung für group_id {group_id}: {e}")
-                    group_names.append(str(group_id))
-            
-            return ', '.join(group_names)
-        except Exception as e:
-            logger.error(f"Fehler bei Gruppenverarbeitung: {e}")
-            return ', '.join([str(gid) for gid in group_ids]) if group_ids else ''
+        from app.utils.id_helpers import resolve_user_group_names
+        return resolve_user_group_names(group_ids)
     
     def generate_complete_export(self) -> BinaryIO:
         """

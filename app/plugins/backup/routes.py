@@ -16,7 +16,7 @@ from app.utils.unified_backup_manager import unified_backup_manager
 from app.utils.decorators import admin_required
 from app.utils.auto_backup import get_auto_backup_status, start_auto_backup, stop_auto_backup, auto_backup_scheduler
 
-bp = Blueprint('backup', __name__, url_prefix='/backup')
+bp = Blueprint('backup', __name__)
 @bp.route('/status', methods=['GET'])
 @login_required
 @admin_required

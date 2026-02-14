@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required
 from app.services.ticket_history_service import ticket_history_service
 
-bp = Blueprint('ticket_history', __name__, url_prefix='/api/tickets')
+bp = Blueprint('ticket_history', __name__)
 
 
 @bp.route('/<ticket_id>/history')

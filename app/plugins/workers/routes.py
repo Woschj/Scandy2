@@ -1,3 +1,5 @@
+from app.utils.id_helpers import find_document_by_id
+from app.utils.id_helpers import convert_id_for_query
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, send_file
 import logging
 from app.models.mongodb_models import MongoDBWorker
@@ -14,57 +16,12 @@ from docxtpl import DocxTemplate
 from bson import ObjectId
 from typing import Union
 
-bp = Blueprint('workers', __name__, url_prefix='/workers')
+bp = Blueprint('workers', __name__)
 
 logger = logging.getLogger(__name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return id_value
-    except Exception as e:
-        logger.warning(f"Fehler bei String-ID-Behandlung: {e}")
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            return ObjectId(id_value)
-        except Exception as e2:
-            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e2}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return id_value
 
-def find_document_by_id(collection: str, id_value: str):
-    """
-    Findet ein Dokument in einer Collection mit robuster ID-Behandlung.
-    Unterstützt sowohl String-IDs als auch ObjectIds.
-    """
-    try:
-        # Versuche zuerst mit String-ID
-        doc = mongodb.find_one(collection, {'_id': id_value})
-        if doc:
-            return doc
-        
-        # Falls nicht gefunden, versuche mit ObjectId
-        try:
-            obj_id = ObjectId(id_value)
-            doc = mongodb.find_one(collection, {'_id': obj_id})
-            if doc:
-                return doc
-        except Exception as e:
-            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e}")
-            pass
-        
-        # Falls auch das fehlschlägt, versuche mit convert_id_for_query
-        converted_id = convert_id_for_query(id_value)
-        doc = mongodb.find_one(collection, {'_id': converted_id})
-        return doc
-        
-    except Exception as e:
-        print(f"Fehler beim Suchen von Dokument {id_value} in {collection}: {e}")
-        return None
+
 
 @bp.route('/')
 @mitarbeiter_required

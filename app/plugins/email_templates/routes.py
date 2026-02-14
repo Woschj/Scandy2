@@ -4,7 +4,7 @@ from flask_login import login_required
 from app.utils.decorators import admin_required
 from app.services.admin_email_templates_service import AdminEmailTemplatesService
 
-bp = Blueprint('admin_email_templates', __name__, url_prefix='/admin/email-templates')
+bp = Blueprint('admin_email_templates', __name__)
 
 
 @bp.route('/')
