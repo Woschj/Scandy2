@@ -30,7 +30,7 @@ class MongoDBDatabase:
     def __init__(self):
         if not hasattr(self, '_initialized'):
             self._initialized = True
-            self._connect()
+            # Die Verbindung wird erst beim ersten Zugriff (lazy) hergestellt
     
     def _connect(self):
         """Stellt die Verbindung zur MongoDB her (robust mit Retry)"""

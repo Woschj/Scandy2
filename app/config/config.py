@@ -45,10 +45,10 @@ class Config:
     MONGODB_COLLECTION_PREFIX = os.environ.get('MONGODB_COLLECTION_PREFIX', '')
     
     # Upload-Verzeichnis
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'app', 'uploads')
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(BASE_DIR, 'app', 'uploads'))
     
     # Backup-Verzeichnis
-    BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
+    BACKUP_DIR = os.environ.get('BACKUP_DIR', os.path.join(BASE_DIR, 'app', 'backups'))
     
     # Flask-Session
     SESSION_TYPE = os.environ.get('SESSION_TYPE', 'filesystem')

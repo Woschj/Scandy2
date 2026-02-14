@@ -1,154 +1,76 @@
-# Scandy - Werkzeug- und Verbrauchsmaterialverwaltung
+# Scandy - Inventory Management System
 
-## 📋 Überblick
+Scandy is a lightweight and flexible inventory management system built with Flask and MongoDB. It is designed to be easily deployed using Docker and managed via Portainer.
 
-Scandy ist ein umfassendes Web-basiertes System zur Verwaltung von Werkzeugen, Verbrauchsmaterialien und Arbeitsaufträgen. Es bietet eine benutzerfreundliche Oberfläche für die Verwaltung von Inventar, Aufträgen und Benutzern.
+## 🚀 Quick Start with Docker Compose
 
-## 🚀 Schnellstart
+The easiest way to get Scandy up and running is using Docker Compose.
 
-### Voraussetzungen
-- Python 3.11+
-- MongoDB
-- Node.js (für CSS-Build)
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-repo/scandy.git
+    cd scandy
+    ```
 
-### Installation
-```bash
-# Repository klonen
-git clone <repository-url>
-cd Scandy2
+2.  **Create a `.env` file:**
+    Copy the example environment file and adjust the values:
+    ```bash
+    cp env.example .env
+    ```
 
-# Installation durchführen
-./install_scandy_simple_new.sh
-```
+3.  **Start the application:**
+    ```bash
+    docker-compose up -d
+    ```
 
-### Update
-```bash
-# System aktualisieren
-./update_scandy_simple.sh
-```
+4.  **Access Scandy:**
+    Open your browser and navigate to `http://localhost:5000`.
 
-## 🏗️ Architektur
+## ⛴️ Installation via Portainer
 
-### Technologie-Stack
-- **Backend**: Flask (Python)
-- **Datenbank**: MongoDB
-- **Frontend**: HTML5, TailwindCSS, JavaScript
-- **Deployment**: Gunicorn, systemd
+To install Scandy as a Stack in Portainer:
 
-### Verzeichnisstruktur
-```
-Scandy2/
-├── app/                    # Hauptapplikation
-│   ├── routes/            # API-Routen
-│   ├── models/            # Datenmodelle
-│   ├── templates/         # HTML-Templates
-│   ├── static/            # CSS, JS, Bilder
-│   └── utils/             # Hilfsfunktionen
-├── backups/               # Automatische Backups
-├── logs/                  # Anwendungslogs
-├── tests/                 # Testsuite
-├── docker-compose.yml     # Docker-Konfiguration
-├── requirements.txt       # Python-Abhängigkeiten
-└── install_scandy_simple_new.sh  # Installationsscript
-```
+1.  Log in to your Portainer instance.
+2.  Go to **Stacks** > **Add stack**.
+3.  Give the stack a name (e.g., `scandy`).
+4.  Select **Web editor** and paste the content of `docker-compose.yml`.
+5.  Under **Environment variables**, add the necessary variables (see list below).
+6.  Click **Deploy the stack**.
 
-## ⚙️ Konfiguration
+## ⚙️ Configuration (Environment Variables)
 
-### Umgebungsvariablen (.env)
-```bash
-# Datenbank
-MONGODB_URI=mongodb://localhost:27017/scandy
-MONGODB_DB=scandy
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `APP_PORT` | The port the application will be accessible on. | `5000` |
+| `MONGO_ROOT_USER` | Root username for MongoDB. | `admin` |
+| `MONGO_ROOT_PASSWORD` | Root password for MongoDB. | `change_me_immediately` |
+| `MONGODB_DB` | Name of the database. | `scandy` |
+| `SECRET_KEY` | Flask secret key for session encryption. | `change_me_secret_key` |
+| `FLASK_ENV` | Flask environment (`production` or `development`). | `production` |
+| `TIMEZONE` | System timezone. | `Europe/Berlin` |
+| `ME_PORT` | Port for Mongo Express (Web UI for MongoDB). | `8081` |
+| `ME_BASICAUTH_USER` | Basic auth username for Mongo Express. | `admin` |
+| `ME_BASICAUTH_PASSWORD` | Basic auth password for Mongo Express. | `change_me_immediately` |
 
-# Sicherheit
-SECRET_KEY=your-secret-key-here
-FLASK_ENV=production
+## 📁 Persistent Data
 
-# Webserver
-WEB_PORT=5000
-```
+Scandy uses Docker volumes to ensure your data is persistent:
 
-### Docker-Deployment
-```bash
-# Mit Docker starten
-docker compose up -d
+*   `mongodb_data`: Stores the MongoDB database files.
+*   `app_uploads`: Stores uploaded files.
+*   `app_backups`: Stores database backups.
+*   `app_logs`: Stores application logs.
+*   `app_sessions`: Stores user session data.
 
-# Mit SSL
-docker compose -f docker-compose.https.yml up -d
-```
+## 🛠️ Development
 
-## 🔧 Verwendung
+If you want to contribute to Scandy, you can use the following commands:
 
-### Web-Interface
-Nach der Installation ist Scandy unter `http://localhost:5000` erreichbar.
+*   `make build`: Build the Docker images.
+*   `make test`: Run the test suite.
+*   `make lint`: Run linting checks.
+*   `make format`: Format the code.
 
-### Backup-System
-Automatische tägliche Backups werden in `/backups` gespeichert.
+## 📄 License
 
-### Logs
-Anwendungslogs sind in `/logs` verfügbar.
-
-## 🔐 Sicherheit
-
-- Session-Management mit Flask-Session
-- Rate-Limiting für API-Endpunkte
-- Input-Validierung; CSRF ist deaktiviert (nur lokale Nutzung)
-- Sichere Passwort-Hashes (Werkzeug/bcrypt)
-
-## 📊 Features
-
-- **Werkzeugverwaltung**: Inventar, Ausleihe, Wartung
-- **Verbrauchsmaterialien**: Lagerbestand, Nachbestellungen
-- **Auftragsverwaltung**: Tickets, Arbeitsaufträge, Zeiterfassung
-- **Benutzerverwaltung**: Rollen, Berechtigungen, Abteilungen
-- **Dashboard**: Übersichten, Statistiken, Berichte
-
-## 🐛 Fehlerbehebung
-
-### Häufige Probleme
-
-**Service startet nicht:**
-```bash
-# Logs prüfen
-sudo journalctl -u scandy.service -f
-
-# Service-Status
-sudo systemctl status scandy.service
-```
-
-**Datenbankverbindung fehlgeschlagen:**
-```bash
-# MongoDB-Status prüfen
-sudo systemctl status mongod
-
-# Verbindung testen
-mongosh --eval "db.adminCommand('ping')"
-```
-
-### Backup wiederherstellen
-```bash
-# Backup-Dateien finden
-ls backups/*.json
-
-# Manuelle Wiederherstellung
-mongorestore --db scandy backups/scandy_backup_YYYYMMDD_HHMMSS
-```
-
-## 📝 Lizenz
-
-Dieses Projekt steht unter der MIT-Lizenz - siehe [LICENSE](LICENSE) Datei für Details.
-
-## 🤝 Beitragen
-
-1. Fork das Projekt
-2. Erstelle einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit deine Änderungen (`git commit -m 'Add some AmazingFeature'`)
-4. Push zum Branch (`git push origin feature/AmazingFeature`)
-5. Öffne einen Pull Request
-
-## 📞 Support
-
-Bei Fragen oder Problemen:
-1. Prüfe die Logs in `/logs`
-2. Stelle sicher, dass alle Voraussetzungen erfüllt sind
-3. Verwende die bereitgestellten Installations-/Update-Scripts
+This project is licensed under the MIT License.
