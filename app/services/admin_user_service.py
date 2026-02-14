@@ -33,7 +33,7 @@ class AdminUserService:
             return users
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Benutzer: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden aller Benutzer: {str(e)}")
             return []
 
     @staticmethod
@@ -47,7 +47,7 @@ class AdminUserService:
             return user
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Benutzers {user_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden des Benutzers {user_id}: {str(e)}")
             return None
 
     @staticmethod
@@ -145,8 +145,8 @@ class AdminUserService:
                 return True, f"Benutzer '{user_data['username']}' erfolgreich erstellt", user_id
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Benutzers: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen des Benutzers: [Interner Fehler]", None
+            logger.error(f"Fehler beim Erstellen des Benutzers: {str(e)}")
+            return False, f"Fehler beim Erstellen des Benutzers: {str(e)}", None
 
     @staticmethod
     def update_user(user_id: str, user_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -242,8 +242,8 @@ class AdminUserService:
             return True, f"Benutzer erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Benutzers {user_id}: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren des Benutzers: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren des Benutzers {user_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren des Benutzers: {str(e)}"
 
     @staticmethod
     def delete_user(user_id: str, permanent: bool = False) -> Tuple[bool, str]:
@@ -314,8 +314,8 @@ class AdminUserService:
                 return True, f"Benutzer '{user.get('username', 'Unknown')}' erfolgreich deaktiviert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Benutzers {user_id}: [Interner Fehler]")
-            return False, f"Fehler beim Löschen des Benutzers: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen des Benutzers {user_id}: {str(e)}")
+            return False, f"Fehler beim Löschen des Benutzers: {str(e)}"
 
     @staticmethod
     def reset_user_password(user_id: str, new_password: str) -> Tuple[bool, str]:
@@ -350,8 +350,8 @@ class AdminUserService:
             return True, f"Passwort für '{user.get('username', 'Unknown')}' erfolgreich zurückgesetzt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Zurücksetzen des Passworts für {user_id}: [Interner Fehler]")
-            return False, f"Fehler beim Zurücksetzen des Passworts: [Interner Fehler]"
+            logger.error(f"Fehler beim Zurücksetzen des Passworts für {user_id}: {str(e)}")
+            return False, f"Fehler beim Zurücksetzen des Passworts: {str(e)}"
 
     @staticmethod
     def get_user_statistics() -> Dict[str, Any]:
@@ -376,7 +376,7 @@ class AdminUserService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Benutzer-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Abrufen der Benutzer-Statistiken: {str(e)}")
             return {
                 'total_users': 0,
                 'active_users': 0,
@@ -470,7 +470,7 @@ class AdminUserService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des automatischen Mitarbeiter-Eintrags: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen des automatischen Mitarbeiter-Eintrags: {str(e)}")
             return False
     
     @staticmethod
@@ -521,7 +521,7 @@ class AdminUserService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Synchronisieren des Mitarbeiter-Eintrags: [Interner Fehler]")
+            logger.error(f"Fehler beim Synchronisieren des Mitarbeiter-Eintrags: {str(e)}")
             return False
     
     @staticmethod
@@ -558,7 +558,7 @@ class AdminUserService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Deaktivieren des Mitarbeiter-Eintrags: [Interner Fehler]")
+            logger.error(f"Fehler beim Deaktivieren des Mitarbeiter-Eintrags: {str(e)}")
             return False
     
 

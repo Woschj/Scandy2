@@ -157,5 +157,5 @@ def process():
                 return jsonify({'error': 'Artikel nicht gefunden'}), 404
 
     except Exception as e:
-        logger.error(f"Fehler bei QuickScan-Verarbeitung: [Interner Fehler]", exc_info=True)
-        return jsonify({'error': f'Interner Fehler: [Interner Fehler]'}), 500
+        logger.error(f"Fehler bei QuickScan-Verarbeitung: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Interner Fehler: {str(e)}'}), 500

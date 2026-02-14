@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 try:
     from app.utils.media_manager import MediaManager
 except ImportError as e:
-    print(f"MediaManager Import-Fehler: [Interner Fehler]")
+    print(f"MediaManager Import-Fehler: {str(e)}")
     # Fallback: Einfache Implementierung
     class MediaManager:
         @staticmethod
@@ -215,7 +215,7 @@ def upload_media(entity_type, entity_id):
             loggers['errors'].error("PIL/Pillow nicht verfügbar - Bildverarbeitung übersprungen")
             # Datei trotzdem behalten
         except Exception as e:
-            loggers['errors'].error(f"Fehler bei der Bildverarbeitung: [Interner Fehler]")
+            loggers['errors'].error(f"Fehler bei der Bildverarbeitung: {str(e)}")
             # Datei trotzdem behalten, auch wenn Verarbeitung fehlschlägt
             import traceback
             loggers['errors'].error(f"Bildverarbeitung Traceback: {traceback.format_exc()}")
@@ -261,7 +261,7 @@ def upload_media(entity_type, entity_id):
                     'file_size_mb': round(final_size_mb, 2)
                 })
         except Exception as e:
-            logger.warning(f"Fehler bei Bildverarbeitung: [Interner Fehler]")
+            logger.warning(f"Fehler bei Bildverarbeitung: {str(e)}")
             # History-Logging für Medien-Upload (nur bei Tickets) - Fallback
             if entity_type == 'tickets':
                 try:
@@ -285,10 +285,10 @@ def upload_media(entity_type, entity_id):
             })
         
     except Exception as e:
-        loggers['errors'].error(f"Upload-Fehler: [Interner Fehler]")
+        loggers['errors'].error(f"Upload-Fehler: {str(e)}")
         import traceback
         loggers['errors'].error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({'success': False, 'error': f'Fehler beim Hochladen: [Interner Fehler]'})
+        return jsonify({'success': False, 'error': f'Fehler beim Hochladen: {str(e)}'})
 
 @bp.route('/<entity_type>/<entity_id>/delete/<filename>', methods=['POST'])
 @login_required
@@ -347,7 +347,7 @@ def delete_media(entity_type, entity_id, filename):
             return jsonify({'success': False, 'error': 'Datei nicht gefunden'})
             
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Löschen: [Interner Fehler]")
+        loggers['errors'].error(f"Fehler beim Löschen: {str(e)}")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/<entity_type>/<entity_id>/list')
@@ -407,7 +407,7 @@ def get_media_list(entity_type, entity_id):
         })
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Laden der Medien: [Interner Fehler]")
+        loggers['errors'].error(f"Fehler beim Laden der Medien: {str(e)}")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/<entity_type>/<entity_id>/count')
@@ -423,7 +423,7 @@ def get_media_count(entity_type, entity_id):
         })
         
     except Exception as e:
-        loggers['errors'].error(f"Count-Fehler: [Interner Fehler]")
+        loggers['errors'].error(f"Count-Fehler: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Ein interner Fehler ist aufgetreten.',
@@ -443,7 +443,7 @@ def test_upload_route(entity_type, entity_id):
             'entity_id': entity_id
         })
     except Exception as e:
-        loggers['errors'].error(f"Test-Upload-Fehler: [Interner Fehler]")
+        loggers['errors'].error(f"Test-Upload-Fehler: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Ein interner Fehler ist aufgetreten.'
@@ -566,5 +566,5 @@ def set_preview_image(entity_type, entity_id, filename):
             return jsonify({'success': False, 'error': 'Entität nicht gefunden'})
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Setzen des Preview-Bildes: [Interner Fehler]")
+        loggers['errors'].error(f"Fehler beim Setzen des Preview-Bildes: {str(e)}")
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})

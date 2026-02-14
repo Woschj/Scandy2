@@ -57,7 +57,7 @@ class EmailService:
             return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Passwort-Reset-E-Mail: [Interner Fehler]")
+            logger.error(f"Fehler beim Senden der Passwort-Reset-E-Mail: {str(e)}")
             return False
     
     @staticmethod
@@ -141,7 +141,7 @@ class EmailService:
             return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der neuen Benutzer-E-Mail: [Interner Fehler]")
+            logger.error(f"Fehler beim Senden der neuen Benutzer-E-Mail: {str(e)}")
             return False
     
     @staticmethod
@@ -181,7 +181,7 @@ class EmailService:
             return send_email(user_email, subject, html_content)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Benachrichtigungs-E-Mail: [Interner Fehler]")
+            logger.error(f"Fehler beim Senden der Benachrichtigungs-E-Mail: {str(e)}")
             return False
     
     @staticmethod
@@ -232,7 +232,7 @@ class EmailService:
             return send_email(user_email, subject, html_content)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Ticket-Benachrichtigung: [Interner Fehler]")
+            logger.error(f"Fehler beim Senden der Ticket-Benachrichtigung: {str(e)}")
             return False
     
     @staticmethod
@@ -278,5 +278,5 @@ class EmailService:
             return send_email(user_email, subject, html_content)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Ausleihe-Benachrichtigung: [Interner Fehler]")
+            logger.error(f"Fehler beim Senden der Ausleihe-Benachrichtigung: {str(e)}")
             return False 

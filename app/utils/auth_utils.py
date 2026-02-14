@@ -27,7 +27,7 @@ def needs_setup():
         return admin_count == 0  # True wenn kein Admin gefunden wurde
     except Exception as e:
         # Wenn Collection oder DB nicht existiert oder anderer Fehler, ist Setup nötig
-        print(f"Fehler beim Prüfen auf Admin-Benutzer für Setup: [Interner Fehler]")
+        print(f"Fehler beim Prüfen auf Admin-Benutzer für Setup: {str(e)}")
         return True
 
 def is_admin_user_present():
@@ -36,7 +36,7 @@ def is_admin_user_present():
         admin_count = mongodb.count_documents('users', {'role': 'admin'})
         return admin_count > 0
     except Exception as e:
-        print(f"Fehler beim Prüfen auf Admin-Benutzer: [Interner Fehler]")
+        print(f"Fehler beim Prüfen auf Admin-Benutzer: {str(e)}")
         return False
 
 def check_password_compatible(password_hash, password):
@@ -77,7 +77,7 @@ def check_password_compatible(password_hash, password):
         return False
         
     except Exception as e:
-        logger.error(f"Fehler bei der Passwort-Überprüfung: [Interner Fehler]")
+        logger.error(f"Fehler bei der Passwort-Überprüfung: {str(e)}")
         return False
 
 def check_bcrypt_password(password_hash, password):
@@ -96,7 +96,7 @@ def check_bcrypt_password(password_hash, password):
         # bcrypt.compare() überprüft das Passwort gegen den Hash
         return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
     except Exception as e:
-        logger.error(f"Fehler bei bcrypt-Passwort-Überprüfung: [Interner Fehler]")
+        logger.error(f"Fehler bei bcrypt-Passwort-Überprüfung: {str(e)}")
         return False
 
 def check_scrypt_password(password_hash, password):
@@ -151,7 +151,7 @@ def check_scrypt_password(password_hash, password):
         return computed_hash_hex == stored_hash
         
     except Exception as e:
-        logger.error(f"Fehler bei scrypt-Passwort-Überprüfung: [Interner Fehler]")
+        logger.error(f"Fehler bei scrypt-Passwort-Überprüfung: {str(e)}")
         # Sicherheitskritisch: Kein permissiver Fallback
         return False
 

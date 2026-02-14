@@ -27,7 +27,7 @@ def ensure_mobile_department():
         if dept:
             g.current_department = dept
     except Exception as e:
-        logger.warning(f"Mobile ensure_department Fehler: [Interner Fehler]")
+        logger.warning(f"Mobile ensure_department Fehler: {str(e)}")
 
 @bp.route('/quickscan')
 def quickscan():
@@ -68,7 +68,7 @@ def login():
         return redirect(url_for('mobile.quickscan'))
         
     except Exception as e:
-        logger.error(f"Mobile Login-Fehler: [Interner Fehler]")
+        logger.error(f"Mobile Login-Fehler: {str(e)}")
         flash('Anmeldung fehlgeschlagen', 'error')
         return redirect(url_for('mobile.quickscan'))
 
@@ -306,7 +306,7 @@ def scan_barcode():
         return jsonify(response_data)
         
     except Exception as e:
-        logger.error(f"Barcode-Scan-Fehler: [Interner Fehler]")
+        logger.error(f"Barcode-Scan-Fehler: {str(e)}")
         return jsonify({'success': False, 'error': 'Interner Server-Fehler'}), 500
 
 @bp.route('/lend', methods=['POST'])
@@ -385,5 +385,5 @@ def lend_item():
             return jsonify({'success': False, 'error': 'Ungültige Aktion'}), 400
             
     except Exception as e:
-        logger.error(f"Lending-Fehler: [Interner Fehler]")
+        logger.error(f"Lending-Fehler: {str(e)}")
         return jsonify({'success': False, 'error': 'Interner Server-Fehler'}), 500 

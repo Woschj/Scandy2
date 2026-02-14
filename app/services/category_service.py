@@ -59,7 +59,7 @@ class CategoryService:
             return sorted(category_names, key=str.casefold)
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Kategorien für {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Kategorien für {department}: {str(e)}")
             return []
     
     @classmethod
@@ -83,7 +83,7 @@ class CategoryService:
             return result
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Department-Kategorien: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden aller Department-Kategorien: {str(e)}")
             return {}
     
     @classmethod
@@ -136,7 +136,7 @@ class CategoryService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Kategorie '{name}' für {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen der Kategorie '{name}' für {department}: {str(e)}")
             return False
     
     @classmethod
@@ -177,7 +177,7 @@ class CategoryService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Kategorie '{old_name}' in {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Aktualisieren der Kategorie '{old_name}' in {department}: {str(e)}")
             return False
     
     @classmethod
@@ -218,7 +218,7 @@ class CategoryService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Kategorie '{name}' in {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Löschen der Kategorie '{name}' in {department}: {str(e)}")
             return False
 
 # Globale Instanz für einfache Verwendung

@@ -189,7 +189,7 @@ def _resolve_user_group_names(group_ids):
                     try:
                         query_id = ObjectId(group_id)
                     except Exception as e:
-                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: [Interner Fehler]")
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {str(e)}")
                         query_id = group_id
 
                 # Lade Nutzergruppe aus Datenbank
@@ -213,7 +213,7 @@ def _create_enhanced_tools_sheet(ws, tools_data):
             from app.services.custom_fields_service import CustomFieldsService
             custom_fields = CustomFieldsService.get_custom_fields_for_target('tools')
         except Exception as e:
-            logger.warning(f"Fehler beim Laden der Custom Fields für Tools: [Interner Fehler]")
+            logger.warning(f"Fehler beim Laden der Custom Fields für Tools: {str(e)}")
             custom_fields = []
 
         # Header definieren
@@ -262,7 +262,7 @@ def _create_enhanced_tools_sheet(ws, tools_data):
 
                 ws.cell(row=row, column=col, value=value)
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen der erweiterten Tools-Tabelle: [Interner Fehler]")
+        logger.error(f"Fehler beim Erstellen der erweiterten Tools-Tabelle: {str(e)}")
 
 def _create_enhanced_consumables_sheet(ws, consumables_data):
     """Erstellt eine erweiterte Consumables-Tabelle mit allen Feldern"""
@@ -311,7 +311,7 @@ def _create_enhanced_consumables_sheet(ws, consumables_data):
 
                 ws.cell(row=row, column=col, value=value)
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen der erweiterten Consumables-Tabelle: [Interner Fehler]")
+        logger.error(f"Fehler beim Erstellen der erweiterten Consumables-Tabelle: {str(e)}")
 
 def create_mongodb_backup():
     """Erstellt ein MongoDB-Backup"""
@@ -329,8 +329,8 @@ def create_mongodb_backup():
             return False, "Fehler beim Erstellen des Backups"
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des MongoDB-Backups: [Interner Fehler]")
-        return False, f"Fehler beim Erstellen des Backups: [Interner Fehler]"
+        logger.error(f"Fehler beim Erstellen des MongoDB-Backups: {str(e)}")
+        return False, f"Fehler beim Erstellen des Backups: {str(e)}"
 
 def fix_id_for_import(doc):
     """

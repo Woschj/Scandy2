@@ -234,7 +234,7 @@ def log_route(f):
         except Exception as e:
             duration = time.time() - start_time
             loggers['errors'].error(
-                f"Fehler in {request.endpoint}: [Interner Fehler]",
+                f"Fehler in {request.endpoint}: {str(e)}",
                 exc_info=True
             )
 
@@ -279,7 +279,7 @@ def log_db_operation(operation):
                 loggers['database'].error(
                     f"DB Operation: {operation} - "
                     f"Dauer: {duration:.2f}s - "
-                    f"Fehler: [Interner Fehler]"
+                    f"Fehler: {str(e)}"
                 )
 
                 # Performance-Metriken für Fehler

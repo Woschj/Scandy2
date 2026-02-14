@@ -27,7 +27,7 @@ class AdminEmailTemplatesService:
             templates = list(mongodb.find(AdminEmailTemplatesService.COLLECTION_NAME, {}))
             return sorted(templates, key=lambda t: t.get('name', '').lower())
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Vorlagen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der E-Mail-Vorlagen: {str(e)}")
             return []
 
     @staticmethod
@@ -56,7 +56,7 @@ class AdminEmailTemplatesService:
             mongodb.update_one('settings', {'key': AdminEmailTemplatesService.SETTINGS_KEY_MAP}, {'$set': {'value': mapping}}, upsert=True)
             return True, 'Vorlagen-Zuordnungen gespeichert.'
         except Exception as e:
-            return False, f'Fehler beim Speichern der Zuordnungen: [Interner Fehler]'
+            return False, f'Fehler beim Speichern der Zuordnungen: {str(e)}'
 
     @staticmethod
     def get_template(template_id: str) -> Optional[Dict[str, Any]]:
@@ -64,7 +64,7 @@ class AdminEmailTemplatesService:
             from bson import ObjectId
             return mongodb.find_one(AdminEmailTemplatesService.COLLECTION_NAME, {'_id': ObjectId(template_id)})
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Vorlage {template_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der E-Mail-Vorlage {template_id}: {str(e)}")
             return None
 
     @staticmethod
@@ -72,7 +72,7 @@ class AdminEmailTemplatesService:
         try:
             return mongodb.find_one(AdminEmailTemplatesService.COLLECTION_NAME, {'key': template_key})
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Vorlage mit key={template_key}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der E-Mail-Vorlage mit key={template_key}: {str(e)}")
             return None
 
     @staticmethod
@@ -99,8 +99,8 @@ class AdminEmailTemplatesService:
             inserted_id = mongodb.insert_one(AdminEmailTemplatesService.COLLECTION_NAME, doc)
             return True, 'E-Mail-Vorlage erstellt.', str(inserted_id)
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der E-Mail-Vorlage: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen: [Interner Fehler]", None
+            logger.error(f"Fehler beim Erstellen der E-Mail-Vorlage: {str(e)}")
+            return False, f"Fehler beim Erstellen: {str(e)}", None
 
     @staticmethod
     def update_template(template_id: str, data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -121,8 +121,8 @@ class AdminEmailTemplatesService:
             )
             return True, 'E-Mail-Vorlage aktualisiert.'
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der E-Mail-Vorlage {template_id}: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren der E-Mail-Vorlage {template_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren: {str(e)}"
 
     @staticmethod
     def delete_template(template_id: str) -> Tuple[bool, str]:
@@ -131,8 +131,8 @@ class AdminEmailTemplatesService:
             mongodb.delete_one(AdminEmailTemplatesService.COLLECTION_NAME, {'_id': ObjectId(template_id)})
             return True, 'E-Mail-Vorlage gelöscht.'
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der E-Mail-Vorlage {template_id}: [Interner Fehler]")
-            return False, f"Fehler beim Löschen: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen der E-Mail-Vorlage {template_id}: {str(e)}")
+            return False, f"Fehler beim Löschen: {str(e)}"
 
     @staticmethod
     def send_test_email(template_id: str, recipient_email: str) -> Tuple[bool, str]:
@@ -200,7 +200,7 @@ class AdminEmailTemplatesService:
                 html_content = render_template_string(html_tpl, **sample_context) if html_tpl else ''
                 text_content = render_template_string(text_tpl, **sample_context) if text_tpl else ''
             except Exception as e:
-                logger.warning(f"Test-Rendering fehlgeschlagen, sende Rohtext: [Interner Fehler]")
+                logger.warning(f"Test-Rendering fehlgeschlagen, sende Rohtext: {str(e)}")
                 subject = subject_tpl
                 html_content = html_tpl
                 text_content = text_tpl
@@ -248,12 +248,12 @@ class AdminEmailTemplatesService:
                 return True, f'Test-E-Mail erfolgreich gesendet an {recipient_email}.'
                 
             except Exception as e:
-                logger.error(f"Fehler beim SMTP-Versand der Test-E-Mail: [Interner Fehler]")
-                return False, f'E-Mail-Versand fehlgeschlagen: [Interner Fehler]'
+                logger.error(f"Fehler beim SMTP-Versand der Test-E-Mail: {str(e)}")
+                return False, f'E-Mail-Versand fehlgeschlagen: {str(e)}'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Testversand: [Interner Fehler]")
-            return False, f"Fehler beim Testversand: [Interner Fehler]"
+            logger.error(f"Fehler beim Testversand: {str(e)}")
+            return False, f"Fehler beim Testversand: {str(e)}"
 
     @staticmethod
     def render_template_by_key(template_key: str, context: Dict[str, Any]) -> Optional[Dict[str, Optional[str]]]:
@@ -278,7 +278,7 @@ class AdminEmailTemplatesService:
             }
             return rendered
         except Exception as e:
-            logger.error(f"Fehler beim Rendern der E-Mail-Vorlage '{template_key}': [Interner Fehler]")
+            logger.error(f"Fehler beim Rendern der E-Mail-Vorlage '{template_key}': {str(e)}")
             return None
 
     @staticmethod

@@ -47,7 +47,7 @@ def custom_fields():
                              feature_settings=feature_settings)
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Feld-Verwaltung: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Feld-Verwaltung: {str(e)}")
         flash('Fehler beim Laden der Feld-Verwaltung', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -79,7 +79,7 @@ def add_custom_field():
         return redirect(url_for('admin.custom_fields'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des benutzerdefinierten Feldes: [Interner Fehler]")
+        logger.error(f"Fehler beim Erstellen des benutzerdefinierten Feldes: {str(e)}")
         flash('Fehler beim Erstellen des Feldes', 'error')
         return redirect(url_for('admin.custom_fields'))
 
@@ -110,7 +110,7 @@ def edit_custom_field(field_id):
         return redirect(url_for('admin.custom_fields'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Bearbeiten des benutzerdefinierten Feldes: [Interner Fehler]")
+        logger.error(f"Fehler beim Bearbeiten des benutzerdefinierten Feldes: {str(e)}")
         flash('Fehler beim Bearbeiten des Feldes', 'error')
         return redirect(url_for('admin.custom_fields'))
 
@@ -129,6 +129,6 @@ def delete_custom_field(field_id):
         return redirect(url_for('admin.custom_fields'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des benutzerdefinierten Feldes: [Interner Fehler]")
+        logger.error(f"Fehler beim Löschen des benutzerdefinierten Feldes: {str(e)}")
         flash('Fehler beim Löschen des Feldes', 'error')
         return redirect(url_for('admin.custom_fields'))

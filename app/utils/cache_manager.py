@@ -48,7 +48,7 @@ class CacheManager:
             return None
             
         except Exception as e:
-            logger.error(f"Error getting cache value for key {key}: [Interner Fehler]")
+            logger.error(f"Error getting cache value for key {key}: {str(e)}")
             return None
     
     def set(self, key: str, value: Any, ttl_seconds: int = 300) -> bool:
@@ -63,7 +63,7 @@ class CacheManager:
             return True
             
         except Exception as e:
-            logger.error(f"Error setting cache value for key {key}: [Interner Fehler]")
+            logger.error(f"Error setting cache value for key {key}: {str(e)}")
             return False
     
     def delete(self, key: str) -> bool:
@@ -76,7 +76,7 @@ class CacheManager:
             return False
             
         except Exception as e:
-            logger.error(f"Error deleting cache value for key {key}: [Interner Fehler]")
+            logger.error(f"Error deleting cache value for key {key}: {str(e)}")
             return False
     
     def clear(self) -> bool:
@@ -87,7 +87,7 @@ class CacheManager:
             return True
             
         except Exception as e:
-            logger.error(f"Error clearing cache: [Interner Fehler]")
+            logger.error(f"Error clearing cache: {str(e)}")
             return False
     
     def cleanup_expired(self) -> int:
@@ -109,7 +109,7 @@ class CacheManager:
             return len(expired_keys)
             
         except Exception as e:
-            logger.error(f"Error cleaning up expired cache entries: [Interner Fehler]")
+            logger.error(f"Error cleaning up expired cache entries: {str(e)}")
             return 0
     
     def get_stats(self) -> Dict[str, Any]:
@@ -133,7 +133,7 @@ class CacheManager:
             }
             
         except Exception as e:
-            logger.error(f"Error getting cache stats: [Interner Fehler]")
+            logger.error(f"Error getting cache stats: {str(e)}")
             return {'error': 'Ein interner Fehler ist aufgetreten.'}
 
 
@@ -201,5 +201,5 @@ def invalidate_cache_pattern(pattern: str) -> int:
         return invalidated_count
         
     except Exception as e:
-        logger.error(f"Error invalidating cache pattern {pattern}: [Interner Fehler]")
+        logger.error(f"Error invalidating cache pattern {pattern}: {str(e)}")
         return 0

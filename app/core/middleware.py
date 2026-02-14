@@ -53,7 +53,7 @@ def setup_performance_monitoring(app):
             if summary.get('total_request_time', 0) > 1.0:  # Only log slow requests
                 logging.info(f"Request Performance: {summary}")
         except Exception as e:
-            logging.debug(f"Error logging performance: [Interner Fehler]")
+            logging.debug(f"Error logging performance: {str(e)}")
         return response
 
 
@@ -125,7 +125,7 @@ def setup_health_check(app):
                 'timestamp': datetime.now().isoformat()
             }, 200
         except Exception as e:
-            app.logger.error(f"Health check failed: [Interner Fehler]")
+            app.logger.error(f"Health check failed: {str(e)}")
             return {
                 'status': 'unhealthy',
                 'database': 'disconnected',
@@ -147,7 +147,7 @@ def setup_system_initialization(app):
         with app.app_context():
             ensure_default_role_permissions()
     except Exception as e:
-        logging.warning(f"Could not ensure default role permissions: [Interner Fehler]")
+        logging.warning(f"Could not ensure default role permissions: {str(e)}")
 
     # Start automatic backup system
     try:
@@ -156,7 +156,7 @@ def setup_system_initialization(app):
             start_auto_backup()
             logging.info("Automatic backup system started")
     except Exception as e:
-        logging.error(f"Error starting automatic backup system: [Interner Fehler]")
+        logging.error(f"Error starting automatic backup system: {str(e)}")
 
     # Perform comprehensive dashboard repair on startup
     try:
@@ -168,7 +168,7 @@ def setup_system_initialization(app):
             else:
                 logging.info("Dashboard repair on startup: No issues found")
     except Exception as e:
-        logging.error(f"Error during automatic dashboard repair on startup: [Interner Fehler]")
+        logging.error(f"Error during automatic dashboard repair on startup: {str(e)}")
 
     # Optimize database indexes
     try:
@@ -177,4 +177,4 @@ def setup_system_initialization(app):
             IndexOptimizer.ensure_indexes()
             logging.info("Database indexes optimized")
     except Exception as e:
-        logging.warning(f"Error optimizing indexes: [Interner Fehler]")
+        logging.warning(f"Error optimizing indexes: {str(e)}")

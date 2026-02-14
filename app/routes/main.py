@@ -66,7 +66,7 @@ def index():
             overdue_loans = stats['overdue_loans']
             notices = StatisticsService.get_notices()
         except Exception as e:
-            current_app.logger.error(f"Fehler beim Laden der Statistiken: [Interner Fehler]")
+            current_app.logger.error(f"Fehler beim Laden der Statistiken: {str(e)}")
             import traceback
             current_app.logger.error(f"Traceback: {traceback.format_exc()}")
             tool_stats = {'total': 0, 'available': 0, 'lent': 0, 'defect': 0}
@@ -130,7 +130,7 @@ def index():
                            weekly_reports_enabled=weekly_reports_enabled)
 
     except Exception as e:
-        current_app.logger.error(f"Fehler beim Laden der Startseite: [Interner Fehler]")
+        current_app.logger.error(f"Fehler beim Laden der Startseite: {str(e)}")
         import traceback
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         return render_template('index_public.html',
@@ -212,7 +212,7 @@ def emergency_admin():
         <head><title>Fehler</title></head>
         <body>
             <h1>❌ Fehler beim Erstellen des Admin-Benutzers</h1>
-            <p>Fehler: [Interner Fehler]</p>
+            <p>Fehler: {str(e)}</p>
         </body>
         </html>
         """

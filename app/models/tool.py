@@ -151,12 +151,12 @@ class Tool(BaseModel):
                 if tool_data:
                     return Tool(**tool_data)
             except Exception as e:
-                logger.warning(f"Fehler bei ObjectId-Konvertierung für Tool {tool_id}: [Interner Fehler]")
+                logger.warning(f"Fehler bei ObjectId-Konvertierung für Tool {tool_id}: {str(e)}")
                 pass
             
             return None
         except Exception as e:
-            logger.error(f"Fehler beim Suchen von Tool {tool_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Suchen von Tool {tool_id}: {str(e)}")
             return None
 
     def save(self):

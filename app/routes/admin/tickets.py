@@ -128,10 +128,10 @@ def add_ticket_message(ticket_id):
             }), 400
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Nachricht: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Hinzufügen der Nachricht: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Speichern der Nachricht: [Interner Fehler]'
+            'message': f'Fehler beim Speichern der Nachricht: {str(e)}'
         }), 500
 
 @bp.route('/tickets/<ticket_id>/note', methods=['POST'])
@@ -174,7 +174,7 @@ def add_ticket_note(ticket_id):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Notiz: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Notiz: {str(e)}")
         return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/tickets/<ticket_id>/update', methods=['POST'])
@@ -230,7 +230,7 @@ def update_ticket(ticket_id):
         return jsonify({'success': True})
 
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren des Tickets {ticket_id}: [Interner Fehler]")
+        logging.error(f"Fehler beim Aktualisieren des Tickets {ticket_id}: {str(e)}")
         return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/tickets/<ticket_id>/update-details', methods=['POST'])
@@ -351,10 +351,10 @@ def update_ticket_details(ticket_id):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren der Ticket-Details: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Aktualisieren der Ticket-Details: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Interner Fehler: [Interner Fehler]'
+            'message': f'Interner Fehler: {str(e)}'
         }), 500
 
 @bp.route('/add_ticket_category', methods=['POST'])
@@ -389,7 +389,7 @@ def add_ticket_category():
         flash('Ticket-Kategorie erfolgreich hinzugefügt.', 'success')
         return redirect(url_for('tickets.create'))
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: {str(e)}")
         flash('Ein Fehler ist aufgetreten.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -409,7 +409,7 @@ def get_ticket_categories():
         categories = handlungsfeld_service.get_handlungsfelder_for_department(current_dept)
         return jsonify({'success': True, 'department': current_dept, 'categories': [{'name': n} for n in categories]})
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Ticket-Kategorien: [Interner Fehler]")
+        logger.error(f"Fehler beim Abrufen der Ticket-Kategorien: {str(e)}")
         return jsonify({'success': False, 'message': 'Fehler beim Laden der Ticket-Kategorien'})
 
 @bp.route('/ticket_categories/add', methods=['POST'])
@@ -442,7 +442,7 @@ def add_ticket_category_json():
             return jsonify({'success': False, 'message': 'Diese Ticket-Kategorie existiert bereits in dieser Abteilung.'})
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -480,7 +480,7 @@ def add_ticket_category_legacy():
         flash('Ticket-Kategorie erfolgreich hinzugefügt.', 'success')
         return redirect(url_for('tickets.create'))
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie: {str(e)}")
         flash('Ein Fehler ist aufgetreten.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -525,7 +525,7 @@ def update_ticket_assignment(ticket_id):
         return jsonify({'success': True, 'message': 'Zuweisung erfolgreich aktualisiert'})
 
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren der Zuweisung: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren der Zuweisung: {str(e)}")
         return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/tickets/<ticket_id>/update-responsible', methods=['POST'])
@@ -562,7 +562,7 @@ def update_ticket_responsible(ticket_id):
 
         return jsonify({'success': True, 'message': 'Verantwortliche Person aktualisiert'})
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
         return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/tickets/<ticket_id>/update-status', methods=['POST'])
@@ -607,5 +607,5 @@ def update_ticket_status(ticket_id):
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Status: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren des Status: {str(e)}")
         return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500

@@ -59,7 +59,7 @@ class LocationService:
             return sorted(location_names, key=str.casefold)
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Standorte für {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Standorte für {department}: {str(e)}")
             return []
     
     @classmethod
@@ -83,7 +83,7 @@ class LocationService:
             return result
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Department-Standorte: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden aller Department-Standorte: {str(e)}")
             return {}
     
     @classmethod
@@ -136,7 +136,7 @@ class LocationService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Standorts '{name}' für {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen des Standorts '{name}' für {department}: {str(e)}")
             return False
     
     @classmethod
@@ -177,7 +177,7 @@ class LocationService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Standorts '{old_name}' in {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Aktualisieren des Standorts '{old_name}' in {department}: {str(e)}")
             return False
     
     @classmethod
@@ -218,7 +218,7 @@ class LocationService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Standorts '{name}' in {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Löschen des Standorts '{name}' in {department}: {str(e)}")
             return False
 
 # Globale Instanz für einfache Verwendung

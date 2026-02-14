@@ -78,7 +78,7 @@ def index():
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Mitarbeiter: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Mitarbeiter: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Mitarbeiter', 'error')
         return redirect(url_for('admin.dashboard'))
 
@@ -189,7 +189,7 @@ def add():
             flash('Mitarbeiter erfolgreich hinzugefügt', 'success')
             return redirect(url_for('workers.index'))
         except Exception as e:
-            flash(f'Fehler beim Hinzufügen: [Interner Fehler]', 'error')
+            flash(f'Fehler beim Hinzufügen: {str(e)}', 'error')
             # Gebe die Formulardaten zurück an das Template
             return render_template('workers/add.html',
                                departments=departments,
@@ -420,7 +420,7 @@ def details(original_barcode):
                              is_admin=current_user.is_admin)
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Mitarbeiterdetails: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Mitarbeiterdetails: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Mitarbeiterdetails', 'error')
         return redirect(url_for('workers.index'))
 
@@ -499,7 +499,7 @@ def edit(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Mitarbeiters: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Aktualisieren des Mitarbeiters: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'message': 'Fehler beim Aktualisieren des Mitarbeiters'}), 500
 
 @bp.route('/<barcode>/delete', methods=['DELETE'])
@@ -537,10 +537,10 @@ def delete_by_barcode(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Mitarbeiters: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: [Interner Fehler]'
+            'message': f'Fehler beim Löschen: {str(e)}'
         }), 500
 
 @bp.route('/workers/search')
@@ -567,7 +567,7 @@ def admin_migrate_timesheets():
         migrated_count = migrate_timesheet_dates()
         flash(f'Migration abgeschlossen. {migrated_count} Timesheet-Einträge wurden migriert.', 'success')
     except Exception as e:
-        flash(f'Fehler bei der Migration: [Interner Fehler]', 'error')
+        flash(f'Fehler bei der Migration: {str(e)}', 'error')
     
     return redirect(url_for('workers.timesheet_list'))
 
@@ -635,7 +635,7 @@ def admin_migrate_all_dates():
         })
         
     except Exception as e:
-        flash(f'Fehler bei der Migration: [Interner Fehler]', 'error')
+        flash(f'Fehler bei der Migration: {str(e)}', 'error')
         return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/admin/check-timesheet-dates')
@@ -775,7 +775,7 @@ def migrate_timesheet_dates():
         
         return migrated_count
     except Exception as e:
-        print(f"Fehler bei Timesheet-Migration: [Interner Fehler]")
+        print(f"Fehler bei Timesheet-Migration: {str(e)}")
         return 0
 
 @bp.route('/timesheets')
@@ -797,7 +797,7 @@ def timesheet_list():
         migrate_timesheet_dates()
     except Exception as e:
         # Migration-Fehler nicht blockieren, nur loggen
-        print(f"Migration-Fehler (nicht kritisch): [Interner Fehler]")
+        print(f"Migration-Fehler (nicht kritisch): {str(e)}")
     
     # Wochenberichte sind nutzerspezifisch und nicht abteilungsgebunden
     user_id = current_user.username
@@ -1038,7 +1038,7 @@ def timesheet_edit(ts_id):
                 print(f"DEBUG: Timesheet mit ObjectId gefunden: KW {ts.get('kw', 'Unknown')}")
                 found_id = obj_id  # Verwende die ObjectId
         except Exception as e:
-            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
+            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {str(e)}")
             found_id = None
     
     if not ts:
@@ -1105,7 +1105,7 @@ def timesheet_download(ts_id):
             if ts:
                 print(f"DEBUG: Timesheet mit ObjectId gefunden: KW {ts.get('kw', 'Unknown')}")
         except Exception as e:
-            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
+            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {str(e)}")
     
     if not ts:
         print(f"DEBUG: Kein Timesheet gefunden für ID: {ts_id}")
@@ -1197,7 +1197,7 @@ def timesheet_quick_update():
         mongodb.update_one('timesheets', {'_id': ts['_id']}, {'$set': update_data})
         flash('Eintrag gespeichert.', 'success')
     except Exception as e:
-        print(f"Quick-Update Fehler: [Interner Fehler]")
+        print(f"Quick-Update Fehler: {str(e)}")
         flash('Konnte den Eintrag nicht speichern.', 'error')
     return redirect(url_for('main.index'))
 

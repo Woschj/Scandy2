@@ -270,7 +270,7 @@ def create_app(test_config=None):
                 normalize_database_ids()
                 logging.info("Datenbank-IDs normalisiert")
         except Exception as e:
-            logging.error(f"Fehler bei ID-Normalisierung: [Interner Fehler]")
+            logging.error(f"Fehler bei ID-Normalisierung: {str(e)}")
     else:
         logging.info("ID-Normalisierung beim Start ist deaktiviert (ENABLE_ID_NORMALIZATION_ON_START=false)")
     
@@ -493,7 +493,7 @@ def create_app(test_config=None):
                     logging.debug(f"User geladen: {user.username}, ID: {user.id}")
                     return user
             except Exception as e:
-                logging.debug(f"ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
+                logging.debug(f"ObjectId-Konvertierung fehlgeschlagen: {str(e)}")
             
             # Methode 3: Fallback mit MongoDBUser.get_by_id
             user_data = MongoDBUser.get_by_id(user_id)
@@ -510,11 +510,11 @@ def create_app(test_config=None):
                 session.clear()
                 logging.debug("Session zurückgesetzt")
             except Exception as e:
-                logging.debug(f"Fehler beim Zurücksetzen der Session: [Interner Fehler]")
+                logging.debug(f"Fehler beim Zurücksetzen der Session: {str(e)}")
             
             return None
         except Exception as e:
-            logging.error(f"Fehler beim Laden des Benutzers {user_id}: [Interner Fehler]")
+            logging.error(f"Fehler beim Laden des Benutzers {user_id}: {str(e)}")
             # Bei Fehlern Session zurücksetzen
             try:
                 from flask import session
@@ -544,7 +544,7 @@ def create_app(test_config=None):
         with app.app_context():
             ensure_default_role_permissions()
     except Exception as e:
-        logging.warning(f"Konnte Default-Rollenrechte nicht sicherstellen: [Interner Fehler]")
+        logging.warning(f"Konnte Default-Rollenrechte nicht sicherstellen: {str(e)}")
 
     # ===== BLUEPRINTS REGISTRIEREN =====
     init_app(app)

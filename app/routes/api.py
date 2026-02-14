@@ -31,7 +31,7 @@ def get_workers():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Laden der Mitarbeiter: [Interner Fehler]'
+            'message': f'Fehler beim Laden der Mitarbeiter: {str(e)}'
         }), 500
 
 @bp.route('/inventory/tools/<barcode>', methods=['GET'])
@@ -59,7 +59,7 @@ def get_tool(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Werkzeugs: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden des Werkzeugs: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Werkzeugs'
@@ -96,7 +96,7 @@ def get_worker(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Mitarbeiters: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden des Mitarbeiters: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Mitarbeiters'
@@ -125,7 +125,7 @@ def update_colors():
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren der Farben: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren der Farben: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Aktualisieren der Farben'
@@ -156,7 +156,7 @@ def process_lending_via_api():
         else:
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler bei /api/lending/process: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler bei /api/lending/process: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'message': 'Fehler bei der Verarbeitung'}), 500
 
 @bp.route('/lending/return', methods=['POST'])
@@ -218,10 +218,10 @@ def return_tool():
             }), 400
         
     except Exception as e:
-        logger.error(f"Error in return_tool: [Interner Fehler]", exc_info=True)
+        logger.error(f"Error in return_tool: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Rückgabe: [Interner Fehler]'
+            'message': f'Fehler bei der Rückgabe: {str(e)}'
         }), 500
 
 @bp.route('/inventory/consumables/<barcode>', methods=['GET'])
@@ -249,7 +249,7 @@ def get_consumable(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Verbrauchsmaterials: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden des Verbrauchsmaterials: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Verbrauchsmaterials'
@@ -302,7 +302,7 @@ def update_barcode():
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Barcodes: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren des Barcodes: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Aktualisieren des Barcodes'
@@ -348,7 +348,7 @@ def get_consumable_forecast(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler bei der Bestandsprognose: [Interner Fehler]")
+        logger.error(f"Fehler bei der Bestandsprognose: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler bei der Berechnung'
@@ -450,7 +450,7 @@ def process_lending():
         
     except Exception as e:
         import traceback
-        logger.error(f"Fehler bei der Quickscan-Verarbeitung: [Interner Fehler]\n{traceback.format_exc()}")
+        logger.error(f"Fehler bei der Quickscan-Verarbeitung: {str(e)}\n{traceback.format_exc()}")
         return jsonify({
             'success': False,
             'message': 'Fehler bei der Verarbeitung'
@@ -504,10 +504,10 @@ def test_return_tool(tool_barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler in test_return_tool: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler in test_return_tool: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: [Interner Fehler]'
+            'message': f'Fehler: {str(e)}'
         }), 500
 
 @bp.route('/debug/test-mongodb-update/<tool_barcode>', methods=['POST'])
@@ -567,8 +567,8 @@ def test_mongodb_update(tool_barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler in test_mongodb_update: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler in test_mongodb_update: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: [Interner Fehler]'
+            'message': f'Fehler: {str(e)}'
         }), 500

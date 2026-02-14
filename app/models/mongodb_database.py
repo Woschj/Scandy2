@@ -34,19 +34,33 @@ class MongoDBDatabase:
     
     def _connect(self):
         """Stellt die Verbindung zur MongoDB her (robust mit Retry)"""
-        uri = os.environ.get("MONGODB_URI")
+        uri = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URI")
 
-        # Fallback for Docker environment if MONGODB_URI is not explicitly set
+        # Fallback for Docker environment if URI is not explicitly set
         if not uri:
             user = os.environ.get("MONGO_ROOT_USER", "admin")
             password = os.environ.get("MONGO_ROOT_PASSWORD", "change_me_immediately")
             db_name_fallback = os.environ.get("MONGODB_DB", "scandy")
-            host = "mongodb" # Service name in docker-compose.yml
+
+            # Try different common hostnames for MongoDB in Docker
+            common_hosts = ["mongodb", "mongo", "db", "localhost"]
+            host = os.environ.get("MONGO_HOST")
+            if not host:
+                # Default to the first reachable host or 'mongodb'
+                host = "mongodb"
+                for h in common_hosts:
+                    try:
+                        import socket
+                        socket.create_connection((h, 27017), timeout=0.5)
+                        host = h
+                        break
+                    except Exception:
+                        continue
             uri = f"mongodb://{user}:{password}@{host}:27017/{db_name_fallback}?authSource=admin"
 
         db_name = os.environ.get("MONGO_INITDB_DATABASE") or os.environ.get("MONGODB_DB", "scandy")
 
-        if uri and 'authSource' not in uri:
+        if uri and '://' in uri and 'authSource' not in uri:
             # Füge authSource=admin hinzu, falls nicht vorhanden
             if '?' in uri:
                 uri += '&authSource=admin'

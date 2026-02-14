@@ -42,7 +42,7 @@ def inject_colors():
                     color_dict[key] = value
             return {'colors': color_dict}
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Farben: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Farben: {str(e)}")
         logger.debug(traceback.format_exc())
 
     # Fallback-Farben
@@ -81,7 +81,7 @@ def inject_version():
             }
         }
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Versionsinformationen: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Versionsinformationen: {str(e)}")
         return {
             'version': VERSION,
             'version_info': {
@@ -120,7 +120,7 @@ def inject_app_labels():
 
         return {'app_labels': app_labels}
     except Exception as e:
-        logger.error(f"Fehler beim Laden der App-Labels: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der App-Labels: {str(e)}")
         return {
             'app_labels': {
                 'tools': {'name': 'Werkzeuge', 'icon': 'fas fa-tools'},
@@ -183,7 +183,7 @@ def inject_unfilled_timesheet_days():
         return {'unfilled_timesheet_days': unfilled_days}
 
     except Exception as e:
-        logger.error(f"Fehler beim Berechnen der fehlenden Wochenberichte: [Interner Fehler]")
+        logger.error(f"Fehler beim Berechnen der fehlenden Wochenberichte: {str(e)}")
         return {'unfilled_timesheet_days': 0}
 
 def inject_feature_settings():
@@ -205,7 +205,7 @@ def inject_feature_settings():
             'feature_settings': feature_settings
         }
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Feature-Einstellungen für Templates: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Feature-Einstellungen für Templates: {str(e)}")
         fallback_settings = {
             'tools': True,
             'consumables': True,
@@ -254,7 +254,7 @@ def inject_custom_fields():
         }
     except Exception as e:
         # Bei Fehlern leere Listen zurückgeben, um Template-Rendering nicht zu stören
-        logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: {str(e)}")
         return {
             'custom_fields_tools': [],
             'custom_fields_consumables': []
@@ -331,6 +331,6 @@ def inject_departments():
         return {'departments': ctx, 'departments_ctx': ctx}
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.warning(f"Departments Context Fehler: [Interner Fehler]")
+        logger.warning(f"Departments Context Fehler: {str(e)}")
         ctx = {'allowed': [], 'current': None}
         return {'departments': ctx, 'departments_ctx': ctx}

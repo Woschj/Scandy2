@@ -55,7 +55,7 @@ class CustomFieldsService:
             # Sortiere nach Erstellungsdatum
             return sorted(fields, key=lambda x: x.get('created_at', datetime.min))
         except Exception as e:
-            logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: {str(e)}")
             return []
     
     @staticmethod
@@ -70,7 +70,7 @@ class CustomFieldsService:
             fields = list(mongodb.find('custom_fields', query))
             return sorted(fields, key=lambda x: x.get('sort_order', 999))
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Felder für {target_type}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Felder für {target_type}: {str(e)}")
             return []
     
     @staticmethod
@@ -136,8 +136,8 @@ class CustomFieldsService:
                 return False, 'Fehler beim Speichern des Feldes'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des benutzerdefinierten Feldes: [Interner Fehler]")
-            return False, f'Fehler beim Erstellen des Feldes: [Interner Fehler]'
+            logger.error(f"Fehler beim Erstellen des benutzerdefinierten Feldes: {str(e)}")
+            return False, f'Fehler beim Erstellen des Feldes: {str(e)}'
     
     @staticmethod
     def update_custom_field(field_id: str, data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -190,8 +190,8 @@ class CustomFieldsService:
                 return False, 'Fehler beim Aktualisieren des Feldes'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des benutzerdefinierten Feldes: [Interner Fehler]")
-            return False, f'Fehler beim Aktualisieren: [Interner Fehler]'
+            logger.error(f"Fehler beim Aktualisieren des benutzerdefinierten Feldes: {str(e)}")
+            return False, f'Fehler beim Aktualisieren: {str(e)}'
     
     @staticmethod
     def delete_custom_field(field_id: str) -> Tuple[bool, str]:
@@ -212,8 +212,8 @@ class CustomFieldsService:
                 return False, 'Fehler beim Löschen des Feldes'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des benutzerdefinierten Feldes: [Interner Fehler]")
-            return False, f'Fehler beim Löschen: [Interner Fehler]'
+            logger.error(f"Fehler beim Löschen des benutzerdefinierten Feldes: {str(e)}")
+            return False, f'Fehler beim Löschen: {str(e)}'
     
     @staticmethod
     def get_custom_field_by_id(field_id: str) -> Optional[Dict[str, Any]]:
@@ -221,7 +221,7 @@ class CustomFieldsService:
         try:
             return mongodb.find_one('custom_fields', {'_id': field_id, 'deleted': {'$ne': True}})
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Feldes {field_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden des Feldes {field_id}: {str(e)}")
             return None
     
     @staticmethod
@@ -276,7 +276,7 @@ class CustomFieldsService:
             return True, '', str(value).strip()
             
         except Exception as e:
-            logger.error(f"Fehler bei der Validierung von Feld {field.get('name', 'unbekannt')}: [Interner Fehler]")
+            logger.error(f"Fehler bei der Validierung von Feld {field.get('name', 'unbekannt')}: {str(e)}")
             return False, f"Validierungsfehler für '{field.get('name', 'unbekannt')}'", None
     
     @staticmethod
@@ -314,8 +314,8 @@ class CustomFieldsService:
             return True, '', processed_values
             
         except Exception as e:
-            logger.error(f"Fehler beim Verarbeiten der benutzerdefinierten Felder: [Interner Fehler]")
-            return False, f'Fehler beim Verarbeiten der Felder: [Interner Fehler]', {}
+            logger.error(f"Fehler beim Verarbeiten der benutzerdefinierten Felder: {str(e)}")
+            return False, f'Fehler beim Verarbeiten der Felder: {str(e)}', {}
     
     @staticmethod
     def _generate_field_key(name: str) -> str:
@@ -352,5 +352,5 @@ class CustomFieldsService:
                 return str(value)
                 
         except Exception as e:
-            logger.error(f"Fehler beim Formatieren des Anzeigewerts: [Interner Fehler]")
+            logger.error(f"Fehler beim Formatieren des Anzeigewerts: {str(e)}")
             return str(value) if value is not None else ''

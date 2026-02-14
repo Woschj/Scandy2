@@ -44,7 +44,7 @@ class AdminDebugService:
             return session_info
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Session-Info: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Session-Info: {str(e)}")
             return {'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
@@ -77,7 +77,7 @@ class AdminDebugService:
             return backup_info
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Info: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Backup-Info: {str(e)}")
             return {'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
@@ -94,8 +94,8 @@ class AdminDebugService:
             return True, "Session erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Session: [Interner Fehler]")
-            return False, f"Fehler beim Löschen der Session: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen der Session: {str(e)}")
+            return False, f"Fehler beim Löschen der Session: {str(e)}"
 
     @staticmethod
     def fix_session_for_user(username: str) -> Tuple[bool, str]:
@@ -126,8 +126,8 @@ class AdminDebugService:
             return True, f"Session für Benutzer '{username}' erfolgreich repariert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Reparieren der Session für '{username}': [Interner Fehler]")
-            return False, f"Fehler beim Reparieren der Session: [Interner Fehler]"
+            logger.error(f"Fehler beim Reparieren der Session für '{username}': {str(e)}")
+            return False, f"Fehler beim Reparieren der Session: {str(e)}"
 
     @staticmethod
     def normalize_user_ids() -> Tuple[bool, str, Dict[str, Any]]:
@@ -182,15 +182,15 @@ class AdminDebugService:
                             
                 except Exception as e:
                     stats['errors'] += 1
-                    stats['details'].append(f"Fehler bei User {user.get('username', 'unknown')}: [Interner Fehler]")
+                    stats['details'].append(f"Fehler bei User {user.get('username', 'unknown')}: {str(e)}")
             
             message = f"Normalisierung abgeschlossen: {stats['normalized_users']} Benutzer normalisiert, {stats['errors']} Fehler"
             logger.info(message)
             return True, message, stats
             
         except Exception as e:
-            logger.error(f"Fehler bei der User-ID-Normalisierung: [Interner Fehler]")
-            return False, f"Fehler bei der Normalisierung: [Interner Fehler]", {}
+            logger.error(f"Fehler bei der User-ID-Normalisierung: {str(e)}")
+            return False, f"Fehler bei der Normalisierung: {str(e)}", {}
 
     @staticmethod
     def normalize_all_ids() -> Tuple[bool, str, Dict[str, Any]]:
@@ -239,21 +239,21 @@ class AdminDebugService:
                                 
                         except Exception as e:
                             stats['errors'] += 1
-                            stats['details'].append(f"Fehler bei Dokument in {collection_name}: [Interner Fehler]")
+                            stats['details'].append(f"Fehler bei Dokument in {collection_name}: {str(e)}")
                     
                     stats['collections_processed'] += 1
                     
                 except Exception as e:
                     stats['errors'] += 1
-                    stats['details'].append(f"Fehler bei Collection {collection_name}: [Interner Fehler]")
+                    stats['details'].append(f"Fehler bei Collection {collection_name}: {str(e)}")
             
             message = f"ID-Normalisierung abgeschlossen: {stats['collections_processed']} Collections, {stats['documents_updated']} Dokumente aktualisiert, {stats['errors']} Fehler"
             logger.info(message)
             return True, message, stats
             
         except Exception as e:
-            logger.error(f"Fehler bei der ID-Normalisierung: [Interner Fehler]")
-            return False, f"Fehler bei der Normalisierung: [Interner Fehler]", {}
+            logger.error(f"Fehler bei der ID-Normalisierung: {str(e)}")
+            return False, f"Fehler bei der Normalisierung: {str(e)}", {}
 
     @staticmethod
     def debug_user_management() -> Dict[str, Any]:
@@ -304,7 +304,7 @@ class AdminDebugService:
             return user_stats
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der User-Management-Info: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der User-Management-Info: {str(e)}")
             return {'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
@@ -339,7 +339,7 @@ class AdminDebugService:
                         'is_active': user.get('is_active', True)
                     }
             except Exception as e:
-                test_results['errors'].append(f"Fehler beim Laden des Benutzers: [Interner Fehler]")
+                test_results['errors'].append(f"Fehler beim Laden des Benutzers: {str(e)}")
             
             # Prüfe Referenzen auf diese User-ID
             collections_to_check = [
@@ -354,13 +354,13 @@ class AdminDebugService:
                     if count > 0:
                         test_results['references'][collection] = count
                 except Exception as e:
-                    test_results['errors'].append(f"Fehler beim Prüfen von {collection}: [Interner Fehler]")
+                    test_results['errors'].append(f"Fehler beim Prüfen von {collection}: {str(e)}")
             
             logger.info(f"User-ID-Test für {user_id}: {test_results}")
             return test_results
             
         except Exception as e:
-            logger.error(f"Fehler beim Testen der User-ID {user_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Testen der User-ID {user_id}: {str(e)}")
             return {'error': 'Ein interner Fehler ist aufgetreten.', 'user_id': user_id}
 
     @staticmethod
@@ -398,7 +398,7 @@ class AdminDebugService:
             return logos
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der verfügbaren Logos: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der verfügbaren Logos: {str(e)}")
             return []
 
     @staticmethod
@@ -460,7 +460,7 @@ class AdminDebugService:
             return health_info
             
         except Exception as e:
-            logger.error(f"Fehler beim System-Health-Check: [Interner Fehler]")
+            logger.error(f"Fehler beim System-Health-Check: {str(e)}")
             return {'overall_status': 'error', 'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
@@ -536,8 +536,8 @@ class AdminDebugService:
             return True, "E-Mail-Konfiguration ist bereits korrekt"
             
         except Exception as e:
-            logger.error(f"Fehler bei der E-Mail-Konfigurations-Reparatur: [Interner Fehler]")
-            return False, f"Fehler bei der E-Mail-Reparatur: [Interner Fehler]"
+            logger.error(f"Fehler bei der E-Mail-Konfigurations-Reparatur: {str(e)}")
+            return False, f"Fehler bei der E-Mail-Reparatur: {str(e)}"
 
     @staticmethod
     def fix_dashboard_comprehensive():
@@ -561,7 +561,7 @@ class AdminDebugService:
             try:
                 fixes_applied['missing_fields'] = AdminDebugService.fix_missing_created_at_fields()
             except Exception as e:
-                logger.warning(f"Backup-Feld-Reparatur fehlgeschlagen: [Interner Fehler]")
+                logger.warning(f"Backup-Feld-Reparatur fehlgeschlagen: {str(e)}")
             
             # 2. Umfassende Datentyp-Reparatur
             try:
@@ -570,7 +570,7 @@ class AdminDebugService:
                 fixes_applied['objectid_conversions'] = dashboard_fixes.get('objectid_conversions', 0)
                 fixes_applied['data_consistency'] = dashboard_fixes.get('data_consistency', 0)
             except Exception as e:
-                logger.warning(f"Datentyp-Reparatur fehlgeschlagen: [Interner Fehler]")
+                logger.warning(f"Datentyp-Reparatur fehlgeschlagen: {str(e)}")
             
             # 3. Zusätzliche Konsistenzprüfungen
             try:
@@ -615,7 +615,7 @@ class AdminDebugService:
                         fixes_applied['data_consistency'] += 1
                         
             except Exception as e:
-                logger.warning(f"Datenkonsistenz-Reparatur fehlgeschlagen: [Interner Fehler]")
+                logger.warning(f"Datenkonsistenz-Reparatur fehlgeschlagen: {str(e)}")
             
             # Gesamtzahl berechnen
             fixes_applied['total'] = sum([
@@ -631,7 +631,7 @@ class AdminDebugService:
             return fixes_applied
             
         except Exception as e:
-            logger.error(f"Fehler bei umfassender Dashboard-Reparatur: [Interner Fehler]")
+            logger.error(f"Fehler bei umfassender Dashboard-Reparatur: {str(e)}")
             return {'total': 0, 'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
@@ -708,5 +708,5 @@ class AdminDebugService:
             return fixed_count
             
         except Exception as e:
-            logger.error(f"Fehler beim Ergänzen fehlender Felder: [Interner Fehler]")
+            logger.error(f"Fehler beim Ergänzen fehlender Felder: {str(e)}")
             return 0 

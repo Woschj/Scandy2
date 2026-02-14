@@ -56,7 +56,7 @@ def normalize_database_ids():
                 total_updated += updated_count
 
             except Exception as e:
-                logging.warning(f"Error normalizing IDs in collection {collection_name}: [Interner Fehler]")
+                logging.warning(f"Error normalizing IDs in collection {collection_name}: {str(e)}")
 
         if total_updated > 0:
             logging.info(f"ID normalization completed: {total_updated} IDs normalized across all collections")
@@ -66,7 +66,7 @@ def normalize_database_ids():
         return total_updated
 
     except Exception as e:
-        logging.error(f"Error during ID normalization: [Interner Fehler]")
+        logging.error(f"Error during ID normalization: {str(e)}")
         return 0
 
 
@@ -83,7 +83,7 @@ def init_database(app):
             create_mongodb_indexes()
             logging.info("MongoDB indexes created")
     except Exception as e:
-        logging.error(f"Error initializing MongoDB: [Interner Fehler]")
+        logging.error(f"Error initializing MongoDB: {str(e)}")
 
 
 def init_database_with_id_normalization(app, enable_normalization=False):
@@ -103,6 +103,6 @@ def init_database_with_id_normalization(app, enable_normalization=False):
                 normalize_database_ids()
                 logging.info("Database IDs normalized")
         except Exception as e:
-            logging.error(f"Error during ID normalization: [Interner Fehler]")
+            logging.error(f"Error during ID normalization: {str(e)}")
     else:
         logging.info("ID normalization on startup is disabled (ENABLE_ID_NORMALIZATION_ON_START=false)")

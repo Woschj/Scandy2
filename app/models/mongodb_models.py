@@ -202,8 +202,8 @@ class MongoDBTool:
                 mongodb._client.admin.command('ping')
                 logger.info("MongoDB-Verbindung erfolgreich getestet")
             except Exception as e:
-                logger.error(f"MongoDB-Ping fehlgeschlagen: [Interner Fehler]")
-                raise Exception(f"MongoDB-Verbindung fehlgeschlagen: [Interner Fehler]")
+                logger.error(f"MongoDB-Ping fehlgeschlagen: {str(e)}")
+                raise Exception(f"MongoDB-Verbindung fehlgeschlagen: {str(e)}")
             
             # Tool-Statistiken - verwende die tatsächlichen Status-Werte
             tool_stats = {
@@ -290,7 +290,7 @@ class MongoDBTool:
             }
         except Exception as e:
             # Fallback bei Fehlern
-            logger.error(f"Fehler in get_statistics: [Interner Fehler]")
+            logger.error(f"Fehler in get_statistics: {str(e)}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             return {
@@ -785,7 +785,7 @@ class MongoDBUser:
                     print(f"DEBUG: User mit ObjectId gefunden: {user_data.get('username', 'Unknown')}")
                     return user_data
             except Exception as e:
-                print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
+                print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {str(e)}")
             
             # Versuche mit convert_id_for_query als Fallback
             try:
@@ -795,13 +795,13 @@ class MongoDBUser:
                     print(f"DEBUG: User mit convert_id_for_query gefunden: {user_data.get('username', 'Unknown')}")
                     return user_data
             except Exception as e:
-                print(f"DEBUG: convert_id_for_query fehlgeschlagen: [Interner Fehler]")
+                print(f"DEBUG: convert_id_for_query fehlgeschlagen: {str(e)}")
             
             print(f"DEBUG: Kein User gefunden für ID: {user_id}")
             return None
                 
         except Exception as e:
-            print(f"DEBUG: Fehler beim Laden des Users mit ID {user_id}: [Interner Fehler]")
+            print(f"DEBUG: Fehler beim Laden des Users mit ID {user_id}: {str(e)}")
             return None
     
     @classmethod
@@ -1001,5 +1001,5 @@ def create_mongodb_indexes():
         logger.info("Datenbankinitialisierung abgeschlossen")
         
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen der MongoDB-Indizes: [Interner Fehler]")
+        logger.error(f"Fehler beim Erstellen der MongoDB-Indizes: {str(e)}")
         raise   

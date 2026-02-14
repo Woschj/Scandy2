@@ -11,7 +11,7 @@ def get_software():
             'software': list(software_list)
         })
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Software: [Interner Fehler]")
+        logger.error(f"Fehler beim Abrufen der Software: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden der Software'
@@ -56,7 +56,7 @@ def add_software():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Software: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Software: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -89,7 +89,7 @@ def delete_software(software_id):
             })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Software: [Interner Fehler]")
+        logger.error(f"Fehler beim Löschen der Software: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -106,7 +106,7 @@ def get_user_groups_admin():
             'groups': list(groups)
         })
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Nutzergruppen: [Interner Fehler]")
+        logger.error(f"Fehler beim Abrufen der Nutzergruppen: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden der Nutzergruppen'
@@ -151,7 +151,7 @@ def add_user_group():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Hinzufügen der Nutzergruppe: [Interner Fehler]")
+        logger.error(f"Fehler beim Hinzufügen der Nutzergruppe: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -184,7 +184,7 @@ def delete_user_group(group_id):
             })
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen der Nutzergruppe: [Interner Fehler]")
+        logger.error(f"Fehler beim Löschen der Nutzergruppe: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -234,7 +234,7 @@ def edit_user_group(group_id):
             })
 
     except Exception as e:
-        logger.error(f"Fehler beim Bearbeiten der Nutzergruppe: [Interner Fehler]")
+        logger.error(f"Fehler beim Bearbeiten der Nutzergruppe: {str(e)}")
         return jsonify({
             'success': False,
             'message': 'Ein Fehler ist aufgetreten.'
@@ -261,6 +261,6 @@ def software_management():
                              groups_list=groups_list)
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Software-Verwaltung: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Software-Verwaltung: {str(e)}")
         flash('Fehler beim Laden der Software-Verwaltung', 'error')
         return redirect(url_for('admin.dashboard'))

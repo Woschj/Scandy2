@@ -102,11 +102,11 @@ class AdminDashboardService:
                                 'id': str(lending.get('_id', ''))
                             })
                     except Exception as e:
-                        logger.warning(f"Fehler bei Verarbeitung einer Ausleihe: [Interner Fehler]")
+                        logger.warning(f"Fehler bei Verarbeitung einer Ausleihe: {str(e)}")
                         continue
                         
             except Exception as e:
-                logger.error(f"Fehler beim Laden der Ausleihen: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden der Ausleihen: {str(e)}")
             
             # Hole die letzten 10 Verbrauchsmaterial-Ausgaben
             try:
@@ -135,11 +135,11 @@ class AdminDashboardService:
                                 'id': str(usage.get('_id', ''))
                             })
                     except Exception as e:
-                        logger.warning(f"Fehler bei Verarbeitung einer Verbrauchsmaterial-Ausgabe: [Interner Fehler]")
+                        logger.warning(f"Fehler bei Verarbeitung einer Verbrauchsmaterial-Ausgabe: {str(e)}")
                         continue
                         
             except Exception as e:
-                logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Ausgaben: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Ausgaben: {str(e)}")
             
             # Sortiere nach Timestamp
             activities.sort(key=lambda x: x.get('timestamp', datetime.now()), reverse=True)
@@ -147,7 +147,7 @@ class AdminDashboardService:
             return activities[:20]  # Maximal 20 Aktivitäten
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der letzten Aktivitäten: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der letzten Aktivitäten: {str(e)}")
             return []
 
     @staticmethod
@@ -209,7 +209,7 @@ class AdminDashboardService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Materialnutzung: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Materialnutzung: {str(e)}")
             return {'usage_data': [], 'period_days': 30}
 
     @staticmethod  
@@ -219,7 +219,7 @@ class AdminDashboardService:
             from app.services.statistics_service import StatisticsService
             return StatisticsService._get_overdue_loans()
         except Exception as e:
-            logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden überfälliger Ausleihen: {str(e)}")
             return []
 
     @staticmethod
@@ -246,10 +246,10 @@ class AdminDashboardService:
                             'severity': 'error'
                         })
                     except Exception as e:
-                        logger.warning(f"Fehler bei defektem Tool: [Interner Fehler]")
+                        logger.warning(f"Fehler bei defektem Tool: {str(e)}")
                         continue
             except Exception as e:
-                logger.error(f"Fehler beim Laden defekter Tools: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden defekter Tools: {str(e)}")
             
             # Überfällige Ausleihen - nutze die neue Logik basierend auf expected_return_date
             try:
@@ -267,10 +267,10 @@ class AdminDashboardService:
                             'severity': 'error' if loan.get('days_overdue', 0) > 7 else 'warning'
                         })
                     except Exception as e:
-                        logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
+                        logger.warning(f"Fehler bei überfälliger Ausleihe: {str(e)}")
                         continue
             except Exception as e:
-                logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden überfälliger Ausleihen: {str(e)}")
 
             # Legacy-Fallback für alte Ausleihen ohne expected_return_date
             try:
@@ -304,10 +304,10 @@ class AdminDashboardService:
                                         'severity': 'warning'
                                     })
                     except Exception as e:
-                        logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
+                        logger.warning(f"Fehler bei überfälliger Ausleihe: {str(e)}")
                         continue
             except Exception as e:
-                logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden überfälliger Ausleihen: {str(e)}")
             
             # Verbrauchsmaterial mit niedrigem Bestand
             try:
@@ -323,15 +323,15 @@ class AdminDashboardService:
                             'severity': 'warning'
                         })
                     except Exception as e:
-                        logger.warning(f"Fehler bei Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+                        logger.warning(f"Fehler bei Verbrauchsmaterial mit niedrigem Bestand: {str(e)}")
                         continue
             except Exception as e:
-                logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+                logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: {str(e)}")
             
             return warnings
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Warnungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Warnungen: {str(e)}")
             return {'defect_tools': [], 'overdue_lendings': [], 'low_stock_consumables': []}
 
     @staticmethod
@@ -364,7 +364,7 @@ class AdminDashboardService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Informationen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Backup-Informationen: {str(e)}")
             return {'backups': [], 'total_count': 0, 'total_size_mb': 0}
 
     @staticmethod
@@ -377,7 +377,7 @@ class AdminDashboardService:
             return stats.get('consumables_forecast', [])
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Prognosen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Prognosen: {str(e)}")
             return []
 
     @staticmethod
@@ -443,5 +443,5 @@ class AdminDashboardService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Trends: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Trends: {str(e)}")
             return {'labels': [], 'datasets': []} 

@@ -83,8 +83,8 @@ def normalize_all_ids():
                 print(f"Collection {collection}: {updated_count} IDs normalisiert")
 
             except Exception as e:
-                collection_results[collection] = f"Fehler: [Interner Fehler]"
-                print(f"Fehler bei Collection {collection}: [Interner Fehler]")
+                collection_results[collection] = f"Fehler: {str(e)}"
+                print(f"Fehler bei Collection {collection}: {str(e)}")
 
         return jsonify({
             'status': 'success',
@@ -132,7 +132,7 @@ def test_email_simple():
                     logger.warning("Passwort konnte nicht entschlüsselt werden - verwende verschlüsseltes Passwort")
                     # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
             except Exception as e:
-                logger.warning(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler] - verwende verschlüsseltes Passwort")
+                logger.warning(f"Fehler beim Entschlüsseln des Passworts: {str(e)} - verwende verschlüsseltes Passwort")
                 # Verwende das verschlüsselte Passwort direkt - test_email_config kann damit umgehen
 
         # Verwende die test_email_config aus email_utils direkt
@@ -154,7 +154,7 @@ def test_email_simple():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Test-Fehler: [Interner Fehler]'
+            'message': f'Test-Fehler: {str(e)}'
         })
 
 @bp.route('/debug/fix-lending-inconsistencies', methods=['POST'])
@@ -179,10 +179,10 @@ def fix_lending_inconsistencies():
             }), 500
 
     except Exception as e:
-        logger.error(f"Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]")
+        logger.error(f"Fehler beim Beheben der Inkonsistenzen: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]'
+            'message': f'Fehler beim Beheben der Inkonsistenzen: {str(e)}'
         }), 500
 
 @bp.route('/debug/validate-lending-consistency', methods=['GET'])
@@ -202,10 +202,10 @@ def validate_lending_consistency():
         })
 
     except Exception as e:
-        logger.error(f"Fehler bei der Konsistenzprüfung: [Interner Fehler]")
+        logger.error(f"Fehler bei der Konsistenzprüfung: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Konsistenzprüfung: [Interner Fehler]'
+            'message': f'Fehler bei der Konsistenzprüfung: {str(e)}'
         }), 500
 
 @bp.route('/debug/fix-missing-created-at', methods=['POST'])
@@ -224,10 +224,10 @@ def fix_missing_created_at():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Korrigieren fehlender created_at Felder: [Interner Fehler]")
+        logger.error(f"Fehler beim Korrigieren fehlender created_at Felder: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Korrigieren: [Interner Fehler]'
+            'message': f'Fehler beim Korrigieren: {str(e)}'
         }), 500
 
 @bp.route('/debug/test-dashboard-fix', methods=['GET'])
@@ -269,7 +269,7 @@ def test_dashboard_fix():
                 else:
                     result['tests'][service_name] = 'Keine Daten'
             except Exception as e:
-                error_msg = f"[Interner Fehler]"
+                error_msg = f"{str(e)}"
                 result['tests'][service_name] = f"Fehler: {error_msg}"
                 result['errors'].append(f"{service_name}: {error_msg}")
 
@@ -286,11 +286,11 @@ def test_dashboard_fix():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler beim Testen des Dashboard-Fixes: [Interner Fehler]")
+        logger.error(f"Fehler beim Testen des Dashboard-Fixes: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Testen: [Interner Fehler]',
-            'errors': [f"Unerwarteter Fehler: [Interner Fehler]"],
+            'message': f'Fehler beim Testen: {str(e)}',
+            'errors': [f"Unerwarteter Fehler: {str(e)}"],
             'tests': {}
         }), 500
 
@@ -319,7 +319,7 @@ def fix_dashboard_complete():
         try:
             result['fixes']['backup_fields'] = AdminBackupService._fix_missing_created_at_fields()
         except Exception as e:
-            result['errors'].append(f"Backup-Felder: [Interner Fehler]")
+            result['errors'].append(f"Backup-Felder: {str(e)}")
 
         # 2. Datenkonsistenz prüfen und korrigieren
         collections_to_check = ['tools', 'workers', 'consumables', 'lendings', 'consumable_usages']
@@ -356,7 +356,7 @@ def fix_dashboard_complete():
                                                  {'$set': {field: datetime.now()}})
                                 result['fixes']['date_fixes'] += 1
             except Exception as e:
-                result['errors'].append(f"{collection} Datumsfelder: [Interner Fehler]")
+                result['errors'].append(f"{collection} Datumsfelder: {str(e)}")
 
         # 3. Teste Dashboard-Services
         dashboard_services = [
@@ -382,7 +382,7 @@ def fix_dashboard_complete():
                 else:
                     result['dashboard_tests'][service_name] = 'Keine Daten'
             except Exception as e:
-                error_msg = f"[Interner Fehler]"
+                error_msg = f"{str(e)}"
                 result['dashboard_tests'][service_name] = f"Fehler: {error_msg}"
                 result['errors'].append(f"{service_name}: {error_msg}")
 
@@ -401,11 +401,11 @@ def fix_dashboard_complete():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei der umfassenden Dashboard-Korrektur: [Interner Fehler]")
+        logger.error(f"Fehler bei der umfassenden Dashboard-Korrektur: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Dashboard-Korrektur: [Interner Fehler]',
-            'errors': [f"Unerwarteter Fehler: [Interner Fehler]"],
+            'message': f'Fehler bei der Dashboard-Korrektur: {str(e)}',
+            'errors': [f"Unerwarteter Fehler: {str(e)}"],
             'fixes': {'backup_fields': 0, 'data_consistency': 0, 'missing_relations': 0, 'date_fixes': 0},
             'dashboard_tests': {}
         }), 500
@@ -429,31 +429,31 @@ def dashboard_status():
             recent_activity = AdminDashboardService.get_recent_activity()
             status['data_counts']['recent_activity'] = len(recent_activity)
         except Exception as e:
-            status['errors'].append(f"Recent Activity: [Interner Fehler]")
+            status['errors'].append(f"Recent Activity: {str(e)}")
 
         try:
             material_usage = AdminDashboardService.get_material_usage()
             status['data_counts']['material_usage'] = len(material_usage.get('usage_data', []))
         except Exception as e:
-            status['errors'].append(f"Material Usage: [Interner Fehler]")
+            status['errors'].append(f"Material Usage: {str(e)}")
 
         try:
             warnings = AdminDashboardService.get_warnings()
             status['data_counts']['warnings'] = sum(len(w) for w in warnings.values())
         except Exception as e:
-            status['errors'].append(f"Warnings: [Interner Fehler]")
+            status['errors'].append(f"Warnings: {str(e)}")
 
         try:
             consumables_forecast = AdminDashboardService.get_consumables_forecast()
             status['data_counts']['consumables_forecast'] = len(consumables_forecast)
         except Exception as e:
-            status['errors'].append(f"Consumables Forecast: [Interner Fehler]")
+            status['errors'].append(f"Consumables Forecast: {str(e)}")
 
         try:
             consumable_trend = AdminDashboardService.get_consumable_trend()
             status['data_counts']['consumable_trend'] = len(consumable_trend.get('labels', []))
         except Exception as e:
-            status['errors'].append(f"Consumable Trend: [Interner Fehler]")
+            status['errors'].append(f"Consumable Trend: {str(e)}")
 
         # Prüfe Datenbank-Zugriff
         try:
@@ -469,7 +469,7 @@ def dashboard_status():
                 'lendings': total_lendings
             })
         except Exception as e:
-            status['errors'].append(f"Database Access: [Interner Fehler]")
+            status['errors'].append(f"Database Access: {str(e)}")
 
         # Wenn es Fehler gibt, versuche automatische Korrektur
         if status['errors']:
@@ -506,10 +506,10 @@ def dashboard_status():
         return jsonify(status)
 
     except Exception as e:
-        logger.error(f"Fehler beim Prüfen des Dashboard-Status: [Interner Fehler]")
+        logger.error(f"Fehler beim Prüfen des Dashboard-Status: {str(e)}")
         return jsonify({
             'dashboard_working': False,
-            'errors': [f"Status check failed: [Interner Fehler]"],
+            'errors': [f"Status check failed: {str(e)}"],
             'fixes_applied': 0,
             'data_counts': {},
             'message': 'Fehler beim Prüfen des Dashboard-Status'
@@ -540,7 +540,7 @@ def dashboard_details():
                 'tickets': mongodb.count_documents('tickets', {})
             }
         except Exception as e:
-            details['errors'].append(f"Database counts: [Interner Fehler]")
+            details['errors'].append(f"Database counts: {str(e)}")
 
         # Service-Tests
         try:
@@ -655,7 +655,7 @@ def dashboard_details():
             }
 
         except Exception as e:
-            details['errors'].append(f"Template variables: [Interner Fehler]")
+            details['errors'].append(f"Template variables: {str(e)}")
 
         return jsonify({
             'success': True,
@@ -664,10 +664,10 @@ def dashboard_details():
         })
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Dashboard-Details: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Dashboard-Details: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Laden der Dashboard-Details: [Interner Fehler]'
+            'message': f'Fehler beim Laden der Dashboard-Details: {str(e)}'
         }), 500
 
 @bp.route('/debug/dashboard-page')
@@ -716,7 +716,7 @@ def test_email_config_debug():
             else:
                 result['errors'].append("E-Mail-Konfiguration konnte nicht geladen werden")
         except Exception as e:
-            result['errors'].append(f"Fehler beim Laden der Konfiguration: [Interner Fehler]")
+            result['errors'].append(f"Fehler beim Laden der Konfiguration: {str(e)}")
 
         # 2. Teste E-Mail-Konfiguration
         if config:
@@ -734,7 +734,7 @@ def test_email_config_debug():
                         else:
                             result['errors'].append("Passwort konnte nicht entschlüsselt werden")
                     except Exception as e:
-                        result['errors'].append(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler]")
+                        result['errors'].append(f"Fehler beim Entschlüsseln des Passworts: {str(e)}")
 
                 # Teste E-Mail-Konfiguration
                 success, message = test_email_config(test_config)
@@ -759,22 +759,22 @@ def test_email_config_debug():
                     result['message'] = f"E-Mail-Test fehlgeschlagen: {message}"
 
             except Exception as e:
-                result['errors'].append(f"Fehler beim E-Mail-Test: [Interner Fehler]")
-                result['message'] = f"Fehler beim E-Mail-Test: [Interner Fehler]"
+                result['errors'].append(f"Fehler beim E-Mail-Test: {str(e)}")
+                result['message'] = f"Fehler beim E-Mail-Test: {str(e)}"
         else:
             result['message'] = "Keine E-Mail-Konfiguration verfügbar"
 
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler beim E-Mail-Konfigurations-Test: [Interner Fehler]")
+        logger.error(f"Fehler beim E-Mail-Konfigurations-Test: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Kritischer Fehler: [Interner Fehler]',
+            'message': f'Kritischer Fehler: {str(e)}',
             'config_loaded': False,
             'config_details': {},
             'test_result': {},
-            'errors': [f"Unerwarteter Fehler: [Interner Fehler]"]
+            'errors': [f"Unerwarteter Fehler: {str(e)}"]
         }), 500
 
 @bp.route('/debug/fix-email-config', methods=['GET'])
@@ -807,7 +807,7 @@ def fix_email_config():
                 if new_config_doc:
                     result['new_config'] = {k: v for k, v in new_config_doc.items() if k != '_id'}
             except Exception as e:
-                result['errors'].append(f"Neue E-Mail-Konfiguration prüfen: [Interner Fehler]")
+                result['errors'].append(f"Neue E-Mail-Konfiguration prüfen: {str(e)}")
 
             # 3. Migriere alte Einstellungen zu neuem Format
             if old_settings and not result['new_config']:
@@ -834,7 +834,7 @@ def fix_email_config():
                     result['message'] += "E-Mail-Konfiguration von altem Format migriert. "
 
                 except Exception as e:
-                    result['errors'].append(f"Migration fehlgeschlagen: [Interner Fehler]")
+                    result['errors'].append(f"Migration fehlgeschlagen: {str(e)}")
 
             # 4. Prüfe ob Admin-Benutzer E-Mail-Adresse hat
             try:
@@ -854,7 +854,7 @@ def fix_email_config():
                     result['message'] += f"{admin_without_email} Admin-Benutzer ohne E-Mail-Adresse korrigiert. "
 
             except Exception as e:
-                result['errors'].append(f"Admin-E-Mail prüfen: [Interner Fehler]")
+                result['errors'].append(f"Admin-E-Mail prüfen: {str(e)}")
 
             # 5. Bewerte das Ergebnis
             if result['fixes_applied'] > 0 and not result['errors']:
@@ -867,18 +867,18 @@ def fix_email_config():
                 result['message'] = "Keine E-Mail-Konfigurationsprobleme gefunden."
 
         except Exception as e:
-            result['errors'].append(f"Allgemeiner Fehler: [Interner Fehler]")
+            result['errors'].append(f"Allgemeiner Fehler: {str(e)}")
             result['message'] = "Fehler beim Prüfen der E-Mail-Konfiguration."
 
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei E-Mail-Konfigurations-Fix: [Interner Fehler]")
+        logger.error(f"Fehler bei E-Mail-Konfigurations-Fix: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Kritischer Fehler: [Interner Fehler]',
+            'message': f'Kritischer Fehler: {str(e)}',
             'fixes_applied': 0,
-            'errors': [f"Unerwarteter Fehler: [Interner Fehler]"],
+            'errors': [f"Unerwarteter Fehler: {str(e)}"],
             'old_settings': {},
             'new_config': {}
         }), 500
@@ -933,7 +933,7 @@ def analyze_lendings():
         })
 
     except Exception as e:
-        logger.error(f"Fehler bei Ausleihen-Analyse: [Interner Fehler]")
+        logger.error(f"Fehler bei Ausleihen-Analyse: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Ein interner Fehler ist aufgetreten.'
@@ -967,7 +967,7 @@ def fix_dashboard_simple():
                 'tickets_count': mongodb.count_documents('tickets', {})
             }
         except Exception as e:
-            result['errors'].append(f"Datenbank-Zugriff: [Interner Fehler]")
+            result['errors'].append(f"Datenbank-Zugriff: {str(e)}")
 
         # 2. Führe Backup-Feld-Korrektur aus
         try:
@@ -975,7 +975,7 @@ def fix_dashboard_simple():
             result['fixes_applied'] = fixed_count
             result['message'] += f"{fixed_count} fehlende Felder korrigiert. "
         except Exception as e:
-            result['errors'].append(f"Backup-Feld-Korrektur: [Interner Fehler]")
+            result['errors'].append(f"Backup-Feld-Korrektur: {str(e)}")
 
         # 3. Teste Dashboard-Services
         dashboard_services = [
@@ -1001,7 +1001,7 @@ def fix_dashboard_simple():
                 else:
                     result['tests'][service_name] = 'Keine Daten'
             except Exception as e:
-                error_msg = f"[Interner Fehler]"
+                error_msg = f"{str(e)}"
                 result['tests'][service_name] = f"Fehler: {error_msg}"
                 result['errors'].append(f"{service_name}: {error_msg}")
 
@@ -1018,12 +1018,12 @@ def fix_dashboard_simple():
         return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Fehler bei der einfachen Dashboard-Korrektur: [Interner Fehler]")
+        logger.error(f"Fehler bei der einfachen Dashboard-Korrektur: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Kritischer Fehler: [Interner Fehler]',
+            'message': f'Kritischer Fehler: {str(e)}',
             'fixes_applied': 0,
-            'errors': [f"Unerwarteter Fehler: [Interner Fehler]"],
+            'errors': [f"Unerwarteter Fehler: {str(e)}"],
             'tests': {},
             'database_info': {}
         }), 500

@@ -40,7 +40,7 @@ class IndexOptimizer:
             logger.info("Index optimization completed successfully")
             
         except Exception as e:
-            logger.error(f"Error during index optimization: [Interner Fehler]")
+            logger.error(f"Error during index optimization: {str(e)}")
             raise
     
     @staticmethod
@@ -67,7 +67,7 @@ class IndexOptimizer:
             logger.info("Tool indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing tool indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing tool indexes: {str(e)}")
     
     @staticmethod
     def _ensure_worker_indexes():
@@ -86,7 +86,7 @@ class IndexOptimizer:
             logger.info("Worker indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing worker indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing worker indexes: {str(e)}")
     
     @staticmethod
     def _ensure_consumable_indexes():
@@ -111,7 +111,7 @@ class IndexOptimizer:
             logger.info("Consumable indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing consumable indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing consumable indexes: {str(e)}")
     
     @staticmethod
     def _ensure_lending_indexes():
@@ -134,7 +134,7 @@ class IndexOptimizer:
             logger.info("Lending indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing lending indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing lending indexes: {str(e)}")
     
     @staticmethod
     def _ensure_ticket_indexes():
@@ -156,7 +156,7 @@ class IndexOptimizer:
             logger.info("Ticket indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing ticket indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing ticket indexes: {str(e)}")
     
     @staticmethod
     def _ensure_system_indexes():
@@ -179,7 +179,7 @@ class IndexOptimizer:
             logger.info("System indexes optimized")
             
         except Exception as e:
-            logger.error(f"Error optimizing system indexes: [Interner Fehler]")
+            logger.error(f"Error optimizing system indexes: {str(e)}")
 
 
 class QueryOptimizer:
@@ -311,7 +311,7 @@ class QueryOptimizer:
                 }
                 
         except Exception as e:
-            logger.error(f"Error in optimized dashboard statistics: [Interner Fehler]")
+            logger.error(f"Error in optimized dashboard statistics: {str(e)}")
             # Fallback zu den ursprünglichen count_documents
             return IndexOptimizer._get_dashboard_statistics_fallback()
     
@@ -367,7 +367,7 @@ class QueryOptimizer:
             }
             
         except Exception as e:
-            logger.error(f"Error in fallback dashboard statistics: [Interner Fehler]")
+            logger.error(f"Error in fallback dashboard statistics: {str(e)}")
             return {
                 'tool_stats': {'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
                 'consumable_stats': {'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},

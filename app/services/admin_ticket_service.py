@@ -38,7 +38,7 @@ class AdminTicketService:
             return ticket
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Tickets {ticket_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden des Tickets {ticket_id}: {str(e)}")
             return None
 
     @staticmethod
@@ -69,7 +69,7 @@ class AdminTicketService:
             return ticket, auftrag_details, material_list
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Details {ticket_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Ticket-Details {ticket_id}: {str(e)}")
             return None, None, []
 
     @staticmethod
@@ -106,8 +106,8 @@ class AdminTicketService:
             return True, "Nachricht erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Nachricht zu Ticket {ticket_id}: [Interner Fehler]")
-            return False, f"Fehler beim Hinzufügen der Nachricht: [Interner Fehler]"
+            logger.error(f"Fehler beim Hinzufügen der Nachricht zu Ticket {ticket_id}: {str(e)}")
+            return False, f"Fehler beim Hinzufügen der Nachricht: {str(e)}"
 
     @staticmethod
     def update_ticket_status(ticket_id: str, new_status: str) -> Tuple[bool, str]:
@@ -139,8 +139,8 @@ class AdminTicketService:
             return True, f"Status erfolgreich auf '{new_status}' geändert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Status von Ticket {ticket_id}: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren des Status: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren des Status von Ticket {ticket_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren des Status: {str(e)}"
 
     @staticmethod
     def update_ticket_assignment(ticket_id: str, assigned_to: str) -> Tuple[bool, str]:
@@ -192,8 +192,8 @@ class AdminTicketService:
             return True, f"Zuweisung erfolgreich auf '{assigned_to}' geändert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Zuweisung von Ticket {ticket_id}: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren der Zuweisung: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren der Zuweisung von Ticket {ticket_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren der Zuweisung: {str(e)}"
 
     @staticmethod
     def delete_ticket(ticket_id: str, permanent: bool = False) -> Tuple[bool, str]:
@@ -237,8 +237,8 @@ class AdminTicketService:
                 return True, "Ticket als gelöscht markiert"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen von Ticket {ticket_id}: [Interner Fehler]")
-            return False, f"Fehler beim Löschen des Tickets: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen von Ticket {ticket_id}: {str(e)}")
+            return False, f"Fehler beim Löschen des Tickets: {str(e)}"
 
     @staticmethod
     def export_ticket_as_word(ticket_id: str) -> Tuple[bool, str, Optional[str]]:
@@ -379,8 +379,8 @@ class AdminTicketService:
             return True, f"Word-Dokument erfolgreich generiert: {output_path}", output_path
             
         except Exception as e:
-            logger.error(f"Fehler beim Generieren des Word-Dokuments: [Interner Fehler]", exc_info=True)
-            return False, f"Fehler beim Generieren des Dokuments: [Interner Fehler]", None
+            logger.error(f"Fehler beim Generieren des Word-Dokuments: {str(e)}", exc_info=True)
+            return False, f"Fehler beim Generieren des Dokuments: {str(e)}", None
 
     @staticmethod
     def update_ticket_details(ticket_id: str, details_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -421,8 +421,8 @@ class AdminTicketService:
             return True, "Ticket-Details erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Ticket-Details {ticket_id}: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren der Ticket-Details: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren der Ticket-Details {ticket_id}: {str(e)}")
+            return False, f"Fehler beim Aktualisieren der Ticket-Details: {str(e)}"
 
     @staticmethod
     def get_ticket_statistics() -> Dict[str, Any]:
@@ -460,7 +460,7 @@ class AdminTicketService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Ticket-Statistiken: {str(e)}")
             return {
                 'total_tickets': 0,
                 'status_stats': {},

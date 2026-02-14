@@ -124,7 +124,7 @@ class UnifiedBackupManager:
                 try:
                     self._prune_old_backups(days=7)
                 except Exception as e:
-                    print(f"⚠️  Konnte alte Backups nicht bereinigen: [Interner Fehler]")
+                    print(f"⚠️  Konnte alte Backups nicht bereinigen: {str(e)}")
                 # Lauf protokollieren
                 try:
                     from app.models.mongodb_database import mongodb
@@ -144,7 +144,7 @@ class UnifiedBackupManager:
                 return None
                 
         except Exception as e:
-            print(f"❌ Fehler beim Erstellen des Backups: [Interner Fehler]")
+            print(f"❌ Fehler beim Erstellen des Backups: {str(e)}")
             return None
     
     def _create_mongodb_backup(self, backup_name: str) -> Optional[Path]:
@@ -254,7 +254,7 @@ class UnifiedBackupManager:
                             print(f"    ✅ Collection {collection_name}: {len(backup_documents)} Dokumente")
                             
                     except Exception as e:
-                        print(f"    ⚠️  Fehler bei Collection {collection_name}: [Interner Fehler]")
+                        print(f"    ⚠️  Fehler bei Collection {collection_name}: {str(e)}")
                         continue
                 
                 # Backup-Datei speichern
@@ -266,7 +266,7 @@ class UnifiedBackupManager:
                 return backup_path
                 
         except Exception as e:
-            print(f"  ❌ Fehler beim MongoDB-Backup: [Interner Fehler]")
+            print(f"  ❌ Fehler beim MongoDB-Backup: {str(e)}")
             return None
     
     def _create_media_backup(self, backup_name: str) -> Optional[Path]:
@@ -345,7 +345,7 @@ class UnifiedBackupManager:
                 return None
                 
         except Exception as e:
-            print(f"  ❌ Fehler beim Medien-Backup: [Interner Fehler]")
+            print(f"  ❌ Fehler beim Medien-Backup: {str(e)}")
             return None
     
     def _create_config_backup(self, backup_name: str) -> Optional[Path]:
@@ -393,7 +393,7 @@ class UnifiedBackupManager:
                 return None
                 
         except Exception as e:
-            print(f"  ❌ Fehler beim Konfigurations-Backup: [Interner Fehler]")
+            print(f"  ❌ Fehler beim Konfigurations-Backup: {str(e)}")
             return None
     
     def _create_final_backup(self, backup_name: str, db_path: Path, 
@@ -415,7 +415,7 @@ class UnifiedBackupManager:
                     checksums[arcname] = h.hexdigest()
                     zipf.write(file_path, arcname)
                 except Exception as e:
-                    print(f"  ⚠️  Konnte Datei nicht hinzufügen ({arcname}): [Interner Fehler]")
+                    print(f"  ⚠️  Konnte Datei nicht hinzufügen ({arcname}): {str(e)}")
 
             with zipfile.ZipFile(final_backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 # MongoDB-Backup hinzufügen
@@ -461,7 +461,7 @@ class UnifiedBackupManager:
             return final_backup_path.name
             
         except Exception as e:
-            print(f"  ❌ Fehler beim Erstellen des finalen Backups: [Interner Fehler]")
+            print(f"  ❌ Fehler beim Erstellen des finalen Backups: {str(e)}")
             return None
     
     def restore_backup(self, backup_filename: str, include_media: bool = True, mode: str = 'replace') -> bool:
@@ -510,7 +510,7 @@ class UnifiedBackupManager:
                                     return False
                             print("  ✅ Integritätsprüfung bestanden")
                     except Exception as e:
-                        print(f"  ⚠️  Konnte Checksummen nicht prüfen: [Interner Fehler]")
+                        print(f"  ⚠️  Konnte Checksummen nicht prüfen: {str(e)}")
                 
                 # Metadaten lesen
                 metadata_path = temp_path / 'backup_metadata.json'
@@ -550,7 +550,7 @@ class UnifiedBackupManager:
                 return True
                 
         except Exception as e:
-            print(f"❌ Fehler beim Wiederherstellen des Backups: [Interner Fehler]")
+            print(f"❌ Fehler beim Wiederherstellen des Backups: {str(e)}")
             return False
     
     def _restore_mongodb(self, mongodb_path: Path, mode: str = 'replace') -> bool:
@@ -613,7 +613,7 @@ class UnifiedBackupManager:
                 return self._python_restore_mongodb(mongo_uri, db_name, mongodb_path / db_name, mode=mode)
                 
         except Exception as e:
-            print(f"  ❌ Fehler bei MongoDB-Wiederherstellung: [Interner Fehler]")
+            print(f"  ❌ Fehler bei MongoDB-Wiederherstellung: {str(e)}")
             return False
 
     def _python_restore_mongodb(self, mongo_uri, db_name, dir_path, mode: str = 'replace') -> bool:
@@ -704,7 +704,7 @@ class UnifiedBackupManager:
             print("  ✅ MongoDB per Python-Fallback wiederhergestellt")
             return True
         except Exception as e:
-            print(f"  ❌ Python-Fallback fehlgeschlagen: [Interner Fehler]")
+            print(f"  ❌ Python-Fallback fehlgeschlagen: {str(e)}")
             return False
     
     def _restore_media(self, media_path: Path) -> bool:
@@ -751,7 +751,7 @@ class UnifiedBackupManager:
             return True
             
         except Exception as e:
-            print(f"  ❌ Fehler bei Medien-Wiederherstellung: [Interner Fehler]")
+            print(f"  ❌ Fehler bei Medien-Wiederherstellung: {str(e)}")
             return False
     
     def _restore_config(self, config_path: Path) -> bool:
@@ -771,7 +771,7 @@ class UnifiedBackupManager:
             return True
             
         except Exception as e:
-            print(f"  ❌ Fehler bei Konfigurations-Wiederherstellung: [Interner Fehler]")
+            print(f"  ❌ Fehler bei Konfigurations-Wiederherstellung: {str(e)}")
             return False
     
     def import_json_backup(self, json_file_path: str) -> bool:
@@ -836,13 +836,13 @@ class UnifiedBackupManager:
             try:
                 self._anonymize_orphan_user_names()
             except Exception as e:
-                print(f"⚠️  Konnte Orphan-Namen nicht anonymisieren: [Interner Fehler]")
+                print(f"⚠️  Konnte Orphan-Namen nicht anonymisieren: {str(e)}")
             
             print(f"✅ JSON-Backup erfolgreich importiert")
             return True
             
         except Exception as e:
-            print(f"❌ Fehler beim Importieren des JSON-Backups: [Interner Fehler]")
+            print(f"❌ Fehler beim Importieren des JSON-Backups: {str(e)}")
             return False
     
     def _validate_json_backup(self, backup_data: Dict) -> bool:
@@ -936,7 +936,7 @@ class UnifiedBackupManager:
             if anonymized:
                 print(f"  🔒 {anonymized} Dokumente anonymisiert (fehlende Benutzer)")
         except Exception as e:
-            print(f"⚠️  Anonymisierung fehlgeschlagen: [Interner Fehler]")
+            print(f"⚠️  Anonymisierung fehlgeschlagen: {str(e)}")
     
     def list_backups(self) -> List[Dict[str, Any]]:
         """Listet alle verfügbaren Backups auf"""
@@ -965,7 +965,7 @@ class UnifiedBackupManager:
                 })
                 
             except Exception as e:
-                print(f"Fehler beim Lesen von Backup {backup_file.name}: [Interner Fehler]")
+                print(f"Fehler beim Lesen von Backup {backup_file.name}: {str(e)}")
         
         return sorted(backups, key=lambda x: x['created_at'], reverse=True)
 
@@ -1091,7 +1091,7 @@ class UnifiedBackupManager:
                     except Exception as e:
                         failed_count += 1
                         # Kurz-Log, aber Import fortsetzen
-                        print(f"    ⚠️  Fehler beim Einfügen in {collection_name}: [Interner Fehler]")
+                        print(f"    ⚠️  Fehler beim Einfügen in {collection_name}: {str(e)}")
                 total_inserted += inserted_count
                 total_failed += failed_count
                 print(f"    ✅ {inserted_count} eingefügt, ❌ {failed_count} fehlgeschlagen in {collection_name}")
@@ -1132,20 +1132,20 @@ class UnifiedBackupManager:
                                 upsert=True
                             )
                         except Exception as e:
-                            print(f"    ⚠️  Nutzer-Import: [Interner Fehler]")
+                            print(f"    ⚠️  Nutzer-Import: {str(e)}")
             except Exception as e:
-                print(f"⚠️  Benutzer-Import (scoped) übersprungen: [Interner Fehler]")
+                print(f"⚠️  Benutzer-Import (scoped) übersprungen: {str(e)}")
 
             # Nachzug: Orphan-Namen anonymisieren
             try:
                 self._anonymize_orphan_user_names()
             except Exception as e:
-                print(f"⚠️  Orphan-Anonymisierung (scoped) fehlgeschlagen: [Interner Fehler]")
+                print(f"⚠️  Orphan-Anonymisierung (scoped) fehlgeschlagen: {str(e)}")
 
             # Erfolg, wenn mindestens ein Dokument eingefügt wurde
             return total_inserted > 0
         except Exception as e:
-            print(f"❌ Fehler beim scoped-Import: [Interner Fehler]")
+            print(f"❌ Fehler beim scoped-Import: {str(e)}")
             return False
         finally:
             # Ursprüngliches Department im Kontext wiederherstellen
@@ -1263,7 +1263,7 @@ class UnifiedBackupManager:
                     except Exception as e:
                         failed_count += 1
                         if len(report['errors']) < 20:
-                            report['errors'].append(f"{collection_name}: [Interner Fehler]")
+                            report['errors'].append(f"{collection_name}: {str(e)}")
                 report['per_collection'][collection_name] = {
                     'inserted': inserted_count,
                     'failed': failed_count,
@@ -1427,7 +1427,7 @@ class UnifiedBackupManager:
                 try:
                     shutil.rmtree(temp_path)
                 except Exception as e:
-                    print(f"Warnung: Konnte temporäre Dateien nicht löschen: [Interner Fehler]")
+                    print(f"Warnung: Konnte temporäre Dateien nicht löschen: {str(e)}")
     
     def _format_size(self, size_bytes: int) -> str:
         """Formatiert Dateigröße"""

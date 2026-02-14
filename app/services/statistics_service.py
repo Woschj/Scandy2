@@ -50,7 +50,7 @@ class StatisticsService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Statistiken: {str(e)}")
             return StatisticsService._get_fallback_statistics()
     
     @staticmethod
@@ -88,7 +88,7 @@ class StatisticsService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler bei Ticket-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler bei Ticket-Statistiken: {str(e)}")
             return {'total': 0, 'open': 0, 'in_progress': 0, 'closed': 0}
     
     @staticmethod
@@ -147,7 +147,7 @@ class StatisticsService:
             return overdue_loans
             
         except Exception as e:
-            logger.error(f"Fehler beim Berechnen überfälliger Ausleihen: [Interner Fehler]")
+            logger.error(f"Fehler beim Berechnen überfälliger Ausleihen: {str(e)}")
             return []
     
     @staticmethod
@@ -178,7 +178,7 @@ class StatisticsService:
             notices_list.sort(key=lambda x: (x.get('priority', 0), x.get('created_at', datetime.min)), reverse=True)
             return notices_list
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Hinweise: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Hinweise: {str(e)}")
             return []
     
     @staticmethod
@@ -189,5 +189,5 @@ class StatisticsService:
             logger.info(f"Invalidated {invalidated} dashboard cache entries")
             return invalidated
         except Exception as e:
-            logger.error(f"Error invalidating dashboard cache: [Interner Fehler]")
+            logger.error(f"Error invalidating dashboard cache: {str(e)}")
             return 0 

@@ -66,7 +66,7 @@ class TicketHistoryService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Protokollieren der Ticket-Änderung: [Interner Fehler]", exc_info=True)
+            logger.error(f"Fehler beim Protokollieren der Ticket-Änderung: {str(e)}", exc_info=True)
             return False
     
     def log_status_change(self, ticket_id: str, old_status: str, new_status: str, 
@@ -267,7 +267,7 @@ class TicketHistoryService:
             return formatted_history
             
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Ticket-Historie für {ticket_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Abrufen der Ticket-Historie für {ticket_id}: {str(e)}")
             return []
     
     def _format_value(self, value: Any) -> str:
@@ -322,7 +322,7 @@ class TicketHistoryService:
             return activity
             
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der Benutzer-Aktivitäten für {username}: [Interner Fehler]")
+            logger.error(f"Fehler beim Abrufen der Benutzer-Aktivitäten für {username}: {str(e)}")
             return []
 
 

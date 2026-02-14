@@ -30,7 +30,7 @@ class AdminNotificationService:
             return notifications
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Benachrichtigungen: {str(e)}")
             return []
 
     @staticmethod
@@ -69,8 +69,8 @@ class AdminNotificationService:
             return True, f"Benachrichtigung '{notification_data['title']}' erfolgreich erstellt", notification_id
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]", None
+            logger.error(f"Fehler beim Erstellen der Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Erstellen der Benachrichtigung: {str(e)}", None
 
     @staticmethod
     def mark_notification_as_read(notification_id: str) -> Tuple[bool, str]:
@@ -101,8 +101,8 @@ class AdminNotificationService:
             return True, f"Benachrichtigung als gelesen markiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Markieren der Benachrichtigung {notification_id}: [Interner Fehler]")
-            return False, f"Fehler beim Markieren der Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Markieren der Benachrichtigung {notification_id}: {str(e)}")
+            return False, f"Fehler beim Markieren der Benachrichtigung: {str(e)}"
 
     @staticmethod
     def delete_notification(notification_id: str) -> Tuple[bool, str]:
@@ -128,8 +128,8 @@ class AdminNotificationService:
             return True, f"Benachrichtigung '{notification.get('title', 'Unknown')}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Benachrichtigung {notification_id}: [Interner Fehler]")
-            return False, f"Fehler beim Löschen der Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen der Benachrichtigung {notification_id}: {str(e)}")
+            return False, f"Fehler beim Löschen der Benachrichtigung: {str(e)}"
 
     @staticmethod
     def get_unread_notifications() -> List[Dict[str, Any]]:
@@ -145,7 +145,7 @@ class AdminNotificationService:
             return notifications
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der ungelesenen Benachrichtigungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der ungelesenen Benachrichtigungen: {str(e)}")
             return []
 
     @staticmethod
@@ -162,7 +162,7 @@ class AdminNotificationService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungsanzahl: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Benachrichtigungsanzahl: {str(e)}")
             return {'total': 0, 'unread': 0, 'read': 0}
 
     @staticmethod
@@ -190,8 +190,8 @@ class AdminNotificationService:
             return success, message
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der System-Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen der System-Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Erstellen der System-Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Erstellen der System-Benachrichtigung: {str(e)}"
 
     @staticmethod
     def create_low_stock_notification(consumable_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -235,8 +235,8 @@ class AdminNotificationService:
             return success, msg
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Niedrigbestand-Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen der Niedrigbestand-Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Erstellen der Niedrigbestand-Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Erstellen der Niedrigbestand-Benachrichtigung: {str(e)}"
 
     @staticmethod
     def create_overdue_notification(lending_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -287,8 +287,8 @@ class AdminNotificationService:
             return success, msg
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Überfälligkeits-Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen der Überfälligkeits-Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Erstellen der Überfälligkeits-Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Erstellen der Überfälligkeits-Benachrichtigung: {str(e)}"
 
     @staticmethod
     def clear_old_notifications(days: int = 30) -> Tuple[bool, str, int]:
@@ -325,8 +325,8 @@ class AdminNotificationService:
             return True, f"{deleted_count} alte Benachrichtigungen erfolgreich gelöscht", deleted_count
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen alter Benachrichtigungen: [Interner Fehler]")
-            return False, f"Fehler beim Löschen alter Benachrichtigungen: [Interner Fehler]", 0
+            logger.error(f"Fehler beim Löschen alter Benachrichtigungen: {str(e)}")
+            return False, f"Fehler beim Löschen alter Benachrichtigungen: {str(e)}", 0
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
@@ -364,7 +364,7 @@ class AdminNotificationService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungs-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Benachrichtigungs-Statistiken: {str(e)}")
             return {
                 'total_count': 0,
                 'type_stats': {},
@@ -390,7 +390,7 @@ class AdminNotificationService:
             return notices
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Benachrichtigungen: {str(e)}")
             return []
 
     @staticmethod
@@ -423,8 +423,8 @@ class AdminNotificationService:
             return True, "Benachrichtigung erfolgreich erstellt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Erstellen der Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Erstellen der Benachrichtigung: {str(e)}"
 
     @staticmethod
     def update_notice(notice_id: str, title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: Optional[int] = None, is_active: Optional[bool] = None) -> Tuple[bool, str]:
@@ -465,8 +465,8 @@ class AdminNotificationService:
             return True, "Benachrichtigung erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Benachrichtigung: [Interner Fehler]")
-            return False, f"Fehler beim Aktualisieren der Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Aktualisieren der Benachrichtigung: {str(e)}")
+            return False, f"Fehler beim Aktualisieren der Benachrichtigung: {str(e)}"
 
     @staticmethod
     def get_notice_by_id(notice_id: str) -> Optional[Dict[str, Any]]:
@@ -486,7 +486,7 @@ class AdminNotificationService:
             return notice
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigung {notice_id}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Benachrichtigung {notice_id}: {str(e)}")
             return None
 
     @staticmethod
@@ -513,5 +513,5 @@ class AdminNotificationService:
             return True, f"Benachrichtigung '{notice.get('title', 'Unknown')}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Benachrichtigung {notice_id}: [Interner Fehler]")
-            return False, f"Fehler beim Löschen der Benachrichtigung: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen der Benachrichtigung {notice_id}: {str(e)}")
+            return False, f"Fehler beim Löschen der Benachrichtigung: {str(e)}"

@@ -44,7 +44,7 @@ def format_datetime(value):
             return value
         return parsed.strftime('%d.%m.%Y %H:%M:%S')
     except Exception as e:
-        logger.warning(f"Fehler bei Datumsformatierung: [Interner Fehler]")
+        logger.warning(f"Fehler bei Datumsformatierung: {str(e)}")
         return value
 
 def format_date(value):
@@ -57,7 +57,7 @@ def format_date(value):
             return value
         return parsed.strftime('%d.%m.%Y')
     except Exception as e:
-        logger.warning(f"Fehler bei Datumsformatierung: [Interner Fehler]")
+        logger.warning(f"Fehler bei Datumsformatierung: {str(e)}")
         return value
 
 def format_time(value):
@@ -70,7 +70,7 @@ def format_time(value):
             return value
         return parsed.strftime('%H:%M:%S')
     except Exception as e:
-        logger.warning(f"Fehler bei Zeitformatierung: [Interner Fehler]")
+        logger.warning(f"Fehler bei Zeitformatierung: {str(e)}")
         return value
 
 def to_datetime(value):

@@ -18,7 +18,7 @@ def get_feature_settings_safe():
         from app.models.mongodb_database import get_feature_settings
         return get_feature_settings()
     except Exception as e:
-        logger.warning(f"Fehler beim Laden der Feature-Einstellungen: [Interner Fehler]")
+        logger.warning(f"Fehler beim Laden der Feature-Einstellungen: {str(e)}")
         # Fallback zu Standard-Einstellungen
         return {
             'tool_field_serial_number': True,
@@ -46,7 +46,7 @@ def get_software_presets():
         software_list = list(mongodb.find('software', {}, sort=[('name', 1)]))
         return software_list
     except Exception as e:
-        logger.warning(f"Fehler beim Laden der Software-Presets: [Interner Fehler]")
+        logger.warning(f"Fehler beim Laden der Software-Presets: {str(e)}")
         return []
 
 def get_user_groups():
@@ -56,7 +56,7 @@ def get_user_groups():
         groups_list = list(mongodb.find('user_groups', {}, sort=[('name', 1)]))
         return groups_list
     except Exception as e:
-        logger.warning(f"Fehler beim Laden der Nutzergruppen: [Interner Fehler]")
+        logger.warning(f"Fehler beim Laden der Nutzergruppen: {str(e)}")
         return []
 
 @bp.route('/')
@@ -91,7 +91,7 @@ def index():
                              user_groups=user_groups,
                              feature_settings=feature_settings)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeuge: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Werkzeuge: {str(e)}")
         flash('Fehler beim Laden der Werkzeuge', 'error')
         return redirect(url_for('main.index'))
 
@@ -153,7 +153,7 @@ def add():
                                          user_groups=get_user_groups(),
                                          feature_settings=get_feature_settings_safe())
             except Exception as e:
-                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: [Interner Fehler]")
+                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
                 # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
                 tool_data['custom_fields'] = {}
             
@@ -186,7 +186,7 @@ def add():
                                      feature_settings=get_feature_settings_safe())
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Werkzeugs: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen des Werkzeugs: {str(e)}")
             flash('Fehler beim Erstellen des Werkzeugs', 'error')
             return render_template('tools/add.html', 
                                  form_data=tool_data,
@@ -210,7 +210,7 @@ def add():
                              user_groups=user_groups,
                              feature_settings=get_feature_settings_safe())
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Formulars: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden des Formulars: {str(e)}")
         flash('Fehler beim Laden des Formulars', 'error')
         return redirect(url_for('tools.index'))
 
@@ -248,7 +248,7 @@ def detail(barcode):
                              now=datetime.now)
                              
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeug-Details: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Werkzeug-Details: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Werkzeug-Details', 'error')
         return redirect(url_for('tools.index'))
 
@@ -294,7 +294,7 @@ def edit(barcode):
             else:
                 return jsonify({'success': False, 'message': f'Fehler bei benutzerdefinierten Feldern: {error_msg}'})
         except Exception as e:
-            logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: [Interner Fehler]")
+            logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
             # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
             tool_data['custom_fields'] = {}
         
@@ -322,7 +322,7 @@ def edit(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Bearbeiten des Werkzeugs: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Bearbeiten des Werkzeugs: {str(e)}", exc_info=True)
         return jsonify({
             'success': False, 
             'message': 'Fehler beim Bearbeiten des Werkzeugs'
@@ -346,7 +346,7 @@ def change_status(barcode):
             return jsonify({'success': False, 'message': message}), 400
         
     except Exception as e:
-        logger.error(f"Fehler beim Ändern des Status: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Ändern des Status: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'message': 'Fehler beim Ändern des Status'}), 500
 
 @bp.route('/<string:barcode>/delete', methods=['POST'])
@@ -370,7 +370,7 @@ def delete(barcode):
         return redirect(url_for('tools.index'))
         
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Werkzeugs: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}", exc_info=True)
         flash('Fehler beim Löschen des Werkzeugs', 'error')
         return redirect(url_for('tools.index'))
 
@@ -400,7 +400,7 @@ def search():
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler bei der Werkzeug-Suche: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler bei der Werkzeug-Suche: {str(e)}", exc_info=True)
         flash('Fehler bei der Suche', 'error')
         return redirect(url_for('tools.index'))
 
@@ -425,7 +425,7 @@ def by_category(category):
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeuge nach Kategorie: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Werkzeuge nach Kategorie: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Werkzeuge', 'error')
         return redirect(url_for('tools.index'))
 
@@ -450,7 +450,7 @@ def by_location(location):
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeuge nach Standort: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Werkzeuge nach Standort: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Werkzeuge', 'error')
         return redirect(url_for('tools.index'))
 
@@ -475,7 +475,7 @@ def by_status(status):
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeuge nach Status: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Werkzeuge nach Status: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Werkzeuge', 'error')
         return redirect(url_for('tools.index'))
 
@@ -495,7 +495,7 @@ def statistics():
                            is_admin=current_user.is_admin)
                            
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: {str(e)}", exc_info=True)
         flash('Fehler beim Laden der Statistiken', 'error')
         return redirect(url_for('tools.index'))
 
@@ -523,6 +523,6 @@ def export():
         return response
         
     except Exception as e:
-        logger.error(f"Fehler beim Export der Werkzeuge: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim Export der Werkzeuge: {str(e)}", exc_info=True)
         flash('Fehler beim Export', 'error')
         return redirect(url_for('tools.index'))

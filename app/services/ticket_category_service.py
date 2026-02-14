@@ -59,7 +59,7 @@ class TicketCategoryService:
             return sorted(category_names, key=str.casefold)
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Kategorien für {department}: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Ticket-Kategorien für {department}: {str(e)}")
             return []
 
 # Globale Instanz für einfache Verwendung

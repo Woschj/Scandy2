@@ -59,7 +59,7 @@ def dashboard():
                             dashboard_fixes_count += 1
 
                     except Exception as e:
-                        logger.warning(f"Fehler bei Tool-Reparatur: [Interner Fehler]")
+                        logger.warning(f"Fehler bei Tool-Reparatur: {str(e)}")
                         continue
 
                 # Stelle sicher, dass alle Workers gültige Felder haben
@@ -86,17 +86,17 @@ def dashboard():
                             dashboard_fixes_count += 1
 
                     except Exception as e:
-                        logger.warning(f"Fehler bei Worker-Reparatur: [Interner Fehler]")
+                        logger.warning(f"Fehler bei Worker-Reparatur: {str(e)}")
                         continue
 
                 if dashboard_fixes_count > 0:
                     logger.info(f"Dashboard-spezifische Reparatur: {dashboard_fixes_count} Korrekturen")
 
             except Exception as e:
-                logger.warning(f"Dashboard-spezifische Reparatur fehlgeschlagen: [Interner Fehler]")
+                logger.warning(f"Dashboard-spezifische Reparatur fehlgeschlagen: {str(e)}")
 
         except Exception as e:
-            logger.warning(f"Automatische Dashboard-Reparatur fehlgeschlagen: [Interner Fehler]")
+            logger.warning(f"Automatische Dashboard-Reparatur fehlgeschlagen: {str(e)}")
 
         # Verwende den AdminDashboardService für alle Dashboard-Daten
         recent_activity = AdminDashboardService.get_recent_activity()
@@ -344,14 +344,14 @@ def dashboard():
                             'days_lent': (datetime.now() - lent_at).days
                         })
                 except Exception as e:
-                    logger.warning(f"Fehler bei Verarbeitung einer Ausleihe: [Interner Fehler]")
+                    logger.warning(f"Fehler bei Verarbeitung einer Ausleihe: {str(e)}")
                     continue
 
             # Sortiere nach Ausleihdatum (älteste zuerst)
             processed_lendings.sort(key=lambda x: x.get('lent_at', datetime.now()))
 
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Dashboard-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Dashboard-Statistiken: {str(e)}")
             # Fallback-Werte
             tool_stats = {'total': 0, 'available': 0, 'lent': 0, 'defect': 0}
             consumable_stats = {'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0}
@@ -383,7 +383,7 @@ def dashboard():
                              notices=notices)
 
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Dashboards: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden des Dashboards: {str(e)}")
         flash('Fehler beim Laden des Dashboards', 'error')
         return render_template('admin/dashboard.html',
                              recent_activity=[],
@@ -429,7 +429,7 @@ def export_ticket(id):
             return redirect(url_for('admin.ticket_detail', ticket_id=id))
 
     except Exception as e:
-        logging.error(f"Fehler beim Generieren des Word-Dokuments: [Interner Fehler]", exc_info=True)
+        logging.error(f"Fehler beim Generieren des Word-Dokuments: {str(e)}", exc_info=True)
         flash('Fehler beim Generieren des Dokuments.', 'error')
         return redirect(url_for('admin.ticket_detail', ticket_id=id))
 
@@ -466,7 +466,7 @@ def export_all_data():
         )
 
     except Exception as e:
-        logger.error(f"Fehler beim Exportieren der Daten: [Interner Fehler]")
+        logger.error(f"Fehler beim Exportieren der Daten: {str(e)}")
         flash('Fehler beim Exportieren der Daten', 'error')
         return redirect(url_for('admin.system'))
 
@@ -495,6 +495,6 @@ def export_excel_detailed():
         )
 
     except Exception as e:
-        logger.error(f"Fehler beim detaillierten Excel-Export: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim detaillierten Excel-Export: {str(e)}", exc_info=True)
         flash('Fehler beim Generieren des detaillierten Excel-Exports', 'error')
         return redirect(url_for('admin.dashboard'))

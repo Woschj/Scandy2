@@ -58,8 +58,8 @@ class BackupService:
             return True, f"Backup erfolgreich erstellt: {backup_path.name}", str(backup_path)
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Backups: [Interner Fehler]")
-            return False, f"Fehler beim Erstellen des Backups: [Interner Fehler]", None
+            logger.error(f"Fehler beim Erstellen des Backups: {str(e)}")
+            return False, f"Fehler beim Erstellen des Backups: {str(e)}", None
     
     def _create_database_backup(self) -> Dict[str, Any]:
         """Erstellt ein Backup aller Datenbank-Collections"""
@@ -102,13 +102,13 @@ class BackupService:
                     logger.info(f"Collection {collection_name}: {len(backup_documents)} Dokumente gesichert")
                     
                 except Exception as e:
-                    logger.error(f"Fehler beim Sichern der Collection {collection_name}: [Interner Fehler]")
+                    logger.error(f"Fehler beim Sichern der Collection {collection_name}: {str(e)}")
                     backup_data['data'][collection_name] = []
             
             return backup_data
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Datenbank-Backups: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen des Datenbank-Backups: {str(e)}")
             raise
     
     def _create_backup_archive(self, json_path: Path, zip_path: Path) -> None:
@@ -154,7 +154,7 @@ class BackupService:
             json_path.unlink()
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Backup-Archivs: [Interner Fehler]")
+            logger.error(f"Fehler beim Erstellen des Backup-Archivs: {str(e)}")
             raise
     
     def restore_backup(self, backup_path: str) -> Tuple[bool, str]:
@@ -175,8 +175,8 @@ class BackupService:
                 return self._restore_from_json(backup_path)
                 
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen des Backups: [Interner Fehler]")
-            return False, f"Fehler beim Wiederherstellen: [Interner Fehler]"
+            logger.error(f"Fehler beim Wiederherstellen des Backups: {str(e)}")
+            return False, f"Fehler beim Wiederherstellen: {str(e)}"
     
     def _restore_from_archive(self, zip_path: str) -> Tuple[bool, str]:
         """Stellt ein Backup aus einem ZIP-Archiv wieder her"""
@@ -208,8 +208,8 @@ class BackupService:
                     os.unlink(tmp_path)
                     
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen aus Archiv: [Interner Fehler]")
-            return False, f"Fehler beim Wiederherstellen aus Archiv: [Interner Fehler]"
+            logger.error(f"Fehler beim Wiederherstellen aus Archiv: {str(e)}")
+            return False, f"Fehler beim Wiederherstellen aus Archiv: {str(e)}"
     
     def _restore_from_json(self, json_path: str) -> Tuple[bool, str]:
         """Stellt ein Backup aus einer JSON-Datei wieder her mit erweiterter Unterstützung für alte Formate"""
@@ -298,7 +298,7 @@ class BackupService:
                             logger.info(f"✅ Collection {collection_name}: {len(documents)} Dokumente wiederhergestellt")
                         
                     except Exception as e:
-                        logger.error(f"❌ Fehler beim Wiederherstellen der Collection {collection_name}: [Interner Fehler]")
+                        logger.error(f"❌ Fehler beim Wiederherstellen der Collection {collection_name}: {str(e)}")
                         restore_stats['failed_collections'] += 1
             
             success_message = f"Backup erfolgreich wiederhergestellt ({format_info['version_estimate']} Format)"
@@ -308,8 +308,8 @@ class BackupService:
             return True, success_message
             
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen aus JSON: [Interner Fehler]")
-            return False, f"Fehler beim Wiederherstellen: [Interner Fehler]"
+            logger.error(f"Fehler beim Wiederherstellen aus JSON: {str(e)}")
+            return False, f"Fehler beim Wiederherstellen: {str(e)}"
     
     def _restore_files_from_archive(self, zipf: zipfile.ZipFile) -> None:
         """Stellt Dateien aus einem ZIP-Archiv wieder her"""
@@ -334,7 +334,7 @@ class BackupService:
             logger.info("Dateien erfolgreich wiederhergestellt")
             
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen der Dateien: [Interner Fehler]")
+            logger.error(f"Fehler beim Wiederherstellen der Dateien: {str(e)}")
     
     def get_backup_list(self) -> List[Dict[str, Any]]:
         """
@@ -368,7 +368,7 @@ class BackupService:
             return backups
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Liste: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Backup-Liste: {str(e)}")
             return []
     
     def _get_backup_info(self, file_path: Path) -> Optional[Dict[str, Any]]:
@@ -393,13 +393,13 @@ class BackupService:
                             backup_info['version'] = data['metadata'].get('version', '1.0')
                             backup_info['collections'] = data['metadata'].get('collections', [])
                 except Exception as e:
-                    logger.warning(f"Fehler beim Extrahieren der JSON-Metadaten: [Interner Fehler]")
+                    logger.warning(f"Fehler beim Extrahieren der JSON-Metadaten: {str(e)}")
                     pass
             
             return backup_info
             
         except Exception as e:
-            logger.error(f"Fehler beim Extrahieren der Backup-Informationen: [Interner Fehler]")
+            logger.error(f"Fehler beim Extrahieren der Backup-Informationen: {str(e)}")
             return None
     
     def delete_backup(self, backup_path: str) -> Tuple[bool, str]:
@@ -422,5 +422,5 @@ class BackupService:
             return True, "Backup erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Backups: [Interner Fehler]")
-            return False, f"Fehler beim Löschen: [Interner Fehler]"
+            logger.error(f"Fehler beim Löschen des Backups: {str(e)}")
+            return False, f"Fehler beim Löschen: {str(e)}"

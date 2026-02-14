@@ -103,7 +103,7 @@ def create_backup():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Erstellen des Backups: [Interner Fehler]'
+            'message': f'Fehler beim Erstellen des Backups: {str(e)}'
         }), 500
 
 @bp.route('/list', methods=['GET'])
@@ -122,7 +122,7 @@ def list_backups():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Auflisten der Backups: [Interner Fehler]'
+            'message': f'Fehler beim Auflisten der Backups: {str(e)}'
         }), 500
 
 @bp.route('/restore', methods=['POST'])
@@ -163,7 +163,7 @@ def restore_backup():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Wiederherstellen des Backups: [Interner Fehler]'
+            'message': f'Fehler beim Wiederherstellen des Backups: {str(e)}'
         }), 500
 
 @bp.route('/download/<filename>', methods=['GET'])
@@ -200,7 +200,7 @@ def download_backup(filename):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Herunterladen des Backups: [Interner Fehler]'
+            'message': f'Fehler beim Herunterladen des Backups: {str(e)}'
         }), 500
 
 @bp.route('/upload', methods=['POST'])
@@ -256,7 +256,7 @@ def upload_backup():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Hochladen des Backups: [Interner Fehler]'
+            'message': f'Fehler beim Hochladen des Backups: {str(e)}'
         }), 500
 
 @bp.route('/import-json', methods=['POST'])
@@ -308,7 +308,7 @@ def import_json_backup():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Importieren des JSON-Backups: [Interner Fehler]'
+            'message': f'Fehler beim Importieren des JSON-Backups: {str(e)}'
         }), 500
 
 @bp.route('/delete/<filename>', methods=['DELETE'])
@@ -335,7 +335,7 @@ def delete_backup(filename):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen des Backups: [Interner Fehler]'
+            'message': f'Fehler beim Löschen des Backups: {str(e)}'
         }), 500
 
 @bp.route('/test/<filename>', methods=['GET'])
@@ -383,7 +383,7 @@ def test_backup(filename):
         return jsonify({
             'success': False,
             'valid': False,
-            'message': f'Backup ist beschädigt: [Interner Fehler]'
+            'message': f'Backup ist beschädigt: {str(e)}'
         }), 500
 
 @bp.route('/info', methods=['GET'])
@@ -429,5 +429,5 @@ def backup_info():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Abrufen der Backup-Informationen: [Interner Fehler]'
+            'message': f'Fehler beim Abrufen der Backup-Informationen: {str(e)}'
         }), 500 

@@ -148,7 +148,7 @@ class Job:
             
         except Exception as e:
             from app.utils.logger import loggers
-            loggers['errors'].error(f"Fehler in Job.find_by_id: [Interner Fehler]")
+            loggers['errors'].error(f"Fehler in Job.find_by_id: {str(e)}")
             return None
     
     @staticmethod
@@ -208,7 +208,7 @@ class Job:
             
         except Exception as e:
             # Bei MongoDB-Fehlern: Fallback auf leere Liste
-            print(f"Fehler beim Abrufen der Jobs: [Interner Fehler]")
+            print(f"Fehler beim Abrufen der Jobs: {str(e)}")
             return {
                 'jobs': [],
                 'total_count': 0,

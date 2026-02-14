@@ -63,7 +63,7 @@ def manage_users():
             departments=departments
         )
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Benutzer: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Benutzer: {str(e)}")
         flash('Fehler beim Laden der Benutzer', 'error')
         from app.services.admin_system_settings_service import AdminSystemSettingsService
         departments = AdminSystemSettingsService.get_departments_from_settings()
@@ -175,7 +175,7 @@ def add_user():
                     else:
                         flash(f'{message} E-Mail konnte nicht versendet werden.', 'warning')
                 except Exception as e:
-                    logger.error(f"Fehler beim Versenden der E-Mail: [Interner Fehler]")
+                    logger.error(f"Fehler beim Versenden der E-Mail: {str(e)}")
                     flash(f'{message} E-Mail konnte nicht versendet werden.', 'warning')
             else:
                 flash(f'{message} Das Passwort wurde generiert. Bitte notieren Sie es sicher oder verwenden Sie die E-Mail-Funktion für zukünftige Benutzer.', 'success')
@@ -341,7 +341,7 @@ def edit_user(user_id):
                                  user_handlungsfelder=user_handlungsfelder)
 
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Benutzers: [Interner Fehler]")
+        logger.error(f"Fehler beim Aktualisieren des Benutzers: {str(e)}")
         flash('Fehler beim Aktualisieren des Benutzers', 'error')
         # Hole alle verfügbaren Handlungsfelder für die aktuelle Abteilung
         from app.services.handlungsfeld_service import handlungsfeld_service
@@ -470,7 +470,7 @@ def debug_user_management():
                 test_results.append({
                     'method': 'Direkte String-Suche',
                     'success': False,
-                    'result': f'Fehler: [Interner Fehler]'
+                    'result': f'Fehler: {str(e)}'
                 })
 
             # Test 2: ObjectId-Suche
@@ -487,7 +487,7 @@ def debug_user_management():
                 test_results.append({
                     'method': 'ObjectId-Suche',
                     'success': False,
-                    'result': f'Fehler: [Interner Fehler]'
+                    'result': f'Fehler: {str(e)}'
                 })
 
             # Test 3: find_user_by_id
@@ -502,7 +502,7 @@ def debug_user_management():
                 test_results.append({
                     'method': 'find_user_by_id',
                     'success': False,
-                    'result': f'Fehler: [Interner Fehler]'
+                    'result': f'Fehler: {str(e)}'
                 })
 
             # Test 4: MongoDBUser.get_by_id
@@ -517,7 +517,7 @@ def debug_user_management():
                 test_results.append({
                     'method': 'MongoDBUser.get_by_id',
                     'success': False,
-                    'result': f'Fehler: [Interner Fehler]'
+                    'result': f'Fehler: {str(e)}'
                 })
 
         return jsonify({
@@ -545,7 +545,7 @@ def debug_test_user_id(user_id):
         return jsonify(test_results)
 
     except Exception as e:
-        logger.error(f"Fehler beim Testen der User-ID {user_id}: [Interner Fehler]")
+        logger.error(f"Fehler beim Testen der User-ID {user_id}: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Ein interner Fehler ist aufgetreten.'
@@ -562,7 +562,7 @@ def delete_user_permanent_api(user_id):
             return jsonify({'success': True, 'message': message})
         return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler beim endgültigen Löschen des Benutzers: [Interner Fehler]", exc_info=True)
+        logger.error(f"Fehler beim endgültigen Löschen des Benutzers: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'message': 'Interner Serverfehler'}), 500
 
 @bp.route('/delete_user/<user_id>', methods=['POST'])
@@ -597,7 +597,7 @@ def delete_user(user_id):
         return redirect(url_for('admin.manage_users'))
 
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Benutzers: [Interner Fehler]")
+        logger.error(f"Fehler beim Löschen des Benutzers: {str(e)}")
         flash('Fehler beim Löschen des Benutzers', 'error')
         return redirect(url_for('admin.manage_users'))
 

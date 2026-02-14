@@ -73,7 +73,7 @@ def reset_password():
             else:
                 flash('Der Reset-Link konnte nicht per E-Mail versendet werden. Bitte kontaktieren Sie den Administrator.', 'error')
         except Exception as e:
-            logger.error(f"Fehler beim E-Mail-Versand: [Interner Fehler]")
+            logger.error(f"Fehler beim E-Mail-Versand: {str(e)}")
             flash('Ein technischer Fehler ist aufgetreten. Bitte kontaktieren Sie den Administrator.', 'error')
 
         return render_template('auth/reset_password.html')
@@ -123,7 +123,7 @@ def reset_password_confirm(token):
             flash('Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich nun anmelden.', 'success')
             return redirect(url_for('auth.login'))
         except Exception as e:
-            logger.error(f"Fehler beim Zurücksetzen des Passworts: [Interner Fehler]")
+            logger.error(f"Fehler beim Zurücksetzen des Passworts: {str(e)}")
             flash('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.', 'error')
 
     return render_template('auth/reset_password_confirm.html', token=token)
@@ -223,7 +223,7 @@ def profile():
             flash('Profil erfolgreich aktualisiert.', 'success')
             return redirect(url_for('auth.profile'))
         except Exception as e:
-            logger.error(f"Fehler beim Profil-Update: [Interner Fehler]")
+            logger.error(f"Fehler beim Profil-Update: {str(e)}")
             flash('Ein Fehler ist aufgetreten.', 'error')
 
     return render_template('auth/profile.html', user=user_data)

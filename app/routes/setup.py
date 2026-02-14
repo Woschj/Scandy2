@@ -82,7 +82,7 @@ def settings():
             return redirect(url_for('setup.setup_optional'))
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der Einstellungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Speichern der Einstellungen: {str(e)}")
             flash('Fehler beim Speichern der Einstellungen', 'error')
             return redirect(url_for('setup.settings'))
     
@@ -102,7 +102,7 @@ def settings():
             label_tickets_icon=settings.get('label_tickets_icon', 'fas fa-ticket-alt'))
             
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Einstellungen: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der Einstellungen: {str(e)}")
         flash('Fehler beim Laden der Einstellungen', 'error')
         return redirect(url_for('main.index'))
 
@@ -148,7 +148,7 @@ def setup_optional():
             return redirect(url_for('auth.login'))
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der optionalen Einstellungen: [Interner Fehler]")
+            logger.error(f"Fehler beim Speichern der optionalen Einstellungen: {str(e)}")
             return render_template('setup_optional.html', error='Fehler beim Speichern der Einstellungen')
     
     # GET: Lade vorhandene Einstellungen für die Anzeige
@@ -186,7 +186,7 @@ def setup_optional():
                              departments=current_departments)
                              
     except Exception as e:
-        logger.error(f"Fehler beim Laden der optionalen Einstellungen: [Interner Fehler]")
+        logger.error(f"Fehler beim Laden der optionalen Einstellungen: {str(e)}")
         return render_template('setup_optional.html', error='Fehler beim Laden der Einstellungen')
 
 def is_admin_user_present():
@@ -206,5 +206,5 @@ def create_admin_user(username, password, role):
         mongodb.insert_one('users', user_data)
         return True, "Admin-Benutzer erfolgreich erstellt"
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen des Admin-Benutzers: [Interner Fehler]")
-        return False, f"Fehler beim Erstellen des Admin-Benutzers: [Interner Fehler]"
+        logger.error(f"Fehler beim Erstellen des Admin-Benutzers: {str(e)}")
+        return False, f"Fehler beim Erstellen des Admin-Benutzers: {str(e)}"

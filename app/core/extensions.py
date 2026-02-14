@@ -69,7 +69,7 @@ def init_email_system(app):
         init_mail(app)
         app.logger.info("Email system initialized")
     except Exception as e:
-        app.logger.warning(f"Email system could not be initialized: [Interner Fehler]")
+        app.logger.warning(f"Email system could not be initialized: {str(e)}")
 
 
 def init_session(app):
@@ -94,7 +94,7 @@ def init_session(app):
             os.chown(session_dir, root_uid, root_gid)
             app.logger.info(f"Session directory permissions and owner set: {session_dir}")
         except Exception as e:
-            app.logger.warning(f"Could not set session directory permissions: [Interner Fehler]")
+            app.logger.warning(f"Could not set session directory permissions: {str(e)}")
 
     Session(app)
     logger.info("Session management initialized")
@@ -170,7 +170,7 @@ def init_context_processors(app):
             feature_settings = get_feature_settings()
             return {'feature_settings': feature_settings}
         except Exception as e:
-            app.logger.warning(f"Error loading feature settings: [Interner Fehler]")
+            app.logger.warning(f"Error loading feature settings: {str(e)}")
             return {'feature_settings': {}}
 
     # Permissions context processor

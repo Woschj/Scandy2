@@ -50,8 +50,8 @@ def process_lending():
         })
 
     except Exception as e:
-        logger.error(f"Error in process_lending: [Interner Fehler]", exc_info=True)
+        logger.error(f"Error in process_lending: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Ausleihe: [Interner Fehler]'
+            'message': f'Fehler bei der Ausleihe: {str(e)}'
         }), 500
