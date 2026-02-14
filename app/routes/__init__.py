@@ -6,7 +6,7 @@ from app.routes.admin import bp as admin_bp
 from app.routes.main import bp as main_bp
 from app.routes.dashboard import bp as dashboard_bp
 from app.routes.setup import bp as setup_bp
-from app.core.plugins import plugin_manager
+from app.core.plugins import plugin_manager, MenuItem
 
 # Import plugins to register them
 import app.plugins.tools
@@ -32,6 +32,10 @@ def init_app(app):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(setup_bp)
+
+    # Register Core Menu Items
+    plugin_manager.register_menu_item(MenuItem('Dashboard', 'dashboard.index', 'fas fa-tachometer-alt', order=10, group='Übersicht'))
+    plugin_manager.register_menu_item(MenuItem('Über Scandy', 'main.about', 'fas fa-question-circle', order=100, group='Allgemein'))
 
     # Register Plugins
     plugin_manager.init_app(app)

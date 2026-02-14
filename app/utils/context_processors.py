@@ -260,8 +260,14 @@ def inject_custom_fields():
             'custom_fields_consumables': []
         }
 
+def inject_plugin_manager():
+    """Injiziert den PluginManager in alle Templates"""
+    from app.core.plugins import plugin_manager
+    return {'plugin_manager': plugin_manager}
+
 def register_context_processors(app):
     """Registriert alle Context Processors"""
+    app.context_processor(inject_plugin_manager)
     app.context_processor(inject_colors)
     app.context_processor(inject_routes)
     app.context_processor(inject_version)

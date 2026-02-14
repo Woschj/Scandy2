@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# CSRF deaktiviert - Token nicht verfügbar #}
     <meta name="csrf-token" content="">
     <title>{% block title %}Scandy{% endblock %}</title>
     <meta name="current-department" content="{{ (departments_ctx.current or departments.current) or '' }}">
@@ -17,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- DaisyUI (vereinheitlicht auf v4) -->
+    <!-- DaisyUI (v4) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.css" rel="stylesheet" type="text/css" />
     
     <!-- Font Awesome -->
@@ -26,7 +25,7 @@
     <!-- Chart.js -->
     <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     
-    <!-- Eigene Styles nach den Framework Styles -->
+    <!-- Eigene Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quickscan.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-fixes.css') }}">
@@ -37,541 +36,404 @@
 
     <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- CSRF deaktiviert - AJAX-Requests ohne CSRF-Validierung -->
-    <script nonce="{{ csp_nonce }}">
-        // CSRF ist deaktiviert - alle AJAX-Requests werden ohne CSRF-Validierung gesendet
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('CSRF-Schutz ist deaktiviert - AJAX-Requests werden ohne CSRF-Validierung gesendet');
-        });
-    </script>
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: oklch(var(--b2)) !important;
+            color: oklch(var(--bc)) !important;
         }
 
-        /* BTZ-Köln Farbschema */
-        :root {
-            --btz-primary: #0066cc;
-            --btz-primary-light: #338fff;
-            --btz-primary-dark: #004d99;
-            --btz-secondary: #f8f9fa;
-            --btz-accent: #e3f2fd;
-            --btz-text: #212529;
-            --btz-text-light: #6c757d;
+        .main-content-with-sidebar, .content-area {
+            background-color: transparent !important;
         }
 
-        /* DaisyUI Theme Override für BTZ-Design - HELLE, LESBARE VERSION */
+        /* Scandy Modern Theme - Softer colors for better accessibility */
         [data-theme="scandy"] {
-            /* Primary colors - BTZ Blau */
-            --p: #0066cc;
-            --pf: #ffffff;
-            --pc: #ffffff;
+            /* Primary colors - Refined Blue */
+            --p: 0.55 0.18 255;
+            --pc: 0.98 0.01 255;
 
-            /* Secondary colors - Hell und kontrastreich */
-            --s: #f8f9fa;
-            --sf: #212529;
-            --sc: #212529;
+            /* Secondary - Slate Gray */
+            --s: 0.45 0.05 255;
+            --sc: 0.98 0.01 255;
 
-            /* Accent colors - Sehr hell */
-            --a: #e3f2fd;
-            --af: #0066cc;
-            --ac: #0066cc;
+            /* Accent - Warm Orange */
+            --a: 0.7 0.18 45;
+            --ac: 0.98 0.01 45;
 
             /* Success, Warning, Error, Info */
-            --su: #28a745;
-            --suc: #ffffff;
-            --wa: #ffc107;
-            --wac: #212529;
-            --er: #dc3545;
-            --erc: #ffffff;
-            --in: #17a2b8;
-            --inc: #ffffff;
+            --su: 0.65 0.2 150;
+            --suc: 0.98 0.01 150;
+            --wa: 0.85 0.15 85;
+            --wac: 0.2 0.05 85;
+            --er: 0.6 0.18 25;
+            --erc: 0.98 0.01 25;
+            --in: 0.7 0.15 210;
+            --inc: 0.98 0.01 210;
 
-            /* Neutral/Base colors - Sehr helle Hintergründe */
-            --b1: #ffffff;  /* Reines Weiß für beste Lesbarkeit */
-            --b2: #f8f9fa;  /* Sehr heller Grau */
-            --b3: #e9ecef;  /* Noch hellerer Grau */
-            --bc: #212529;  /* Dunkler Text für Kontrast */
-            --n: #6c757d;   /* Mittlerer Text */
-            --nc: #212529;  /* Dunkler Text */
+            /* Neutral/Base - Softer Grays */
+            --b1: 0.99 0.005 255;  /* Soft White */
+            --b2: 0.97 0.01 255;   /* Very Light Gray */
+            --b3: 0.94 0.015 255;  /* Light Gray */
+            --bc: 0.25 0.02 255;   /* Deep Gray Text */
+            --n: 0.35 0.03 255;
+            --nc: 0.95 0.01 255;
 
             /* Rounded corners */
-            --rounded-box: 0.5rem;
-            --rounded-btn: 0.375rem;
-            --rounded-badge: 0.25rem;
+            --rounded-box: 1rem;
+            --rounded-btn: 0.6rem;
+            --rounded-badge: 1rem;
 
             /* Animation/Transition */
-            --animation-btn: 0.2s;
+            --animation-btn: 0.25s;
             --animation-input: 0.2s;
         }
-        
-        .nav-text {
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
 
-        /* Optimierte Layout-Styles */
-        .main-content-with-sidebar {
-            margin-left: 226px;
-            min-height: calc(100vh - 4rem);
-            padding: 1rem;
-        }
-
-        .navbar-with-sidebar {
-            margin-left: 226px;
-            height: 4rem;
-            min-height: 4rem;
-        }
-
-        /* Kompakte Cards */
-        .card-compact {
-            margin-bottom: 1rem;
-        }
-
-        .card-compact .card-body {
-            padding: 1rem;
-        }
-
-        /* Bessere Abstände */
-        .content-section {
-            margin-bottom: 1.5rem;
-        }
-
-        /* Optimierte Tabellen */
-        .table-container {
-            overflow-x: auto;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-        }
-
-        /* Kompakte Formulare */
-        .form-compact .form-control {
-            margin-bottom: 0.75rem;
-        }
-
-        /* Bessere Grid-Layouts */
-        .grid-responsive {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-
-        /* Optimierte Sidebar */
+        /* Layout Container */
         .sidebar-permanent {
-            width: 226px;
-            background: #ffffff;
-            border-right: 2px solid #e5e7eb;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            width: 260px;
+            background-color: oklch(var(--b1));
+            border-right: 1px solid oklch(var(--b3));
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+            transition: transform 0.3s ease;
         }
 
-        /* Kompakte Navigation */
+        .main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-top {
+            height: 4.5rem;
+            background-color: oklch(var(--b1) / 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid oklch(var(--b3));
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            padding: 0 1.5rem;
+        }
+
+        .content-area {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        /* Sidebar Nav Styling */
         .sidebar-nav-item {
-            height: 3rem;
-            margin-bottom: 0.25rem;
-            border-radius: 0.5rem;
-            margin-right: 0.5rem;
+            display: flex;
+            align-items: center;
+            height: 2.75rem;
+            padding: 0 1rem;
+            margin: 0.125rem 0.5rem;
+            border-radius: 0.75rem;
+            color: oklch(var(--bc) / 0.7);
+            font-weight: 500;
             transition: all 0.2s ease;
         }
 
         .sidebar-nav-item:hover {
-            background-color: #f3f4f6;
-            transform: translateX(4px);
+            background-color: oklch(var(--b2));
+            color: oklch(var(--p));
         }
 
         .sidebar-nav-item.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            background-color: oklch(var(--p) / 0.1);
+            color: oklch(var(--p));
+            font-weight: 600;
         }
 
-        /* QuickScan Button Styling */
-        #quickScanTrigger {
-            background: #ffffff;
+        .sidebar-nav-item.active i {
+            color: oklch(var(--p));
         }
 
-        #quickScanTrigger:hover {
-            background: #f9fafb;
+        /* Animations */
+        @keyframes scan-slow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(200%); }
+        }
+        .animate-scan-slow {
+            animation: scan-slow 2.5s infinite;
         }
 
-        /* Trennlinie */
-        .sidebar-divider {
-            width: 80%;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-            margin: 1rem auto;
-        }
-
-        /* Bessere Responsive */
-        @media (max-width: 768px) {
-            .main-content-with-sidebar {
-                margin-left: 0;
-                padding: 0.5rem;
-            }
-            
-            .navbar-with-sidebar {
-                margin-left: 0;
-            }
-            
+        /* Responsive */
+        @media (max-width: 1024px) {
             .sidebar-permanent {
                 transform: translateX(-100%);
             }
+            .sidebar-permanent.open {
+                transform: translateX(0);
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+
+        /* Custom Scrollbar for Sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: oklch(var(--b3));
+            border-radius: 10px;
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-base-200">
-    <div class="flex flex-col min-h-screen">
-        <!-- Vertikales Seitenmenü -->
-        <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
-            <!-- QuickScan-Trigger -->
-            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
-                <div class="w-full h-20 rounded-tl-xl overflow-hidden transition-all duration-300 flex items-center justify-center group
-                    {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}">
-                    <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-90">
-                    <span class="ml-4 text-base font-semibold text-gray-700 group-hover:text-primary transition-colors duration-300">Scan</span>
-                    <!-- Scanner Animation -->
-                    <div class="absolute w-full h-0.5 bg-primary/50 -top-1 left-0 animate-scanner after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-primary/30"></div>
+<body class="min-h-screen">
+    <!-- Sidebar -->
+    <aside class="sidebar-permanent" id="sidebar">
+        <!-- Logo & QuickScan Area -->
+        <div class="p-6">
+            <div id="quickScanTrigger"
+                 data-role="{{ current_user.role }}"
+                 class="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20 flex items-center justify-center gap-3 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 group overflow-hidden relative
+                        {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 pointer-events-none grayscale{% endif %}"
+                 title="Quick Scan">
+
+                <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-qrcode text-white text-lg"></i>
                 </div>
-            </div>
-            
-            <!-- Trennlinie -->
-            <div class="sidebar-divider"></div>
-            
-            <!-- Navigation Items -->
-            {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
-            <!-- Werkzeuge - nur für Nicht-Teilnehmer -->
-            <a href="{{ url_for('tools.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tools' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="{{ app_labels['tools']['icon'] }} text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">{{ app_labels['tools']['name'] }}</span>
-            </a>
-            <!-- Verbrauchsgüter - nur für Nicht-Teilnehmer -->
-            <a href="{{ url_for('consumables.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'consumables' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="{{ app_labels['consumables']['icon'] }} text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">{{ app_labels['consumables']['name'] }}</span>
-            </a>
-            {% endif %}
-            
-            {# Mitarbeiter-Link: für alle außer Teilnehmer (Benutzer dürfen ihn sehen) #}
-            {% if current_user.is_authenticated and current_user.role != 'teilnehmer' %}
-            <a href="{{ url_for('workers.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'workers.index' %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="fas fa-users text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Mitarbeiter</span>
-            </a>
-            {% endif %}
-            
-            {# Ticketsystem für alle eingeloggten Benutzer - nur wenn Feature aktiviert #}
-            {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
-            <a href="{{ url_for('tickets.create') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'tickets.create' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
-                     <i class="{{ app_labels.tickets.icon }} text-xl"></i>
-                     {% if unread_tickets_count and unread_tickets_count > 0 %}
-                     <span class="badge badge-error badge-sm absolute top-0 right-0" style="transform: translate(50%,-50%);">{{ unread_tickets_count }}</span>
-                     {% endif %}
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">{{ app_labels.tickets.name }}</span>
-            </a>
-            {% endif %}
+                <span class="text-white font-bold text-sm tracking-wide">QUICK SCAN</span>
 
-            {# Wochenplan-Link für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
-            {% if current_user.is_authenticated and current_user.timesheet_enabled and features_enabled.get('weekly_reports', False) %}
-            <a href="{{ url_for('workers.timesheet_list') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('workers.timesheet') %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0 relative">
-                     <i class="fas fa-clock text-xl"></i>
-                     {% if unfilled_timesheet_days is defined and unfilled_timesheet_days > 0 %}
-                     <span class="badge badge-error badge-sm absolute top-0 right-0" style="transform: translate(50%,-50%);">{{ unfilled_timesheet_days }}</span>
-                     {% endif %}
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Wochenberichte</span>
-            </a>
-            {% endif %}
-            
-            {# Auftragserstellung - für alle Benutzer - nur wenn Ticketsystem aktiviert #}
-            {% if current_user.is_authenticated and features_enabled.get('ticket_system', True) %}
-            <a href="{{ url_for('tickets.public_create_order') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'tickets.public_create_order' %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="fas fa-file-alt text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Auftragserstellung</span>
-            </a>
-            {% endif %}
-            
-            {# Jobbörse - global sichtbar #}
-            <a href="{{ url_for('jobs.job_list') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'jobs' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-              <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                  <i class="fas fa-briefcase text-xl"></i>
-              </div>
-              <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Jobbörse</span>
-            </a>
-
-            {# Kantinenplan - nur für berechtigte Benutzer wenn Feature aktiviert #}
-            {% if current_user.is_authenticated and features_enabled.get('canteen_plan', False) and current_user.canteen_plan_enabled %}
-            <a href="{{ url_for('canteen.index') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and 'canteen' in request.endpoint %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="fas fa-utensils text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Kantinenplan</span>
-            </a>
-            {% endif %}
-
-            <!-- Über Scandy (öffentlich) -->
-            <a href="{{ url_for('main.about') }}" 
-               class="flex items-center h-12 pl-2 mb-1 rounded-r-lg transition-all duration-300 sidebar-nav-item {% if request.endpoint and request.endpoint == 'main.about' %}active{% else %}text-gray-700{% endif %}">
-                 <div class="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                     <i class="fas fa-question-circle text-xl"></i>
-                 </div>
-                 <span class="nav-text ml-2 opacity-100 transition-opacity duration-300 whitespace-nowrap sidebar-text">Über Scandy</span>
-            </a>
-
-            <!-- Versionsnummer am unteren Rand -->
-            <div class="mt-auto text-xs text-gray-500 flex flex-col items-center pb-4">
-                <div class="version-display">
-                    <!-- Lokale Version -->
-                    <span class="version-local">{{ version_info.local_version }}</span>
-                    
-                    <!-- GitHub Version (falls verfügbar) -->
-                    {% if version_info.github_version %}
-                        <span class="version-github {% if version_info.is_up_to_date %}text-success{% elif version_info.update_available %}text-warning{% else %}text-gray-400{% endif %}">
-                            GitHub: {{ version_info.github_version }}
-                        </span>
-                    {% endif %}
-                    
-                    <!-- Status-Indikator -->
-                    {% if version_info.github_version %}
-                        {% if version_info.is_up_to_date %}
-                            <span class="version-status up-to-date">✓ Aktuell</span>
-                        {% elif version_info.update_available %}
-                            <span class="version-status update-available">⚠ Update</span>
-                        {% else %}
-                            <span class="version-status unknown">? Unbekannt</span>
-                        {% endif %}
-                    {% else %}
-                        <span class="version-status error">? Verbindung fehlgeschlagen</span>
-                    {% endif %}
-                </div>
-                
-                <span class="opacity-100 transition-opacity duration-300 whitespace-nowrap mt-2">
-                    {{ ''|author }}
-                </span>
-                <span class="opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                    MIT License
-                </span>
+                <!-- Scanner Line Effect -->
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent h-1/2 w-full -translate-y-full group-hover:animate-scan-slow opacity-0 group-hover:opacity-100 pointer-events-none"></div>
             </div>
         </div>
 
-        <!-- Horizontale Navbar -->
-        <div class="navbar bg-base-100 px-4 relative z-[100] w-full min-h-[4rem] flex items-center ml-[226px] navbar-with-sidebar">
-            <!-- Linker Bereich -->
-            <div class="flex-1 flex items-center min-w-0">
-                <div class="w-24 flex-shrink-0"></div>
-                <h1 class="text-xl font-bold truncate">
+        <!-- Navigation Items Dynamic -->
+        <div class="flex-1 overflow-y-auto sidebar-scroll pb-6">
+            {% for group, items in plugin_manager.get_grouped_menu_items() %}
+                {# Visible check #}
+                {% set ns = namespace(group_visible=false) %}
+                {% for item in items %}
+                    {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
+                          (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
+                                {% set ns.group_visible = true %}
+                            {% endif %}
+                        {% else %}
+                             {# Handle guest visibility if needed, e.g., jobs or about #}
+                             {% if group == 'Allgemein' %}{% set ns.group_visible = true %}{% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if ns.group_visible %}
+                    <div class="px-6 mt-6 mb-2 text-[10px] uppercase tracking-[0.1em] font-bold text-gray-400">
+                        {{ group }}
+                    </div>
+                    {% for item in items %}
+                        {% set item_visible = false %}
+                        {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
+                              (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
+                            {% if current_user.is_authenticated %}
+                                {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
+                                    {% set item_visible = true %}
+                                {% endif %}
+                            {% elif group == 'Allgemein' %}
+                                {% set item_visible = true %}
+                            {% endif %}
+                        {% endif %}
+
+                        {% if item_visible %}
+                            <a href="{{ url_for(item.endpoint) }}"
+                               class="sidebar-nav-item {% if request.endpoint and item.endpoint in request.endpoint %}active{% endif %}">
+                                 <div class="w-8 flex items-center justify-center">
+                                     <i class="{% if item.label_is_key %}{{ app_labels[item.label]['icon'] }}{% else %}{{ item.icon }}{% endif %} text-lg"></i>
+                                 </div>
+                                 <span class="ml-3 text-sm truncate">
+                                     {% if item.label_is_key %}{{ app_labels[item.label]['name'] }}{% else %}{{ item.label }}{% endif %}
+                                 </span>
+
+                                 {# Badges #}
+                                 {% if item.badge_count_key %}
+                                    {% set count = 0 %}
+                                    {% if item.badge_count_key == 'unread_tickets_count' %}{% set count = unread_tickets_count %}{% endif %}
+                                    {% if item.badge_count_key == 'unfilled_timesheet_days' %}{% set count = unfilled_timesheet_days %}{% endif %}
+                                    {% if count and count > 0 %}
+                                        <span class="ml-auto badge badge-error badge-sm">{{ count }}</span>
+                                    {% endif %}
+                                 {% endif %}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-base-300">
+            <div class="flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
+                <div class="text-[10px] font-medium flex gap-2">
+                    <span class="text-primary font-bold">Scandy</span>
+                    <span>v{{ version_info.local_version }}</span>
+                </div>
+                <div class="text-[9px] uppercase tracking-tighter">MIT License</div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <!-- Top Navbar -->
+        <header class="navbar-top flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <!-- Mobile Menu Toggle -->
+                <button class="btn btn-ghost btn-circle lg:hidden" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <h1 class="text-lg font-bold text-base-content hidden sm:block">
                     {% if request.endpoint and 'tools' in request.endpoint %}{{ app_labels.tools.name }}
                     {% elif request.endpoint and 'workers' in request.endpoint %}Mitarbeiter
                     {% elif request.endpoint and 'consumables' in request.endpoint %}{{ app_labels.consumables.name }}
                     {% elif request.endpoint and 'tickets' in request.endpoint %}{{ app_labels.tickets.name }}
-                    {% elif request.endpoint and request.endpoint == 'main.about' %}Über Scandy
-                    {% else %}Dashboard{% endif %}
+                    {% elif request.endpoint == 'dashboard.index' %}Dashboard
+                    {% elif request.endpoint == 'main.about' %}Über Scandy
+                    {% else %}Übersicht{% endif %}
                 </h1>
             </div>
 
-            <!-- Mittlerer Bereich: Logo -->
-            <div class="flex-1 flex justify-center items-center min-w-0">
-                <a href="{{ url_for('main.index') }}" 
-                   class="hover:opacity-80 transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-base-200"
-                   title="Zurück zur Startseite">
-                    <i class="fas fa-home text-xl text-primary"></i>
+            <!-- Center Logo -->
+            <div class="absolute left-1/2 -translate-x-1/2 flex items-center">
+                <a href="{{ url_for('main.index') }}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-all">
                     {% if app_labels.custom_logo %}
-                    <img src="{{ url_for('static', filename=app_labels.custom_logo) }}" 
-                         alt="Benutzerdefiniertes Logo" 
-                         class="h-12 w-auto object-contain">
+                        <img src="{{ url_for('static', filename=app_labels.custom_logo) }}" class="h-8 w-auto object-contain">
                     {% else %}
-                    <img src="{{ url_for('static', filename='images/BTZ_logo.jpg') }}" 
-                         alt="BTZ Logo" 
-                         class="h-12 w-auto object-contain">
+                        <img src="{{ url_for('static', filename='images/BTZ_logo.jpg') }}" class="h-8 w-auto object-contain">
                     {% endif %}
-                    <i class="fas fa-home text-xl text-primary"></i>
                 </a>
             </div>
 
-            <!-- Rechter Bereich -->
-            <div class="flex-1 flex items-center justify-end gap-2 min-w-0">
+            <!-- Right Side Controls -->
+            <div class="flex items-center gap-2">
                 {% if current_user.is_authenticated %}
-                <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-building mr-2"></i>
-                        {{ departments_ctx.current or departments.current or 'Abteilung wählen' }}
-                    </label>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-60">
-                        {% for dep in (departments_ctx.allowed or departments.allowed) %}
-                        <li>
-                            <a href="{{ url_for('admin.switch_department', department=dep) }}" class="{% if departments.current == dep %}active{% endif %}">
-                                <i class="fas fa-layer-group mr-2"></i>{{ dep }}
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-                {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
-                <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-bars"></i>
-                    </label>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52">
-                        <li>
-                            <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and 'admin.dashboard' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ url_for('admin.system') }}" class="{% if request.endpoint and 'admin.system' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-cogs mr-2"></i>Systemverwaltung
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ url_for('admin.departments_manage_page') }}" class="{% if request.endpoint and 'departments_manage_page' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-building mr-2"></i>Abteilungen
-                            </a>
-                        </li>
-                        {% if feature_settings.get('software_management', False) %}
-                        <li>
-                            <a href="{{ url_for('admin.software_management') }}" class="{% if request.endpoint and 'admin.software_management' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-desktop mr-2"></i>Software & Nutzergruppen
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li>
-                            <a href="{{ url_for('admin.feature_settings') }}" class="{% if request.endpoint and 'admin.feature_settings' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-toggle-on mr-2"></i>Feature-Einstellungen
-                            </a>
-                        </li>
-                        {# Entfernt: Department-Features Menüeintrag #}
-                        <li>
-                            <a href="{{ url_for('admin.manage_users') }}" class="{% if request.endpoint and 'admin.manage_users' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-users-cog mr-2"></i>Benutzerverwaltung
-                            </a>
-                        </li>
-                        {# E-Mail-Debug entfernt #}
-                        <li>
-                            <a href="{{ url_for('admin.email_settings') }}" class="{% if request.endpoint and 'admin.email_settings' in request.endpoint %}active{% endif %}">
-                                <i class="fas fa-envelope mr-2"></i>E-Mail-Einstellungen
-                            </a>
-                        </li>
-                        
-                        <li>
-                            <a href="{{ url_for('admin.manual_lending') }}" class="{% if request.endpoint and request.endpoint == 'admin.manual_lending' %}active{% endif %}">
-                                <i class="fas fa-hand-holding mr-2"></i>Manuelle Ausleihe
-                            </a>
-                        </li>
-                        {# Entfernt: Kantinenplan verwalten (Duplikat) #}
-                    </ul>
-                </div>
-                <a href="{{ url_for('admin.trash') }}" 
-                   class="btn btn-ghost btn-circle btn-sm text-error relative">
-                    <i class="fas fa-trash-alt"></i>
-                    {% if trash_count is defined and trash_count > 0 %}
-                    <span class="absolute -top-2 -right-2 bg-error text-white rounded-full w-5 h-5 
-                               flex items-center justify-center text-xs">
-                        {{ trash_count }}
-                    </span>
+                    <!-- Department Switcher -->
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-sm gap-2 normal-case font-medium border border-base-300">
+                            <i class="fas fa-building text-primary opacity-70"></i>
+                            <span class="max-w-[120px] truncate">{{ departments_ctx.current or departments.current or 'Abteilung' }}</span>
+                            <i class="fas fa-chevron-down text-[10px] opacity-50"></i>
+                        </label>
+                        <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-64 mt-2 border border-base-300">
+                            <li class="menu-title">Abteilung wechseln</li>
+                            {% for dep in (departments_ctx.allowed or departments.allowed) %}
+                            <li>
+                                <a href="{{ url_for('admin.switch_department', department=dep) }}" class="rounded-lg {% if (departments_ctx.current or departments.current) == dep %}active bg-primary/10 text-primary font-bold{% endif %}">
+                                    <i class="fas fa-layer-group opacity-50"></i>{{ dep }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% if current_user.is_mitarbeiter %}
+                        <!-- Admin Quick Menu -->
+                        <div class="dropdown dropdown-end">
+                            <label tabindex="0" class="btn btn-ghost btn-sm btn-square border border-base-300">
+                                <i class="fas fa-cog"></i>
+                            </label>
+                            <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-60 mt-2 border border-base-300">
+                                <li class="menu-title text-primary uppercase text-[10px] tracking-widest font-bold">Verwaltung</li>
+                                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line w-5"></i> Dashboard</a></li>
+                                <li><a href="{{ url_for('admin.system') }}"><i class="fas fa-terminal w-5"></i> Systemverwaltung</a></li>
+                                <li><a href="{{ url_for('admin.departments_manage_page') }}"><i class="fas fa-building w-5"></i> Abteilungen</a></li>
+                                <li><a href="{{ url_for('admin.manage_users') }}"><i class="fas fa-user-gear w-5"></i> Benutzer</a></li>
+                                <div class="divider my-1"></div>
+                                <li><a href="{{ url_for('admin.trash') }}" class="text-error"><i class="fas fa-trash-alt w-5"></i> Papierkorb</a></li>
+                            </ul>
+                        </div>
                     {% endif %}
-                </a>
-                {% endif %}
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('auth.profile') }}" class="text-sm mr-2 hidden md:inline hover:text-primary transition-colors duration-200" title="Mein Profil bearbeiten">
-                        <i class="fas fa-user mr-1"></i>{{ current_user.username }}
-                    </a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </a>
+
+                    <!-- User Menu -->
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-sm border border-base-300 gap-2 normal-case">
+                            <div class="avatar placeholder">
+                                <div class="bg-primary text-primary-content rounded-lg w-6 h-6">
+                                    <span class="text-xs uppercase">{{ current_user.username[:1] }}</span>
+                                </div>
+                            </div>
+                            <span class="hidden md:inline font-medium">{{ current_user.username }}</span>
+                        </label>
+                        <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-52 mt-2 border border-base-300">
+                            <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user-circle w-5"></i> Profil</a></li>
+                            <div class="divider my-1"></div>
+                            <li><a href="{{ url_for('auth.logout') }}" class="text-error font-medium"><i class="fas fa-sign-out-alt w-5"></i> Logout</a></li>
+                        </ul>
+                    </div>
                 {% else %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm ml-auto">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Login
-                </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm rounded-xl px-6">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
                 {% endif %}
             </div>
-        </div>
+        </header>
 
-        <!-- Main Content -->
-        <main class="relative z-0 ml-[226px] main-content-with-sidebar">
+        <!-- Main Content Section -->
+        <main class="content-area">
             {% block content %}
-            <div class="container mx-auto">
-                <!-- Info-Karte (nur für QuickScan) -->
-                {% if request.endpoint and request.endpoint == 'quick_scan.index' %}
-                <div class="card bg-base-100 shadow-xl mb-6">
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            <i class="fas fa-info-circle text-primary"></i>
+            <div class="max-w-7xl mx-auto">
+                <!-- Page Breadcrumbs or Info for QuickScan -->
+                {% if request.endpoint == 'quick_scan.index' %}
+                <div class="alert bg-base-100 border border-base-300 shadow-sm mb-6 rounded-2xl p-6">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <i class="fas fa-bolt"></i>
+                            </div>
                             QuickScan
                         </h2>
-                        <p>Scannen Sie einen Barcode oder wählen Sie eine Aktion:</p>
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <button class="btn btn-primary" onclick="showManualLendingModal()">
-                                <i class="fas fa-hand-holding mr-2"></i>Manuelle Ausleihe
-                            </button>
-                            <button class="btn btn-secondary" onclick="showReturnModal()">
-                                <i class="fas fa-undo-alt mr-2"></i>Rückgabe
-                            </button>
-                            <button class="btn btn-accent" onclick="showConsumableModal()">
-                                <i class="{{ app_labels.consumables.icon }} mr-2"></i>{{ app_labels.consumables.name }}
-                            </button>
-                        </div>
+                        <p class="text-base-content/60 mt-1">Wählen Sie eine Aktion oder scannen Sie einen Barcode.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+                        <button class="btn btn-sm btn-primary rounded-lg" onclick="showManualLendingModal()">
+                            <i class="fas fa-hand-holding"></i> Ausleihe
+                        </button>
+                        <button class="btn btn-sm btn-secondary rounded-lg" onclick="showReturnModal()">
+                            <i class="fas fa-undo-alt"></i> Rückgabe
+                        </button>
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- Hauptinhalt -->
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ 'error' if category == 'error' else 'success' if category == 'success' else 'info' }} shadow-lg mb-6 rounded-2xl border-0">
+                        <i class="fas fa-{{ 'circle-exclamation' if category == 'error' else 'circle-check' if category == 'success' else 'circle-info' }}"></i>
+                        <span>{{ message }}</span>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <!-- Main Content Slot -->
                 {% block page_content %}{% endblock %}
             </div>
             {% endblock %}
         </main>
     </div>
 
-    <!-- QuickScan Modal -->
+    <!-- Modals & Overlays -->
     {% include 'components/quickscan_modal.html' %}
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3"></div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2"></div>
-
-    <!-- Flash Messages -->
-    <div id="flash-data" data-flashes='{{ get_flashed_messages(with_categories=true)|tojson|safe }}'></div>
-    <script nonce="{{ csp_nonce }}">
-    document.addEventListener('DOMContentLoaded', function() {
-        var el = document.getElementById('flash-data');
-        if (!el) return;
-        var flashesStr = el.getAttribute('data-flashes') || '[]';
-        var flashes = [];
-        try { flashes = JSON.parse(flashesStr); } catch (e) { flashes = []; }
-        if (Array.isArray(flashes)) {
-            flashes.forEach(function(msg){
-                try { window.showToast(msg[0], msg[1]); } catch(e) {}
-            });
-        }
-        el.remove();
-    });
-    </script>
-
-    <!-- HTMX -->
+    <!-- Scripts -->
     <script nonce="{{ csp_nonce }}" src="https://unpkg.com/htmx.org@1.9.10"></script>
-
-    <!-- HTML5-QR-Code-Scanner -->
     <script nonce="{{ csp_nonce }}" src="https://unpkg.com/html5-qrcode"></script>
-
-    <!-- Eigene Scripts -->
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/quickscan.js') }}?v=2"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/lending-service.js') }}" defer></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/toast.js') }}"></script>
@@ -579,72 +441,8 @@
 
     {% block scripts %}{% endblock %}
 
-    <!-- Styles für die Scanner-Animation -->
-    <style>
-        @keyframes scanner {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(80px); }
-            100% { transform: translateY(0); }
-        }
-        .animate-scanner {
-            animation: scanner 2s linear infinite;
-        }
-
-        /* Tanz-Animation für Easter Egg */
-        @keyframes dance {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(-10deg) scale(1.3); }
-            50% { transform: rotate(0deg) scale(1); }
-            75% { transform: rotate(10deg) scale(1.3); }
-            100% { transform: rotate(0deg) scale(1); }
-        }
-        .dancing-zebra {
-            position: fixed;
-            width: 400px;
-            height: auto;
-            z-index: 9999999;
-            pointer-events: none;
-            filter: brightness(1.2) contrast(1.1);
-        }
-        .dancing-zebra.left {
-            top: 50%;
-            left: 5%;
-            transform: translateY(-50%);
-        }
-        .dancing-zebra.right {
-            top: 50%;
-            right: 5%;
-            transform: translateY(-50%) scaleX(-1);
-        }
-
-        /* Verbessertes Scandy Logo Styling - ohne @apply (Browser versteht das nicht) */
-        /* QuickScan-Trigger als rechteckiger Button */
-        #quickScanTrigger {
-            width: 100%; height: 4rem; border-radius: .75rem; overflow: hidden;
-            transition: background-color .2s, box-shadow .2s; display: flex; align-items: center; justify-content: center;
-            background: var(--fallback-b1, #fff);
-            cursor: pointer; position: relative; box-shadow: 0 4px 6px -2px rgba(0,0,0,.1);
-            margin-top: 0; z-index: 100; padding: 0 .5rem;
-        }
-        #quickScanTrigger:hover { background: var(--fallback-b2, #f9fafb); }
-        
-        /* Deaktivierter QuickScan Button */
-        #quickScanTrigger.disabled { opacity: .5; cursor: not-allowed; }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sidebar-permanent {
-                transform: translateX(-100%);
-            }
-            
-            .main-content-with-sidebar {
-                margin-left: 0;
-            }
-            
-            .navbar-with-sidebar {
-                margin-left: 0;
-            }
-        }
-    </style>
+    <script>
+        // Tooltip initialization or other global UI scripts
+    </script>
 </body>
 </html>
