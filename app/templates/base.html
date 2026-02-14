@@ -228,10 +228,16 @@
         <!-- Vertikales Seitenmenü -->
         <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
+            {% set qs_disabled = not current_user.is_authenticated or current_user.role == 'teilnehmer' %}
             {% set qs_tooltip = "Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer)" if not current_user.is_authenticated else ("Quick Scan (nicht verfügbar für Teilnehmer)" if current_user.role == 'teilnehmer' else "Quick Scan öffnen") %}
-            <button type="button" class="w-full h-16 min-h-[4rem] px-0 border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{{ qs_tooltip }}" aria-label="{{ qs_tooltip }}">
-                <div class="w-full h-20 rounded-tl-xl overflow-hidden transition-all duration-300 flex items-center justify-center group
-                    {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}">
+            <button type="button"
+                class="w-full h-16 min-h-[4rem] px-0 border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-300 {% if qs_disabled %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}"
+                id="quickScanTrigger"
+                data-role="{{ current_user.role }}"
+                title="{{ qs_tooltip }}"
+                aria-label="{{ qs_tooltip }}"
+                {% if qs_disabled %}disabled{% endif %}>
+                <div class="w-full h-20 rounded-tl-xl overflow-hidden flex items-center justify-center group">
                     <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-90">
                     <span class="ml-4 text-base font-semibold text-gray-700 group-hover:text-primary transition-colors duration-300">Scan</span>
                     <!-- Scanner Animation -->
