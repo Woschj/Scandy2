@@ -113,7 +113,7 @@ class VersionChecker:
             logger.error(f"Fehler beim Versionscheck: {e}")
             return {
                 'status': 'error',
-                'message': f'Fehler beim Versionscheck: {str(e)}',
+                'message': 'Fehler beim Versionscheck.',
                 'local_version': info['local_version']
             }
 

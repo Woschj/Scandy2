@@ -395,7 +395,7 @@ def fix_session(username):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/debug/normalize-user-ids')
@@ -421,7 +421,7 @@ def normalize_user_ids():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/debug/user-management')
@@ -531,7 +531,7 @@ def debug_user_management():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/debug/test-user-id/<user_id>')

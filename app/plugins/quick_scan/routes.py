@@ -158,4 +158,4 @@ def process():
 
     except Exception as e:
         logger.error(f"Fehler bei QuickScan-Verarbeitung: {str(e)}", exc_info=True)
-        return jsonify({'error': f'Interner Fehler: {str(e)}'}), 500 
+        return jsonify({'error': f'Interner Fehler: [Interner Fehler]'}), 500

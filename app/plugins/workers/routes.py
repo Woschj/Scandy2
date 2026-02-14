@@ -189,7 +189,7 @@ def add():
             flash('Mitarbeiter erfolgreich hinzugefügt', 'success')
             return redirect(url_for('workers.index'))
         except Exception as e:
-            flash(f'Fehler beim Hinzufügen: {str(e)}', 'error')
+            flash(f'Fehler beim Hinzufügen: [Interner Fehler]', 'error')
             # Gebe die Formulardaten zurück an das Template
             return render_template('workers/add.html',
                                departments=departments,
@@ -540,7 +540,7 @@ def delete_by_barcode(barcode):
         logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/workers/search')
@@ -557,7 +557,7 @@ def search():
         })
         return jsonify([dict(worker) for worker in workers])
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/admin/migrate-timesheets', methods=['POST'])
 @admin_required
@@ -567,7 +567,7 @@ def admin_migrate_timesheets():
         migrated_count = migrate_timesheet_dates()
         flash(f'Migration abgeschlossen. {migrated_count} Timesheet-Einträge wurden migriert.', 'success')
     except Exception as e:
-        flash(f'Fehler bei der Migration: {str(e)}', 'error')
+        flash(f'Fehler bei der Migration: [Interner Fehler]', 'error')
     
     return redirect(url_for('workers.timesheet_list'))
 
@@ -635,8 +635,8 @@ def admin_migrate_all_dates():
         })
         
     except Exception as e:
-        flash(f'Fehler bei der Migration: {str(e)}', 'error')
-        return jsonify({'success': False, 'error': str(e)}), 500
+        flash(f'Fehler bei der Migration: [Interner Fehler]', 'error')
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/admin/check-timesheet-dates')
 @admin_required
@@ -668,7 +668,7 @@ def check_timesheet_dates():
             'needs_migration': string_dates > 0
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/admin/check-database-status')
 @admin_required
@@ -717,7 +717,7 @@ def check_database_status():
         return jsonify(status)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 def migrate_timesheet_dates():
     """Migriert Timesheet-Datumsfelder von String zu Date-Objekten"""

@@ -153,4 +153,30 @@ def check_scrypt_password(password_hash, password):
     except Exception as e:
         logger.error(f"Fehler bei scrypt-Passwort-Überprüfung: {e}")
         # Sicherheitskritisch: Kein permissiver Fallback
-        return False 
+        return False
+
+def is_safe_url(target):
+    """
+    Überprüft, ob eine URL für Redirects sicher ist (verhindert Open Redirect).
+
+    Args:
+        target (str): Die zu prüfende URL
+
+    Returns:
+        bool: True wenn sicher, False sonst
+    """
+    if not target:
+        return False
+
+    from urllib.parse import urlparse, urljoin
+    from flask import request
+
+    # Verhindere Redirects auf externe Domains
+    # Eine URL ist sicher, wenn sie relativ ist oder auf denselben Host zeigt
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+
+    # Sicherstellen, dass netloc übereinstimmt und kein scheme-switching stattfindet
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc and \
+           not urlparse(target).netloc

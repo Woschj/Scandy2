@@ -784,7 +784,10 @@ def switch_department(department):
                 flash(f'Aktives Department: {department}', 'success')
             else:
                 flash('Abteilung existiert nicht', 'error')
-            return redirect(request.referrer or url_for('main.index'))
+
+            from app.utils.auth_utils import is_safe_url
+            target = request.referrer if is_safe_url(request.referrer) else url_for('main.index')
+            return redirect(target)
 
         # Nicht-Admins: nur innerhalb erlaubter Abteilungen
         allowed = user.get('allowed_departments', []) if user else []
@@ -797,7 +800,10 @@ def switch_department(department):
         logger = logging.getLogger(__name__)
         logger.error(f"Fehler beim Wechseln des Departments: {e}")
         flash('Fehler beim Wechseln des Departments', 'error')
-    return redirect(request.referrer or url_for('main.index'))
+
+    from app.utils.auth_utils import is_safe_url
+    target = request.referrer if is_safe_url(request.referrer) else url_for('main.index')
+    return redirect(target)
 
 @bp.route('/admin/email/diagnose', methods=['POST'])
 @login_required

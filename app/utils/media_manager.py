@@ -121,7 +121,7 @@ class MediaManager:
             loggers['errors'].error("PIL/Pillow nicht verfügbar - Bildverarbeitung übersprungen")
             return False
         except Exception as e:
-            loggers['errors'].error(f"Fehler bei der Bildverarbeitung: {e}")
+            loggers['errors'].error(f"Fehler bei der Bildverarbeitung: [Interner Fehler]")
             import traceback
             loggers['errors'].error(f"Bildverarbeitung Traceback: {traceback.format_exc()}")
             return False
@@ -164,7 +164,7 @@ class MediaManager:
             return unique_filename, None
             
         except Exception as e:
-            loggers['errors'].error(f"Upload-Fehler: {e}")
+            loggers['errors'].error(f"Upload-Fehler: [Interner Fehler]")
             return None, f"Fehler beim Hochladen: {str(e)}"
     
     @staticmethod
@@ -183,7 +183,7 @@ class MediaManager:
                 return False
                 
         except Exception as e:
-            loggers['errors'].error(f"Delete-Fehler: {e}")
+            loggers['errors'].error(f"Delete-Fehler: [Interner Fehler]")
             return False
     
     @staticmethod
@@ -207,7 +207,7 @@ class MediaManager:
                 return True
                 
         except Exception as e:
-            loggers['errors'].error(f"Delete-All-Fehler: {e}")
+            loggers['errors'].error(f"Delete-All-Fehler: [Interner Fehler]")
             return False
     
     @staticmethod
@@ -220,7 +220,7 @@ class MediaManager:
                           if os.path.isfile(os.path.join(upload_folder, f))])
             return 0
         except Exception as e:
-            loggers['errors'].error(f"Count-Fehler: {e}")
+            loggers['errors'].error(f"Count-Fehler: [Interner Fehler]")
             return 0
     
     @staticmethod
@@ -248,5 +248,5 @@ class MediaManager:
             loggers['user_actions'].info(f"Medien-Liste: {media_list}")
             return sorted(media_list)
         except Exception as e:
-            loggers['errors'].error(f"List-Fehler: {e}")
+            loggers['errors'].error(f"List-Fehler: [Interner Fehler]")
             return [] 

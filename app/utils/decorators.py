@@ -73,7 +73,7 @@ def admin_required(f):
                 }), 401
             flash("Bitte melden Sie sich an.", "info")
             return redirect(url_for('auth.login', next=request.url))
-        
+
         if current_user.role != 'admin':
             # Logge unautorisierte Admin-Zugriffe
             log_security_event('unauthorized_admin_access', current_user.username, request.remote_addr, {
@@ -87,7 +87,7 @@ def admin_required(f):
                     'message': 'Keine Berechtigung für diese Aktion.'
                 }), 403
             abort(403)
-        
+
         logger.debug(f"[DECORATOR] admin_required: Access granted for user {current_user.id}. Proceeding to route function.")
         return f(*args, **kwargs)
     return decorated_function
@@ -107,14 +107,14 @@ def mitarbeiter_required(f):
                 }), 401
             flash("Bitte melden Sie sich an.", "info")
             return redirect(url_for('auth.login', next=request.url))
-        
+
         # Erlaube alle Rollen außer 'teilnehmer'
         user_role = getattr(current_user, 'role', 'anwender')
         is_allowed = user_role != 'teilnehmer'
-        
+
         logger.debug(f"[DECORATOR] mitarbeiter_required: User role is '{user_role}', is_allowed evaluated to {is_allowed}")
-        
-        if not is_allowed: 
+
+        if not is_allowed:
             # Logge unautorisierte Zugriffe
             log_security_event('unauthorized_mitarbeiter_access', current_user.username, request.remote_addr, {
                 'endpoint': request.endpoint,
@@ -127,7 +127,7 @@ def mitarbeiter_required(f):
                     'message': 'Keine Berechtigung für diese Aktion.'
                 }), 403
             abort(403)
-        
+
         logger.debug(f"[DECORATOR] mitarbeiter_required: Access granted for user {current_user.id} (role: {user_role}). Proceeding to route function.")
         return f(*args, **kwargs)
     return decorated_function
@@ -147,7 +147,7 @@ def teilnehmer_required(f):
                 }), 401
             flash("Bitte melden Sie sich an.", "info")
             return redirect(url_for('auth.login', next=request.url))
-        
+
         if current_user.role != 'teilnehmer':
             # Logge unautorisierte Zugriffe
             log_security_event('unauthorized_teilnehmer_access', current_user.username, request.remote_addr, {
@@ -161,7 +161,7 @@ def teilnehmer_required(f):
                     'message': 'Keine Berechtigung für diese Aktion.'
                 }), 403
             abort(403)
-        
+
         logger.debug(f"[DECORATOR] teilnehmer_required: Access granted for user {current_user.id}. Proceeding to route function.")
         return f(*args, **kwargs)
     return decorated_function
@@ -181,7 +181,7 @@ def not_teilnehmer_required(f):
                 }), 401
             flash("Bitte melden Sie sich an.", "info")
             return redirect(url_for('auth.login', next=request.url))
-        
+
         if current_user.role == 'teilnehmer':
             logger.warning(f"[DECORATOR] not_teilnehmer_required: User {current_user.id} is teilnehmer. Aborting with 403.")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -190,7 +190,7 @@ def not_teilnehmer_required(f):
                     'message': 'Keine Berechtigung für diese Aktion.'
                 }), 403
             abort(403)
-        
+
         logger.debug(f"[DECORATOR] not_teilnehmer_required: Access granted for user {current_user.id}. Proceeding to route function.")
         return f(*args, **kwargs)
     return decorated_function
@@ -199,7 +199,7 @@ def log_route(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         start_time = time.time()
-        
+
         loggers['user_actions'].info(
             f"Route aufgerufen: {request.endpoint} - "
             f"Methode: {request.method} - "
@@ -207,21 +207,21 @@ def log_route(f):
             f"User-Agent: {request.user_agent} - "
             f"Args: {kwargs}"
         )
-        
+
         if request.form:
             safe_form = {k: v for k, v in request.form.items() if 'password' not in k.lower()}
             loggers['user_actions'].info(f"Form-Daten: {safe_form}")
-            
+
         if request.args:
             loggers['user_actions'].info(f"Query-Parameter: {dict(request.args)}")
-            
+
         try:
             result = f(*args, **kwargs)
-            
+
             # Performance-Metriken loggen
             duration = time.time() - start_time
             log_performance_metric('route_duration', duration, 'seconds')
-            
+
             # Logge erfolgreiche Aktionen
             if current_user.is_authenticated:
                 log_user_action('route_access', current_user.username, {
@@ -229,7 +229,7 @@ def log_route(f):
                     'method': request.method,
                     'duration': duration
                 })
-            
+
             return result
         except Exception as e:
             duration = time.time() - start_time
@@ -237,19 +237,19 @@ def log_route(f):
                 f"Fehler in {request.endpoint}: {str(e)}",
                 exc_info=True
             )
-            
+
             # Logge Fehler mit Performance-Metriken
             log_performance_metric('route_error_duration', duration, 'seconds')
-            
+
             # Logge Sicherheitsereignisse bei bestimmten Fehlern
             if '403' in str(e) or '401' in str(e):
-                log_security_event('route_access_denied', 
-                                 getattr(current_user, 'username', 'anonymous'), 
+                log_security_event('route_access_denied',
+                                 getattr(current_user, 'username', 'anonymous'),
                                  request.remote_addr, {
                                      'endpoint': request.endpoint,
                                      'error': str(e)
                                  })
-            
+
             raise
     return decorated_function
 
@@ -261,30 +261,30 @@ def log_db_operation(operation):
             try:
                 result = f(*args, **kwargs)
                 duration = time.time() - start_time
-                
+
                 # Logge erfolgreiche DB-Operation
                 log_database_operation(operation, 'unknown', duration, True)
-                
+
                 # Performance-Metriken
                 log_performance_metric('db_operation_duration', duration, 'seconds')
-                
+
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                
+
                 # Logge fehlgeschlagene DB-Operation
                 log_database_operation(operation, 'unknown', duration, False)
-                
+
                 # Logge Fehler
                 loggers['database'].error(
                     f"DB Operation: {operation} - "
                     f"Dauer: {duration:.2f}s - "
                     f"Fehler: {str(e)}"
                 )
-                
+
                 # Performance-Metriken für Fehler
                 log_performance_metric('db_operation_error_duration', duration, 'seconds')
-                
+
                 raise
         return wrapper
     return decorator
@@ -298,17 +298,17 @@ def performance_monitor(operation_name):
             try:
                 result = f(*args, **kwargs)
                 duration = time.time() - start_time
-                
+
                 # Logge Performance-Metriken
                 log_performance_metric(f'{operation_name}_duration', duration, 'seconds')
-                
+
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                
+
                 # Logge Fehler-Performance
                 log_performance_metric(f'{operation_name}_error_duration', duration, 'seconds')
-                
+
                 raise
         return wrapper
     return decorator 

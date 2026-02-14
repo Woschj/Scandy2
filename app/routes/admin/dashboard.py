@@ -418,13 +418,12 @@ def export_ticket(id):
             ticket_number = ticket.get('ticket_number', id) if ticket else id
 
             # Pfad-Validierung für Sicherheit
-            base_dir = os.path.abspath(os.path.join(current_app.root_path, 'static', 'uploads'))
-            abs_file_path = os.path.abspath(file_path)
-            if not abs_file_path.startswith(base_dir):
-                 logger.error(f"Sicherheitswarnung: Unzulässiger Dateipfad beim Ticket-Export: {abs_file_path}")
-                 abort(403)
+            from flask import send_from_directory
 
-            return send_file(abs_file_path, as_attachment=True, download_name=f'ticket_{ticket_number}_export.docx')
+            directory = os.path.join(current_app.root_path, 'static', 'uploads')
+            filename = os.path.basename(file_path)
+
+            return send_from_directory(directory, filename, as_attachment=True, download_name=f'ticket_{ticket_number}_export.docx')
         else:
             flash('Fehler beim Exportieren des Tickets.', 'error')
             return redirect(url_for('admin.ticket_detail', ticket_id=id))

@@ -31,7 +31,7 @@ def get_workers():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Laden der Mitarbeiter: {str(e)}'
+            'message': f'Fehler beim Laden der Mitarbeiter: [Interner Fehler]'
         }), 500
 
 @bp.route('/inventory/tools/<barcode>', methods=['GET'])
@@ -221,7 +221,7 @@ def return_tool():
         logger.error(f"Error in return_tool: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Rückgabe: {str(e)}'
+            'message': f'Fehler bei der Rückgabe: [Interner Fehler]'
         }), 500
 
 @bp.route('/inventory/consumables/<barcode>', methods=['GET'])
@@ -361,7 +361,7 @@ def get_notices():
         notices = list(mongodb.find('homepage_notices', {'is_active': True}, sort=[('priority', -1), ('created_at', -1)]))
         return jsonify({'success': True, 'notices': notices})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['GET'])
 @admin_required
@@ -373,7 +373,7 @@ def get_notice(id):
             return jsonify({'error': 'Hinweis nicht gefunden'}), 404
         return jsonify({'success': True, 'notice': notice})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices', methods=['POST'])
 @admin_required
@@ -392,7 +392,7 @@ def create_notice():
         result = mongodb.insert_one('homepage_notices', notice_data)
         return jsonify({'success': True, 'id': str(result)})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['PUT'])
 @admin_required
@@ -410,7 +410,7 @@ def update_notice(id):
         mongodb.update_one('homepage_notices', {'_id': id}, {'$set': update_data})
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['DELETE'])
 @admin_required
@@ -420,7 +420,7 @@ def delete_notice(id):
         mongodb.delete_one('homepage_notices', {'_id': id})
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/quickscan/process_lending', methods=['POST'])
 @login_required
@@ -507,7 +507,7 @@ def test_return_tool(tool_barcode):
         logger.error(f"Fehler in test_return_tool: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: {str(e)}'
+            'message': f'Fehler: [Interner Fehler]'
         }), 500
 
 @bp.route('/debug/test-mongodb-update/<tool_barcode>', methods=['POST'])
@@ -570,5 +570,5 @@ def test_mongodb_update(tool_barcode):
         logger.error(f"Fehler in test_mongodb_update: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: {str(e)}'
+            'message': f'Fehler: [Interner Fehler]'
         }), 500

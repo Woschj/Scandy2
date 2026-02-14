@@ -124,7 +124,7 @@ def job_list():
                              available_industries=available_industries)
                              
     except Exception as e:
-        loggers['errors'].error(f"Fehler in job_list: {e}")
+        loggers['errors'].error(f"Fehler in job_list: [Interner Fehler]")
         import traceback
         loggers['errors'].error(f"Traceback: {traceback.format_exc()}")
         flash('Fehler beim Laden der Jobs', 'error')
@@ -176,7 +176,7 @@ def create_job():
                 flash('Fehler beim Erstellen des Jobs', 'error')
                 
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Erstellen des Jobs: {e}")
+            loggers['errors'].error(f"Fehler beim Erstellen des Jobs: [Interner Fehler]")
             flash('Fehler beim Erstellen des Jobs', 'error')
     
     # Leere data für GET-Request oder bei Fehlern
@@ -227,7 +227,7 @@ def job_detail(job_id):
                              job=job, entity_type='jobs', entity_id=job_id)
                              
     except Exception as e:
-        loggers['errors'].error(f"Fehler in job_detail: {e}")
+        loggers['errors'].error(f"Fehler in job_detail: [Interner Fehler]")
         flash('Fehler beim Laden der Job-Details', 'error')
         return redirect(url_for('jobs.job_list'))
 
@@ -283,7 +283,7 @@ def edit_job(job_id):
         return render_template('jobs/edit.html', job=job, entity_type='jobs', entity_id=job_id)
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Bearbeiten des Jobs {job_id}: {e}")
+        loggers['errors'].error(f"Fehler beim Bearbeiten des Jobs {job_id}: [Interner Fehler]")
         flash('Fehler beim Bearbeiten des Jobs', 'error')
         return redirect(url_for('jobs.job_list'))
 
@@ -305,7 +305,7 @@ def delete_job(job_id):
             flash('Fehler beim Löschen des Jobs', 'error')
             
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Löschen des Jobs {job_id}: {e}")
+        loggers['errors'].error(f"Fehler beim Löschen des Jobs {job_id}: [Interner Fehler]")
         flash('Fehler beim Löschen des Jobs', 'error')
     
     return redirect(url_for('jobs.job_list'))
@@ -338,7 +338,7 @@ def api_jobs():
         })
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler in API jobs: {e}")
+        loggers['errors'].error(f"Fehler in API jobs: [Interner Fehler]")
         return jsonify({'error': 'Fehler beim Abrufen der Jobs'}), 500
 
 @bp.route('/api/jobs/<job_id>')
@@ -352,7 +352,7 @@ def api_job_detail(job_id):
         return jsonify(job.to_dict())
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler in API job detail: {e}")
+        loggers['errors'].error(f"Fehler in API job detail: [Interner Fehler]")
         return jsonify({'error': 'Fehler beim Abrufen der Job-Details'}), 500 
 
 @bp.route('/debug-jobs')
@@ -383,7 +383,7 @@ def debug_jobs():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/debug-test')
 def test_jobs():
@@ -428,10 +428,10 @@ def test_jobs():
         })
         
     except Exception as e:
-        loggers['errors'].error(f"TEST Fehler: {e}")
+        loggers['errors'].error(f"TEST Fehler: [Interner Fehler]")
         import traceback
         loggers['errors'].error(f"TEST Traceback: {traceback.format_exc()}")
-        return jsonify({'error': str(e)}) 
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
 
 
@@ -462,7 +462,7 @@ def fix_test_job():
         })
         
     except Exception as e:
-                return jsonify({'error': str(e)})
+                return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
 
 
@@ -520,7 +520,7 @@ def create_test_job():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}) 
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/fix-job-numbers')
 @login_required
@@ -557,7 +557,7 @@ def fix_job_numbers():
         return redirect(url_for('jobs.job_list'))
         
     except Exception as e:
-        flash(f'Fehler beim Nummerieren der Jobs: {e}', 'error')
+        flash(f'Fehler beim Nummerieren der Jobs: [Interner Fehler]', 'error')
         return redirect(url_for('jobs.job_list')) 
 
 @bp.route('/debug-fix-ids')
@@ -594,7 +594,7 @@ def debug_fix_ids():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}) 
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
  
 
@@ -643,7 +643,7 @@ def fix_all_job_ids():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}) 
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'})
 
 # Neue Routen für Kommentare und Löschfunktionen
 
@@ -685,8 +685,8 @@ def add_comment(job_id):
         return jsonify({'success': True})
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Hinzufügen des Kommentars: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+        loggers['errors'].error(f"Fehler beim Hinzufügen des Kommentars: [Interner Fehler]")
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/comment/<comment_id>/delete', methods=['DELETE'])
 @login_required
@@ -724,8 +724,8 @@ def delete_comment(comment_id):
         return jsonify({'success': True})
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Löschen des Kommentars: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+        loggers['errors'].error(f"Fehler beim Löschen des Kommentars: [Interner Fehler]")
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/<job_id>/delete', methods=['DELETE'])
 @login_required
@@ -751,8 +751,8 @@ def delete_job_api(job_id):
         return jsonify({'success': True})
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Löschen des Jobs: {e}")
-        return jsonify({'success': False, 'error': str(e)}) 
+        loggers['errors'].error(f"Fehler beim Löschen des Jobs: [Interner Fehler]")
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/fix-job-creator/<job_id>')
 def fix_job_creator(job_id):
@@ -787,7 +787,7 @@ def fix_job_creator(job_id):
             return jsonify({'success': True, 'created_by_name': job_data['created_by_name']})
             
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}) 
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/delete-all', methods=['DELETE'])
 @login_required
@@ -807,5 +807,5 @@ def delete_all_jobs():
         return jsonify({'success': True, 'deleted_count': result.deleted_count})
         
     except Exception as e:
-        loggers['errors'].error(f"Fehler beim Löschen aller Jobs: {e}")
-        return jsonify({'success': False, 'error': str(e)}) 
+        loggers['errors'].error(f"Fehler beim Löschen aller Jobs: [Interner Fehler]")
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'})

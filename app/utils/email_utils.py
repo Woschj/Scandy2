@@ -222,7 +222,7 @@ def test_email_config(config_data):
         import smtplib
         from email.mime.text import MIMEText
         
-        logger.info(f"Teste E-Mail-Konfiguration: {config_data['mail_server']}:{config_data['mail_port']}")
+        logger.info("Teste E-Mail-Konfiguration")
         
         # SMTP-Verbindung aufbauen
         if config_data['mail_use_tls'] and config_data['mail_port'] == 465:
@@ -408,7 +408,7 @@ def _send_email_direct(recipient, subject, body, attachments=None, mail_type="de
             return False
 
         # Logge alle Parameter vor dem Versand
-        logger.info(f"[MAIL][{mail_type}] Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info(f"[MAIL][{mail_type}] Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}")
 
         # Erstelle E-Mail-Nachricht
         msg = MIMEMultipart()
@@ -480,7 +480,7 @@ def _send_email_direct(recipient, subject, body, attachments=None, mail_type="de
         return True
 
     except Exception as e:
-        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten E-Mail-Versand: {e}\nEmpfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username') if 'config' in locals() and config else 'N/A'}, SMTP={config.get('mail_server') if 'config' in locals() and config else 'N/A'}:{config.get('mail_port') if 'config' in locals() and config else 'N/A'}, TLS={config.get('mail_use_tls') if 'config' in locals() and config else 'N/A'}, Auth={config.get('use_auth', True) if 'config' in locals() and config else 'N/A'}, Attachments={bool(attachments)}\n{traceback.format_exc()}")
+        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten E-Mail-Versand: {e}")
         return False
 
 def _send_email_direct_html(recipient, subject, html_content=None, text_content=None, attachments=None, mail_type="default"):
@@ -499,7 +499,7 @@ def _send_email_direct_html(recipient, subject, html_content=None, text_content=
             return False
 
         # Logge alle Parameter vor dem Versand
-        logger.info(f"[MAIL][{mail_type}] HTML-E-Mail Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info(f"[MAIL][{mail_type}] HTML-E-Mail Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}")
 
         # Erstelle E-Mail-Nachricht
         msg = MIMEMultipart('alternative')
@@ -578,7 +578,7 @@ def _send_email_direct_html(recipient, subject, html_content=None, text_content=
         return True
 
     except Exception as e:
-        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten HTML-E-Mail-Versand: {e}\nEmpfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username') if 'config' in locals() and config else 'N/A'}, SMTP={config.get('mail_server') if 'config' in locals() and config else 'N/A'}:{config.get('mail_port') if 'config' in locals() and config else 'N/A'}, TLS={config.get('mail_use_tls') if 'config' in locals() and config else 'N/A'}, Auth={config.get('use_auth', True) if 'config' in locals() and config else 'N/A'}, Attachments={bool(attachments)}\n{traceback.format_exc()}")
+        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten HTML-E-Mail-Versand: {e}")
         return False
 
 def ensure_app_context(func):
@@ -1080,7 +1080,7 @@ def diagnose_smtp_connection(config_data):
                     
             except Exception as e:
                 results['steps'].append(f"STARTTLS fehlgeschlagen: {e}")
-                results['error'] = f"STARTTLS-Fehler: {e}"
+                results['error'] = f"STARTTLS-Fehler: [Interner Fehler]"
         
         # Schritt 5: Authentifizierung testen (falls Anmeldedaten vorhanden)
         if config_data.get('mail_username') and config_data.get('mail_password'):
@@ -1092,7 +1092,7 @@ def diagnose_smtp_connection(config_data):
             except Exception as e:
                 results['steps'].append(f"Authentifizierung fehlgeschlagen: {e}")
                 results['auth_success'] = False
-                results['error'] = f"Auth-Fehler: {e}"
+                results['error'] = f"Auth-Fehler: [Interner Fehler]"
         else:
             results['steps'].append("Keine Anmeldedaten vorhanden - Authentifizierung übersprungen")
             results['auth_success'] = None
@@ -1112,7 +1112,7 @@ def diagnose_smtp_connection(config_data):
             except Exception as e:
                 results['steps'].append(f"Test-E-Mail fehlgeschlagen: {e}")
                 results['test_email_success'] = False
-                results['error'] = f"Test-E-Mail-Fehler: {e}"
+                results['error'] = f"Test-E-Mail-Fehler: [Interner Fehler]"
         
         server.quit()
         results['steps'].append("SMTP-Verbindung geschlossen")
@@ -1176,7 +1176,7 @@ def debug_email_status():
     except Exception as e:
         return {
             'status': 'error',
-            'message': f'Fehler beim Prüfen des E-Mail-Status: {str(e)}',
+            'message': f'Fehler beim Prüfen des E-Mail-Status: [Interner Fehler]',
             'details': 'Überprüfen Sie die Logs für weitere Details'
         }
 

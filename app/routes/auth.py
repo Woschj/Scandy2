@@ -5,7 +5,7 @@ from app.models.mongodb_database import mongodb
 from app.models.user import User
 from app.models.mongodb_models import MongoDBUser
 from werkzeug.security import check_password_hash, generate_password_hash
-from app.utils.auth_utils import needs_setup
+from app.utils.auth_utils import needs_setup, is_safe_url
 from datetime import datetime
 from bson import ObjectId
 import secrets
@@ -177,7 +177,7 @@ def login():
 
                 # Redirect zur ursprünglich gewünschten Seite
                 next_page = request.args.get('next')
-                if not next_page or urlparse(next_page).netloc != '':
+                if not is_safe_url(next_page):
                     next_page = url_for('dashboard.index')
                 return redirect(next_page)
 

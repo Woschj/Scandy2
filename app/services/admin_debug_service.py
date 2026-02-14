@@ -339,7 +339,7 @@ class AdminDebugService:
                         'is_active': user.get('is_active', True)
                     }
             except Exception as e:
-                test_results['errors'].append(f"Fehler beim Laden des Benutzers: {str(e)}")
+                test_results['errors'].append(f"Fehler beim Laden des Benutzers: [Interner Fehler]")
             
             # Prüfe Referenzen auf diese User-ID
             collections_to_check = [
@@ -354,7 +354,7 @@ class AdminDebugService:
                     if count > 0:
                         test_results['references'][collection] = count
                 except Exception as e:
-                    test_results['errors'].append(f"Fehler beim Prüfen von {collection}: {str(e)}")
+                    test_results['errors'].append(f"Fehler beim Prüfen von {collection}: [Interner Fehler]")
             
             logger.info(f"User-ID-Test für {user_id}: {test_results}")
             return test_results

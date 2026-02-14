@@ -135,7 +135,7 @@ def detail(barcode):
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Details anzeigen
     consumable = ConsumableService.get_consumable_detail(barcode)
@@ -193,7 +193,7 @@ def adjust_stock(barcode):
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
         logger.error(f"Fehler beim Anpassen des Bestands: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<barcode>/delete', methods=['DELETE'])
 @login_required
@@ -208,7 +208,7 @@ def delete(barcode):
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
         logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<barcode>/forecast')
 @login_required
@@ -223,7 +223,7 @@ def forecast(barcode):
             return jsonify({'success': False, 'message': 'Keine ausreichenden Daten für Vorhersage'}), 400
     except Exception as e:
         logger.error(f"Fehler bei der Vorhersage: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/export')
 @login_required
@@ -279,7 +279,7 @@ def bulk_actions():
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
         logger.error(f"Fehler bei Massenaktion: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/statistics')
 @login_required
@@ -352,7 +352,7 @@ def barcode_scan(barcode):
             return jsonify(result), 404
     except Exception as e:
         logger.error(f"Fehler beim Barcode-Scan: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/quick-scan', methods=['GET', 'POST'])
 @login_required
@@ -369,7 +369,7 @@ def quick_scan():
             return jsonify(result)
         except Exception as e:
             logger.error(f"Fehler beim Quick-Scan: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # Verwende das index Template für Quick-Scan
     return render_template('consumables/index.html', show_quick_scan=True)
@@ -389,7 +389,7 @@ def restock_alert(barcode):
             return jsonify({'success': False, 'message': result}), 400
     except Exception as e:
         logger.error(f"Fehler beim Senden der Nachbestellungs-Benachrichtigung: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/usage-history/<barcode>')
 @login_required
@@ -403,7 +403,7 @@ def usage_history(barcode):
             return jsonify({'success': False, 'message': 'Keine Historie gefunden'}), 404
     except Exception as e:
         logger.error(f"Fehler beim Laden der Nutzungshistorie: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/categories', methods=['GET', 'POST'])
 @login_required
@@ -429,7 +429,7 @@ def category_management():
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             logger.error(f"Fehler bei der Kategorieverwaltung: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Kategorien anzeigen
     try:
@@ -465,7 +465,7 @@ def location_management():
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             logger.error(f"Fehler bei der Standortverwaltung: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Standorte anzeigen
     try:
@@ -511,7 +511,7 @@ def settings():
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             logger.error(f"Fehler beim Aktualisieren der Einstellungen: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Einstellungen anzeigen
     try:

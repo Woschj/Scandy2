@@ -51,9 +51,9 @@ def history():
                 '$limit': 50
             }
         ]
-        
+
         history_data = list(mongodb.aggregate('lendings', pipeline))
-        
+
         # Konvertiere MongoDB-Objekte in das erwartete Format
         history = []
         for item in history_data:
@@ -66,9 +66,9 @@ def history():
                 'worker_name': item['worker_name'],
                 'worker_barcode': item['worker_barcode']
             })
-            
+
     except Exception as e:
         print(f"Fehler beim Laden der Historie: {e}")
         history = []
-            
+
     return render_template('history.html', history=history) 

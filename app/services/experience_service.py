@@ -19,7 +19,7 @@ class ExperienceService:
             return list(experiences)
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen der Erfahrungsberichte für Job {job_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen der Erfahrungsberichte für Job {job_id}: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -55,7 +55,7 @@ class ExperienceService:
             return experience
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Erstellen des Erfahrungsberichts: {e}")
+            loggers['errors'].error(f"Fehler beim Erstellen des Erfahrungsberichts: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -78,7 +78,7 @@ class ExperienceService:
             return experience
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Aktualisieren des Erfahrungsberichts {experience_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Aktualisieren des Erfahrungsberichts {experience_id}: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -94,7 +94,7 @@ class ExperienceService:
             return True
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Löschen des Erfahrungsberichts {experience_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Löschen des Erfahrungsberichts {experience_id}: [Interner Fehler]")
             return False
     
     @staticmethod
@@ -114,7 +114,7 @@ class ExperienceService:
             return True
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Bewerten des Erfahrungsberichts {experience_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Bewerten des Erfahrungsberichts {experience_id}: [Interner Fehler]")
             return False
     
     @staticmethod
@@ -157,7 +157,7 @@ class ExperienceService:
             }
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen der Erfahrungsbericht-Statistiken für Job {job_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen der Erfahrungsbericht-Statistiken für Job {job_id}: [Interner Fehler]")
             return {
                 'total_reviews': 0,
                 'average_rating': 0,

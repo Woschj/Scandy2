@@ -163,7 +163,7 @@ def canteen_status():
         
     except Exception as e:
         logger.error(f"Fehler beim Abrufen des Kantinenplan-Status: {e}")
-        return jsonify({'enabled': True, 'error': str(e)})
+        return jsonify({'enabled': True, 'error': 'Ein interner Fehler ist aufgetreten.'})
 
 @bp.route('/api/canteen/current_week', methods=['GET'])
 def api_current_week():
@@ -218,7 +218,7 @@ def api_current_week():
         
     except Exception as e:
         logger.error(f"API-Fehler: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/today', methods=['GET'])
 def api_today():
@@ -253,7 +253,7 @@ def api_today():
         })
     except Exception as e:
         logger.error(f"API-Fehler (today): {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/two_weeks', methods=['GET'])
 def api_two_weeks():
@@ -306,7 +306,7 @@ def api_two_weeks():
         
     except Exception as e:
         logger.error(f"API-Fehler: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/api/canteen/status', methods=['GET'])
 def api_status():
@@ -371,7 +371,7 @@ def debug_canteen():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/canteen/simple_save', methods=['POST'])
 def simple_save():

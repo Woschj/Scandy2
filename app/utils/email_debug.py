@@ -40,7 +40,7 @@ def debug_email_status():
     except Exception as e:
         return {
             'status': 'error',
-            'message': f'Fehler beim Prüfen des E-Mail-Status: {str(e)}',
+            'message': f'Fehler beim Prüfen des E-Mail-Status: [Interner Fehler]',
             'details': 'Überprüfen Sie die Logs für weitere Details'
         }
 
@@ -71,6 +71,6 @@ def test_simple_email():
     except Exception as e:
         return {
             'status': 'error',
-            'message': f'Fehler beim Testen der E-Mail: {str(e)}',
+            'message': f'Fehler beim Testen der E-Mail: [Interner Fehler]',
             'details': 'Überprüfen Sie die Logs für weitere Details'
         }

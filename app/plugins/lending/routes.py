@@ -21,11 +21,11 @@ def process_lending():
     logger.info(f"Request Method: {request.method}")
     logger.info(f"Request Path: {request.path}")
     logger.info(f"Request Headers: {dict(request.headers)}")
-    
+
     try:
         data = request.get_json()
         logger.info(f"Received data: {data}")
-        
+
         if not data:
             return jsonify({
                 'success': False,
@@ -35,7 +35,7 @@ def process_lending():
         # Validierung der Eingabedaten
         required_fields = ['item_type', 'item_barcode', 'worker_barcode']
         missing_fields = [field for field in required_fields if field not in data]
-        
+
         if missing_fields:
             return jsonify({
                 'success': False,
@@ -53,5 +53,5 @@ def process_lending():
         logger.error(f"Error in process_lending: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Ausleihe: {str(e)}'
+            'message': f'Fehler bei der Ausleihe: [Interner Fehler]'
         }), 500

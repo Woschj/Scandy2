@@ -148,7 +148,7 @@ class Job:
             
         except Exception as e:
             from app.utils.logger import loggers
-            loggers['errors'].error(f"Fehler in Job.find_by_id: {e}")
+            loggers['errors'].error(f"Fehler in Job.find_by_id: [Interner Fehler]")
             return None
     
     @staticmethod

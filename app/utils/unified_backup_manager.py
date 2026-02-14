@@ -1263,7 +1263,7 @@ class UnifiedBackupManager:
                     except Exception as e:
                         failed_count += 1
                         if len(report['errors']) < 20:
-                            report['errors'].append(f"{collection_name}: {e}")
+                            report['errors'].append(f"{collection_name}: [Interner Fehler]")
                 report['per_collection'][collection_name] = {
                     'inserted': inserted_count,
                     'failed': failed_count,

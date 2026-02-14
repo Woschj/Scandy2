@@ -448,8 +448,12 @@ def delete_logo(filename):
     """Logo löschen"""
     try:
         import os
-        logo_path = os.path.join(current_app.root_path, 'static', 'uploads', 'logos', filename)
-        if os.path.exists(logo_path):
+        from werkzeug.utils import secure_filename
+
+        safe_filename = secure_filename(filename)
+        logo_path = os.path.join(current_app.root_path, 'static', 'uploads', 'logos', safe_filename)
+
+        if os.path.exists(logo_path) and os.path.isfile(logo_path):
             os.remove(logo_path)
             return jsonify({'success': True, 'message': 'Logo erfolgreich gelöscht'})
         else:
