@@ -10,7 +10,14 @@ def history():
     """Zeigt die Historie der Ausleihen an"""
     try:
         # Hole die letzten 50 Ausleihen mit Details
+        # OPTIMIERUNG: Erst sortieren und limitieren, dann Lookups durchführen
         pipeline = [
+            {
+                '$sort': {'lent_at': -1}
+            },
+            {
+                '$limit': 50
+            },
             {
                 '$lookup': {
                     'from': 'tools',
@@ -43,32 +50,13 @@ def history():
                     'worker_name': {'$concat': ['$worker.firstname', ' ', '$worker.lastname']},
                     'worker_barcode': '$worker.barcode'
                 }
-            },
-            {
-                '$sort': {'lent_at': -1}
-            },
-            {
-                '$limit': 50
             }
         ]
-        
-        history_data = list(mongodb.aggregate('lendings', pipeline))
-        
-        # Konvertiere MongoDB-Objekte in das erwartete Format
-        history = []
-        for item in history_data:
-            history.append({
-                'id': str(item['id']),
-                'lent_at': item['lent_at'],
-                'returned_at': item.get('returned_at'),
-                'tool_name': item['tool_name'],
-                'tool_barcode': item['tool_barcode'],
-                'worker_name': item['worker_name'],
-                'worker_barcode': item['worker_barcode']
-            })
-            
+
+        history = list(mongodb.aggregate('lendings', pipeline))
+
     except Exception as e:
         print(f"Fehler beim Laden der Historie: {e}")
         history = []
-            
-    return render_template('history.html', history=history) 
+
+    return render_template('history.html', history=history)
