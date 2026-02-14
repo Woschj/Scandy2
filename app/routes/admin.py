@@ -3934,6 +3934,7 @@ def list_old_backups():
         }), 500
 
 @bp.route('/debug/session')
+@admin_required
 def debug_session():
     """Debug-Route für Session-Informationen"""
     try:
@@ -3961,6 +3962,7 @@ def debug_backup_info():
         }), 500
 
 @bp.route('/debug/clear-session')
+@admin_required
 def clear_session():
     """Löscht die aktuelle Session"""
     try:
@@ -3985,6 +3987,7 @@ def clear_session():
         }), 500
 
 @bp.route('/debug/fix-session/<username>')
+@admin_required
 def fix_session(username):
     """Repariert die Session für einen bestimmten Benutzer"""
     try:
@@ -4009,6 +4012,7 @@ def fix_session(username):
         }), 500
 
 @bp.route('/debug/normalize-user-ids')
+@admin_required
 def normalize_user_ids():
     """Normalisiert alle User-IDs in der Datenbank zu Strings"""
     try:
@@ -4034,6 +4038,7 @@ def normalize_user_ids():
         }), 500
 
 @bp.route('/debug/normalize-all-ids')
+@admin_required
 def normalize_all_ids():
     """Normalisiert alle IDs in allen Collections zu Strings"""
     try:
@@ -4746,67 +4751,6 @@ def import_all_data():
         flash(f'Fehler beim Importieren: {str(e)}', 'error')
         return redirect(url_for('admin.system'))
 
-@bp.route('/reset_password', methods=['GET', 'POST'])
-def reset_password():
-    """Passwort-Reset per E-Mail"""
-    if request.method == 'POST':
-        # Unterstütze sowohl "username" als auch "email" aus dem Formular
-        username_or_email = (request.form.get('username') or request.form.get('email') or '').strip()
-        
-        if not username_or_email:
-            flash('Bitte Benutzername oder E-Mail eingeben', 'error')
-            return render_template('auth/reset_password.html')
-        
-        # Benutzer per username oder email finden (case-insensitiv für E-Mail und Username)
-        import re as _re
-        if '@' in username_or_email:
-            _pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
-            user = mongodb.find_one('users', {'email': _pattern})
-        else:
-            _pattern = {'$regex': f'^{_re.escape(username_or_email)}$', '$options': 'i'}
-            user = mongodb.find_one('users', {'username': _pattern})
-        if not user:
-            flash('Kein Benutzer mit dieser E-Mail-Adresse gefunden.', 'error')
-            return render_template('auth/reset_password.html')
-        
-        # Empfänger-E-Mail prüfen
-        email = (user.get('email') or '').strip()
-        if not email:
-            flash('Für diesen Benutzer ist keine E-Mail-Adresse hinterlegt. Bitte wenden Sie sich an den Administrator.', 'error')
-            return render_template('auth/reset_password.html')
-        
-        # Token-basierten Reset-Link versenden (kein direktes Passwort-Ändern)
-        import secrets
-        from datetime import datetime, timedelta
-        token = secrets.token_urlsafe(32)
-        try:
-            mongodb.insert_one('password_reset_tokens', {
-                'token': token,
-                'user_id': user.get('_id'),
-                'username': user.get('username'),
-                'email': email,
-                'created_at': datetime.utcnow(),
-                'expires_at': datetime.utcnow() + timedelta(minutes=60),
-                'used': False
-            })
-        except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Reset-Tokens: {e}")
-            flash('Fehler beim Erstellen des Reset-Links.', 'error')
-            return render_template('auth/reset_password.html')
-
-        from flask import current_app
-        from app.utils.email_utils import send_password_reset_mail
-        reset_url = request.url_root.rstrip('/') + url_for('auth.reset_with_token', token=token)
-        _sent = send_password_reset_mail(email, reset_link=reset_url)
-        if not _sent:
-            logger.warning('Passwort-Reset: E-Mail-Versand fehlgeschlagen – Token wurde erstellt')
-            if getattr(current_app, 'debug', False):
-                flash(f'DEBUG: Reset-Link: {reset_url}', 'info')
-        flash('Wenn ein Konto existiert, wurde ein Link zum Zurücksetzen per E-Mail gesendet.', 'success')
-        
-        return redirect(url_for('auth.login'))
-    
-    return render_template('auth/reset_password.html')
 
 
 
@@ -6442,6 +6386,7 @@ def fix_dashboard_simple():
         }), 500
 
 @bp.route('/test/json-backups')
+@admin_required
 def test_json_backups():
     """Test-Route für JSON-Backups"""
     try:
