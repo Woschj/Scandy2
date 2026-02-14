@@ -37,13 +37,14 @@ RUN mkdir -p /app/app/uploads /app/app/backups /app/app/logs /app/app/flask_sess
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV FLASK_APP=app/wsgi.py
+ENV PORT=5000
 
 # Expose the application port
 EXPOSE 5000
 
-# Health check
+# Health check (dynamic port)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Start the application using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--max-requests", "1000", "--max-requests-jitter", "100", "app.wsgi:application"]
+# Start the application using Gunicorn (dynamic port)
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --workers 4 --timeout 120 --max-requests 1000 --max-requests-jitter 100 app.wsgi:application"]

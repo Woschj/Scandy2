@@ -64,7 +64,7 @@ class Config:
     
     # Server-Einstellungen
     HOST = '0.0.0.0'
-    PORT = 5000
+    PORT = int(os.environ.get('PORT') or os.environ.get('WEB_PORT') or os.environ.get('SCANDY_WEB_PORT') or 5000)
     
     # Static Files Konfiguration (für LXC-Container)
     STATIC_FOLDER = os.path.join(BASE_DIR, 'app', 'static')

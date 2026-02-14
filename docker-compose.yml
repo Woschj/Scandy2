@@ -1,49 +1,6 @@
+version: "3.9"
+
 services:
-  mongodb:
-    image: mongo:7
-    container_name: scandy-mongodb
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_immediately}
-      MONGO_INITDB_DATABASE: ${MONGODB_DB:-scandy}
-    ports:
-      - "${MONGO_PORT:-27017}:27017"
-    volumes:
-      - mongodb_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d
-    networks:
-      - scandy-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  mongo-express:
-    image: mongo-express:1.0.0
-    container_name: scandy-mongo-express
-    restart: unless-stopped
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-admin}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-change_me_immediately}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-change_me_immediately}@mongodb:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: ${ME_BASICAUTH_USER:-admin}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_BASICAUTH_PASSWORD:-change_me_immediately}
-    ports:
-      - "${ME_PORT:-8081}:8081"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - scandy-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   app:
     build:
       context: .
@@ -51,42 +8,50 @@ services:
     image: scandy:latest
     container_name: scandy-app
     restart: unless-stopped
-    environment:
-      - DATABASE_MODE=mongodb
-      - MONGODB_URI=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-change_me_immediately}@mongodb:27017/${MONGODB_DB:-scandy}?authSource=admin
-      - MONGODB_DB=${MONGODB_DB:-scandy}
-      - FLASK_ENV=${FLASK_ENV:-production}
-      - SECRET_KEY=${SECRET_KEY:-change_me_secret_key}
-      - SYSTEM_NAME=${SYSTEM_NAME:-Scandy}
-      - TZ=${TIMEZONE:-Europe/Berlin}
-      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-False}
-      - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-False}
-    ports:
-      - "${APP_PORT:-5000}:5000"
-    volumes:
-      - app_uploads:/app/app/uploads
-      - app_backups:/app/app/backups
-      - app_logs:/app/app/logs
-      - app_sessions:/app/app/flask_session
     depends_on:
       mongodb:
         condition: service_healthy
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017/scandy}
+      - SECRET_KEY=${SECRET_KEY:-change_me_immediately}
+      - PORT=${PORT:-5000}
+      - SYSTEM_NAME=${SYSTEM_NAME:-Scandy}
+      - TZ=${TIMEZONE:-Europe/Berlin}
+    ports:
+      - "${HOST_PORT:-5000}:${PORT:-5000}"
+    volumes:
+      - scandy_uploads:/app/app/uploads
+      - scandy_backups:/app/app/backups
+      - scandy_logs:/app/app/logs
+      - scandy_sessions:/app/app/flask_session
     networks:
-      - scandy-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - scandy-net
 
-volumes:
-  mongodb_data:
-  app_uploads:
-  app_backups:
-  app_logs:
-  app_sessions:
+  mongodb:
+    image: mongo:7
+    container_name: scandy-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=scandy
+    volumes:
+      - scandy_db_data:/data/db
+    networks:
+      - scandy-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 networks:
-  scandy-network:
+  scandy-net:
     driver: bridge
+
+volumes:
+  scandy_db_data:
+  scandy_uploads:
+  scandy_backups:
+  scandy_logs:
+  scandy_sessions:

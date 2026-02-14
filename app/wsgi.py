@@ -28,15 +28,16 @@ if __name__ == '__main__':
     # Für Entwicklung: Flask-Entwicklungsserver
     # Für Produktion: Verwende Gunicorn oder Waitress
     import sys
+    port = int(app.config.get('PORT', 5000))
     if len(sys.argv) > 1 and sys.argv[1] == '--dev':
         # Entwicklungsserver
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='0.0.0.0', port=port, debug=False)
     else:
         # Produktionsserver (Waitress als Fallback)
         try:
             from waitress import serve
-            print("Starting with Waitress production server...")
-            serve(app, host='0.0.0.0', port=5000, threads=4)
+            print(f"Starting with Waitress production server on port {port}...")
+            serve(app, host='0.0.0.0', port=port, threads=4)
         except ImportError:
-            print("Waitress not available, falling back to Flask development server...")
-            app.run(host='0.0.0.0', port=5000, debug=False) 
+            print(f"Waitress not available, falling back to Flask development server on port {port}...")
+            app.run(host='0.0.0.0', port=port, debug=False)
