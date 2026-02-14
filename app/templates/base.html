@@ -174,9 +174,12 @@
             transition: all 0.2s ease;
         }
 
-        .sidebar-nav-item:hover {
+        .sidebar-nav-item:hover,
+        .sidebar-nav-item:focus-visible {
             background-color: #f3f4f6;
             transform: translateX(4px);
+            outline: 2px solid oklch(var(--p));
+            outline-offset: -2px;
         }
 
         .sidebar-nav-item.active {
@@ -225,7 +228,8 @@
         <!-- Vertikales Seitenmenü -->
         <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
-            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
+            {% set qs_tooltip = "Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer)" if not current_user.is_authenticated else ("Quick Scan (nicht verfügbar für Teilnehmer)" if current_user.role == 'teilnehmer' else "Quick Scan öffnen") %}
+            <button type="button" class="w-full h-16 min-h-[4rem] px-0 border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{{ qs_tooltip }}" aria-label="{{ qs_tooltip }}">
                 <div class="w-full h-20 rounded-tl-xl overflow-hidden transition-all duration-300 flex items-center justify-center group
                     {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-gray-50 cursor-pointer{% endif %}">
                     <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-90">
@@ -233,7 +237,7 @@
                     <!-- Scanner Animation -->
                     <div class="absolute w-full h-0.5 bg-primary/50 -top-1 left-0 animate-scanner after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-primary/30"></div>
                 </div>
-            </div>
+            </button>
             
             <!-- Trennlinie -->
             <div class="sidebar-divider"></div>
@@ -411,10 +415,10 @@
             <div class="flex-1 flex items-center justify-end gap-2 min-w-0">
                 {% if current_user.is_authenticated %}
                 <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <button type="button" class="btn btn-ghost btn-sm" aria-label="Abteilung wechseln. Aktuelle Abteilung: {{ departments_ctx.current or departments.current or 'Abteilung wählen' }}">
                         <i class="fas fa-building mr-2"></i>
                         {{ departments_ctx.current or departments.current or 'Abteilung wählen' }}
-                    </label>
+                    </button>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-60">
                         {% for dep in (departments_ctx.allowed or departments.allowed) %}
                         <li>
@@ -428,9 +432,9 @@
                 {% endif %}
                 {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
                 <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <button type="button" class="btn btn-ghost btn-sm" aria-label="Administrationsmenü öffnen">
                         <i class="fas fa-bars"></i>
-                    </label>
+                    </button>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52">
                         <li>
                             <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and 'admin.dashboard' in request.endpoint %}active{% endif %}">
@@ -481,7 +485,8 @@
                     </ul>
                 </div>
                 <a href="{{ url_for('admin.trash') }}" 
-                   class="btn btn-ghost btn-circle btn-sm text-error relative">
+                   class="btn btn-ghost btn-circle btn-sm text-error relative"
+                   aria-label="Papierkorb {% if trash_count is defined and trash_count > 0 %}({{ trash_count }} Elemente){% endif %}">
                     <i class="fas fa-trash-alt"></i>
                     {% if trash_count is defined and trash_count > 0 %}
                     <span class="absolute -top-2 -right-2 bg-error text-white rounded-full w-5 h-5 
@@ -492,10 +497,10 @@
                 </a>
                 {% endif %}
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('auth.profile') }}" class="text-sm mr-2 hidden md:inline hover:text-primary transition-colors duration-200" title="Mein Profil bearbeiten">
+                    <a href="{{ url_for('auth.profile') }}" class="text-sm mr-2 hidden md:inline hover:text-primary transition-colors duration-200" title="Mein Profil bearbeiten" aria-label="Profil von {{ current_user.username }} bearbeiten">
                         <i class="fas fa-user mr-1"></i>{{ current_user.username }}
                     </a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm" title="Logout">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm" title="Logout" aria-label="Abmelden">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 {% else %}
