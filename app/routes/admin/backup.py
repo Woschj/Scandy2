@@ -64,7 +64,7 @@ def backup_list():
         logger.error(f"Fehler beim Laden der Backups: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Laden der Backups: {str(e)}'
+            'message': f'Fehler beim Laden der Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/create', methods=['POST'])
@@ -111,7 +111,7 @@ def create_backup():
         logger.error(f"Fehler beim Erstellen des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Erstellen des Backups: {str(e)}'
+            'message': f'Fehler beim Erstellen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/upload', methods=['POST'])
@@ -215,7 +215,7 @@ def upload_backup():
         logger.error(f"Fehler beim Hochladen des Backups: {str(e)}", exc_info=True)
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Hochladen des Backups: {str(e)}'
+            'message': f'Fehler beim Hochladen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/restore/<filename>', methods=['POST'])
@@ -283,7 +283,7 @@ def restore_backup(filename):
         logger.error(f"Fehler beim Wiederherstellen des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Wiederherstellen des Backups: {str(e)}'
+            'message': f'Fehler beim Wiederherstellen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/download/<filename>')
@@ -359,7 +359,7 @@ def download_backup(filename):
         logger.error(f"Fehler beim Herunterladen des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Herunterladen des Backups: {str(e)}'
+            'message': f'Fehler beim Herunterladen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/test/<filename>')
@@ -385,7 +385,7 @@ def test_backup(filename):
         logger.error(f"Fehler beim Testen des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Testen des Backups: {str(e)}'
+            'message': f'Fehler beim Testen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/create-json', methods=['POST'])
@@ -413,7 +413,7 @@ def create_json_backup():
         logger.error(f"Fehler beim Erstellen des JSON-Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Erstellen des JSON-Backups: {str(e)}'
+            'message': f'Fehler beim Erstellen des JSON-Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/create-native', methods=['POST'])
@@ -441,7 +441,7 @@ def create_native_backup():
         logger.error(f"Fehler beim Erstellen des nativen Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Erstellen des nativen Backups: {str(e)}'
+            'message': f'Fehler beim Erstellen des nativen Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/restore-native/<backup_name>', methods=['POST'])
@@ -468,7 +468,7 @@ def restore_native_backup(backup_name):
         logger.error(f"Fehler beim Wiederherstellen des nativen Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Wiederherstellen des nativen Backups: {str(e)}'
+            'message': f'Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/create-hybrid', methods=['POST'])
@@ -496,7 +496,7 @@ def create_hybrid_backup():
         logger.error(f"Fehler beim Erstellen des hybriden Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Erstellen des hybriden Backups: {str(e)}'
+            'message': f'Fehler beim Erstellen des hybriden Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/convert-old/<filename>', methods=['POST'])
@@ -523,7 +523,7 @@ def convert_old_backup(filename):
         logger.error(f"Fehler beim Konvertieren des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Konvertieren des Backups: {str(e)}'
+            'message': f'Fehler beim Konvertieren des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/convert-all-old', methods=['POST'])
@@ -544,7 +544,7 @@ def convert_all_old_backups():
         logger.error(f"Fehler bei der Massenkonvertierung: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler bei der Massenkonvertierung: {str(e)}'
+            'message': f'Fehler bei der Massenkonvertierung: [Interner Fehler]'
         }), 500
 
 @bp.route('/backup/list-old', methods=['GET'])
@@ -565,7 +565,7 @@ def list_old_backups():
         logger.error(f"Fehler beim Auflisten alter Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Auflisten alter Backups: {str(e)}'
+            'message': f'Fehler beim Auflisten alter Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/debug/backup-info')
@@ -578,7 +578,7 @@ def debug_backup_info():
         return jsonify(backup_info)
     except Exception as e:
         return jsonify({
-            'error': str(e),
+            'error': 'Ein interner Fehler ist aufgetreten.',
             'traceback': str(e.__traceback__)
         }), 500
 
@@ -641,9 +641,9 @@ def import_all_data():
                                 mongodb.update_one('tools', {'barcode': tool_data.get('barcode')}, {'$set': tool_data})
                                 imported_count += 1
                         except Exception as e:
-                            errors.append(f"Zeile {index + 2}: Fehler bei Werkzeug: {str(e)}")
+                            errors.append(f"Zeile {index + 2}: Fehler bei Werkzeug: [Interner Fehler]")
                 except Exception as e:
-                    errors.append(f"Fehler beim Lesen der Werkzeuge-Tabelle: {str(e)}")
+                    errors.append(f"Fehler beim Lesen der Werkzeuge-Tabelle: [Interner Fehler]")
 
             # Importiere Mitarbeiter
             if 'Mitarbeiter' in excel_file.sheet_names:
@@ -668,9 +668,9 @@ def import_all_data():
                                 mongodb.update_one('workers', {'barcode': worker_data.get('barcode')}, {'$set': worker_data})
                                 imported_count += 1
                         except Exception as e:
-                            errors.append(f"Zeile {index + 2}: Fehler bei Mitarbeiter: {str(e)}")
+                            errors.append(f"Zeile {index + 2}: Fehler bei Mitarbeiter: [Interner Fehler]")
                 except Exception as e:
-                    errors.append(f"Fehler beim Lesen der Mitarbeiter-Tabelle: {str(e)}")
+                    errors.append(f"Fehler beim Lesen der Mitarbeiter-Tabelle: [Interner Fehler]")
 
             # Importiere Verbrauchsmaterial
             if 'Verbrauchsmaterial' in excel_file.sheet_names:
@@ -695,9 +695,9 @@ def import_all_data():
                                 mongodb.update_one('consumables', {'barcode': consumable_data.get('barcode')}, {'$set': consumable_data})
                                 imported_count += 1
                         except Exception as e:
-                            errors.append(f"Zeile {index + 2}: Fehler bei Verbrauchsmaterial: {str(e)}")
+                            errors.append(f"Zeile {index + 2}: Fehler bei Verbrauchsmaterial: [Interner Fehler]")
                 except Exception as e:
-                    errors.append(f"Fehler beim Lesen der Verbrauchsmaterial-Tabelle: {str(e)}")
+                    errors.append(f"Fehler beim Lesen der Verbrauchsmaterial-Tabelle: [Interner Fehler]")
 
             # Importiere Settings (Kategorien, Standorte, Abteilungen)
             if 'Settings' in excel_file.sheet_names:
@@ -724,9 +724,9 @@ def import_all_data():
                             else:
                                 errors.append(f"Zeile {index + 2}: Ungültige Setting '{setting_data.get('key')}' übersprungen")
                         except Exception as e:
-                            errors.append(f"Zeile {index + 2}: Fehler bei Setting: {str(e)}")
+                            errors.append(f"Zeile {index + 2}: Fehler bei Setting: [Interner Fehler]")
                 except Exception as e:
-                    errors.append(f"Fehler beim Lesen der Settings-Tabelle: {str(e)}")
+                    errors.append(f"Fehler beim Lesen der Settings-Tabelle: [Interner Fehler]")
 
             # Zeige Erfolgsmeldung und eventuelle Fehler
             if errors:
@@ -744,7 +744,7 @@ def import_all_data():
 
     except Exception as e:
         logger.error(f"Fehler beim Importieren der Daten: {str(e)}")
-        flash(f'Fehler beim Importieren: {str(e)}', 'error')
+        flash(f'Fehler beim Importieren: [Interner Fehler]', 'error')
         return redirect(url_for('admin.system'))
 
 @bp.route('/backup/auto/status')
@@ -763,7 +763,7 @@ def auto_backup_status():
         logger.error(f"Fehler beim Abrufen des Auto-Backup-Status: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Abrufen des Status: {str(e)}'
+            'message': f'Fehler beim Abrufen des Status: [Interner Fehler]'
         })
 
 @bp.route('/backup/auto/start', methods=['POST'])
@@ -782,7 +782,7 @@ def start_auto_backup():
         logger.error(f"Fehler beim Starten des Auto-Backup-Systems: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Starten: {str(e)}'
+            'message': f'Fehler beim Starten: [Interner Fehler]'
         })
 
 @bp.route('/backup/auto/stop', methods=['POST'])
@@ -801,7 +801,7 @@ def stop_auto_backup():
         logger.error(f"Fehler beim Stoppen des Auto-Backup-Systems: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Stoppen: {str(e)}'
+            'message': f'Fehler beim Stoppen: [Interner Fehler]'
         })
 
 @bp.route('/backup/auto/logs')
@@ -831,7 +831,7 @@ def auto_backup_logs():
         logger.error(f"Fehler beim Abrufen der Auto-Backup-Logs: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Abrufen der Logs: {str(e)}'
+            'message': f'Fehler beim Abrufen der Logs: [Interner Fehler]'
         })
 
 @bp.route('/auto-backup', methods=['GET', 'POST'])
@@ -882,7 +882,7 @@ def auto_backup():
                         flash('E-Mail-Adresse für wöchentliche Backups erfolgreich gespeichert.', 'success')
                     except Exception as e:
                         logger.error(f"Fehler beim Speichern der wöchentlichen Backup-E-Mail: {e}")
-                        flash(f'Fehler beim Speichern der E-Mail-Adresse: {str(e)}', 'error')
+                        flash(f'Fehler beim Speichern der E-Mail-Adresse: [Interner Fehler]', 'error')
                 else:
                     flash('Bitte geben Sie eine gültige E-Mail-Adresse ein.', 'error')
 
@@ -923,7 +923,7 @@ def test_weekly_backup():
         logger.error(f"Fehler beim Versenden des Backup-Archivs: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Versenden: {str(e)}'
+            'message': f'Fehler beim Versenden: [Interner Fehler]'
         })
 
 @bp.route('/backup/import_json', methods=['GET', 'POST'])
@@ -993,7 +993,7 @@ def import_json_backup_job_status(job_id: str):
         job = unified_backup_manager.get_import_job(job_id)
         return jsonify(job)
     except Exception as e:
-        return jsonify({'exists': False, 'error': str(e)}), 500
+        return jsonify({'exists': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/backup/import_json/status/<job_id>', methods=['GET'])
 @login_required
@@ -1074,7 +1074,7 @@ def fix_backup_fields():
         logger.error(f"Fehler beim Korrigieren der Backup-Felder: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Korrigieren: {str(e)}'
+            'message': f'Fehler beim Korrigieren: [Interner Fehler]'
         }), 500
 
 @bp.route('/debug/test-backup-restore/<filename>', methods=['GET'])
@@ -1113,14 +1113,14 @@ def test_backup_restore(filename):
         except Exception as e:
             return jsonify({
                 'success': False,
-                'message': f'Fehler beim Testen des Backups: {str(e)}',
+                'message': f'Fehler beim Testen des Backups: [Interner Fehler]',
                 'backup_path': str(backup_path)
             })
 
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Unerwarteter Fehler: {str(e)}'
+            'message': f'Unerwarteter Fehler: [Interner Fehler]'
         }), 500
 
 @bp.route('/test/json-backups')
@@ -1140,5 +1140,5 @@ def test_json_backups():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500

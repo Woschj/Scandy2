@@ -76,7 +76,7 @@ def manual_lending():
                 logger.error(f"Fehler bei der Ausleihe: {str(e)}")
                 return jsonify({
                     'success': False,
-                    'message': f'Fehler: {str(e)}'
+                    'message': f'Fehler: [Interner Fehler]'
                 }), 500
 
         except Exception as e:
@@ -184,7 +184,7 @@ def manual_lending():
                               consumables=consumables,
                               current_lendings=current_lendings)
     except Exception as e:
-        print(f"Fehler beim Laden der Daten: {e}")
+        print(f"Fehler beim Laden der Daten: [Interner Fehler]")
         flash('Fehler beim Laden der Daten', 'error')
         return render_template('admin/manual_lending.html',
                               tools=[],
@@ -344,7 +344,7 @@ def change_department():
 
     except Exception as e:
         logger.error(f"Fehler beim Wechseln der Abteilung: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/role_permissions', methods=['GET', 'POST'])
 @admin_required
@@ -826,7 +826,7 @@ def diagnose_email():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Diagnose-Fehler: {str(e)}'
+            'message': f'Diagnose-Fehler: [Interner Fehler]'
         })
 
 @bp.route('/version/check', methods=['GET'])
@@ -844,7 +844,7 @@ def check_version():
         logger.error(f"Fehler beim Versionscheck: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Versionscheck: {str(e)}'
+            'message': f'Fehler beim Versionscheck: [Interner Fehler]'
         }), 500
 
 @bp.route('/version_check', methods=['GET'])
@@ -873,7 +873,7 @@ def version_check():
         logger.error(f"Fehler beim Versionscheck: {str(e)}")
         return jsonify({
             'update_available': False,
-            'error': str(e)
+            'error': 'Ein interner Fehler ist aufgetreten.'
         })
 
 @bp.route('/version/info', methods=['GET'])
@@ -891,7 +891,7 @@ def get_version_info():
         logger.error(f"Fehler beim Abrufen der Versionsinformationen: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Abrufen der Versionsinformationen: {str(e)}'
+            'message': f'Fehler beim Abrufen der Versionsinformationen: [Interner Fehler]'
         }), 500
 
 @bp.route('/version', methods=['GET'])
@@ -903,5 +903,5 @@ def version_check_page():
         return render_template('admin/version_check.html')
     except Exception as e:
         logger.error(f"Fehler beim Laden der Versionscheck-Seite: {str(e)}")
-        flash(f'Fehler beim Laden der Seite: {str(e)}', 'error')
+        flash(f'Fehler beim Laden der Seite: [Interner Fehler]', 'error')
         return redirect(url_for('admin.dashboard'))

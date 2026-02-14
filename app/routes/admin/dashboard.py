@@ -416,14 +416,22 @@ def export_ticket(id):
             # Sende das Dokument
             ticket = find_document_by_id('tickets', id)
             ticket_number = ticket.get('ticket_number', id) if ticket else id
-            return send_file(file_path, as_attachment=True, download_name=f'ticket_{ticket_number}_export.docx')
+
+            # Pfad-Validierung für Sicherheit
+            base_dir = os.path.abspath(os.path.join(current_app.root_path, 'static', 'uploads'))
+            abs_file_path = os.path.abspath(file_path)
+            if not abs_file_path.startswith(base_dir):
+                 logger.error(f"Sicherheitswarnung: Unzulässiger Dateipfad beim Ticket-Export: {abs_file_path}")
+                 abort(403)
+
+            return send_file(abs_file_path, as_attachment=True, download_name=f'ticket_{ticket_number}_export.docx')
         else:
-            flash(message, 'error')
+            flash('Fehler beim Exportieren des Tickets.', 'error')
             return redirect(url_for('admin.ticket_detail', ticket_id=id))
 
     except Exception as e:
         logging.error(f"Fehler beim Generieren des Word-Dokuments: {str(e)}", exc_info=True)
-        flash(f'Fehler beim Generieren des Dokuments: {str(e)}', 'error')
+        flash('Fehler beim Generieren des Dokuments.', 'error')
         return redirect(url_for('admin.ticket_detail', ticket_id=id))
 
 @bp.route('/export_all_data')

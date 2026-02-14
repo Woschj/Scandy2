@@ -123,7 +123,7 @@ def restore_item(type, barcode):
         logger.error(f"Fehler beim Wiederherstellen des Eintrags: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Wiederherstellen: {str(e)}'
+            'message': f'Fehler beim Wiederherstellen: [Interner Fehler]'
         }), 500
 
 @bp.route('/tools/delete', methods=['DELETE'])
@@ -177,7 +177,7 @@ def delete_tool_soft_json():
         logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/tools/<barcode>/delete', methods=['DELETE'])
@@ -226,7 +226,7 @@ def delete_tool_soft(barcode):
         logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/tools/<barcode>/delete-permanent', methods=['DELETE'])
@@ -258,7 +258,7 @@ def delete_tool_permanent(barcode):
         logger.error(f"Fehler beim endgültigen Löschen des Werkzeugs: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/consumables/delete', methods=['DELETE'])
@@ -362,7 +362,7 @@ def delete_worker_soft_json():
         logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/workers/<barcode>/delete', methods=['DELETE'])
@@ -411,7 +411,7 @@ def delete_worker_soft(barcode):
         logger.error(f"Fehler beim Löschen des Mitarbeiters: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/workers/<barcode>/delete-permanent', methods=['DELETE'])
@@ -690,7 +690,7 @@ def delete_backup(filename):
         logger.error(f"Fehler beim Löschen des Backups: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Fehler beim Löschen des Backups: {str(e)}'
+            'message': f'Fehler beim Löschen des Backups: [Interner Fehler]'
         }), 500
 
 @bp.route('/tickets/<ticket_id>/delete', methods=['POST'])
@@ -717,7 +717,7 @@ def delete_ticket(ticket_id):
         logger.error(f"Fehler beim Löschen des Tickets: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
 
 @bp.route('/tickets/<ticket_id>/delete-permanent', methods=['DELETE'])
@@ -762,5 +762,5 @@ def delete_ticket_permanent(ticket_id):
         logger.error(f"Fehler beim endgültigen Löschen des Tickets: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Löschen: {str(e)}'
+            'message': f'Fehler beim Löschen: [Interner Fehler]'
         }), 500
