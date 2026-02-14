@@ -250,7 +250,7 @@ class ProductionConfig(Config):
                 os.chmod(session_dir, 0o755)  # rwxr-xr-x
                 app.logger.info(f"Session-Verzeichnis-Berechtigungen gesetzt: {session_dir}")
             except Exception as e:
-                app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: {e}")
+                app.logger.warning(f"Konnte Session-Verzeichnis-Berechtigungen nicht setzen: [Interner Fehler]")
         
         # Security Headers hinzufügen (CSP Nonce einsetzen)
         @app.after_request

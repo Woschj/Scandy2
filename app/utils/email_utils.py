@@ -29,7 +29,7 @@ def _get_encryption_key():
         key = hashlib.sha256(secret_key.encode()).digest()
         return base64.urlsafe_b64encode(key)
     except Exception as e:
-        logger.error(f"Fehler beim Generieren des Verschlüsselungsschlüssels: {e}")
+        logger.error(f"Fehler beim Generieren des Verschlüsselungsschlüssels: [Interner Fehler]")
         return None
 
 def _get_fernet():
@@ -42,7 +42,7 @@ def _get_fernet():
             return None
         return Fernet(key)
     except Exception as e:
-        logger.error(f"Fehler beim Initialisieren von Fernet: {e}")
+        logger.error(f"Fehler beim Initialisieren von Fernet: [Interner Fehler]")
         return None
 
 def _encrypt_password(password):
@@ -58,7 +58,7 @@ def _encrypt_password(password):
             token = f.encrypt(password.encode('utf-8')).decode('utf-8')
             return f"fernet:{token}"
         except Exception as e:
-            logger.warning(f"Fernet-Verschlüsselung fehlgeschlagen, verwende XOR-Fallback: {e}")
+            logger.warning(f"Fernet-Verschlüsselung fehlgeschlagen, verwende XOR-Fallback: [Interner Fehler]")
     # Fallback XOR
     try:
         key = _get_encryption_key()
@@ -69,7 +69,7 @@ def _encrypt_password(password):
             encrypted.append(byte ^ key_bytes[i % len(key_bytes)])
         return base64.urlsafe_b64encode(bytes(encrypted)).decode()
     except Exception as e:
-        logger.error(f"Fehler beim Verschlüsseln des Passworts: {e}")
+        logger.error(f"Fehler beim Verschlüsseln des Passworts: [Interner Fehler]")
         return None
 
 def _decrypt_password(encrypted_password):
@@ -95,7 +95,7 @@ def _decrypt_password(encrypted_password):
                 return None
             return f.decrypt(encrypted_password.encode('utf-8')).decode('utf-8')
     except Exception as e:
-        logger.error(f"Fernet-Entschlüsselung fehlgeschlagen: {e}")
+        logger.error(f"Fernet-Entschlüsselung fehlgeschlagen: [Interner Fehler]")
         return None
     # Fallback XOR
     try:
@@ -110,7 +110,7 @@ def _decrypt_password(encrypted_password):
             decrypted.append(byte ^ key_bytes[i % len(key_bytes)])
         return bytes(decrypted).decode('utf-8')
     except Exception as e:
-        logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
+        logger.error(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler]")
         return None
 
 def get_email_config():
@@ -155,7 +155,7 @@ def get_email_config():
         
         return config
     except Exception as e:
-        logger.error(f"Fehler beim Laden der E-Mail-Konfiguration: {e}")
+        logger.error(f"Fehler beim Laden der E-Mail-Konfiguration: [Interner Fehler]")
         return None
 
 def save_email_config(config_data):
@@ -193,7 +193,7 @@ def save_email_config(config_data):
         
         return True
     except Exception as e:
-        logger.error(f"Fehler beim Speichern der E-Mail-Konfiguration: {e}")
+        logger.error(f"Fehler beim Speichern der E-Mail-Konfiguration: [Interner Fehler]")
         return False
 
 def test_email_config(config_data):
@@ -215,14 +215,14 @@ def test_email_config(config_data):
                     logger.warning("Passwort konnte nicht entschlüsselt werden")
                     return False, "Passwort konnte nicht entschlüsselt werden"
             except Exception as e:
-                logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
-                return False, f"Fehler beim Entschlüsseln des Passworts: {str(e)}"
+                logger.error(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler]")
+                return False, f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler]"
         
         # Teste SMTP-Verbindung direkt
         import smtplib
         from email.mime.text import MIMEText
         
-        logger.info(f"Teste E-Mail-Konfiguration: {config_data['mail_server']}:{config_data['mail_port']}")
+        logger.info("Teste E-Mail-Konfiguration")
         
         # SMTP-Verbindung aufbauen
         if config_data['mail_use_tls'] and config_data['mail_port'] == 465:
@@ -254,17 +254,17 @@ def test_email_config(config_data):
         return True, "E-Mail-Konfiguration funktioniert"
         
     except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP-Authentifizierungsfehler: {e}")
-        return False, f"Authentifizierungsfehler: {str(e)}"
+        logger.error(f"SMTP-Authentifizierungsfehler: [Interner Fehler]")
+        return False, f"Authentifizierungsfehler: [Interner Fehler]"
     except smtplib.SMTPConnectError as e:
-        logger.error(f"SMTP-Verbindungsfehler: {e}")
-        return False, f"Verbindungsfehler: {str(e)}"
+        logger.error(f"SMTP-Verbindungsfehler: [Interner Fehler]")
+        return False, f"Verbindungsfehler: [Interner Fehler]"
     except smtplib.SMTPException as e:
-        logger.error(f"SMTP-Fehler: {e}")
-        return False, f"SMTP-Fehler: {str(e)}"
+        logger.error(f"SMTP-Fehler: [Interner Fehler]")
+        return False, f"SMTP-Fehler: [Interner Fehler]"
     except Exception as e:
-        logger.error(f"Unerwarteter Fehler beim E-Mail-Test: {e}")
-        return False, f"Unerwarteter Fehler: {str(e)}"
+        logger.error(f"Unerwarteter Fehler beim E-Mail-Test: [Interner Fehler]")
+        return False, f"Unerwarteter Fehler: [Interner Fehler]"
 
 def init_mail(app):
     global mail
@@ -323,7 +323,7 @@ def init_mail(app):
                 app.logger.info(f"TLS: {config['mail_use_tls']}, SSL: {app.config['MAIL_USE_SSL']}")
                 return mail
             except Exception as e:
-                app.logger.error(f"Fehler bei E-Mail-Initialisierung: {e}")
+                app.logger.error(f"Fehler bei E-Mail-Initialisierung: [Interner Fehler]")
                 mail = None
                 return None
         else:
@@ -332,7 +332,7 @@ def init_mail(app):
             mail = None
             return None
     except Exception as e:
-        app.logger.error(f"Fehler bei E-Mail-Initialisierung: {e}")
+        app.logger.error(f"Fehler bei E-Mail-Initialisierung: [Interner Fehler]")
         mail = None
         return None
 
@@ -357,7 +357,7 @@ def _check_auth_required(server, port, use_tls):
                 smtp_server.starttls()
                 capabilities = smtp_server.ehlo()
             except Exception as e:
-                logger.warning(f"STARTTLS nicht verfügbar: {e}")
+                logger.warning(f"STARTTLS nicht verfügbar: [Interner Fehler]")
                 pass  # STARTTLS nicht verfügbar
         
         # Prüfe AUTH in Capabilities (korrigiert für btz-koeln.net)
@@ -384,7 +384,7 @@ def _check_auth_required(server, port, use_tls):
         return auth_supported
         
     except Exception as e:
-        logger.warning(f"Konnte Auth-Status für {server}:{port} nicht prüfen: {e}")
+        logger.warning(f"Konnte Auth-Status für {server}:{port} nicht prüfen: [Interner Fehler]")
         # Bei Fehlern annehmen, dass Auth erforderlich ist (sicherer Fallback)
         return True
 
@@ -404,11 +404,11 @@ def _send_email_direct(recipient, subject, body, attachments=None, mail_type="de
         # Lade E-Mail-Konfiguration
         config = get_email_config()
         if not config:
-            logger.error(f"[MAIL][{mail_type}] E-Mail-Konfiguration nicht verfügbar! Empfänger: {recipient}, Betreff: {subject}")
+            logger.error("[MAIL] E-Mail-Konfiguration nicht verfügbar")
             return False
 
         # Logge alle Parameter vor dem Versand
-        logger.info(f"[MAIL][{mail_type}] Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info("[MAIL] Versand wird vorbereitet")
 
         # Erstelle E-Mail-Nachricht
         msg = MIMEMultipart()
@@ -476,11 +476,11 @@ def _send_email_direct(recipient, subject, body, attachments=None, mail_type="de
         server.sendmail(config['mail_username'], recipient, text)
         server.quit()
 
-        logger.info(f"[MAIL][{mail_type}] E-Mail erfolgreich versendet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info("[MAIL] E-Mail erfolgreich versendet")
         return True
 
     except Exception as e:
-        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten E-Mail-Versand: {e}\nEmpfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username') if 'config' in locals() and config else 'N/A'}, SMTP={config.get('mail_server') if 'config' in locals() and config else 'N/A'}:{config.get('mail_port') if 'config' in locals() and config else 'N/A'}, TLS={config.get('mail_use_tls') if 'config' in locals() and config else 'N/A'}, Auth={config.get('use_auth', True) if 'config' in locals() and config else 'N/A'}, Attachments={bool(attachments)}\n{traceback.format_exc()}")
+        logger.error("[MAIL] Fehler beim E-Mail-Versand")
         return False
 
 def _send_email_direct_html(recipient, subject, html_content=None, text_content=None, attachments=None, mail_type="default"):
@@ -495,11 +495,11 @@ def _send_email_direct_html(recipient, subject, html_content=None, text_content=
         # Lade E-Mail-Konfiguration
         config = get_email_config()
         if not config:
-            logger.error(f"[MAIL][{mail_type}] E-Mail-Konfiguration nicht verfügbar! Empfänger: {recipient}, Betreff: {subject}")
+            logger.error("[MAIL] E-Mail-Konfiguration nicht verfügbar")
             return False
 
         # Logge alle Parameter vor dem Versand
-        logger.info(f"[MAIL][{mail_type}] HTML-E-Mail Versand wird vorbereitet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info("[MAIL] HTML-E-Mail Versand wird vorbereitet")
 
         # Erstelle E-Mail-Nachricht
         msg = MIMEMultipart('alternative')
@@ -574,11 +574,11 @@ def _send_email_direct_html(recipient, subject, html_content=None, text_content=
         server.sendmail(config['mail_username'], recipient, text)
         server.quit()
 
-        logger.info(f"[MAIL][{mail_type}] HTML-E-Mail erfolgreich versendet: Empfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username')}, SMTP={config.get('mail_server')}:{config.get('mail_port')}, TLS={config.get('mail_use_tls')}, Auth={config.get('use_auth', True)}, Attachments={bool(attachments)}")
+        logger.info("[MAIL] HTML-E-Mail erfolgreich versendet")
         return True
 
     except Exception as e:
-        logger.error(f"[MAIL][{mail_type}] Fehler beim direkten HTML-E-Mail-Versand: {e}\nEmpfänger={recipient}, Betreff={subject}, Absender={config.get('mail_username') if 'config' in locals() and config else 'N/A'}, SMTP={config.get('mail_server') if 'config' in locals() and config else 'N/A'}:{config.get('mail_port') if 'config' in locals() and config else 'N/A'}, TLS={config.get('mail_use_tls') if 'config' in locals() and config else 'N/A'}, Auth={config.get('use_auth', True) if 'config' in locals() and config else 'N/A'}, Attachments={bool(attachments)}\n{traceback.format_exc()}")
+        logger.error("[MAIL] Fehler beim HTML-E-Mail-Versand")
         return False
 
 def ensure_app_context(func):
@@ -613,7 +613,7 @@ def send_email(to_email, subject, html_content=None, text_content=None, from_nam
         return success
         
     except Exception as e:
-        logger.error(f"[MAIL][auftrag] Fehler beim Senden der E-Mail: {e}\nEmpfänger={to_email}, Betreff={subject}, From={from_name}\n{traceback.format_exc()}")
+        logger.error(f"[MAIL][auftrag] Fehler beim Senden der E-Mail: [Interner Fehler]\nEmpfänger={to_email}, Betreff={subject}, From={from_name}\n{traceback.format_exc()}")
         return False
 
 @ensure_app_context
@@ -811,7 +811,7 @@ Scandy - Ihr Auftragssystem
         return result
         
     except Exception as e:
-        logger.error(f"Fehler beim Senden der Auftragsbestätigungs-E-Mail: {str(e)}")
+        logger.error(f"Fehler beim Senden der Auftragsbestätigungs-E-Mail: [Interner Fehler]")
         return False 
 
 @ensure_app_context
@@ -825,7 +825,7 @@ def send_password_mail(recipient, password):
             logger.info(f"Passwort-E-Mail erfolgreich an {recipient} gesendet (ohne Speicherung im Gesendet-Ordner)")
         return success
     except Exception as e:
-        logger.error(f"Fehler beim Versenden der Passwort-E-Mail: {e}")
+        logger.error(f"Fehler beim Versenden der Passwort-E-Mail: [Interner Fehler]")
         return False
 
 @ensure_app_context
@@ -847,7 +847,7 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
                 logger.error(f"[MAIL][reset] Fehlende E-Mail-Einstellung: {setting}")
                 return False
         
-        logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail wird vorbereitet: Empfänger={recipient}, Passwort={bool(password)}, Reset_Link={bool(reset_link)}")
+        logger.info("[MAIL][reset] Passwort-Reset-E-Mail wird vorbereitet")
         
         # Zusätzliche Kontextdaten ermitteln (z. B. Benutzername) für bessere Template-Kompatibilität
         username = None
@@ -938,11 +938,11 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
                 logger.error(f"[MAIL][reset] Passwort-Reset-E-Mail fehlgeschlagen (Fallback HTML)")
             return success
         except Exception as e:
-            logger.error(f"[MAIL][reset] Fehler beim Versenden der Passwort-Reset-E-Mail (Fallback): {e}")
+            logger.error(f"[MAIL][reset] Fehler beim Versenden der Passwort-Reset-E-Mail (Fallback): [Interner Fehler]")
             return False
             
     except Exception as e:
-        logger.error(f"[MAIL][reset] Unerwarteter Fehler in send_password_reset_mail: {e}")
+        logger.error(f"[MAIL][reset] Unerwarteter Fehler in send_password_reset_mail: [Interner Fehler]")
         return False
 
 @ensure_app_context
@@ -981,7 +981,7 @@ Ihr Scandy-System"""
         return success
         
     except Exception as e:
-        logger.error(f"[MAIL][backup] Fehler beim Senden der Backup-E-Mail: {e}\nEmpfänger={recipient}, Backup={backup_path}\n{traceback.format_exc()}")
+        logger.error(f"[MAIL][backup] Fehler beim Senden der Backup-E-Mail: [Interner Fehler]\nEmpfänger={recipient}, Backup={backup_path}\n{traceback.format_exc()}")
         return False
 
 @ensure_app_context
@@ -1020,7 +1020,7 @@ Ihr Scandy-System"""
         return success
         
     except Exception as e:
-        logger.error(f"[MAIL][weekly_backup] Fehler beim Senden des wöchentlichen Backup-Archivs: {e}\nEmpfänger={recipient}, Archiv={archive_path}\n{traceback.format_exc()}")
+        logger.error(f"[MAIL][weekly_backup] Fehler beim Senden des wöchentlichen Backup-Archivs: [Interner Fehler]\nEmpfänger={recipient}, Archiv={archive_path}\n{traceback.format_exc()}")
         return False
 
 def diagnose_smtp_connection(config_data):
@@ -1079,8 +1079,8 @@ def diagnose_smtp_connection(config_data):
                     results['steps'].append(f"Capabilities nach TLS: {list(server.esmtp_features.keys())}")
                     
             except Exception as e:
-                results['steps'].append(f"STARTTLS fehlgeschlagen: {e}")
-                results['error'] = f"STARTTLS-Fehler: {e}"
+                results['steps'].append(f"STARTTLS fehlgeschlagen: [Interner Fehler]")
+                results['error'] = f"STARTTLS-Fehler: [Interner Fehler]"
         
         # Schritt 5: Authentifizierung testen (falls Anmeldedaten vorhanden)
         if config_data.get('mail_username') and config_data.get('mail_password'):
@@ -1090,9 +1090,9 @@ def diagnose_smtp_connection(config_data):
                 results['steps'].append("Authentifizierung erfolgreich")
                 results['auth_success'] = True
             except Exception as e:
-                results['steps'].append(f"Authentifizierung fehlgeschlagen: {e}")
+                results['steps'].append(f"Authentifizierung fehlgeschlagen: [Interner Fehler]")
                 results['auth_success'] = False
-                results['error'] = f"Auth-Fehler: {e}"
+                results['error'] = f"Auth-Fehler: [Interner Fehler]"
         else:
             results['steps'].append("Keine Anmeldedaten vorhanden - Authentifizierung übersprungen")
             results['auth_success'] = None
@@ -1110,9 +1110,9 @@ def diagnose_smtp_connection(config_data):
                 results['steps'].append("Test-E-Mail erfolgreich gesendet")
                 results['test_email_success'] = True
             except Exception as e:
-                results['steps'].append(f"Test-E-Mail fehlgeschlagen: {e}")
+                results['steps'].append(f"Test-E-Mail fehlgeschlagen: [Interner Fehler]")
                 results['test_email_success'] = False
-                results['error'] = f"Test-E-Mail-Fehler: {e}"
+                results['error'] = f"Test-E-Mail-Fehler: [Interner Fehler]"
         
         server.quit()
         results['steps'].append("SMTP-Verbindung geschlossen")
@@ -1126,8 +1126,8 @@ def diagnose_smtp_connection(config_data):
     except Exception as e:
         return {
             'success': False,
-            'steps': [f"Fehler bei der Diagnose: {e}"],
-            'error': str(e),
+            'steps': [f"Fehler bei der Diagnose: [Interner Fehler]"],
+            'error': 'Ein interner Fehler ist aufgetreten.',
             'capabilities': {},
             'auth_methods': []
         }
@@ -1140,7 +1140,7 @@ def reload_email_config(app):
         logger.info("E-Mail-Konfiguration erfolgreich neu geladen")
         return True
     except Exception as e:
-        logger.error(f"Fehler beim Neuladen der E-Mail-Konfiguration: {e}")
+        logger.error(f"Fehler beim Neuladen der E-Mail-Konfiguration: [Interner Fehler]")
         return False
 
 def debug_email_status():
@@ -1176,7 +1176,7 @@ def debug_email_status():
     except Exception as e:
         return {
             'status': 'error',
-            'message': f'Fehler beim Prüfen des E-Mail-Status: {str(e)}',
+            'message': f'Fehler beim Prüfen des E-Mail-Status: [Interner Fehler]',
             'details': 'Überprüfen Sie die Logs für weitere Details'
         }
 
@@ -1220,7 +1220,7 @@ def send_email_with_config(to_email, subject, html_content=None, text_content=No
                     logger.error("Passwort konnte nicht entschlüsselt werden")
                     return False
             except Exception as e:
-                logger.error(f"Fehler beim Entschlüsseln des Passworts: {e}")
+                logger.error(f"Fehler beim Entschlüsseln des Passworts: [Interner Fehler]")
                 return False
         
         # SMTP-Verbindung aufbauen
@@ -1271,14 +1271,14 @@ def send_email_with_config(to_email, subject, html_content=None, text_content=No
         return True
         
     except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP-Authentifizierungsfehler: {e}")
+        logger.error(f"SMTP-Authentifizierungsfehler: [Interner Fehler]")
         return False
     except smtplib.SMTPConnectError as e:
-        logger.error(f"SMTP-Verbindungsfehler: {e}")
+        logger.error(f"SMTP-Verbindungsfehler: [Interner Fehler]")
         return False
     except smtplib.SMTPException as e:
-        logger.error(f"SMTP-Fehler: {e}")
+        logger.error(f"SMTP-Fehler: [Interner Fehler]")
         return False
     except Exception as e:
-        logger.error(f"Unerwarteter Fehler beim E-Mail-Versand: {e}")
+        logger.error(f"Unerwarteter Fehler beim E-Mail-Versand: [Interner Fehler]")
         return False 

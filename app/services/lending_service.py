@@ -64,8 +64,8 @@ class LendingService:
                 return False, 'Ungültiger Item-Typ', {}
                 
         except Exception as e:
-            logger.error(f"Fehler bei der Ausleihe-Verarbeitung: {str(e)}")
-            return False, f'Fehler bei der Verarbeitung: {str(e)}', {}
+            logger.error(f"Fehler bei der Ausleihe-Verarbeitung: [Interner Fehler]")
+            return False, f'Fehler bei der Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def _process_tool_lending(item_barcode: str, worker_barcode: str, action: str, worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -84,8 +84,8 @@ class LendingService:
                 return False, 'Ungültige Aktion für Werkzeug', {}
                 
         except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Ausleihe: {str(e)}")
-            return False, f'Fehler bei der Werkzeug-Verarbeitung: {str(e)}', {}
+            logger.error(f"Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
+            return False, f'Fehler bei der Werkzeug-Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def _lend_tool(item_barcode: str, worker_barcode: str, tool: Dict[str, Any], worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -144,8 +144,8 @@ class LendingService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Ausleihe: {str(e)}")
-            return False, f'Fehler bei der Ausleihe: {str(e)}', {}
+            logger.error(f"Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
+            return False, f'Fehler bei der Ausleihe: [Interner Fehler]', {}
     
     @staticmethod
     def _return_tool(item_barcode: str, worker_barcode: str, tool: Dict[str, Any], worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -184,8 +184,8 @@ class LendingService:
                         lending_id = ObjectId(lending_id)
                         logger.info(f"String-ID zu ObjectId konvertiert: {lending_id}")
                     except Exception as e:
-                        logger.error(f"Fehler beim Konvertieren der ID: {str(e)}")
-                        return False, f'Fehler beim Konvertieren der ID: {str(e)}', {}
+                        logger.error(f"Fehler beim Konvertieren der ID: [Interner Fehler]")
+                        return False, f'Fehler beim Konvertieren der ID: [Interner Fehler]', {}
                 
                 lending_update_result = mongodb.update_one('lendings', 
                                                         {'_id': lending_id}, 
@@ -205,8 +205,8 @@ class LendingService:
                 else:
                     logger.info(f"Ausleihe erfolgreich markiert als zurückgegeben")
             except Exception as e:
-                logger.error(f"Exception beim Markieren der Rückgabe: {str(e)}")
-                return False, f'Fehler beim Markieren der Rückgabe: {str(e)}', {}
+                logger.error(f"Exception beim Markieren der Rückgabe: [Interner Fehler]")
+                return False, f'Fehler beim Markieren der Rückgabe: [Interner Fehler]', {}
             
             # Aktualisiere Werkzeug-Status
             try:
@@ -243,7 +243,7 @@ class LendingService:
                 else:
                     logger.info(f"Werkzeug-Status erfolgreich aktualisiert")
             except Exception as e:
-                logger.error(f"Exception beim Aktualisieren des Werkzeug-Status: {str(e)}")
+                logger.error(f"Exception beim Aktualisieren des Werkzeug-Status: [Interner Fehler]")
                 # Rollback versuchen
                 try:
                     mongodb.update_one('lendings', 
@@ -258,7 +258,7 @@ class LendingService:
                 except Exception as rollback_error:
                     logger.error(f"Rollback fehlgeschlagen: {str(rollback_error)}")
                 
-                return False, f'Fehler beim Aktualisieren des Werkzeug-Status: {str(e)}', {}
+                return False, f'Fehler beim Aktualisieren des Werkzeug-Status: [Interner Fehler]', {}
             
             logger.info(f"Werkzeug {tool['name']} erfolgreich zurückgegeben")
             
@@ -268,8 +268,8 @@ class LendingService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Rückgabe: {str(e)}", exc_info=True)
-            return False, f'Fehler bei der Rückgabe: {str(e)}', {}
+            logger.error(f"Fehler bei Werkzeug-Rückgabe: [Interner Fehler]", exc_info=True)
+            return False, f'Fehler bei der Rückgabe: [Interner Fehler]', {}
     
     @staticmethod
     def _process_consumable_lending(item_barcode: str, worker_barcode: str, action: str, quantity: int, worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -336,8 +336,8 @@ class LendingService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler bei Verbrauchsmaterial-Entnahme: {str(e)}")
-            return False, f'Fehler bei der Verbrauchsmaterial-Verarbeitung: {str(e)}', {}
+            logger.error(f"Fehler bei Verbrauchsmaterial-Entnahme: [Interner Fehler]")
+            return False, f'Fehler bei der Verbrauchsmaterial-Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def get_active_lendings() -> list:
@@ -364,7 +364,7 @@ class LendingService:
             return enriched_lendings
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aktiver Ausleihen: {str(e)}")
+            logger.error(f"Fehler beim Laden aktiver Ausleihen: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -393,7 +393,7 @@ class LendingService:
             return enriched_usages
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Entnahmen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Entnahmen: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -437,7 +437,7 @@ class LendingService:
             return enriched_usages
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Historie: {str(e)}")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Historie: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -471,7 +471,7 @@ class LendingService:
             return current_lending
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der aktuellen Ausleihe: {str(e)}")
+            logger.error(f"Fehler beim Laden der aktuellen Ausleihe: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -514,7 +514,7 @@ class LendingService:
             return enriched_lendings
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ausleihhistorie: {str(e)}")
+            logger.error(f"Fehler beim Laden der Ausleihhistorie: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -598,8 +598,8 @@ class LendingService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler bei der Konsistenzprüfung: {str(e)}")
-            return False, f'Fehler bei der Konsistenzprüfung: {str(e)}', {}
+            logger.error(f"Fehler bei der Konsistenzprüfung: [Interner Fehler]")
+            return False, f'Fehler bei der Konsistenzprüfung: [Interner Fehler]', {}
     
     @staticmethod
     def fix_lending_inconsistencies() -> Tuple[bool, str, Dict[str, Any]]:
@@ -681,8 +681,8 @@ class LendingService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Beheben der Inkonsistenzen: {str(e)}")
-            return False, f'Fehler beim Beheben der Inkonsistenzen: {str(e)}', {}
+            logger.error(f"Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]")
+            return False, f'Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]', {}
     
     @staticmethod
     def return_tool_centralized(tool_barcode: str, worker_barcode: str = None) -> Tuple[bool, str]:
@@ -742,5 +742,5 @@ class LendingService:
                 return False, message
                 
         except Exception as e:
-            logger.error(f"Fehler bei der zentralen Rückgabe: {str(e)}", exc_info=True)
-            return False, f'Fehler bei der Rückgabe: {str(e)}' 
+            logger.error(f"Fehler bei der zentralen Rückgabe: [Interner Fehler]", exc_info=True)
+            return False, f'Fehler bei der Rückgabe: [Interner Fehler]'

@@ -47,7 +47,7 @@ class AdminBackupService:
             return backups
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Liste: {str(e)}")
+            logger.error(f"Fehler beim Laden der Backup-Liste: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -69,8 +69,8 @@ class AdminBackupService:
                 return False, "Fehler beim Erstellen des BSON-Backups", None
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des BSON-Backups: {str(e)}")
-            return False, f"Fehler beim Erstellen des BSON-Backups: {str(e)}", None
+            logger.error(f"Fehler beim Erstellen des BSON-Backups: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen des BSON-Backups: [Interner Fehler]", None
 
     @staticmethod
     def upload_backup(file) -> Tuple[bool, str]:
@@ -129,8 +129,8 @@ class AdminBackupService:
                 return False, f"Fehler beim Wiederherstellen des {backup_type}-Backups"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Upload des Backups: {str(e)}")
-            return False, f"Fehler beim Upload des Backups: {str(e)}"
+            logger.error(f"Fehler beim Upload des Backups: [Interner Fehler]")
+            return False, f"Fehler beim Upload des Backups: [Interner Fehler]"
 
     @staticmethod
     def restore_backup(filename: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
@@ -175,8 +175,8 @@ class AdminBackupService:
                 return False, "Fehler beim Wiederherstellen des Backups", None
                 
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen des Backups {filename}: {str(e)}")
-            return False, f"Fehler beim Wiederherstellen des Backups: {str(e)}", None
+            logger.error(f"Fehler beim Wiederherstellen des Backups {filename}: [Interner Fehler]")
+            return False, f"Fehler beim Wiederherstellen des Backups: [Interner Fehler]", None
 
     @staticmethod
     def download_backup(filename: str) -> Tuple[bool, str, Optional[bytes]]:
@@ -203,8 +203,8 @@ class AdminBackupService:
             return True, f"Backup '{filename}' zum Download bereit", file_content
             
         except Exception as e:
-            logger.error(f"Fehler beim Download des Backups {filename}: {str(e)}")
-            return False, f"Fehler beim Download des Backups: {str(e)}", None
+            logger.error(f"Fehler beim Download des Backups {filename}: [Interner Fehler]")
+            return False, f"Fehler beim Download des Backups: [Interner Fehler]", None
 
     @staticmethod
     def delete_backup(filename: str) -> Tuple[bool, str]:
@@ -230,8 +230,8 @@ class AdminBackupService:
             return True, f"Backup '{filename}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Backups {filename}: {str(e)}")
-            return False, f"Fehler beim Löschen des Backups: {str(e)}"
+            logger.error(f"Fehler beim Löschen des Backups {filename}: [Interner Fehler]")
+            return False, f"Fehler beim Löschen des Backups: [Interner Fehler]"
 
     @staticmethod
     def get_backup_statistics() -> Dict[str, Any]:
@@ -252,7 +252,7 @@ class AdminBackupService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der Backup-Statistiken: [Interner Fehler]")
             return {
                 'total_backups': 0,
                 'total_size_mb': 0,
@@ -277,7 +277,7 @@ class AdminBackupService:
             return backup_path
             
         except Exception as e:
-            logger.error(f"Fehler beim Ermitteln des Backup-Pfads für {filename}: {str(e)}")
+            logger.error(f"Fehler beim Ermitteln des Backup-Pfads für {filename}: [Interner Fehler]")
             return Path()
 
     @staticmethod
@@ -319,11 +319,11 @@ class AdminBackupService:
             return True, f"Backup '{filename}' ist gültig ({total_documents} Dokumente in {len(backup_data)} Collections)"
             
         except json.JSONDecodeError as e:
-            logger.error(f"Backup {filename} ist kein gültiges JSON: {str(e)}")
+            logger.error(f"Backup {filename} ist kein gültiges JSON: [Interner Fehler]")
             return False, f"Backup '{filename}' ist kein gültiges JSON-Format"
         except Exception as e:
-            logger.error(f"Fehler beim Testen des Backups {filename}: {str(e)}")
-            return False, f"Fehler beim Testen des Backups: {str(e)}" 
+            logger.error(f"Fehler beim Testen des Backups {filename}: [Interner Fehler]")
+            return False, f"Fehler beim Testen des Backups: [Interner Fehler]"
 
     @staticmethod
     def _fix_missing_created_at_fields():
@@ -425,7 +425,7 @@ class AdminBackupService:
             return fixed_count
             
         except Exception as e:
-            logger.error(f"Fehler beim Ergänzen fehlender Felder: {str(e)}")
+            logger.error(f"Fehler beim Ergänzen fehlender Felder: [Interner Fehler]")
             return 0 
 
     @staticmethod
@@ -470,11 +470,11 @@ class AdminBackupService:
                                 logger.info(f"String-ObjectId gefunden in {collection}: {doc['_id']}")
                                 
                         except Exception as e:
-                            logger.warning(f"Fehler bei Dokument-Analyse in {collection}: {e}")
+                            logger.warning(f"Fehler bei Dokument-Analyse in {collection}: [Interner Fehler]")
                             continue
                             
                 except Exception as e:
-                    logger.error(f"Fehler bei Collection-Analyse {collection}: {str(e)}")
+                    logger.error(f"Fehler bei Collection-Analyse {collection}: [Interner Fehler]")
             
             # SICHERE VERSION: Nur Analyse der fehlenden Felder
             try:
@@ -493,7 +493,7 @@ class AdminBackupService:
                     logger.info(f"{len(workers_without_created)} Workers ohne created_at Feld gefunden")
                     
             except Exception as e:
-                logger.error(f"Fehler bei Datenkonsistenz-Analyse: {str(e)}")
+                logger.error(f"Fehler bei Datenkonsistenz-Analyse: [Interner Fehler]")
             
             # Gesamtzahl berechnen
             fixes_applied['total'] = sum([
@@ -507,8 +507,8 @@ class AdminBackupService:
             return fixes_applied
             
         except Exception as e:
-            logger.error(f"Fehler bei Dashboard-Analyse: {str(e)}")
-            return {'total': 0, 'error': str(e)}
+            logger.error(f"Fehler bei Dashboard-Analyse: [Interner Fehler]")
+            return {'total': 0, 'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
     def fix_dashboard_after_backup_SAFE():
@@ -566,7 +566,7 @@ class AdminBackupService:
                     fixes_applied['missing_fields'] += 1
                     
             except Exception as e:
-                logger.error(f"Fehler bei sicheren Dashboard-Fixes: {str(e)}")
+                logger.error(f"Fehler bei sicheren Dashboard-Fixes: [Interner Fehler]")
             
             # Gesamtzahl berechnen
             fixes_applied['total'] = fixes_applied['missing_fields']
@@ -575,8 +575,8 @@ class AdminBackupService:
             return fixes_applied
             
         except Exception as e:
-            logger.error(f"Fehler bei sicheren Dashboard-Fixes: {str(e)}")
-            return {'total': 0, 'error': str(e)} 
+            logger.error(f"Fehler bei sicheren Dashboard-Fixes: [Interner Fehler]")
+            return {'total': 0, 'error': 'Ein interner Fehler ist aufgetreten.'}
 
     @staticmethod
     def create_native_backup() -> Tuple[bool, str, Optional[str]]:
@@ -597,8 +597,8 @@ class AdminBackupService:
                 return False, "Fehler beim Erstellen des nativen Backups", None
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des nativen Backups: {str(e)}")
-            return False, f"Fehler beim Erstellen des nativen Backups: {str(e)}", None
+            logger.error(f"Fehler beim Erstellen des nativen Backups: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen des nativen Backups: [Interner Fehler]", None
     
     @staticmethod
     def restore_native_backup(backup_filename: str) -> Tuple[bool, str]:
@@ -619,8 +619,8 @@ class AdminBackupService:
                 return False, f"Fehler beim Wiederherstellen des nativen Backups: {backup_filename}"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Wiederherstellen des nativen Backups: {str(e)}")
-            return False, f"Fehler beim Wiederherstellen des nativen Backups: {str(e)}"
+            logger.error(f"Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]")
+            return False, f"Fehler beim Wiederherstellen des nativen Backups: [Interner Fehler]"
     
     @staticmethod
     def get_native_backup_list() -> List[Dict[str, Any]]:
@@ -631,7 +631,7 @@ class AdminBackupService:
             return backup_manager.list_native_backups()
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der nativen Backup-Liste: {str(e)}")
+            logger.error(f"Fehler beim Laden der nativen Backup-Liste: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -652,8 +652,8 @@ class AdminBackupService:
                 return False, "Fehler beim Erstellen des JSON-Backups", None
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des JSON-Backups: {str(e)}")
-            return False, f"Fehler beim Erstellen des JSON-Backups: {str(e)}", None
+            logger.error(f"Fehler beim Erstellen des JSON-Backups: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen des JSON-Backups: [Interner Fehler]", None
 
     @staticmethod
     def create_hybrid_backup() -> Tuple[bool, str, Optional[Dict[str, str]]]:
@@ -673,5 +673,5 @@ class AdminBackupService:
                 return False, "Fehler beim Erstellen des hybriden Backups", None
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des hybriden Backups: {str(e)}")
-            return False, f"Fehler beim Erstellen des hybriden Backups: {str(e)}", None 
+            logger.error(f"Fehler beim Erstellen des hybriden Backups: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen des hybriden Backups: [Interner Fehler]", None

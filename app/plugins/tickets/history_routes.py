@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required
 from app.services.ticket_history_service import ticket_history_service
 
-bp = Blueprint('ticket_history', __name__, url_prefix='/api/tickets')
+bp = Blueprint('ticket_history', __name__)
 
 
 @bp.route('/<ticket_id>/history')
@@ -35,7 +35,7 @@ def get_ticket_history(ticket_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': f'Fehler beim Laden der Historie: {str(e)}'
+            'error': f'Fehler beim Laden der Historie: [Interner Fehler]'
         }), 500
 
 
@@ -66,5 +66,5 @@ def get_user_activity(username):
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': f'Fehler beim Laden der Benutzer-Aktivitäten: {str(e)}'
+            'error': f'Fehler beim Laden der Benutzer-Aktivitäten: [Interner Fehler]'
         }), 500 

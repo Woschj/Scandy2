@@ -1,3 +1,4 @@
+from app.utils.id_helpers import convert_id_for_query
 """
 MongoDB-Modelle für Scandy - Vollständige Implementierung
 """
@@ -10,23 +11,7 @@ from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return id_value
-    except Exception as e:
-        logger.warning(f"Fehler bei String-ID-Behandlung: {e}")
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            return ObjectId(id_value)
-        except Exception as e2:
-            logger.warning(f"Fehler bei ObjectId-Konvertierung: {e2}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return id_value
+
 
 class BaseModel:
     """Basis-Klasse für MongoDB-Modelle"""
@@ -217,8 +202,8 @@ class MongoDBTool:
                 mongodb._client.admin.command('ping')
                 logger.info("MongoDB-Verbindung erfolgreich getestet")
             except Exception as e:
-                logger.error(f"MongoDB-Ping fehlgeschlagen: {e}")
-                raise Exception(f"MongoDB-Verbindung fehlgeschlagen: {e}")
+                logger.error(f"MongoDB-Ping fehlgeschlagen: [Interner Fehler]")
+                raise Exception(f"MongoDB-Verbindung fehlgeschlagen: [Interner Fehler]")
             
             # Tool-Statistiken - verwende die tatsächlichen Status-Werte
             tool_stats = {
@@ -305,7 +290,7 @@ class MongoDBTool:
             }
         except Exception as e:
             # Fallback bei Fehlern
-            logger.error(f"Fehler in get_statistics: {e}")
+            logger.error(f"Fehler in get_statistics: [Interner Fehler]")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             return {
@@ -800,7 +785,7 @@ class MongoDBUser:
                     print(f"DEBUG: User mit ObjectId gefunden: {user_data.get('username', 'Unknown')}")
                     return user_data
             except Exception as e:
-                print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {e}")
+                print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: [Interner Fehler]")
             
             # Versuche mit convert_id_for_query als Fallback
             try:
@@ -810,13 +795,13 @@ class MongoDBUser:
                     print(f"DEBUG: User mit convert_id_for_query gefunden: {user_data.get('username', 'Unknown')}")
                     return user_data
             except Exception as e:
-                print(f"DEBUG: convert_id_for_query fehlgeschlagen: {e}")
+                print(f"DEBUG: convert_id_for_query fehlgeschlagen: [Interner Fehler]")
             
             print(f"DEBUG: Kein User gefunden für ID: {user_id}")
             return None
                 
         except Exception as e:
-            print(f"DEBUG: Fehler beim Laden des Users mit ID {user_id}: {e}")
+            print(f"DEBUG: Fehler beim Laden des Users mit ID {user_id}: [Interner Fehler]")
             return None
     
     @classmethod
@@ -1016,5 +1001,5 @@ def create_mongodb_indexes():
         logger.info("Datenbankinitialisierung abgeschlossen")
         
     except Exception as e:
-        logger.error(f"Fehler beim Erstellen der MongoDB-Indizes: {str(e)}")
+        logger.error(f"Fehler beim Erstellen der MongoDB-Indizes: [Interner Fehler]")
         raise   

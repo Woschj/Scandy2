@@ -18,16 +18,8 @@ class UtilityService:
         Konvertiert eine ID für Datenbankabfragen.
         Versucht zuerst mit String-ID, dann mit ObjectId.
         """
-        # Wenn bereits ein ObjectId-Objekt übergeben wurde, direkt zurückgeben
-        if isinstance(id_value, ObjectId):
-            return id_value
-        # Bevorzugt: gültige 24‑hex Strings zu ObjectId konvertieren
-        try:
-            return ObjectId(str(id_value))
-        except Exception as e:
-            logger.warning(f"Fehler bei ID-Konvertierung: {e}")
-            # Fallback: unverändert zurückgeben (z. B. echte String-IDs)
-            return id_value
+        from app.utils.id_helpers import convert_id_for_query
+        return convert_id_for_query(id_value)
     
     @staticmethod
     def safe_date_key(item: Dict[str, Any], date_field: str = 'created_at') -> datetime:
@@ -51,7 +43,7 @@ class UtilityService:
                     except ValueError:
                         continue
             except Exception as e:
-                logger.warning(f"Fehler bei Datumskonvertierung: {e}")
+                logger.warning(f"Fehler bei Datumskonvertierung: [Interner Fehler]")
                 pass
         elif isinstance(date_value, datetime):
             return date_value
@@ -106,7 +98,7 @@ class UtilityService:
                             except ValueError:
                                 continue
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         item[field] = None
                 elif isinstance(item[field], datetime):
@@ -117,7 +109,7 @@ class UtilityService:
                     try:
                         item[field] = datetime.fromisoformat(str(item[field]))
                     except Exception as e:
-                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         item[field] = None
             else:

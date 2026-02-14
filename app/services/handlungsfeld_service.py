@@ -57,7 +57,7 @@ class HandlungsfeldService:
             return sorted(handlungsfelder_set, key=str.casefold)
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Handlungsfelder für {department}: {e}")
+            logger.error(f"Fehler beim Laden der Handlungsfelder für {department}: [Interner Fehler]")
             return []
     
     @classmethod
@@ -81,7 +81,7 @@ class HandlungsfeldService:
             return result
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Department-Handlungsfelder: {e}")
+            logger.error(f"Fehler beim Laden aller Department-Handlungsfelder: [Interner Fehler]")
             return {}
     
     @classmethod
@@ -134,7 +134,7 @@ class HandlungsfeldService:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Handlungsfelds '{name}' für {department}: {e}")
+            logger.error(f"Fehler beim Erstellen des Handlungsfelds '{name}' für {department}: [Interner Fehler]")
             return False
     
     @classmethod
@@ -175,7 +175,7 @@ class HandlungsfeldService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Handlungsfelds '{old_name}' in {department}: {e}")
+            logger.error(f"Fehler beim Aktualisieren des Handlungsfelds '{old_name}' in {department}: [Interner Fehler]")
             return False
     
     @classmethod
@@ -216,7 +216,7 @@ class HandlungsfeldService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Handlungsfelds '{name}' in {department}: {e}")
+            logger.error(f"Fehler beim Löschen des Handlungsfelds '{name}' in {department}: [Interner Fehler]")
             return False
     
     @classmethod
@@ -247,7 +247,7 @@ class HandlungsfeldService:
             return copied_count > 0
             
         except Exception as e:
-            logger.error(f"Fehler beim Kopieren der Handlungsfelder von {source_department} zu {target_department}: {e}")
+            logger.error(f"Fehler beim Kopieren der Handlungsfelder von {source_department} zu {target_department}: [Interner Fehler]")
             return False
 
 # Globale Instanz für einfache Verwendung

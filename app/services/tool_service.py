@@ -96,7 +96,7 @@ class ToolService:
             return processed_tools
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeuge: [Interner Fehler]")
             return []
     
     def get_tool_by_barcode(self, barcode: str) -> Optional[Dict[str, Any]]:
@@ -120,7 +120,7 @@ class ToolService:
             return tool
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Werkzeugs {barcode}: {str(e)}")
+            logger.error(f"Fehler beim Laden des Werkzeugs {barcode}: [Interner Fehler]")
             return None
     
     def create_tool(self, tool_data: Dict[str, Any]) -> Tuple[bool, str, Optional[str]]:
@@ -185,8 +185,8 @@ class ToolService:
             return True, 'Werkzeug wurde erfolgreich erstellt', barcode
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Werkzeugs: {str(e)}")
-            return False, f'Fehler beim Erstellen des Werkzeugs: {str(e)}', None
+            logger.error(f"Fehler beim Erstellen des Werkzeugs: [Interner Fehler]")
+            return False, f'Fehler beim Erstellen des Werkzeugs: [Interner Fehler]', None
     
     def update_tool(self, barcode: str, tool_data: Dict[str, Any]) -> Tuple[bool, str, Optional[str]]:
         """
@@ -263,8 +263,8 @@ class ToolService:
             return True, 'Werkzeug erfolgreich aktualisiert', new_barcode
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Werkzeugs: {str(e)}")
-            return False, f'Fehler beim Aktualisieren: {str(e)}', barcode
+            logger.error(f"Fehler beim Aktualisieren des Werkzeugs: [Interner Fehler]")
+            return False, f'Fehler beim Aktualisieren: [Interner Fehler]', barcode
     
     def delete_tool(self, barcode: str, permanent: bool = False) -> Tuple[bool, str]:
         """
@@ -314,8 +314,8 @@ class ToolService:
                 return True, 'Werkzeug gelöscht'
                 
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Werkzeugs: {str(e)}")
-            return False, f'Fehler beim Löschen: {str(e)}'
+            logger.error(f"Fehler beim Löschen des Werkzeugs: [Interner Fehler]")
+            return False, f'Fehler beim Löschen: [Interner Fehler]'
     
     def change_tool_status(self, barcode: str, new_status: str) -> Tuple[bool, str]:
         """
@@ -353,8 +353,8 @@ class ToolService:
             return True, f'Status erfolgreich auf "{new_status}" geändert'
             
         except Exception as e:
-            logger.error(f"Fehler beim Ändern des Werkzeug-Status: {str(e)}")
-            return False, f'Fehler beim Ändern: {str(e)}'
+            logger.error(f"Fehler beim Ändern des Werkzeug-Status: [Interner Fehler]")
+            return False, f'Fehler beim Ändern: [Interner Fehler]'
     
     def get_tool_details(self, barcode: str) -> Optional[Dict[str, Any]]:
         """
@@ -418,7 +418,7 @@ class ToolService:
             return tool
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Details: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeug-Details: [Interner Fehler]")
             return None
     
     def search_tools(self, query: str) -> List[Dict[str, Any]]:
@@ -454,7 +454,7 @@ class ToolService:
             return tools
             
         except Exception as e:
-            logger.error(f"Fehler bei der Werkzeug-Suche: {str(e)}")
+            logger.error(f"Fehler bei der Werkzeug-Suche: [Interner Fehler]")
             return []
     
     def get_tools_by_category(self, category: str) -> List[Dict[str, Any]]:
@@ -481,7 +481,7 @@ class ToolService:
             return tools
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Kategorie: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeuge nach Kategorie: [Interner Fehler]")
             return []
     
     def get_tools_by_location(self, location: str) -> List[Dict[str, Any]]:
@@ -508,7 +508,7 @@ class ToolService:
             return tools
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Standort: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeuge nach Standort: [Interner Fehler]")
             return []
     
     def get_tools_by_status(self, status: str) -> List[Dict[str, Any]]:
@@ -545,7 +545,7 @@ class ToolService:
                 return tools
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Status: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeuge nach Status: [Interner Fehler]")
             return []
     
     def get_tool_statistics(self) -> Dict[str, Any]:
@@ -578,7 +578,7 @@ class ToolService:
             return stats
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
             return {
                 'total_tools': 0,
                 'available_tools': 0,
@@ -627,7 +627,7 @@ class ToolService:
             return output.getvalue()
             
         except Exception as e:
-            logger.error(f"Fehler beim Export der Werkzeuge: {str(e)}")
+            logger.error(f"Fehler beim Export der Werkzeuge: [Interner Fehler]")
             return ""
     
     def _convert_datetime_fields(self, tool: Dict[str, Any]) -> Dict[str, Any]:
@@ -653,7 +653,7 @@ class ToolService:
                             except ValueError:
                                 continue
                     except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         tool[field] = None
                 elif isinstance(tool[field], datetime):
@@ -664,7 +664,7 @@ class ToolService:
                     try:
                         tool[field] = datetime.fromisoformat(str(tool[field]))
                     except Exception as e:
-                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: {e}")
+                        logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         tool[field] = None
             else:
@@ -710,7 +710,7 @@ class ToolService:
                         for software_id in group['software']:
                             current_software.add(software_id)
                 except Exception as e:
-                    logger.warning(f"Fehler beim Laden der Nutzergruppe {group_id}: {str(e)}")
+                    logger.warning(f"Fehler beim Laden der Nutzergruppe {group_id}: [Interner Fehler]")
             
             # Zurück zur Liste konvertieren und Tool aktualisieren
             tool['additional_software'] = list(current_software)
@@ -718,5 +718,5 @@ class ToolService:
             return tool
             
         except Exception as e:
-            logger.error(f"Fehler beim Zusammenführen der Software aus Nutzergruppen: {str(e)}")
+            logger.error(f"Fehler beim Zusammenführen der Software aus Nutzergruppen: [Interner Fehler]")
             return tool 

@@ -9,7 +9,7 @@ import logging
 from app.services.consumable_service import ConsumableService
 
 # Blueprint mit URL-Präfix definieren
-bp = Blueprint('consumables', __name__, url_prefix='/consumables')
+bp = Blueprint('consumables', __name__)
 logger = logging.getLogger(__name__)
 
 @bp.route('/')
@@ -40,7 +40,7 @@ def index():
                              categories=categories,
                              locations=locations)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Verbrauchsmaterialien: {str(e)}")
+        logger.error(f"Fehler beim Laden der Verbrauchsmaterialien: [Interner Fehler]")
         flash('Fehler beim Laden der Verbrauchsmaterialien', 'error')
         return redirect(url_for('main.index'))
 
@@ -85,7 +85,7 @@ def add():
                                          locations=locations,
                                          form_data=data)
             except Exception as e:
-                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
+                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: [Interner Fehler]")
                 # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
                 data['custom_fields'] = {}
             success, message = ConsumableService.add_consumable(data)
@@ -95,7 +95,7 @@ def add():
             else:
                 flash(message, 'error')
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Verbrauchsmaterials: {str(e)}", exc_info=True)
+            logger.error(f"Fehler beim Hinzufügen des Verbrauchsmaterials: [Interner Fehler]", exc_info=True)
             flash('Fehler beim Hinzufügen des Verbrauchsmaterials', 'error')
     
     # GET-Anfrage: Formular anzeigen
@@ -124,7 +124,7 @@ def detail(barcode):
                 else:
                     return jsonify({'success': False, 'message': f'Fehler bei benutzerdefinierten Feldern: {error_msg}'}), 400
             except Exception as e:
-                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: {str(e)}")
+                logger.error(f"Fehler beim Verarbeiten benutzerdefinierter Felder: [Interner Fehler]")
                 # Benutzerdefinierte Felder sind optional, daher kein Fehler-Return
                 data['custom_fields'] = {}
             
@@ -134,8 +134,8 @@ def detail(barcode):
             else:
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: [Interner Fehler]", exc_info=True)
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Details anzeigen
     consumable = ConsumableService.get_consumable_detail(barcode)
@@ -192,8 +192,8 @@ def adjust_stock(barcode):
         else:
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler beim Anpassen des Bestands: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler beim Anpassen des Bestands: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<barcode>/delete', methods=['DELETE'])
 @login_required
@@ -207,8 +207,8 @@ def delete(barcode):
         else:
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<barcode>/forecast')
 @login_required
@@ -222,8 +222,8 @@ def forecast(barcode):
         else:
             return jsonify({'success': False, 'message': 'Keine ausreichenden Daten für Vorhersage'}), 400
     except Exception as e:
-        logger.error(f"Fehler bei der Vorhersage: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler bei der Vorhersage: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/export')
 @login_required
@@ -238,7 +238,7 @@ def export():
             headers={'Content-Disposition': 'attachment; filename=verbrauchsmaterialien.csv'}
         )
     except Exception as e:
-        logger.error(f"Fehler beim Export: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Export: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Export', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -256,7 +256,7 @@ def search():
                            consumables=consumables, 
                            search_query=query)
     except Exception as e:
-        logger.error(f"Fehler bei der Suche: {str(e)}", exc_info=True)
+        logger.error(f"Fehler bei der Suche: [Interner Fehler]", exc_info=True)
         flash('Fehler bei der Suche', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -278,8 +278,8 @@ def bulk_actions():
         else:
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler bei Massenaktion: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler bei Massenaktion: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/statistics')
 @login_required
@@ -290,7 +290,7 @@ def statistics():
         # Verwende das index Template mit Statistiken
         return render_template('consumables/index.html', stats=stats)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Statistiken: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Statistiken: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden der Statistiken', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -303,7 +303,7 @@ def low_stock():
         # Verwende das index Template mit Niedrigbestand-Filter
         return render_template('consumables/index.html', consumables=low_stock_items, show_low_stock=True)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Niedrigbestand-Liste: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Niedrigbestand-Liste: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden der Niedrigbestand-Liste', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -333,7 +333,7 @@ def import_consumables():
             
             return redirect(url_for('consumables.index'))
         except Exception as e:
-            logger.error(f"Fehler beim Import: {str(e)}", exc_info=True)
+            logger.error(f"Fehler beim Import: [Interner Fehler]", exc_info=True)
             flash('Fehler beim Import', 'error')
             return redirect(url_for('consumables.index'))
     
@@ -351,8 +351,8 @@ def barcode_scan(barcode):
         else:
             return jsonify(result), 404
     except Exception as e:
-        logger.error(f"Fehler beim Barcode-Scan: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler beim Barcode-Scan: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/quick-scan', methods=['GET', 'POST'])
 @login_required
@@ -368,8 +368,8 @@ def quick_scan():
             result = ConsumableService.quick_scan_action(barcode, action, quantity)
             return jsonify(result)
         except Exception as e:
-            logger.error(f"Fehler beim Quick-Scan: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            logger.error(f"Fehler beim Quick-Scan: [Interner Fehler]", exc_info=True)
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # Verwende das index Template für Quick-Scan
     return render_template('consumables/index.html', show_quick_scan=True)
@@ -388,8 +388,8 @@ def restock_alert(barcode):
         else:
             return jsonify({'success': False, 'message': result}), 400
     except Exception as e:
-        logger.error(f"Fehler beim Senden der Nachbestellungs-Benachrichtigung: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler beim Senden der Nachbestellungs-Benachrichtigung: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/usage-history/<barcode>')
 @login_required
@@ -402,8 +402,8 @@ def usage_history(barcode):
         else:
             return jsonify({'success': False, 'message': 'Keine Historie gefunden'}), 404
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Nutzungshistorie: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Fehler beim Laden der Nutzungshistorie: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/categories', methods=['GET', 'POST'])
 @login_required
@@ -428,8 +428,8 @@ def category_management():
             else:
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
-            logger.error(f"Fehler bei der Kategorieverwaltung: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            logger.error(f"Fehler bei der Kategorieverwaltung: [Interner Fehler]", exc_info=True)
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Kategorien anzeigen
     try:
@@ -437,7 +437,7 @@ def category_management():
         # Verwende das index Template für Kategorieverwaltung
         return render_template('consumables/index.html', categories=categories, show_categories=True)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Kategorien: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Kategorien: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden der Kategorien', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -464,8 +464,8 @@ def location_management():
             else:
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
-            logger.error(f"Fehler bei der Standortverwaltung: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            logger.error(f"Fehler bei der Standortverwaltung: [Interner Fehler]", exc_info=True)
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Standorte anzeigen
     try:
@@ -473,7 +473,7 @@ def location_management():
         # Verwende das index Template für Standortverwaltung
         return render_template('consumables/index.html', locations=locations, show_locations=True)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Standorte: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Standorte: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden der Standorte', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -493,7 +493,7 @@ def report():
                            report_type=report_type,
                            show_report=True)
     except Exception as e:
-        logger.error(f"Fehler beim Generieren des Berichts: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Generieren des Berichts: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Generieren des Berichts', 'error')
         return redirect(url_for('consumables.index'))
 
@@ -510,8 +510,8 @@ def settings():
             else:
                 return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Einstellungen: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': str(e)}), 500
+            logger.error(f"Fehler beim Aktualisieren der Einstellungen: [Interner Fehler]", exc_info=True)
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
     
     # GET-Methode: Einstellungen anzeigen
     try:
@@ -519,6 +519,6 @@ def settings():
         # Verwende das index Template für Einstellungen
         return render_template('consumables/index.html', settings=settings_data, show_settings=True)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Einstellungen: {str(e)}", exc_info=True)
+        logger.error(f"Fehler beim Laden der Einstellungen: [Interner Fehler]", exc_info=True)
         flash('Fehler beim Laden der Einstellungen', 'error')
         return redirect(url_for('consumables.index'))

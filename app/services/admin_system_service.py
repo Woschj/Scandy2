@@ -29,7 +29,7 @@ class AdminSystemService:
             return settings
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Systemeinstellungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Systemeinstellungen: [Interner Fehler]")
             return {}
 
     @staticmethod
@@ -54,8 +54,8 @@ class AdminSystemService:
             return True, "Systemeinstellungen erfolgreich gespeichert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der Systemeinstellungen: {str(e)}")
-            return False, f"Fehler beim Speichern der Systemeinstellungen: {str(e)}"
+            logger.error(f"Fehler beim Speichern der Systemeinstellungen: [Interner Fehler]")
+            return False, f"Fehler beim Speichern der Systemeinstellungen: [Interner Fehler]"
 
     @staticmethod
     def get_departments() -> List[str]:
@@ -63,7 +63,7 @@ class AdminSystemService:
         try:
             return get_departments_from_settings()
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Abteilungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Abteilungen: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -101,8 +101,8 @@ class AdminSystemService:
             return True, f"Abteilung '{department_name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Abteilung {department_name}: {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Abteilung: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Abteilung {department_name}: [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Abteilung: [Interner Fehler]"
 
     @staticmethod
     def delete_department(department_name: str) -> Tuple[bool, str]:
@@ -142,8 +142,8 @@ class AdminSystemService:
             return True, f"Abteilung '{department_name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Abteilung {department_name}: {str(e)}")
-            return False, f"Fehler beim Löschen der Abteilung: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Abteilung {department_name}: [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Abteilung: [Interner Fehler]"
 
     @staticmethod
     def get_categories() -> List[str]:
@@ -151,7 +151,7 @@ class AdminSystemService:
         try:
             return get_categories_from_settings()
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Kategorien: {str(e)}")
+            logger.error(f"Fehler beim Laden der Kategorien: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -189,8 +189,8 @@ class AdminSystemService:
             return True, f"Kategorie '{category_name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Kategorie {category_name}: {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Kategorie {category_name}: [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Kategorie: [Interner Fehler]"
 
     @staticmethod
     def delete_category(category_name: str) -> Tuple[bool, str]:
@@ -232,8 +232,8 @@ class AdminSystemService:
             return True, f"Kategorie '{category_name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Kategorie {category_name}: {str(e)}")
-            return False, f"Fehler beim Löschen der Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Kategorie {category_name}: [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Kategorie: [Interner Fehler]"
 
     @staticmethod
     def get_locations() -> List[str]:
@@ -241,7 +241,7 @@ class AdminSystemService:
         try:
             return get_locations_from_settings()
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Standorte: {str(e)}")
+            logger.error(f"Fehler beim Laden der Standorte: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -279,8 +279,8 @@ class AdminSystemService:
             return True, f"Standort '{location_name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Standorts {location_name}: {str(e)}")
-            return False, f"Fehler beim Hinzufügen des Standorts: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen des Standorts {location_name}: [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen des Standorts: [Interner Fehler]"
 
     @staticmethod
     def delete_location(location_name: str) -> Tuple[bool, str]:
@@ -322,8 +322,8 @@ class AdminSystemService:
             return True, f"Standort '{location_name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen des Standorts {location_name}: {str(e)}")
-            return False, f"Fehler beim Löschen des Standorts: {str(e)}"
+            logger.error(f"Fehler beim Löschen des Standorts {location_name}: [Interner Fehler]")
+            return False, f"Fehler beim Löschen des Standorts: [Interner Fehler]"
 
     @staticmethod
     def get_ticket_categories() -> List[str]:
@@ -331,7 +331,7 @@ class AdminSystemService:
         try:
             return get_ticket_categories_from_settings()
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Ticket-Kategorien: {str(e)}")
+            logger.error(f"Fehler beim Laden der Ticket-Kategorien: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -369,8 +369,8 @@ class AdminSystemService:
             return True, f"Ticket-Kategorie '{category_name}' erfolgreich hinzugefügt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie {category_name}: {str(e)}")
-            return False, f"Fehler beim Hinzufügen der Ticket-Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Hinzufügen der Ticket-Kategorie {category_name}: [Interner Fehler]")
+            return False, f"Fehler beim Hinzufügen der Ticket-Kategorie: [Interner Fehler]"
 
     @staticmethod
     def delete_ticket_category(category_name: str) -> Tuple[bool, str]:
@@ -411,8 +411,8 @@ class AdminSystemService:
             return True, f"Ticket-Kategorie '{category_name}' erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Ticket-Kategorie {category_name}: {str(e)}")
-            return False, f"Fehler beim Löschen der Ticket-Kategorie: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Ticket-Kategorie {category_name}: [Interner Fehler]")
+            return False, f"Fehler beim Löschen der Ticket-Kategorie: [Interner Fehler]"
 
     @staticmethod
     def get_system_statistics() -> Dict[str, Any]:
@@ -449,7 +449,7 @@ class AdminSystemService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Systemstatistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der Systemstatistiken: [Interner Fehler]")
             return {
                 'total_tools': 0,
                 'total_consumables': 0,
@@ -492,7 +492,7 @@ class AdminSystemService:
             return settings, app_labels
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Systemdaten: {str(e)}")
+            logger.error(f"Fehler beim Laden der Systemdaten: [Interner Fehler]")
             return {}, {
                 'tools': {'name': 'Werkzeuge', 'icon': 'fas fa-tools'},
                 'consumables': {'name': 'Verbrauchsmaterial', 'icon': 'fas fa-box'},
@@ -530,8 +530,8 @@ class AdminSystemService:
             return success, message
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der App-Labels: {str(e)}")
-            return False, f"Fehler beim Speichern der App-Labels: {str(e)}"
+            logger.error(f"Fehler beim Speichern der App-Labels: [Interner Fehler]")
+            return False, f"Fehler beim Speichern der App-Labels: [Interner Fehler]"
 
     @staticmethod
     def get_available_logos() -> List[Dict[str, str]]:
@@ -559,5 +559,5 @@ class AdminSystemService:
             return logos
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der verfügbaren Logos: {str(e)}")
+            logger.error(f"Fehler beim Laden der verfügbaren Logos: [Interner Fehler]")
             return [] 

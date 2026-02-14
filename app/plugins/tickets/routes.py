@@ -1,3 +1,4 @@
+from app.utils.id_helpers import convert_id_for_query, find_document_by_id
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash, abort, send_file, render_template_string, current_app
 from app.models.mongodb_models import MongoDBTicket
 from app.models.mongodb_database import mongodb, is_feature_enabled
@@ -81,85 +82,8 @@ import os
 from bson import ObjectId
 from typing import Union
 
-bp = Blueprint('tickets', __name__, url_prefix='/tickets')
+bp = Blueprint('tickets', __name__)
 
-def convert_id_for_query(id_value: str) -> Union[str, ObjectId]:
-    """
-    Konvertiert eine ID für Datenbankabfragen.
-    Versucht zuerst mit String-ID, dann mit ObjectId.
-    """
-    if not id_value:
-        return None
-        
-    try:
-        # Versuche zuerst mit String-ID (für importierte Daten)
-        return str(id_value)
-    except Exception as e:
-        print(f"DEBUG: String-Konvertierung fehlgeschlagen für {id_value}: {e}")
-        # Falls das fehlschlägt, versuche ObjectId
-        try:
-            from bson import ObjectId
-            return ObjectId(id_value)
-        except Exception as e2:
-            print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen für {id_value}: {e2}")
-            # Falls auch das fehlschlägt, gib die ursprüngliche ID zurück
-            return str(id_value)
-
-def normalize_id_for_database(id_value):
-    """
-    Normalisiert eine ID für die Datenbank - konvertiert alles zu String
-    """
-    if isinstance(id_value, ObjectId):
-        return str(id_value)
-    elif isinstance(id_value, str):
-        return id_value
-    else:
-        return str(id_value)
-
-def find_document_by_id(collection: str, id_value: str):
-    """
-    Findet ein Dokument in einer Collection mit robuster ID-Behandlung.
-    Versucht verschiedene ID-Formate: String, ObjectId, convert_id_for_query
-    """
-    if not id_value:
-        print(f"DEBUG: Keine ID angegeben für Collection '{collection}'")
-        return None
-        
-    print(f"DEBUG: Suche Dokument in Collection '{collection}' mit ID: {id_value}")
-    
-    # Versuche zuerst mit String-ID
-    try:
-        doc = mongodb.find_one(collection, {'_id': id_value})
-        if doc:
-            print(f"DEBUG: Dokument mit String-ID gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-            return doc
-    except Exception as e:
-        print(f"DEBUG: String-ID-Suche fehlgeschlagen: {e}")
-    
-    # Falls nicht gefunden, versuche mit ObjectId
-    try:
-        from bson import ObjectId
-        obj_id = ObjectId(id_value)
-        doc = mongodb.find_one(collection, {'_id': obj_id})
-        if doc:
-            print(f"DEBUG: Dokument mit ObjectId gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-            return doc
-    except Exception as e:
-        print(f"DEBUG: ObjectId-Konvertierung fehlgeschlagen: {e}")
-    
-    # Falls immer noch nicht gefunden, versuche mit convert_id_for_query
-    try:
-        converted_id = convert_id_for_query(id_value)
-        if converted_id:
-            doc = mongodb.find_one(collection, {'_id': converted_id})
-            if doc:
-                print(f"DEBUG: Dokument mit convert_id_for_query gefunden: {doc.get('title', doc.get('name', 'Unknown'))}")
-                return doc
-    except Exception as e:
-        print(f"DEBUG: convert_id_for_query-Suche fehlgeschlagen: {e}")
-    
-    print(f"DEBUG: Kein Dokument gefunden für ID: {id_value}")
-    return None
 
 @bp.route('/debug/tickets')
 @login_required
@@ -186,7 +110,7 @@ def debug_tickets():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/debug/test-ticket/<ticket_id>')
 @login_required
@@ -218,7 +142,7 @@ def test_ticket(ticket_id):
         except Exception as e:
             results['objectid_search'] = {
                 'found': False,
-                'error': str(e)
+                'error': 'Ein interner Fehler ist aufgetreten.'
             }
         
         # Methode 3: find_document_by_id
@@ -234,7 +158,7 @@ def test_ticket(ticket_id):
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/debug/normalize-ticket-ids')
 @login_required
@@ -274,7 +198,7 @@ def normalize_ticket_ids():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/debug/normalize-all-ids')
@@ -320,8 +244,8 @@ def normalize_all_ids():
                 print(f"Collection {collection_name}: {updated_count} IDs normalisiert")
                 
             except Exception as e:
-                results[collection_name] = f"Fehler: {str(e)}"
-                print(f"Fehler bei Collection {collection_name}: {e}")
+                results[collection_name] = f"Fehler: [Interner Fehler]"
+                print(f"Fehler bei Collection {collection_name}: [Interner Fehler]")
         
         return jsonify({
             'status': 'success',
@@ -333,7 +257,7 @@ def normalize_all_ids():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Ein interner Fehler ist aufgetreten.'
         }), 500
 
 @bp.route('/debug/test-update-ticket/<ticket_id>')
@@ -365,7 +289,7 @@ def test_update_ticket(ticket_id):
     except Exception as e:
         return jsonify({
             'success': False, 
-            'message': str(e),
+            'message': 'Ein interner Fehler ist aufgetreten.',
             'ticket_id': ticket_id
         })
 
@@ -401,7 +325,7 @@ def test_mongodb():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'MongoDB-Fehler: {str(e)}'
+            'message': f'MongoDB-Fehler: [Interner Fehler]'
         })
 
 @bp.route('/debug/test-specific-ticket/<ticket_id>')
@@ -455,7 +379,7 @@ def test_specific_ticket(ticket_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': str(e),
+            'message': 'Ein interner Fehler ist aufgetreten.',
             'ticket_id': ticket_id
         })
 
@@ -491,7 +415,7 @@ def test_update_operation(ticket_id):
                 'success': result.modified_count > 0
             }
         except Exception as e:
-            results['direct_mongodb'] = {'error': str(e)}
+            results['direct_mongodb'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         # Methode 2: Wrapper-Methode
         try:
@@ -501,7 +425,7 @@ def test_update_operation(ticket_id):
                 'result_type': type(result).__name__
             }
         except Exception as e:
-            results['wrapper_method'] = {'error': str(e)}
+            results['wrapper_method'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         # Methode 3: Mit verschiedenen ID-Formaten
         try:
@@ -512,7 +436,7 @@ def test_update_operation(ticket_id):
                 'result_type': type(string_result).__name__
             }
         except Exception as e:
-            results['string_id'] = {'error': str(e)}
+            results['string_id'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         return jsonify({
             'ticket_id': ticket_id,
@@ -522,7 +446,7 @@ def test_update_operation(ticket_id):
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/debug/analyze-ticket/<ticket_id>')
 def analyze_ticket(ticket_id):
@@ -556,7 +480,7 @@ def analyze_ticket(ticket_id):
         except Exception as e:
             results['objectid_search'] = {
                 'found': False,
-                'error': str(e)
+                'error': 'Ein interner Fehler ist aufgetreten.'
             }
         
         # Methode 3: Direkte MongoDB-Abfrage
@@ -569,7 +493,7 @@ def analyze_ticket(ticket_id):
                 'id_type': type(direct_ticket.get('_id')).__name__ if direct_ticket else None
             }
         except Exception as e:
-            results['direct_mongodb_string'] = {'error': str(e)}
+            results['direct_mongodb_string'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         # Methode 4: Direkte MongoDB-Abfrage mit ObjectId
         try:
@@ -583,7 +507,7 @@ def analyze_ticket(ticket_id):
                 'id_type': type(direct_ticket.get('_id')).__name__ if direct_ticket else None
             }
         except Exception as e:
-            results['direct_mongodb_objectid'] = {'error': str(e)}
+            results['direct_mongodb_objectid'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         # Teste Update-Operationen
         update_results = {}
@@ -617,7 +541,7 @@ def analyze_ticket(ticket_id):
                     {'$unset': {'debug_test': ''}}
                 )
             except Exception as e:
-                update_results['string_update'] = {'error': str(e)}
+                update_results['string_update'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
             
             # Teste Update mit ObjectId
             try:
@@ -636,7 +560,7 @@ def analyze_ticket(ticket_id):
                     {'$unset': {'debug_test': ''}}
                 )
             except Exception as e:
-                update_results['objectid_update'] = {'error': str(e)}
+                update_results['objectid_update'] = {'error': 'Ein interner Fehler ist aufgetreten.'}
         
         return jsonify({
             'ticket_id': ticket_id,
@@ -645,7 +569,7 @@ def analyze_ticket(ticket_id):
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -704,7 +628,7 @@ def create():
                                      now=datetime.now())
                 
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Tickets: {str(e)}")
+            logger.error(f"Fehler beim Erstellen des Tickets: [Interner Fehler]")
             flash('Fehler beim Erstellen des Tickets', 'error')
             # Bei Fehlern müssen wir auch die Ticket-Listen laden
             from app.services.ticket_category_service import ticket_category_service
@@ -784,7 +708,7 @@ def create():
                              priority_colors=priority_colors,
                              now=datetime.now())
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Ticket-Formulars: {str(e)}")
+        logger.error(f"Fehler beim Laden des Ticket-Formulars: [Interner Fehler]")
         flash('Fehler beim Laden des Formulars', 'error')
         return redirect(url_for('main.index'))
 
@@ -924,7 +848,7 @@ def view(ticket_id):
                              })
                              
     except Exception as e:
-        logging.error(f"Fehler beim Laden der Nachrichten: {str(e)}")
+        logging.error(f"Fehler beim Laden der Nachrichten: [Interner Fehler]")
         flash('Fehler beim Laden der Nachrichten.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -969,8 +893,8 @@ def get_ticket_messages(ticket_id):
         })
         
     except Exception as e:
-        logging.error(f"Fehler beim Laden der Nachrichten: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Laden der Nachrichten: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<ticket_id>/add-message', methods=['POST'])
 @login_required
@@ -1038,7 +962,7 @@ def add_message(ticket_id):
         })
 
     except Exception as e:
-        logging.error(f"Fehler beim Hinzufügen der Nachricht: {str(e)}", exc_info=True)
+        logging.error(f"Fehler beim Hinzufügen der Nachricht: [Interner Fehler]", exc_info=True)
         return jsonify({'success': False, 'message': 'Ein Fehler ist aufgetreten'}), 500
 
 @bp.route('/<id>')
@@ -1128,7 +1052,7 @@ def detail(id):
                              now=datetime.now())
                              
     except Exception as e:
-        logging.error(f"Fehler beim Laden der Ticket-Details: {str(e)}")
+        logging.error(f"Fehler beim Laden der Ticket-Details: [Interner Fehler]")
         flash('Fehler beim Laden der Ticket-Details.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -1170,7 +1094,7 @@ def delete(id):
         })
         
     except Exception as e:
-        logging.error(f"Fehler beim Löschen des Tickets #{id}: {str(e)}")
+        logging.error(f"Fehler beim Löschen des Tickets #{id}: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Löschen des Tickets'
@@ -1227,7 +1151,7 @@ def auftrag_details_modal(id):
                              now=datetime.now())
                              
     except Exception as e:
-        logging.error(f"Fehler beim Laden der Auftragsdetails-Modal: {str(e)}")
+        logging.error(f"Fehler beim Laden der Auftragsdetails-Modal: [Interner Fehler]")
         flash('Fehler beim Laden der Auftragsdetails.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -1309,8 +1233,8 @@ def update_status(id):
             return jsonify({'success': True, 'message': 'Status erfolgreich aktualisiert'})
 
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren des Status: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Aktualisieren des Status: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<id>/update-assignment', methods=['POST'])
 @login_required
@@ -1388,8 +1312,8 @@ def update_assignment(id):
             return jsonify({'success': False, 'message': message})
 
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren der Zuweisung: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Aktualisieren der Zuweisung: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<id>/update-responsible', methods=['POST'])
 @login_required
@@ -1428,8 +1352,8 @@ def update_responsible(id):
         else:
             return jsonify({'success': False, 'message': message})
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren der verantwortlichen Person: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Aktualisieren der verantwortlichen Person: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<id>/update-due-date', methods=['POST'])
 @login_required
@@ -1487,8 +1411,8 @@ def update_due_date(id):
         return jsonify({'success': True, 'message': 'Fälligkeitsdatum erfolgreich aktualisiert'})
 
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren des Fälligkeitsdatums: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Aktualisieren des Fälligkeitsdatums: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/<id>/update-details', methods=['POST'])
 @login_required
@@ -1705,11 +1629,11 @@ def update_details(id):
             return redirect(url_for('tickets.view', ticket_id=id))
 
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren der Auftragsdetails: {e}", exc_info=True)
+        logging.error(f"Fehler beim Aktualisieren der Auftragsdetails: [Interner Fehler]", exc_info=True)
         if request.is_json:
-            return jsonify({'success': False, 'message': str(e)}), 500
+            return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
         else:
-            flash(f'Fehler beim Speichern: {str(e)}', 'error')
+            flash(f'Fehler beim Speichern: [Interner Fehler]', 'error')
             return redirect(url_for('tickets.auftrag_details_page', id=id))
 
 @bp.route('/<id>/export')
@@ -1854,8 +1778,8 @@ def export_ticket(id):
         return send_file(output_path, as_attachment=True, download_name=f'ticket_{ticket_number}_export.docx')
         
     except Exception as e:
-        logging.error(f"Fehler beim Generieren des Word-Dokuments: {str(e)}", exc_info=True)
-        flash(f'Fehler beim Generieren des Dokuments: {str(e)}', 'error')
+        logging.error(f"Fehler beim Generieren des Word-Dokuments: [Interner Fehler]", exc_info=True)
+        flash(f'Fehler beim Generieren des Dokuments: [Interner Fehler]', 'error')
         return redirect(url_for('tickets.create'))
 
 @bp.route('/<id>/note', methods=['POST'])
@@ -1907,8 +1831,8 @@ def add_note(id):
         })
 
     except Exception as e:
-        logging.error(f"Fehler beim Hinzufügen der Notiz: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logging.error(f"Fehler beim Hinzufügen der Notiz: [Interner Fehler]")
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 def get_unassigned_ticket_count():
     """Zählt offene, nicht zugewiesene Tickets nur im aktuellen Department,
@@ -2132,7 +2056,7 @@ def _handle_auftrag_creation(external=False):
                                  ticket=ticket_data)
             
         except Exception as e:
-            logging.error(f"Fehler bei der öffentlichen Auftragserstellung: {str(e)}", exc_info=True)
+            logging.error(f"Fehler bei der öffentlichen Auftragserstellung: [Interner Fehler]", exc_info=True)
             from app.services.ticket_category_service import ticket_category_service
             categories = ticket_category_service.get_ticket_categories_for_department(getattr(g, 'current_department', None))
             if external or not current_user.is_authenticated:
@@ -2174,7 +2098,7 @@ def public_ticket_categories():
         categories = handlungsfeld_service.get_handlungsfelder_for_department(req_dept)
         return jsonify({'success': True, 'department': req_dept, 'categories': [{'name': n} for n in categories]})
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen der Ticket-Kategorien (public): {str(e)}")
+        logger.error(f"Fehler beim Abrufen der Ticket-Kategorien (public): [Interner Fehler]")
         return jsonify({'success': False, 'message': 'Fehler beim Laden der Ticket-Kategorien'})
 
 @bp.route('/<id>/auftrag-details')
@@ -2265,7 +2189,7 @@ def auftrag_details_page(id):
                              arbeit_list=arbeit_list)
                              
     except Exception as e:
-        logging.error(f"Fehler beim Laden der Auftragsdetails-Seite: {str(e)}")
+        logging.error(f"Fehler beim Laden der Auftragsdetails-Seite: [Interner Fehler]")
         flash('Fehler beim Laden der Auftragsdetails.', 'error')
         return redirect(url_for('tickets.create'))
 
@@ -2351,7 +2275,7 @@ def update_ticket(id):
                     update_data['due_date'] = due_date
                     logging.info(f"DEBUG: due_date gesetzt: {update_data['due_date']}")
                 except ValueError as e:
-                    logging.error(f"DEBUG: Fehler beim Parsen von due_date: {e}")
+                    logging.error(f"DEBUG: Fehler beim Parsen von due_date: [Interner Fehler]")
                     return jsonify({'success': False, 'message': 'Ungültiges Datumsformat'}), 400
             else:
                 update_data['due_date'] = None
@@ -2403,8 +2327,8 @@ def update_ticket(id):
             return jsonify({'success': False, 'message': f'Datenbankfehler: {str(db_error)}'}), 500
             
     except Exception as e:
-        logging.error(f"Fehler beim Aktualisieren des Tickets {id}: {e}", exc_info=True)
-        return jsonify({'success': False, 'message': f'Interner Fehler: {str(e)}'}), 500 
+        logging.error(f"Fehler beim Aktualisieren des Tickets {id}: [Interner Fehler]", exc_info=True)
+        return jsonify({'success': False, 'message': f'Interner Fehler: [Interner Fehler]'}), 500
 
 @bp.route('/debug/unassigned-tickets')
 @login_required
@@ -2450,4 +2374,4 @@ def debug_unassigned_tickets():
         return jsonify(debug_info)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500

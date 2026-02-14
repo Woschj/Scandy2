@@ -112,7 +112,7 @@ def setup_session_cleanup(app):
                         except Exception:
                             pass
         except Exception as e:
-            app.logger.warning(f"Error during session cleanup: {e}")
+            app.logger.warning(f"Error during session cleanup: [Interner Fehler]")
 
     # Run cleanup on startup
     cleanup_old_sessions()
@@ -159,7 +159,7 @@ def load_user(user_id):
                 logging.debug(f"User loaded: {user.username}, ID: {user.id}")
                 return user
         except Exception as e:
-            logging.debug(f"ObjectId conversion failed: {e}")
+            logging.debug(f"ObjectId conversion failed: [Interner Fehler]")
 
         # Method 3: Fallback with MongoDBUser.get_by_id
         user_data = MongoDBUser.get_by_id(user_id)
@@ -176,12 +176,12 @@ def load_user(user_id):
             session.clear()
             logging.debug("Session cleared")
         except Exception as e:
-            logging.debug(f"Error clearing session: {e}")
+            logging.debug(f"Error clearing session: [Interner Fehler]")
 
         return None
 
     except Exception as e:
-        logging.error(f"Error loading user {user_id}: {e}")
+        logging.error(f"Error loading user {user_id}: [Interner Fehler]")
         # Clear session on error
         try:
             from flask import session

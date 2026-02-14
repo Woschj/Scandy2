@@ -80,7 +80,7 @@ def get_setting_value(setting_key, fallback_collection=None, fallback_field='nam
         return []
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Settings für '{setting_key}': {e}")
+        logger.error(f"Fehler beim Laden der Settings für '{setting_key}': [Interner Fehler]")
         return []
 
 def get_ticket_categories_from_settings():
@@ -162,7 +162,7 @@ def get_categories_scoped() -> list:
             unique.append(s)
         return sorted(unique, key=str.casefold)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Kategorien (scoped): {e}")
+        logger.error(f"Fehler beim Laden der Kategorien (scoped): [Interner Fehler]")
         return []
 
 def get_locations_scoped() -> list:
@@ -194,7 +194,7 @@ def get_locations_scoped() -> list:
             unique.append(s)
         return sorted(unique, key=str.casefold)
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Standorte (scoped): {e}")
+        logger.error(f"Fehler beim Laden der Standorte (scoped): [Interner Fehler]")
         return []
 
 def get_departments_from_settings():
@@ -235,7 +235,7 @@ def ensure_default_settings():
             logger.info("Ticket-Kategorien-Collection initialisiert")
 
     except Exception as e:
-        logger.error(f"Fehler beim Initialisieren der Settings Collections: {e}")
+        logger.error(f"Fehler beim Initialisieren der Settings Collections: [Interner Fehler]")
         raise
 
 def validate_reference_data():
@@ -260,7 +260,7 @@ def validate_reference_data():
             'departments': departments
         }
     except Exception as e:
-        logger.error(f"Fehler bei der Validierung der Referenzdaten: {e}")
+        logger.error(f"Fehler bei der Validierung der Referenzdaten: [Interner Fehler]")
         return {
             'categories': [],
             'locations': [],
@@ -347,7 +347,7 @@ def migrate_old_data_to_settings():
         logger.info("Migration der alten Daten abgeschlossen")
         
     except Exception as e:
-        logger.error(f"Fehler bei der Migration der alten Daten: {e}")
+        logger.error(f"Fehler bei der Migration der alten Daten: [Interner Fehler]")
         raise
 
 def get_next_ticket_number():
@@ -453,7 +453,7 @@ def ensure_consistent_ids():
                 total_updated += updated_count
                 
             except Exception as e:
-                print(f"Fehler bei ID-Normalisierung in Collection {collection_name}: {e}")
+                print(f"Fehler bei ID-Normalisierung in Collection {collection_name}: [Interner Fehler]")
         
         if total_updated > 0:
             print(f"ID-Normalisierung abgeschlossen: {total_updated} IDs in allen Collections normalisiert")
@@ -463,5 +463,5 @@ def ensure_consistent_ids():
         return total_updated
             
     except Exception as e:
-        print(f"Fehler bei ID-Normalisierung: {e}")
+        print(f"Fehler bei ID-Normalisierung: [Interner Fehler]")
         return 0 

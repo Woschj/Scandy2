@@ -45,8 +45,8 @@ class NotificationService:
             return True, "Benachrichtigung erfolgreich erstellt"
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der Benachrichtigung: {str(e)}")
-            return False, f"Fehler beim Erstellen: {str(e)}"
+            logger.error(f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen: [Interner Fehler]"
     
     def get_active_notices(self) -> List[Dict[str, Any]]:
         """
@@ -62,7 +62,7 @@ class NotificationService:
             return notices
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Benachrichtigungen: [Interner Fehler]")
             return []
     
     def update_notice(self, notice_id: str, **kwargs) -> Tuple[bool, str]:
@@ -90,8 +90,8 @@ class NotificationService:
             return True, "Benachrichtigung erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Benachrichtigung: {str(e)}")
-            return False, f"Fehler beim Aktualisieren: {str(e)}"
+            logger.error(f"Fehler beim Aktualisieren der Benachrichtigung: [Interner Fehler]")
+            return False, f"Fehler beim Aktualisieren: [Interner Fehler]"
     
     def delete_notice(self, notice_id: str) -> Tuple[bool, str]:
         """
@@ -109,8 +109,8 @@ class NotificationService:
             return True, "Benachrichtigung erfolgreich gelöscht"
             
         except Exception as e:
-            logger.error(f"Fehler beim Löschen der Benachrichtigung: {str(e)}")
-            return False, f"Fehler beim Löschen: {str(e)}"
+            logger.error(f"Fehler beim Löschen der Benachrichtigung: [Interner Fehler]")
+            return False, f"Fehler beim Löschen: [Interner Fehler]"
     
     def send_system_notification(self, user_email: str, subject: str, message: str, notification_type: str = "info") -> bool:
         """
@@ -129,7 +129,7 @@ class NotificationService:
             return self.email_service.send_notification_email(user_email, subject, message, notification_type)
             
         except Exception as e:
-            logger.error(f"Fehler beim Senden der System-Benachrichtigung: {str(e)}")
+            logger.error(f"Fehler beim Senden der System-Benachrichtigung: [Interner Fehler]")
             return False
     
     def notify_ticket_assignment(self, ticket_data: Dict[str, Any], assigned_user_email: str) -> bool:
@@ -151,7 +151,7 @@ class NotificationService:
             )
             
         except Exception as e:
-            logger.error(f"Fehler bei Ticket-Zuweisungs-Benachrichtigung: {str(e)}")
+            logger.error(f"Fehler bei Ticket-Zuweisungs-Benachrichtigung: [Interner Fehler]")
             return False
     
     def notify_ticket_update(self, ticket_data: Dict[str, Any], user_email: str) -> bool:
@@ -173,7 +173,7 @@ class NotificationService:
             )
             
         except Exception as e:
-            logger.error(f"Fehler bei Ticket-Update-Benachrichtigung: {str(e)}")
+            logger.error(f"Fehler bei Ticket-Update-Benachrichtigung: [Interner Fehler]")
             return False
     
     def notify_lending_action(self, lending_data: Dict[str, Any], user_email: str, action: str) -> bool:
@@ -196,7 +196,7 @@ class NotificationService:
             )
             
         except Exception as e:
-            logger.error(f"Fehler bei Ausleihe-Benachrichtigung: {str(e)}")
+            logger.error(f"Fehler bei Ausleihe-Benachrichtigung: [Interner Fehler]")
             return False
     
     def create_system_alert(self, title: str, message: str, alert_type: str = "warning") -> Tuple[bool, str]:
@@ -223,8 +223,8 @@ class NotificationService:
             )
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen der System-Warnung: {str(e)}")
-            return False, f"Fehler beim Erstellen: {str(e)}"
+            logger.error(f"Fehler beim Erstellen der System-Warnung: [Interner Fehler]")
+            return False, f"Fehler beim Erstellen: [Interner Fehler]"
     
     def check_and_notify_low_stock(self, consumable_data: Dict[str, Any]) -> bool:
         """
@@ -251,7 +251,7 @@ class NotificationService:
             return False
             
         except Exception as e:
-            logger.error(f"Fehler bei der Bestandsprüfung: {str(e)}")
+            logger.error(f"Fehler bei der Bestandsprüfung: [Interner Fehler]")
             return False
     
     def check_and_notify_overdue_tools(self) -> int:
@@ -288,13 +288,13 @@ class NotificationService:
                             notification_count += 1
                             
                 except Exception as e:
-                    logger.error(f"Fehler bei der Überfälligkeitsprüfung: {str(e)}")
+                    logger.error(f"Fehler bei der Überfälligkeitsprüfung: [Interner Fehler]")
                     continue
             
             return notification_count
             
         except Exception as e:
-            logger.error(f"Fehler bei der Überfälligkeitsprüfung: {str(e)}")
+            logger.error(f"Fehler bei der Überfälligkeitsprüfung: [Interner Fehler]")
             return 0
     
     def get_notification_settings(self) -> Dict[str, Any]:
@@ -320,7 +320,7 @@ class NotificationService:
                 return default_settings
                 
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungseinstellungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der Benachrichtigungseinstellungen: [Interner Fehler]")
             return {}
     
     def update_notification_settings(self, settings: Dict[str, Any]) -> Tuple[bool, str]:
@@ -343,5 +343,5 @@ class NotificationService:
             return True, "Einstellungen erfolgreich aktualisiert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren der Benachrichtigungseinstellungen: {str(e)}")
-            return False, f"Fehler beim Aktualisieren: {str(e)}" 
+            logger.error(f"Fehler beim Aktualisieren der Benachrichtigungseinstellungen: [Interner Fehler]")
+            return False, f"Fehler beim Aktualisieren: [Interner Fehler]"

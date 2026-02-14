@@ -30,7 +30,7 @@ class AdminEmailService:
             return settings
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Einstellungen: {str(e)}")
+            logger.error(f"Fehler beim Laden der E-Mail-Einstellungen: [Interner Fehler]")
             return {}
 
     @staticmethod
@@ -56,8 +56,8 @@ class AdminEmailService:
             return True, "E-Mail-Einstellungen erfolgreich gespeichert"
             
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der E-Mail-Einstellungen: {str(e)}")
-            return False, f"Fehler beim Speichern der E-Mail-Einstellungen: {str(e)}"
+            logger.error(f"Fehler beim Speichern der E-Mail-Einstellungen: [Interner Fehler]")
+            return False, f"Fehler beim Speichern der E-Mail-Einstellungen: [Interner Fehler]"
 
     @staticmethod
     def test_email_configuration() -> Tuple[bool, str]:
@@ -119,8 +119,8 @@ class AdminEmailService:
                 return False, "Fehler beim Senden der Test-E-Mail"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Testen der E-Mail-Konfiguration: {str(e)}")
-            return False, f"Fehler beim Testen der E-Mail-Konfiguration: {str(e)}"
+            logger.error(f"Fehler beim Testen der E-Mail-Konfiguration: [Interner Fehler]")
+            return False, f"Fehler beim Testen der E-Mail-Konfiguration: [Interner Fehler]"
 
     @staticmethod
     def send_notification_email(recipient_email: str, subject: str, message: str) -> Tuple[bool, str]:
@@ -150,8 +150,8 @@ class AdminEmailService:
                 return False, "Fehler beim Senden der E-Mail"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Benachrichtigungs-E-Mail: {str(e)}")
-            return False, f"Fehler beim Senden der E-Mail: {str(e)}"
+            logger.error(f"Fehler beim Senden der Benachrichtigungs-E-Mail: [Interner Fehler]")
+            return False, f"Fehler beim Senden der E-Mail: [Interner Fehler]"
 
     @staticmethod
     def send_low_stock_notification(consumable_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -207,8 +207,8 @@ class AdminEmailService:
                 return False, "Keine E-Mails erfolgreich gesendet"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Niedrigbestand-Benachrichtigung: {str(e)}")
-            return False, f"Fehler beim Senden der Niedrigbestand-Benachrichtigung: {str(e)}"
+            logger.error(f"Fehler beim Senden der Niedrigbestand-Benachrichtigung: [Interner Fehler]")
+            return False, f"Fehler beim Senden der Niedrigbestand-Benachrichtigung: [Interner Fehler]"
 
     @staticmethod
     def send_overdue_notification(lending_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -270,8 +270,8 @@ class AdminEmailService:
                 return False, "Keine E-Mails erfolgreich gesendet"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Überfälligkeits-Benachrichtigung: {str(e)}")
-            return False, f"Fehler beim Senden der Überfälligkeits-Benachrichtigung: {str(e)}"
+            logger.error(f"Fehler beim Senden der Überfälligkeits-Benachrichtigung: [Interner Fehler]")
+            return False, f"Fehler beim Senden der Überfälligkeits-Benachrichtigung: [Interner Fehler]"
 
     @staticmethod
     def get_email_statistics() -> Dict[str, Any]:
@@ -300,7 +300,7 @@ class AdminEmailService:
             }
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Statistiken: {str(e)}")
+            logger.error(f"Fehler beim Laden der E-Mail-Statistiken: [Interner Fehler]")
             return {
                 'email_configured': False,
                 'users_with_email': 0,
@@ -337,7 +337,7 @@ class AdminEmailService:
                 }
                 
         except Exception as e:
-            logger.error(f"Fehler beim Laden der E-Mail-Konfiguration: {str(e)}")
+            logger.error(f"Fehler beim Laden der E-Mail-Konfiguration: [Interner Fehler]")
             return {
                 'mail_server': 'smtp.gmail.com',
                 'mail_port': 587,
@@ -371,8 +371,8 @@ class AdminEmailService:
                 return False, "Fehler beim Speichern der E-Mail-Konfiguration"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der E-Mail-Konfiguration: {str(e)}")
-            return False, f"Fehler beim Speichern der E-Mail-Konfiguration: {str(e)}"
+            logger.error(f"Fehler beim Speichern der E-Mail-Konfiguration: [Interner Fehler]")
+            return False, f"Fehler beim Speichern der E-Mail-Konfiguration: [Interner Fehler]"
 
     @staticmethod
     def test_email_config(config_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -394,8 +394,8 @@ class AdminEmailService:
             return success, message
             
         except Exception as e:
-            logger.error(f"Fehler beim Testen der E-Mail-Konfiguration: {str(e)}")
-            return False, f"Fehler beim Testen der E-Mail-Konfiguration: {str(e)}"
+            logger.error(f"Fehler beim Testen der E-Mail-Konfiguration: [Interner Fehler]")
+            return False, f"Fehler beim Testen der E-Mail-Konfiguration: [Interner Fehler]"
 
     @staticmethod
     def diagnose_smtp_connection(config_data: Dict[str, Any]) -> Tuple[bool, str]:
@@ -420,5 +420,5 @@ class AdminEmailService:
                 return False, result.get('error', 'Unbekannter Fehler')
                 
         except Exception as e:
-            logger.error(f"Fehler bei SMTP-Diagnose: {str(e)}")
-            return False, f"Diagnose-Fehler: {str(e)}" 
+            logger.error(f"Fehler bei SMTP-Diagnose: [Interner Fehler]")
+            return False, f"Diagnose-Fehler: [Interner Fehler]"
