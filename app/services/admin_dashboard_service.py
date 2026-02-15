@@ -75,32 +75,49 @@ class AdminDashboardService:
         try:
             activities = []
             
-            # Hole die letzten 10 Ausleihen
+            # Hole die letzten 10 Ausleihen (Optimiert mit Aggregation zur Vermeidung von N+1 Problemen)
             try:
-                recent_lendings = list(mongodb.find('lendings', {}, sort=[('lent_at', -1)], limit=10))
+                lending_pipeline = [
+                    {'$sort': {'lent_at': -1}},
+                    {'$limit': 10},
+                    {
+                        '$lookup': {
+                            'from': 'tools',
+                            'localField': 'tool_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'tool_info'
+                        }
+                    },
+                    {'$unwind': '$tool_info'},
+                    {
+                        '$lookup': {
+                            'from': 'workers',
+                            'localField': 'worker_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'worker_info'
+                        }
+                    },
+                    {'$unwind': '$worker_info'}
+                ]
+
+                recent_lendings = mongodb.aggregate('lendings', lending_pipeline)
                 
                 # Ausleihen verarbeiten
                 for lending in recent_lendings:
                     try:
                         # Sichere Dokumentverarbeitung
                         lending = AdminDashboardService._safe_document_processing(lending, ['lent_at', 'returned_at'])
+                        tool = AdminDashboardService._safe_document_processing(lending.get('tool_info', {}))
+                        worker = AdminDashboardService._safe_document_processing(lending.get('worker_info', {}))
                         
-                        tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode', '')})
-                        worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode', '')})
-                        
-                        if tool and worker:
-                            # Sichere Dokumentverarbeitung für Tool und Worker
-                            tool = AdminDashboardService._safe_document_processing(tool)
-                            worker = AdminDashboardService._safe_document_processing(worker)
-                            
-                            activities.append({
-                                'type': 'lending',
-                                'timestamp': lending.get('lent_at', datetime.now()),
-                                'tool_name': tool.get('name', 'Unbekanntes Tool'),
-                                'worker_name': worker.get('name', 'Unbekannter Worker'),
-                                'status': lending.get('status', 'unbekannt'),
-                                'id': str(lending.get('_id', ''))
-                            })
+                        activities.append({
+                            'type': 'lending',
+                            'timestamp': lending.get('lent_at', datetime.now()),
+                            'tool_name': tool.get('name', 'Unbekanntes Tool'),
+                            'worker_name': worker.get('name', 'Unbekannter Worker'),
+                            'status': lending.get('status', 'unbekannt'),
+                            'id': str(lending.get('_id', ''))
+                        })
                     except Exception as e:
                         logger.warning(f"Fehler bei Verarbeitung einer Ausleihe: [Interner Fehler]")
                         continue
@@ -108,32 +125,49 @@ class AdminDashboardService:
             except Exception as e:
                 logger.error(f"Fehler beim Laden der Ausleihen: [Interner Fehler]")
             
-            # Hole die letzten 10 Verbrauchsmaterial-Ausgaben
+            # Hole die letzten 10 Verbrauchsmaterial-Ausgaben (Optimiert mit Aggregation)
             try:
-                recent_usages = list(mongodb.find('consumable_usages', {}, sort=[('used_at', -1)], limit=10))
+                usage_pipeline = [
+                    {'$sort': {'used_at': -1}},
+                    {'$limit': 10},
+                    {
+                        '$lookup': {
+                            'from': 'consumables',
+                            'localField': 'consumable_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'consumable_info'
+                        }
+                    },
+                    {'$unwind': '$consumable_info'},
+                    {
+                        '$lookup': {
+                            'from': 'workers',
+                            'localField': 'worker_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'worker_info'
+                        }
+                    },
+                    {'$unwind': '$worker_info'}
+                ]
+
+                recent_usages = mongodb.aggregate('consumable_usages', usage_pipeline)
                 
                 # Verbrauchsmaterial-Ausgaben verarbeiten
                 for usage in recent_usages:
                     try:
                         # Sichere Dokumentverarbeitung
                         usage = AdminDashboardService._safe_document_processing(usage, ['used_at'])
+                        consumable = AdminDashboardService._safe_document_processing(usage.get('consumable_info', {}))
+                        worker = AdminDashboardService._safe_document_processing(usage.get('worker_info', {}))
                         
-                        consumable = mongodb.find_one('consumables', {'barcode': usage.get('consumable_barcode', '')})
-                        worker = mongodb.find_one('workers', {'barcode': usage.get('worker_barcode', '')})
-                        
-                        if consumable and worker:
-                            # Sichere Dokumentverarbeitung
-                            consumable = AdminDashboardService._safe_document_processing(consumable)
-                            worker = AdminDashboardService._safe_document_processing(worker)
-                            
-                            activities.append({
-                                'type': 'consumable_usage',
-                                'timestamp': usage.get('used_at', datetime.now()),
-                                'consumable_name': consumable.get('name', 'Unbekanntes Verbrauchsmaterial'),
-                                'worker_name': worker.get('name', 'Unbekannter Worker'),
-                                'quantity': usage.get('quantity', 0),
-                                'id': str(usage.get('_id', ''))
-                            })
+                        activities.append({
+                            'type': 'consumable_usage',
+                            'timestamp': usage.get('used_at', datetime.now()),
+                            'consumable_name': consumable.get('name', 'Unbekanntes Verbrauchsmaterial'),
+                            'worker_name': worker.get('name', 'Unbekannter Worker'),
+                            'quantity': usage.get('quantity', 0),
+                            'id': str(usage.get('_id', ''))
+                        })
                     except Exception as e:
                         logger.warning(f"Fehler bei Verarbeitung einer Verbrauchsmaterial-Ausgabe: [Interner Fehler]")
                         continue
