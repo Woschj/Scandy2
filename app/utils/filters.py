@@ -44,7 +44,7 @@ def format_datetime(value):
             return value
         return parsed.strftime('%d.%m.%Y %H:%M:%S')
     except Exception as e:
-        logger.warning(f"Fehler bei Datumsformatierung: {e}")
+        logger.warning(f"Fehler bei Datumsformatierung: [Interner Fehler]")
         return value
 
 def format_date(value):
@@ -57,7 +57,7 @@ def format_date(value):
             return value
         return parsed.strftime('%d.%m.%Y')
     except Exception as e:
-        logger.warning(f"Fehler bei Datumsformatierung: {e}")
+        logger.warning(f"Fehler bei Datumsformatierung: [Interner Fehler]")
         return value
 
 def format_time(value):
@@ -70,7 +70,7 @@ def format_time(value):
             return value
         return parsed.strftime('%H:%M:%S')
     except Exception as e:
-        logger.warning(f"Fehler bei Zeitformatierung: {e}")
+        logger.warning(f"Fehler bei Zeitformatierung: [Interner Fehler]")
         return value
 
 def to_datetime(value):
@@ -110,7 +110,7 @@ def format_duration(duration):
     days = total_seconds // 86400
     hours = (total_seconds % 86400) // 3600
     minutes = (total_seconds % 3600) // 60
-    
+
     parts = []
     if days > 0:
         parts.append(f"{days} {'Tag' if days == 1 else 'Tage'}")
@@ -118,7 +118,7 @@ def format_duration(duration):
         parts.append(f"{hours} {'Stunde' if hours == 1 else 'Stunden'}")
     if minutes > 0 and days == 0:  # Minuten nur anzeigen wenn weniger als 1 Tag
         parts.append(f"{minutes} {'Minute' if minutes == 1 else 'Minuten'}")
-    
+
     return ' '.join(parts) if parts else 'Weniger als 1 Minute'
 
 def author_filter(value):
@@ -127,27 +127,27 @@ def author_filter(value):
 
 def register_filters(app):
     """Registriert alle benutzerdefinierten Filter"""
-    
+
     @app.template_filter('datetime')
     def datetime_filter(value):
         """Formatiert ein Datum im deutschen Format"""
         return format_datetime(value)
-    
+
     @app.template_filter('date')
     def date_filter(value):
         """Formatiert ein Datum nur mit Datum (ohne Zeit)"""
         return format_date(value)
-    
+
     @app.template_filter('time')
     def time_filter(value):
         """Formatiert nur die Zeit"""
         return format_time(value)
-    
+
     @app.template_filter('datetime_short')
     def datetime_short_filter(value):
         """Kurzes Datumsformat (TT.MM.JJJJ HH:MM)"""
         return format_datetime(value)
-    
+
     @app.template_filter('datetime_long')
     def datetime_long_filter(value):
         """Langes Datumsformat mit Wochentag"""
@@ -155,7 +155,7 @@ def register_filters(app):
         if not parsed:
             return value or ''
         return f"{GERMAN_WEEKDAYS.get(parsed.weekday(), '')}, {parsed.strftime('%d.%m.%Y %H:%M:%S')}"
-    
+
     @app.template_filter('date_relative')
     def date_relative_filter(value):
         """Relatives Datum (heute, gestern, etc.)"""
@@ -165,7 +165,7 @@ def register_filters(app):
         now = datetime.now()
         today = now.date()
         value_date = parsed.date()
-        
+
         if value_date == today:
             return f'Heute, {parsed.strftime("%H:%M:%S")}'
         elif value_date == today - timedelta(days=1):
@@ -174,7 +174,7 @@ def register_filters(app):
             return f'Morgen, {parsed.strftime("%H:%M:%S")}'
         else:
             return parsed.strftime('%d.%m.%Y %H:%M:%S')
-    
+
     @app.template_filter('author')
     def author_filter(value):
         """Gibt den Autor zurück (unabhängig vom Input-Wert)"""

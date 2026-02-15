@@ -31,7 +31,7 @@ def resolve_user_group_names(group_ids):
                     try:
                         query_id = ObjectId(group_id)
                     except Exception as e:
-                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: {e}")
+                        logger.warning(f"Fehler bei ObjectId-Konvertierung für group_id {group_id}: [Interner Fehler]")
                         query_id = group_id
                 
                 # Lade Nutzergruppe aus Datenbank
@@ -41,12 +41,12 @@ def resolve_user_group_names(group_ids):
                 else:
                     group_names.append(str(group_id))
             except Exception as e:
-                logger.warning(f"Fehler bei Gruppenverarbeitung für group_id {group_id}: {e}")
+                logger.warning(f"Fehler bei Gruppenverarbeitung für group_id {group_id}: [Interner Fehler]")
                 group_names.append(str(group_id))
         
         return ', '.join(group_names)
     except Exception as e:
-        logger.error(f"Fehler bei Gruppenverarbeitung: {e}")
+        logger.error(f"Fehler bei Gruppenverarbeitung: [Interner Fehler]")
         return ', '.join([str(gid) for gid in group_ids]) if group_ids else ''
 
 def format_software_list(software_list):
@@ -64,7 +64,7 @@ def format_software_list(software_list):
             return ''
         return ', '.join(software_list)
     except Exception as e:
-        logger.warning(f"Fehler bei Software-Listen-Formatierung: {e}")
+        logger.warning(f"Fehler bei Software-Listen-Formatierung: [Interner Fehler]")
         return ''
 
 def format_boolean_field(value, true_text="Ja", false_text="Nein"):
@@ -84,5 +84,5 @@ def format_boolean_field(value, true_text="Ja", false_text="Nein"):
             return true_text if value else false_text
         return str(value) if value is not None else ''
     except Exception as e:
-        logger.warning(f"Fehler bei Boolean-Feld-Formatierung: {e}")
+        logger.warning(f"Fehler bei Boolean-Feld-Formatierung: [Interner Fehler]")
         return ''

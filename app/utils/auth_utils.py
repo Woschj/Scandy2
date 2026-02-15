@@ -27,7 +27,7 @@ def needs_setup():
         return admin_count == 0  # True wenn kein Admin gefunden wurde
     except Exception as e:
         # Wenn Collection oder DB nicht existiert oder anderer Fehler, ist Setup nötig
-        print(f"Fehler beim Prüfen auf Admin-Benutzer für Setup: {e}")
+        print(f"Fehler beim Prüfen auf Admin-Benutzer für Setup: [Interner Fehler]")
         return True
 
 def is_admin_user_present():
@@ -36,7 +36,7 @@ def is_admin_user_present():
         admin_count = mongodb.count_documents('users', {'role': 'admin'})
         return admin_count > 0
     except Exception as e:
-        print(f"Fehler beim Prüfen auf Admin-Benutzer: {e}")
+        print(f"Fehler beim Prüfen auf Admin-Benutzer: [Interner Fehler]")
         return False
 
 def check_password_compatible(password_hash, password):
@@ -77,7 +77,7 @@ def check_password_compatible(password_hash, password):
         return False
         
     except Exception as e:
-        logger.error(f"Fehler bei der Passwort-Überprüfung: {e}")
+        logger.error(f"Fehler bei der Passwort-Überprüfung: [Interner Fehler]")
         return False
 
 def check_bcrypt_password(password_hash, password):
@@ -96,7 +96,7 @@ def check_bcrypt_password(password_hash, password):
         # bcrypt.compare() überprüft das Passwort gegen den Hash
         return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
     except Exception as e:
-        logger.error(f"Fehler bei bcrypt-Passwort-Überprüfung: {e}")
+        logger.error(f"Fehler bei bcrypt-Passwort-Überprüfung: [Interner Fehler]")
         return False
 
 def check_scrypt_password(password_hash, password):
@@ -151,6 +151,28 @@ def check_scrypt_password(password_hash, password):
         return computed_hash_hex == stored_hash
         
     except Exception as e:
-        logger.error(f"Fehler bei scrypt-Passwort-Überprüfung: {e}")
+        logger.error(f"Fehler bei scrypt-Passwort-Überprüfung: [Interner Fehler]")
         # Sicherheitskritisch: Kein permissiver Fallback
-        return False 
+        return False
+
+def is_safe_url(target):
+    """
+    Überprüft, ob eine URL für Redirects sicher ist (verhindert Open Redirect).
+    Erlaubt nur relative URLs ohne Scheme und Host.
+
+    Args:
+        target (str): Die zu prüfende URL
+
+    Returns:
+        bool: True wenn sicher, False sonst
+    """
+    if not target:
+        return False
+
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(target)
+        # Nur Pfade ohne Host und Scheme erlauben (relative URLs)
+        return not parsed.netloc and not parsed.scheme and parsed.path.startswith('/')
+    except Exception:
+        return False

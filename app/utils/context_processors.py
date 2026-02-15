@@ -42,9 +42,9 @@ def inject_colors():
                     color_dict[key] = value
             return {'colors': color_dict}
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Farben: {e}")
+        logger.error(f"Fehler beim Laden der Farben: [Interner Fehler]")
         logger.debug(traceback.format_exc())
-    
+
     # Fallback-Farben
     return {
         'colors': {
@@ -81,7 +81,7 @@ def inject_version():
             }
         }
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Versionsinformationen: {str(e)}")
+        logger.error(f"Fehler beim Laden der Versionsinformationen: [Interner Fehler]")
         return {
             'version': VERSION,
             'version_info': {
@@ -89,7 +89,7 @@ def inject_version():
                 'github_version': None,
                 'is_up_to_date': None,
                 'update_available': False,
-                'error': str(e)
+                'error': 'Ein interner Fehler ist aufgetreten.'
             }
         }
 
@@ -102,7 +102,7 @@ def inject_app_labels():
             'consumables': {'name': 'Verbrauchsmaterial', 'icon': 'fas fa-box-open'},
             'tickets': {'name': 'Tickets', 'icon': 'fas fa-ticket-alt'}
         }
-        
+
         # Labels aus der Datenbank laden
         for doc in label_docs:
             key = doc['key'].replace('label_', '')
@@ -110,17 +110,17 @@ def inject_app_labels():
             if 'value' not in doc:
                 continue
             value = doc['value']
-            
+
             # Label-Typ und Attribut extrahieren (z.B. tools_name -> tools.name)
             parts = key.split('_')
             if len(parts) == 2:
                 label_type, attr = parts
                 if label_type in app_labels:
                     app_labels[label_type][attr] = value
-        
+
         return {'app_labels': app_labels}
     except Exception as e:
-        logger.error(f"Fehler beim Laden der App-Labels: {str(e)}")
+        logger.error(f"Fehler beim Laden der App-Labels: [Interner Fehler]")
         return {
             'app_labels': {
                 'tools': {'name': 'Werkzeuge', 'icon': 'fas fa-tools'},
@@ -136,54 +136,54 @@ def inject_unfilled_timesheet_days():
         from flask_login import current_user
         from datetime import datetime, timedelta
         from app.utils.cache_manager import cache
-        
+
         # Nur für eingeloggte Benutzer mit aktiviertem Wochenbericht-Feature berechnen
         if not hasattr(current_user, 'is_authenticated') or not current_user.is_authenticated:
             return {'unfilled_timesheet_days': 0}
-        
+
         # Prüfe ob Wochenbericht-Feature aktiviert ist
         if not hasattr(current_user, 'timesheet_enabled') or not current_user.timesheet_enabled:
             return {'unfilled_timesheet_days': 0}
-        
+
         # OPTIMIERT: Cache für 5 Minuten
         user_id = current_user.username
         cache_key = f"timesheet_days_{user_id}"
-        
+
         cached_result = cache.get(cache_key)
         if cached_result is not None:
             return {'unfilled_timesheet_days': cached_result}
-        
+
         # Berechne unausgefüllte Tage für den aktuellen Benutzer
         today = datetime.now()
-        
+
         # Hole alle Timesheets des Benutzers
         timesheets = list(mongodb.find('timesheets', {'user_id': user_id}))
-        
+
         # Berechne unausgefüllte Tage für alle Wochen
         unfilled_days = 0
         for ts in timesheets:
             # Berechne den Wochenstart
             week_start = datetime.fromisocalendar(ts['year'], ts['kw'], 1)  # 1 = Montag
             days = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag']
-            
+
             for i, day in enumerate(days):
                 # Berechne das Datum für den aktuellen Tag
                 current_day = week_start + timedelta(days=i)
-                
+
                 # Prüfe nur vergangene Tage
                 if current_day.date() < today.date():
                     has_times = ts.get(f'{day}_start') or ts.get(f'{day}_end')
                     has_tasks = ts.get(f'{day}_tasks')
                     if not (has_times and has_tasks):
                         unfilled_days += 1
-        
+
         # Cache das Ergebnis für 5 Minuten
         cache.set(cache_key, unfilled_days, 300)
-        
+
         return {'unfilled_timesheet_days': unfilled_days}
-        
+
     except Exception as e:
-        logger.error(f"Fehler beim Berechnen der fehlenden Wochenberichte: {str(e)}")
+        logger.error(f"Fehler beim Berechnen der fehlenden Wochenberichte: [Interner Fehler]")
         return {'unfilled_timesheet_days': 0}
 
 def inject_feature_settings():
@@ -205,7 +205,7 @@ def inject_feature_settings():
             'feature_settings': feature_settings
         }
     except Exception as e:
-        logger.error(f"Fehler beim Laden der Feature-Einstellungen für Templates: {str(e)}")
+        logger.error(f"Fehler beim Laden der Feature-Einstellungen für Templates: [Interner Fehler]")
         fallback_settings = {
             'tools': True,
             'consumables': True,
@@ -229,11 +229,11 @@ def inject_feature_settings():
 def inject_custom_fields():
     """
     Injiziert benutzerdefinierte Felder in alle Templates
-    
+
     Lädt alle aktiven benutzerdefinierten Felder für Werkzeuge und Verbrauchsgüter
-    und stellt sie als 'custom_fields_tools' und 'custom_fields_consumables' 
+    und stellt sie als 'custom_fields_tools' und 'custom_fields_consumables'
     in allen Jinja2-Templates zur Verfügung.
-    
+
     Returns:
         dict: Template-Kontext mit benutzerdefinierten Feldern
     """
@@ -242,19 +242,19 @@ def inject_custom_fields():
             'custom_fields_tools': [],
             'custom_fields_consumables': []
         }
-    
+
     try:
         # Lade benutzerdefinierte Felder für beide Typen
         tools_fields = CustomFieldsService.get_custom_fields_for_target('tools')
         consumables_fields = CustomFieldsService.get_custom_fields_for_target('consumables')
-        
+
         return {
             'custom_fields_tools': tools_fields,
             'custom_fields_consumables': consumables_fields
         }
     except Exception as e:
         # Bei Fehlern leere Listen zurückgeben, um Template-Rendering nicht zu stören
-        logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: {str(e)}")
+        logger.error(f"Fehler beim Laden der benutzerdefinierten Felder: [Interner Fehler]")
         return {
             'custom_fields_tools': [],
             'custom_fields_consumables': []
@@ -331,6 +331,6 @@ def inject_departments():
         return {'departments': ctx, 'departments_ctx': ctx}
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.warning(f"Departments Context Fehler: {e}")
+        logger.warning(f"Departments Context Fehler: [Interner Fehler]")
         ctx = {'allowed': [], 'current': None}
         return {'departments': ctx, 'departments_ctx': ctx}

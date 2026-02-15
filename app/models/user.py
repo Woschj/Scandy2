@@ -29,7 +29,7 @@ class User(UserMixin):
                 try:
                     self.delete_at = datetime.fromisoformat(self.delete_at.replace('Z', '+00:00'))
                 except Exception as e:
-                    logger.warning(f"Fehler bei Datumskonvertierung delete_at: {e}")
+                    logger.warning(f"Fehler bei Datumskonvertierung delete_at: [Interner Fehler]")
                     self.delete_at = None
             
 
@@ -130,4 +130,4 @@ class User(UserMixin):
         except Exception as e:
             # Logge den Fehler, aber falle nicht aus
             import logging
-            logging.error(f"Fehler beim Speichern von timesheet_enabled für User {user_id}: {e}") 
+            logging.error(f"Fehler beim Speichern von timesheet_enabled für User {user_id}: [Interner Fehler]")

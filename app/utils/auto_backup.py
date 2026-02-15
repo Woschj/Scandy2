@@ -95,7 +95,7 @@ class AutoBackupScheduler:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler bei Worker-Koordination: {e}")
+            logger.error(f"Fehler bei Worker-Koordination: [Interner Fehler]")
             # Bei Fehlern: Backup trotzdem ausführen (sicherer Fallback)
             return True
     
@@ -114,7 +114,7 @@ class AutoBackupScheduler:
             })
             
         except Exception as e:
-            logger.error(f"Fehler beim Freigeben des Backup-Locks: {e}")
+            logger.error(f"Fehler beim Freigeben des Backup-Locks: [Interner Fehler]")
     
     def _cleanup_expired_locks(self):
         """Bereinigt abgelaufene Locks aus der Datenbank"""
@@ -133,7 +133,7 @@ class AutoBackupScheduler:
                 logger.info(f"{result.deleted_count} abgelaufene Locks bereinigt")
                 
         except Exception as e:
-            logger.error(f"Fehler beim Bereinigen abgelaufener Locks: {e}")
+            logger.error(f"Fehler beim Bereinigen abgelaufener Locks: [Interner Fehler]")
     
     def _load_backup_times(self):
         """Lädt die konfigurierten Backup-Zeiten aus der Datenbank"""
@@ -167,7 +167,7 @@ class AutoBackupScheduler:
                 logger.info("Keine konfigurierten Backup-Zeiten gefunden, verwende Standard-Zeiten")
                 
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Backup-Zeiten: {e}")
+            logger.error(f"Fehler beim Laden der Backup-Zeiten: [Interner Fehler]")
             # Verwende Standard-Zeiten bei Fehlern
             self.backup_times = [dt_time(6, 0), dt_time(18, 0)]
     
@@ -197,7 +197,7 @@ class AutoBackupScheduler:
                     logger.warning(f"Ungültiges Datum für letztes wöchentliches Backup: {last_weekly_setting['value']}")
                     
         except Exception as e:
-            logger.error(f"Fehler beim Laden der wöchentlichen Backup-Konfiguration: {e}")
+            logger.error(f"Fehler beim Laden der wöchentlichen Backup-Konfiguration: [Interner Fehler]")
     
     def save_backup_times(self, times_list):
         """Speichert neue Backup-Zeiten in der Datenbank"""
@@ -233,8 +233,8 @@ class AutoBackupScheduler:
                 return False, "Keine gültigen Zeiten gefunden"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der Backup-Zeiten: {e}")
-            return False, f"Fehler beim Speichern: {str(e)}"
+            logger.error(f"Fehler beim Speichern der Backup-Zeiten: [Interner Fehler]")
+            return False, f"Fehler beim Speichern: [Interner Fehler]"
     
     def save_weekly_backup_time(self, time_str):
         """Speichert die wöchentliche Backup-Zeit in der Datenbank"""
@@ -265,8 +265,8 @@ class AutoBackupScheduler:
                 return False, "Ungültiges Zeitformat (HH:MM)"
                 
         except Exception as e:
-            logger.error(f"Fehler beim Speichern der wöchentlichen Backup-Zeit: {e}")
-            return False, f"Fehler beim Speichern: {str(e)}"
+            logger.error(f"Fehler beim Speichern der wöchentlichen Backup-Zeit: [Interner Fehler]")
+            return False, f"Fehler beim Speichern: [Interner Fehler]"
     
     def get_backup_times(self):
         """Gibt die aktuellen Backup-Zeiten zurück"""
@@ -354,8 +354,8 @@ class AutoBackupScheduler:
                 time.sleep(30)
                 
             except Exception as e:
-                logger.error(f"Fehler im Auto-Backup-Scheduler: {e}")
-                self._log_backup_event(f"FEHLER: {e}")
+                logger.error(f"Fehler im Auto-Backup-Scheduler: [Interner Fehler]")
+                self._log_backup_event(f"FEHLER: [Interner Fehler]")
                 time.sleep(60)  # Warte 1 Minute bei Fehlern
                 
     def _create_scheduled_backup(self):
@@ -390,8 +390,8 @@ class AutoBackupScheduler:
                 self._send_backup_notification(None, success=False)
                 
         except Exception as e:
-            logger.error(f"Fehler beim automatischen Backup: {e}")
-            self._log_backup_event(f"Backup-Fehler: {e}")
+            logger.error(f"Fehler beim automatischen Backup: [Interner Fehler]")
+            self._log_backup_event(f"Backup-Fehler: [Interner Fehler]")
             self._send_backup_notification(None, success=False)
         finally:
             # Lock freigeben
@@ -443,12 +443,12 @@ class AutoBackupScheduler:
                     logger.info(f"ZIP-Archiv nach Versand gelöscht: {archive_filename}")
                     self._log_backup_event(f"ZIP-Archiv nach Versand gelöscht: {archive_filename}")
                 except Exception as e:
-                    logger.error(f"Fehler beim Löschen der ZIP-Datei: {e}")
-                    self._log_backup_event(f"Fehler beim Löschen der ZIP-Datei: {e}")
+                    logger.error(f"Fehler beim Löschen der ZIP-Datei: [Interner Fehler]")
+                    self._log_backup_event(f"Fehler beim Löschen der ZIP-Datei: [Interner Fehler]")
             
         except Exception as e:
-            logger.error(f"Fehler beim Erstellen des wöchentlichen Backup-Archivs: {e}")
-            self._log_backup_event(f"Fehler beim wöchentlichen Backup-Archiv: {e}")
+            logger.error(f"Fehler beim Erstellen des wöchentlichen Backup-Archivs: [Interner Fehler]")
+            self._log_backup_event(f"Fehler beim wöchentlichen Backup-Archiv: [Interner Fehler]")
         finally:
             # Lock freigeben
             self._release_backup_lock()
@@ -477,8 +477,8 @@ class AutoBackupScheduler:
                 return False
                 
         except Exception as e:
-            logger.error(f"Fehler beim Senden des wöchentlichen Backup-Archivs: {e}")
-            self._log_backup_event(f"Fehler beim Senden des wöchentlichen Backup-Archivs: {e}")
+            logger.error(f"Fehler beim Senden des wöchentlichen Backup-Archivs: [Interner Fehler]")
+            self._log_backup_event(f"Fehler beim Senden des wöchentlichen Backup-Archivs: [Interner Fehler]")
             return False
     
     def _get_weekly_backup_email(self):
@@ -499,7 +499,7 @@ class AutoBackupScheduler:
             return None
             
         except Exception as e:
-            logger.error(f"Fehler beim Ermitteln der E-Mail für wöchentliche Backups: {e}")
+            logger.error(f"Fehler beim Ermitteln der E-Mail für wöchentliche Backups: [Interner Fehler]")
             return None
     
     def _update_last_weekly_backup_date(self):
@@ -518,7 +518,7 @@ class AutoBackupScheduler:
             logger.info(f"Letztes wöchentliches Backup-Datum aktualisiert: {current_date}")
             
         except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des letzten wöchentlichen Backup-Datums: {e}")
+            logger.error(f"Fehler beim Aktualisieren des letzten wöchentlichen Backup-Datums: [Interner Fehler]")
             
     def _log_backup_event(self, message):
         """Loggt Backup-Ereignisse in eine separate Datei"""
@@ -530,7 +530,7 @@ class AutoBackupScheduler:
                 f.write(log_entry)
                 
         except Exception as e:
-            logger.error(f"Fehler beim Loggen des Backup-Ereignisses: {e}")
+            logger.error(f"Fehler beim Loggen des Backup-Ereignisses: [Interner Fehler]")
             
     def _send_backup_notification(self, backup_filename, success=True):
         """Sendet E-Mail-Benachrichtigung über Backup-Status"""
@@ -548,7 +548,7 @@ class AutoBackupScheduler:
                     logger.info(f"Backup-Benachrichtigung an {admin_email} gesendet")
                     
         except Exception as e:
-            logger.error(f"Fehler beim Senden der Backup-Benachrichtigung: {e}")
+            logger.error(f"Fehler beim Senden der Backup-Benachrichtigung: [Interner Fehler]")
             
     def _get_admin_email(self):
         """Ermittelt die Admin-E-Mail-Adresse aus den Einstellungen"""
@@ -568,7 +568,7 @@ class AutoBackupScheduler:
             return None
             
         except Exception as e:
-            logger.error(f"Fehler beim Ermitteln der Admin-E-Mail: {e}")
+            logger.error(f"Fehler beim Ermitteln der Admin-E-Mail: [Interner Fehler]")
             return None
             
     def get_status(self):
@@ -585,7 +585,7 @@ class AutoBackupScheduler:
                 'log_file': str(self.log_file)
             }
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen des Auto-Backup-Status: {e}")
+            logger.error(f"Fehler beim Abrufen des Auto-Backup-Status: [Interner Fehler]")
             return {
                 'running': self.running,
                 'backup_times': [t.strftime('%H:%M') for t in self.backup_times],

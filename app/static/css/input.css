@@ -1,3 +1,72 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* NetBox-inspired theme variables and overrides */
+:root {
+  /* NetBox Color Palette */
+  --btz-primary: #004d99;
+  --btz-primary-light: #3f51b5;
+  --btz-primary-dark: #003366;
+  --btz-primary-hover: #004080;
+  --btz-secondary: #f8f9fa;
+  --btz-secondary-dark: #e9ecef;
+  --btz-accent: #ffc107;
+  --btz-accent-dark: #e0a800;
+  --btz-text: #333333;
+  --btz-text-light: #6c757d;
+  --btz-text-muted: #9ca3af;
+  --btz-success: #28a745;
+  --btz-warning: #ffc107;
+  --btz-danger: #dc3545;
+  --btz-info: #17a2b8;
+
+  /* Shadows */
+  --btz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --btz-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+  /* Radius - NetBox is more rectangular */
+  --btz-radius: 0.25rem;
+}
+
+@layer base {
+  body {
+    @apply bg-[#f5f8fa] text-[#333333];
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+@layer components {
+  /* Card Styles - NetBox style */
+  .card {
+    @apply border border-[#e9ecef] rounded-[var(--btz-radius)] bg-white shadow-sm !important;
+  }
+
+  .card-header {
+    @apply bg-[#f8f9fa] border-b border-[#e9ecef] px-5 py-3 font-semibold !important;
+    color: #333 !important;
+  }
+
+  .card-title {
+    @apply text-base mb-0 !important;
+    color: #333 !important;
+  }
+
+  /* Button Styles - NetBox style */
+  .btn {
+    @apply rounded-[var(--btz-radius)] font-medium normal-case !important;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--btz-primary)] border-[var(--btz-primary)] text-white !important;
+  }
+
+  /* Table Styles */
+  .table {
+    @apply border-separate border-spacing-0 !important;
+  }
+
+  .table thead th {
+    @apply bg-[#f8f9fa] border-b-2 border-[#e9ecef] text-[#495057] font-semibold uppercase text-[0.75rem] tracking-wider !important;
+  }
+}

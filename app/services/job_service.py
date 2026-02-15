@@ -75,7 +75,7 @@ class JobService:
             }
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen der aktiven Jobs: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen der aktiven Jobs: [Interner Fehler]")
             return {
                 'jobs': [],
                 'total_count': 0,
@@ -105,7 +105,7 @@ class JobService:
             return None
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen des Jobs {job_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen des Jobs {job_id}: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -165,7 +165,7 @@ class JobService:
                 return None
                 
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Erstellen des Jobs: {e}")
+            loggers['errors'].error(f"Fehler beim Erstellen des Jobs: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -228,7 +228,7 @@ class JobService:
                 return None
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Aktualisieren des Jobs {job_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Aktualisieren des Jobs {job_id}: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -248,7 +248,7 @@ class JobService:
             return True
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Löschen des Jobs {job_id}: {e}")
+            loggers['errors'].error(f"Fehler beim Löschen des Jobs {job_id}: [Interner Fehler]")
             return False
     
     @staticmethod
@@ -297,7 +297,7 @@ class JobService:
             }
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen der Job-Statistiken: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen der Job-Statistiken: [Interner Fehler]")
             return {
                 'total_jobs': 0,
                 'active_jobs': 0,
@@ -359,7 +359,7 @@ class JobService:
             }
             
         except Exception as e:
-            loggers['errors'].error(f"Fehler beim Abrufen der Jobs: {e}")
+            loggers['errors'].error(f"Fehler beim Abrufen der Jobs: [Interner Fehler]")
             return {
                 'jobs': [],
                 'total_count': 0,

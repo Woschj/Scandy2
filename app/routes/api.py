@@ -31,10 +31,11 @@ def get_workers():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Fehler beim Laden der Mitarbeiter: {str(e)}'
+            'message': f'Fehler beim Laden der Mitarbeiter: [Interner Fehler]'
         }), 500
 
 @bp.route('/inventory/tools/<barcode>', methods=['GET'])
+@login_required
 def get_tool(barcode):
     """Gibt Details zu einem Werkzeug zurück"""
     try:
@@ -58,13 +59,14 @@ def get_tool(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Werkzeugs: {str(e)}")
+        logger.error(f"Fehler beim Laden des Werkzeugs: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Werkzeugs'
         }), 500
 
 @bp.route('/inventory/workers/<barcode>', methods=['GET'])
+@login_required
 def get_worker(barcode):
     """Gibt Details zu einem Mitarbeiter zurück"""
     try:
@@ -94,7 +96,7 @@ def get_worker(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Mitarbeiters: {str(e)}")
+        logger.error(f"Fehler beim Laden des Mitarbeiters: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Mitarbeiters'
@@ -123,7 +125,7 @@ def update_colors():
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren der Farben: {str(e)}")
+        logger.error(f"Fehler beim Aktualisieren der Farben: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Aktualisieren der Farben'
@@ -154,7 +156,7 @@ def process_lending_via_api():
         else:
             return jsonify({'success': False, 'message': message}), 400
     except Exception as e:
-        logger.error(f"Fehler bei /api/lending/process: {str(e)}", exc_info=True)
+        logger.error(f"Fehler bei /api/lending/process: [Interner Fehler]", exc_info=True)
         return jsonify({'success': False, 'message': 'Fehler bei der Verarbeitung'}), 500
 
 @bp.route('/lending/return', methods=['POST'])
@@ -216,13 +218,14 @@ def return_tool():
             }), 400
         
     except Exception as e:
-        logger.error(f"Error in return_tool: {str(e)}", exc_info=True)
+        logger.error(f"Error in return_tool: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler bei der Rückgabe: {str(e)}'
+            'message': f'Fehler bei der Rückgabe: [Interner Fehler]'
         }), 500
 
 @bp.route('/inventory/consumables/<barcode>', methods=['GET'])
+@login_required
 def get_consumable(barcode):
     """Gibt Details zu einem Verbrauchsmaterial zurück"""
     try:
@@ -246,7 +249,7 @@ def get_consumable(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Laden des Verbrauchsmaterials: {str(e)}")
+        logger.error(f"Fehler beim Laden des Verbrauchsmaterials: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Laden des Verbrauchsmaterials'
@@ -299,7 +302,7 @@ def update_barcode():
         })
         
     except Exception as e:
-        logger.error(f"Fehler beim Aktualisieren des Barcodes: {str(e)}")
+        logger.error(f"Fehler beim Aktualisieren des Barcodes: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler beim Aktualisieren des Barcodes'
@@ -345,7 +348,7 @@ def get_consumable_forecast(barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler bei der Bestandsprognose: {str(e)}")
+        logger.error(f"Fehler bei der Bestandsprognose: [Interner Fehler]")
         return jsonify({
             'success': False,
             'message': 'Fehler bei der Berechnung'
@@ -358,7 +361,7 @@ def get_notices():
         notices = list(mongodb.find('homepage_notices', {'is_active': True}, sort=[('priority', -1), ('created_at', -1)]))
         return jsonify({'success': True, 'notices': notices})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['GET'])
 @admin_required
@@ -370,7 +373,7 @@ def get_notice(id):
             return jsonify({'error': 'Hinweis nicht gefunden'}), 404
         return jsonify({'success': True, 'notice': notice})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices', methods=['POST'])
 @admin_required
@@ -389,7 +392,7 @@ def create_notice():
         result = mongodb.insert_one('homepage_notices', notice_data)
         return jsonify({'success': True, 'id': str(result)})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['PUT'])
 @admin_required
@@ -407,7 +410,7 @@ def update_notice(id):
         mongodb.update_one('homepage_notices', {'_id': id}, {'$set': update_data})
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/notices/<id>', methods=['DELETE'])
 @admin_required
@@ -417,7 +420,7 @@ def delete_notice(id):
         mongodb.delete_one('homepage_notices', {'_id': id})
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ein interner Fehler ist aufgetreten.'}), 500
 
 @bp.route('/quickscan/process_lending', methods=['POST'])
 @login_required
@@ -447,7 +450,7 @@ def process_lending():
         
     except Exception as e:
         import traceback
-        logger.error(f"Fehler bei der Quickscan-Verarbeitung: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"Fehler bei der Quickscan-Verarbeitung: [Interner Fehler]\n{traceback.format_exc()}")
         return jsonify({
             'success': False,
             'message': 'Fehler bei der Verarbeitung'
@@ -501,10 +504,10 @@ def test_return_tool(tool_barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler in test_return_tool: {str(e)}", exc_info=True)
+        logger.error(f"Fehler in test_return_tool: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: {str(e)}'
+            'message': f'Fehler: [Interner Fehler]'
         }), 500
 
 @bp.route('/debug/test-mongodb-update/<tool_barcode>', methods=['POST'])
@@ -564,8 +567,8 @@ def test_mongodb_update(tool_barcode):
         })
         
     except Exception as e:
-        logger.error(f"Fehler in test_mongodb_update: {str(e)}", exc_info=True)
+        logger.error(f"Fehler in test_mongodb_update: [Interner Fehler]", exc_info=True)
         return jsonify({
             'success': False,
-            'message': f'Fehler: {str(e)}'
+            'message': f'Fehler: [Interner Fehler]'
         }), 500

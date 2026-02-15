@@ -41,7 +41,7 @@ class VersionChecker:
                     return match.group(1)
                     
         except Exception as e:
-            logger.error(f"Fehler beim Abrufen der GitHub-Version: {e}")
+            logger.error(f"Fehler beim Abrufen der GitHub-Version: [Interner Fehler]")
             
         return None
     
@@ -110,10 +110,10 @@ class VersionChecker:
                 }
                 
         except Exception as e:
-            logger.error(f"Fehler beim Versionscheck: {e}")
+            logger.error(f"Fehler beim Versionscheck: [Interner Fehler]")
             return {
                 'status': 'error',
-                'message': f'Fehler beim Versionscheck: {str(e)}',
+                'message': 'Fehler beim Versionscheck.',
                 'local_version': info['local_version']
             }
 

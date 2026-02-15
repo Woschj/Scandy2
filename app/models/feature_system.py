@@ -90,7 +90,7 @@ class FeatureSystem:
                 return cls.DEFAULT_FEATURES.copy()
                 
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Feature-Einstellungen für {department}: {e}")
+            logger.error(f"Fehler beim Laden der Feature-Einstellungen für {department}: [Interner Fehler]")
             return cls.DEFAULT_FEATURES.copy()
     
     @classmethod
@@ -139,7 +139,7 @@ class FeatureSystem:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Setzen der Feature-Einstellung {feature_name} für {department}: {e}")
+            logger.error(f"Fehler beim Setzen der Feature-Einstellung {feature_name} für {department}: [Interner Fehler]")
             return False
     
     @classmethod
@@ -176,7 +176,7 @@ class FeatureSystem:
             return cls.DEFAULT_FEATURES.get(feature_name, False)
             
         except Exception as e:
-            logger.error(f"Fehler beim Prüfen der Feature-Einstellung {feature_name} für {department}: {e}")
+            logger.error(f"Fehler beim Prüfen der Feature-Einstellung {feature_name} für {department}: [Interner Fehler]")
             return cls.DEFAULT_FEATURES.get(feature_name, False)
     
     @classmethod
@@ -200,7 +200,7 @@ class FeatureSystem:
             return result
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden aller Department-Features: {e}")
+            logger.error(f"Fehler beim Laden aller Department-Features: [Interner Fehler]")
             return {}
     
     @classmethod
@@ -222,7 +222,7 @@ class FeatureSystem:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Zurücksetzen der Features für {department}: {e}")
+            logger.error(f"Fehler beim Zurücksetzen der Features für {department}: [Interner Fehler]")
             return False
     
     @classmethod
@@ -250,7 +250,7 @@ class FeatureSystem:
             return True
             
         except Exception as e:
-            logger.error(f"Fehler beim Kopieren der Features von {source_department} zu {target_department}: {e}")
+            logger.error(f"Fehler beim Kopieren der Features von {source_department} zu {target_department}: [Interner Fehler]")
             return False
 
 # Globale Instanz für einfache Verwendung
