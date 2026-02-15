@@ -26,9 +26,8 @@
     <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     
     <!-- Eigene Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/quickscan.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-fixes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quickscan.css') }}?v=3">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/version-display.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/button-fixes.css') }}">
 
@@ -37,263 +36,114 @@
     <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body {
+        :root {
             font-family: 'Inter', sans-serif;
-            background-color: oklch(var(--b2)) !important;
-            color: oklch(var(--bc)) !important;
-        }
-
-        .main-content-with-sidebar, .content-area {
-            background-color: transparent !important;
-        }
-
-        /* Scandy Modern Theme - Softer colors for better accessibility */
-        [data-theme="scandy"] {
-            /* Primary colors - Refined Blue */
-            --p: 0.55 0.18 255;
-            --pc: 0.98 0.01 255;
-
-            /* Secondary - Slate Gray */
-            --s: 0.45 0.05 255;
-            --sc: 0.98 0.01 255;
-
-            /* Accent - Warm Orange */
-            --a: 0.7 0.18 45;
-            --ac: 0.98 0.01 45;
-
-            /* Success, Warning, Error, Info */
-            --su: 0.65 0.2 150;
-            --suc: 0.98 0.01 150;
-            --wa: 0.85 0.15 85;
-            --wac: 0.2 0.05 85;
-            --er: 0.6 0.18 25;
-            --erc: 0.98 0.01 25;
-            --in: 0.7 0.15 210;
-            --inc: 0.98 0.01 210;
-
-            /* Neutral/Base - Softer Grays */
-            --b1: 0.99 0.005 255;  /* Soft White */
-            --b2: 0.97 0.01 255;   /* Very Light Gray */
-            --b3: 0.94 0.015 255;  /* Light Gray */
-            --bc: 0.25 0.02 255;   /* Deep Gray Text */
-            --n: 0.35 0.03 255;
-            --nc: 0.95 0.01 255;
-
-            /* Rounded corners */
-            --rounded-box: 1rem;
-            --rounded-btn: 0.6rem;
+            --rounded-box: 1.5rem;
+            --rounded-btn: 0.75rem;
             --rounded-badge: 1rem;
-
-            /* Animation/Transition */
             --animation-btn: 0.25s;
             --animation-input: 0.2s;
+            --btn-focus-scale: 0.95;
         }
 
-        /* Layout Container */
-        .sidebar-permanent {
-            width: 260px;
-            background-color: oklch(var(--b1));
-            border-right: 1px solid oklch(var(--b3));
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 100;
-            transition: transform 0.3s ease;
+        [data-theme="scandy"] {
+            --p: 0.55 0.18 255; --pc: 0.99 0.01 255;
+            --s: 0.45 0.05 255; --sc: 0.99 0.01 255;
+            --a: 0.75 0.15 75;  --ac: 0.15 0.05 75;
+            --su: 0.70 0.15 150; --suc: 0.15 0.05 150;
+            --wa: 0.80 0.15 85;  --wac: 0.15 0.05 85;
+            --er: 0.60 0.18 25;  --erc: 0.99 0.01 25;
+            --in: 0.70 0.15 210; --inc: 0.15 0.05 210;
+            --b1: 1 0 0;        --b2: 0.97 0.01 255; --b3: 0.94 0.01 255;
+            --bc: 0.15 0.02 255;
+            --n: 0.25 0.03 255; --nc: 0.95 0.01 255;
         }
 
-        .main-wrapper {
-            margin-left: 260px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        @media (prefers-color-scheme: dark) {
+            [data-theme="scandy"] {
+                --b1: 0.14 0.02 255; --b2: 0.11 0.02 255; --b3: 0.08 0.02 255;
+                --bc: 0.95 0.01 255;
+                --n: 0.25 0.03 255;  --nc: 0.98 0.01 255;
+                --p: 0.60 0.16 255;
+            }
         }
 
-        .navbar-top {
-            height: 4.5rem;
-            background-color: oklch(var(--b1) / 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid oklch(var(--b3));
-            position: sticky;
-            top: 0;
-            z-index: 90;
-            padding: 0 1.5rem;
-        }
-
-        .content-area {
-            padding: 1.5rem;
-            flex-grow: 1;
-        }
-
-        /* Sidebar Nav Styling */
-        .sidebar-nav-item {
-            display: flex;
-            align-items: center;
-            height: 2.75rem;
-            padding: 0 1rem;
-            margin: 0.125rem 0.5rem;
-            border-radius: 0.75rem;
-            color: oklch(var(--bc) / 0.7);
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-nav-item:hover {
+        body {
             background-color: oklch(var(--b2));
-            color: oklch(var(--p));
+            color: oklch(var(--bc));
+            min-height: 100vh;
         }
 
-        .sidebar-nav-item.active {
-            background-color: oklch(var(--p) / 0.1);
-            color: oklch(var(--p));
-            font-weight: 600;
+        /* Glassmorphism Effects */
+        .glass-panel {
+            background: oklch(var(--b1) / 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid oklch(var(--bc) / 0.05);
         }
 
-        .sidebar-nav-item.active i {
-            color: oklch(var(--p));
-        }
-
-        /* Animations */
-        @keyframes scan-slow {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(200%); }
-        }
-        .animate-scan-slow {
-            animation: scan-slow 2.5s infinite;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .sidebar-permanent {
-                transform: translateX(-100%);
-            }
-            .sidebar-permanent.open {
-                transform: translateX(0);
-            }
-            .main-wrapper {
-                margin-left: 0;
-            }
-        }
-
-        /* Custom Scrollbar for Sidebar */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: oklch(var(--b3));
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: oklch(var(--bc) / 0.1);
             border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: oklch(var(--bc) / 0.2); }
+
+        /* Card Hover Effects */
+        .card-modern {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid oklch(var(--bc) / 0.05);
+        }
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px oklch(var(--bc) / 0.05), 0 8px 10px -6px oklch(var(--bc) / 0.05);
+            border-color: oklch(var(--p) / 0.1);
+        }
+
+        /* Nav Link Active State Indicator */
+        .menu li > a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            height: 50%;
+            width: 4px;
+            background: oklch(var(--pc));
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Responsive Grid Helper */
+        .grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Custom Animations */
+        @keyframes scan-line {
+            0% { transform: scaleX(0); opacity: 0; }
+            50% { transform: scaleX(1); opacity: 1; }
+            100% { transform: scaleX(0); opacity: 0; }
+        }
+        .animate-scan-line {
+            animation: scan-line 2s infinite ease-in-out;
         }
     </style>
 </head>
 
-<body class="min-h-screen">
-    <!-- Sidebar -->
-    <aside class="sidebar-permanent" id="sidebar">
-        <!-- Logo & QuickScan Area -->
-        <div class="p-6">
-            <div id="quickScanTrigger"
-                 data-role="{{ current_user.role }}"
-                 class="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20 flex items-center justify-center gap-3 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 group overflow-hidden relative
-                        {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 pointer-events-none grayscale{% endif %}"
-                 title="Quick Scan">
+<body class="min-h-screen bg-base-200">
+    <div class="drawer lg:drawer-open">
+        <input id="main-drawer" type="checkbox" class="drawer-toggle" />
 
-                <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                    <i class="fas fa-qrcode text-white text-lg"></i>
+        <div class="drawer-content flex flex-col min-h-screen">
+            <!-- Top Navbar -->
+            <header class="navbar bg-base-100/80 backdrop-blur-xl border-b border-base-content/5 sticky top-0 z-30 px-4 h-16">
+                <div class="flex-none lg:hidden">
+                    <label for="main-drawer" class="btn btn-ghost btn-square">
+                        <i class="fas fa-bars"></i>
+                    </label>
                 </div>
-                <span class="text-white font-bold text-sm tracking-wide">QUICK SCAN</span>
-
-                <!-- Scanner Line Effect -->
-                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent h-1/2 w-full -translate-y-full group-hover:animate-scan-slow opacity-0 group-hover:opacity-100 pointer-events-none"></div>
-            </div>
-        </div>
-
-        <!-- Navigation Items Dynamic -->
-        <div class="flex-1 overflow-y-auto sidebar-scroll pb-6">
-            {% for group, items in plugin_manager.get_grouped_menu_items() %}
-                {# Visible check #}
-                {% set ns = namespace(group_visible=false) %}
-                {% for item in items %}
-                    {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
-                          (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
-                        {% if current_user.is_authenticated %}
-                            {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
-                                {% set ns.group_visible = true %}
-                            {% endif %}
-                        {% else %}
-                             {# Handle guest visibility if needed, e.g., jobs or about #}
-                             {% if group == 'Allgemein' %}{% set ns.group_visible = true %}{% endif %}
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
-
-                {% if ns.group_visible %}
-                    <div class="px-6 mt-6 mb-2 text-[10px] uppercase tracking-[0.1em] font-bold text-gray-400">
-                        {{ group }}
-                    </div>
-                    {% for item in items %}
-                        {% set item_visible = false %}
-                        {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
-                              (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
-                            {% if current_user.is_authenticated %}
-                                {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
-                                    {% set item_visible = true %}
-                                {% endif %}
-                            {% elif group == 'Allgemein' %}
-                                {% set item_visible = true %}
-                            {% endif %}
-                        {% endif %}
-
-                        {% if item_visible %}
-                            <a href="{{ url_for(item.endpoint) }}"
-                               class="sidebar-nav-item {% if request.endpoint and item.endpoint in request.endpoint %}active{% endif %}">
-                                 <div class="w-8 flex items-center justify-center">
-                                     <i class="{% if item.label_is_key %}{{ app_labels[item.label]['icon'] }}{% else %}{{ item.icon }}{% endif %} text-lg"></i>
-                                 </div>
-                                 <span class="ml-3 text-sm truncate">
-                                     {% if item.label_is_key %}{{ app_labels[item.label]['name'] }}{% else %}{{ item.label }}{% endif %}
-                                 </span>
-
-                                 {# Badges #}
-                                 {% if item.badge_count_key %}
-                                    {% set count = 0 %}
-                                    {% if item.badge_count_key == 'unread_tickets_count' %}{% set count = unread_tickets_count %}{% endif %}
-                                    {% if item.badge_count_key == 'unfilled_timesheet_days' %}{% set count = unfilled_timesheet_days %}{% endif %}
-                                    {% if count and count > 0 %}
-                                        <span class="ml-auto badge badge-error badge-sm">{{ count }}</span>
-                                    {% endif %}
-                                 {% endif %}
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        <!-- Sidebar Footer -->
-        <div class="p-4 border-t border-base-300">
-            <div class="flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
-                <div class="text-[10px] font-medium flex gap-2">
-                    <span class="text-primary font-bold">Scandy</span>
-                    <span>v{{ version_info.local_version }}</span>
-                </div>
-                <div class="text-[9px] uppercase tracking-tighter">MIT License</div>
-            </div>
-        </div>
-    </aside>
-
-    <div class="main-wrapper">
-        <!-- Top Navbar -->
-        <header class="navbar-top flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <!-- Mobile Menu Toggle -->
-                <button class="btn btn-ghost btn-circle lg:hidden" onclick="document.getElementById('sidebar').classList.toggle('open')">
-                    <i class="fas fa-bars"></i>
-                </button>
 
                 <h1 class="text-lg font-bold text-base-content hidden sm:block">
                     {% if request.endpoint and 'tools' in request.endpoint %}{{ app_labels.tools.name }}
@@ -304,7 +154,6 @@
                     {% elif request.endpoint == 'main.about' %}Über Scandy
                     {% else %}Übersicht{% endif %}
                 </h1>
-            </div>
 
             <!-- Center Logo -->
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center">
@@ -318,21 +167,25 @@
             </div>
 
             <!-- Right Side Controls -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 {% if current_user.is_authenticated %}
                     <!-- Department Switcher -->
                     <div class="dropdown dropdown-end">
-                        <label tabindex="0" class="btn btn-ghost btn-sm gap-2 normal-case font-medium border border-base-300">
-                            <i class="fas fa-building text-primary opacity-70"></i>
+                        <button type="button" tabindex="0" class="btn btn-ghost btn-sm gap-2 normal-case font-semibold bg-base-200/50 hover:bg-base-200 border-none rounded-xl px-4 h-10">
+                            <i class="fas fa-building text-primary/70"></i>
                             <span class="max-w-[120px] truncate">{{ departments_ctx.current or departments.current or 'Abteilung' }}</span>
-                            <i class="fas fa-chevron-down text-[10px] opacity-50"></i>
-                        </label>
-                        <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-64 mt-2 border border-base-300">
-                            <li class="menu-title">Abteilung wechseln</li>
+                            <i class="fas fa-chevron-down text-[10px] opacity-40"></i>
+                        </button>
+                        <ul tabindex="0" class="dropdown-content z-[101] menu p-3 shadow-2xl bg-base-100/95 backdrop-blur-xl rounded-2xl w-72 mt-3 border border-base-content/5">
+                            <li class="menu-title px-4 py-2 text-xs uppercase tracking-widest font-black opacity-40">Abteilung wechseln</li>
                             {% for dep in (departments_ctx.allowed or departments.allowed) %}
-                            <li>
-                                <a href="{{ url_for('admin.switch_department', department=dep) }}" class="rounded-lg {% if (departments_ctx.current or departments.current) == dep %}active bg-primary/10 text-primary font-bold{% endif %}">
-                                    <i class="fas fa-layer-group opacity-50"></i>{{ dep }}
+                            <li class="mt-1">
+                                <a href="{{ url_for('admin.switch_department', department=dep) }}" class="rounded-xl py-3 px-4 {% if (departments_ctx.current or departments.current) == dep %}active bg-primary text-primary-content font-bold{% endif %}">
+                                    <i class="fas fa-layer-group opacity-50"></i>
+                                    <span class="flex-1">{{ dep }}</span>
+                                    {% if (departments_ctx.current or departments.current) == dep %}
+                                        <i class="fas fa-check-circle text-xs"></i>
+                                    {% endif %}
                                 </a>
                             </li>
                             {% endfor %}
@@ -342,35 +195,35 @@
                     {% if current_user.is_mitarbeiter %}
                         <!-- Admin Quick Menu -->
                         <div class="dropdown dropdown-end">
-                            <label tabindex="0" class="btn btn-ghost btn-sm btn-square border border-base-300">
-                                <i class="fas fa-cog"></i>
-                            </label>
-                            <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-60 mt-2 border border-base-300">
-                                <li class="menu-title text-primary uppercase text-[10px] tracking-widest font-bold">Verwaltung</li>
-                                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line w-5"></i> Dashboard</a></li>
-                                <li><a href="{{ url_for('admin.system') }}"><i class="fas fa-terminal w-5"></i> Systemverwaltung</a></li>
-                                <li><a href="{{ url_for('admin.departments_manage_page') }}"><i class="fas fa-building w-5"></i> Abteilungen</a></li>
-                                <li><a href="{{ url_for('admin.manage_users') }}"><i class="fas fa-user-gear w-5"></i> Benutzer</a></li>
-                                <div class="divider my-1"></div>
-                                <li><a href="{{ url_for('admin.trash') }}" class="text-error"><i class="fas fa-trash-alt w-5"></i> Papierkorb</a></li>
+                            <button type="button" tabindex="0" class="btn btn-ghost btn-sm btn-square bg-base-200/50 hover:bg-base-200 border-none rounded-xl h-10 w-10">
+                                <i class="fas fa-cog opacity-70"></i>
+                            </button>
+                            <ul tabindex="0" class="dropdown-content z-[101] menu p-3 shadow-2xl bg-base-100/95 backdrop-blur-xl rounded-2xl w-64 mt-3 border border-base-content/5">
+                                <li class="menu-title px-4 py-2 text-xs uppercase tracking-widest font-black text-primary">Verwaltung</li>
+                                <li class="mt-2"><a href="{{ url_for('admin.dashboard') }}" class="rounded-xl py-2.5"><i class="fas fa-chart-line w-5 opacity-70"></i> Dashboard</a></li>
+                                <li><a href="{{ url_for('admin.system') }}" class="rounded-xl py-2.5"><i class="fas fa-terminal w-5 opacity-70"></i> Systemverwaltung</a></li>
+                                <li><a href="{{ url_for('admin.departments_manage_page') }}" class="rounded-xl py-2.5"><i class="fas fa-building w-5 opacity-70"></i> Abteilungen</a></li>
+                                <li><a href="{{ url_for('admin.manage_users') }}" class="rounded-xl py-2.5"><i class="fas fa-user-gear w-5 opacity-70"></i> Benutzer</a></li>
+                                <div class="divider my-2 opacity-5"></div>
+                                <li><a href="{{ url_for('admin.trash') }}" class="text-error rounded-xl py-2.5 hover:bg-error/10"><i class="fas fa-trash-alt w-5"></i> Papierkorb</a></li>
                             </ul>
                         </div>
                     {% endif %}
 
                     <!-- User Menu -->
                     <div class="dropdown dropdown-end">
-                        <label tabindex="0" class="btn btn-ghost btn-sm border border-base-300 gap-2 normal-case">
+                        <button type="button" tabindex="0" class="btn btn-ghost btn-sm bg-base-200/50 hover:bg-base-200 border-none rounded-xl h-10 px-3 gap-3 normal-case">
                             <div class="avatar placeholder">
-                                <div class="bg-primary text-primary-content rounded-lg w-6 h-6">
-                                    <span class="text-xs uppercase">{{ current_user.username[:1] }}</span>
+                                <div class="bg-primary text-primary-content rounded-lg w-7 h-7">
+                                    <span class="text-xs font-black uppercase">{{ current_user.username[:1] }}</span>
                                 </div>
                             </div>
-                            <span class="hidden md:inline font-medium">{{ current_user.username }}</span>
-                        </label>
-                        <ul tabindex="0" class="dropdown-content z-[101] menu p-2 shadow-2xl bg-base-100 rounded-2xl w-52 mt-2 border border-base-300">
-                            <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user-circle w-5"></i> Profil</a></li>
-                            <div class="divider my-1"></div>
-                            <li><a href="{{ url_for('auth.logout') }}" class="text-error font-medium"><i class="fas fa-sign-out-alt w-5"></i> Logout</a></li>
+                            <span class="hidden md:inline font-bold text-sm">{{ current_user.username }}</span>
+                        </button>
+                        <ul tabindex="0" class="dropdown-content z-[101] menu p-3 shadow-2xl bg-base-100/95 backdrop-blur-xl rounded-2xl w-56 mt-3 border border-base-content/5">
+                            <li><a href="{{ url_for('auth.profile') }}" class="rounded-xl py-2.5"><i class="fas fa-user-circle w-5 opacity-70"></i> Profil</a></li>
+                            <div class="divider my-2 opacity-5"></div>
+                            <li><a href="{{ url_for('auth.logout') }}" class="text-error font-bold rounded-xl py-2.5 hover:bg-error/10"><i class="fas fa-sign-out-alt w-5"></i> Logout</a></li>
                         </ul>
                     </div>
                 {% else %}
@@ -381,50 +234,138 @@
             </div>
         </header>
 
-        <!-- Main Content Section -->
-        <main class="content-area">
-            {% block content %}
-            <div class="max-w-7xl mx-auto">
-                <!-- Page Breadcrumbs or Info for QuickScan -->
-                {% if request.endpoint == 'quick_scan.index' %}
-                <div class="alert bg-base-100 border border-base-300 shadow-sm mb-6 rounded-2xl p-6">
-                    <div>
-                        <h2 class="text-xl font-bold flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-                            QuickScan
-                        </h2>
-                        <p class="text-base-content/60 mt-1">Wählen Sie eine Aktion oder scannen Sie einen Barcode.</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-                        <button class="btn btn-sm btn-primary rounded-lg" onclick="showManualLendingModal()">
-                            <i class="fas fa-hand-holding"></i> Ausleihe
-                        </button>
-                        <button class="btn btn-sm btn-secondary rounded-lg" onclick="showReturnModal()">
-                            <i class="fas fa-undo-alt"></i> Rückgabe
-                        </button>
+            <!-- Main Content Section -->
+            <main class="p-6 flex-grow">
+                {% block content %}
+                <div class="max-w-7xl mx-auto space-y-6">
+                    <!-- Page Header / Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ 'error' if category == 'error' else 'success' if category == 'success' else 'info' }} shadow-lg rounded-2xl border-0">
+                            <i class="fas fa-{{ 'circle-exclamation' if category == 'error' else 'circle-check' if category == 'success' else 'circle-info' }}"></i>
+                            <span>{{ message }}</span>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <!-- Main Content Slot -->
+                    {% block page_content %}{% endblock %}
+                </div>
+                {% endblock %}
+            </main>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="drawer-side z-40">
+            <label for="main-drawer" class="drawer-overlay"></label>
+            <div class="w-80 min-h-screen bg-base-100 border-r border-base-content/5 flex flex-col">
+                <!-- Logo & Brand Area -->
+                <div class="px-8 py-8">
+                    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group">
+                        <div class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 group-hover:rotate-12 transition-transform duration-300">
+                            <i class="fas fa-microchip text-primary-content text-2xl"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-black tracking-tighter text-base-content uppercase leading-none">Scandy</span>
+                            <span class="text-[10px] font-bold tracking-[0.3em] text-primary uppercase">Management</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- QuickScan Button in Sidebar -->
+                <div class="px-6 mb-4">
+                    <div id="quickScanTrigger"
+                         data-role="{{ current_user.role }}"
+                         class="w-full py-4 rounded-2xl bg-base-content text-base-100 flex items-center px-6 gap-4 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-xl shadow-base-content/10
+                                {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-20 pointer-events-none grayscale{% endif %}"
+                         title="Quick Scan">
+                        <i class="fas fa-expand-alt text-xl"></i>
+                        <div class="flex flex-col">
+                            <span class="font-black text-xs tracking-widest uppercase">Quick Scan</span>
+                            <span class="text-[9px] opacity-60 font-bold uppercase">Bereit</span>
+                        </div>
                     </div>
                 </div>
-                {% endif %}
 
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% if messages %}
-                    {% for category, message in messages %}
-                      <div class="alert alert-{{ 'error' if category == 'error' else 'success' if category == 'success' else 'info' }} shadow-lg mb-6 rounded-2xl border-0">
-                        <i class="fas fa-{{ 'circle-exclamation' if category == 'error' else 'circle-check' if category == 'success' else 'circle-info' }}"></i>
-                        <span>{{ message }}</span>
-                      </div>
-                    {% endfor %}
-                  {% endif %}
-                {% endwith %}
+                <!-- Navigation Items -->
+                <div class="flex-1 overflow-y-auto px-4 pb-8">
+                    <ul class="menu w-full gap-1 p-0">
+                        {% for group, items in plugin_manager.get_grouped_menu_items() %}
+                            {# Visible check #}
+                            {% set ns = namespace(group_visible=false) %}
+                            {% for item in items %}
+                                {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
+                                      (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
+                                    {% if current_user.is_authenticated %}
+                                        {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
+                                            {% set ns.group_visible = true %}
+                                        {% endif %}
+                                    {% else %}
+                                         {% if group == 'Allgemein' %}{% set ns.group_visible = true %}{% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
 
-                <!-- Main Content Slot -->
-                {% block page_content %}{% endblock %}
+                            {% if ns.group_visible %}
+                                <li class="menu-title mt-8 first:mt-2 text-[10px] uppercase tracking-[0.25em] font-black text-base-content/25 px-4">
+                                    {{ group }}
+                                </li>
+                                {% for item in items %}
+                                    {% set item_visible = false %}
+                                    {% if (not item.feature_name or features_enabled.get(item.feature_name, True)) and
+                                          (not item.required_role or (current_user.is_authenticated and current_user.role == item.required_role)) %}
+                                        {% if current_user.is_authenticated %}
+                                            {% if current_user.role != 'teilnehmer' or group not in ['Inventar', 'Personal'] %}
+                                                {% set item_visible = true %}
+                                            {% endif %}
+                                        {% elif group == 'Allgemein' %}
+                                            {% set item_visible = true %}
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if item_visible %}
+                                        <li>
+                                            <a href="{{ url_for(item.endpoint) }}"
+                                               class="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all duration-200 group mb-0.5
+                                                      {% if request.endpoint and item.endpoint in request.endpoint %}bg-primary text-primary-content font-bold shadow-lg shadow-primary/25{% else %}hover:bg-base-content/5 text-base-content/60 hover:text-base-content{% endif %}">
+                                                 <div class="w-5 flex items-center justify-center">
+                                                     <i class="{% if item.label_is_key %}{{ app_labels[item.label]['icon'] }}{% else %}{{ item.icon }}{% endif %} text-lg"></i>
+                                                 </div>
+                                                 <span class="text-sm">
+                                                     {% if item.label_is_key %}{{ app_labels[item.label]['name'] }}{% else %}{{ item.label }}{% endif %}
+                                                 </span>
+
+                                                 {% if item.badge_count_key %}
+                                                    {% set count = 0 %}
+                                                    {% if item.badge_count_key == 'unread_tickets_count' %}{% set count = unread_tickets_count %}{% endif %}
+                                                    {% if item.badge_count_key == 'unfilled_timesheet_days' %}{% set count = unfilled_timesheet_days %}{% endif %}
+                                                    {% if count and count > 0 %}
+                                                        <span class="ml-auto badge {% if request.endpoint and item.endpoint in request.endpoint %}badge-ghost{% else %}badge-error{% endif %} badge-sm font-bold">{{ count }}</span>
+                                                    {% endif %}
+                                                 {% endif %}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="p-8 border-t border-base-content/5 mt-auto">
+                    <div class="flex flex-col gap-1.5 opacity-30 hover:opacity-100 transition-opacity duration-300">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black tracking-widest text-primary">SCANDY</span>
+                            <span class="text-[9px] px-1.5 py-0.5 bg-base-content/10 rounded font-bold">V{{ version_info.local_version }}</span>
+                        </div>
+                        <div class="text-[9px] font-bold uppercase tracking-wider">© 2024 Andreas Klann</div>
+                    </div>
+                </div>
             </div>
-            {% endblock %}
-        </main>
+        </aside>
     </div>
 
     <!-- Modals & Overlays -->

@@ -62,7 +62,7 @@
                 {{ worker.email }}
             </a>
         {% else %}
-            <span class="text-gray-400">-</span>
+            <span class="text-base-content/40">-</span>
         {% endif %}
     </td>
     <td>
@@ -75,7 +75,7 @@
                 <div class="badge badge-outline text-xs mt-1">{{ worker.role }}</div>
             {% endif %}
         {% else %}
-            <span class="text-gray-400">-</span>
+            <span class="text-base-content/40">-</span>
         {% endif %}
     </td>
     <td>
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filter-Funktionalität
     function applyFilters() {
         const department = document.getElementById('departmentFilter').value;
-        
+
         document.querySelectorAll('.data-row').forEach(row => {
             const matchesDepartment = !department || row.dataset.department === department;
             row.style.display = matchesDepartment ? '' : 'none';

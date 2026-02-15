@@ -16,16 +16,16 @@
 /* Card States - Spezifischere Selektoren */
 #itemCard.selected,
 #workerCard.selected {
-    border-color: #fbbf24 !important;
-    background-color: rgba(251, 191, 36, 0.1) !important;
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
+    border-color: oklch(var(--wa)) !important;
+    background-color: oklch(var(--wa) / 0.1) !important;
+    box-shadow: 0 0 20px oklch(var(--wa) / 0.3) !important;
 }
 
 #itemCard.success,
 #workerCard.success {
-    border-color: #10b981 !important;
-    background-color: rgba(16, 185, 129, 0.1) !important;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+    border-color: oklch(var(--su)) !important;
+    background-color: oklch(var(--su) / 0.1) !important;
+    box-shadow: 0 0 20px oklch(var(--su) / 0.3) !important;
 }
 
 .scan-area {
@@ -48,14 +48,14 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        hsl(var(--p) / 0.3) 20%, 
-        hsl(var(--p)) 50%,
-        hsl(var(--p) / 0.3) 80%,
+    background: linear-gradient(90deg,
+        transparent 0%,
+        oklch(var(--p) / 0.3) 20%,
+        oklch(var(--p)) 50%,
+        oklch(var(--p) / 0.3) 80%,
         transparent 100%
     );
-    box-shadow: 0 0 8px hsl(var(--p) / 0.5);
+    box-shadow: 0 0 8px oklch(var(--p) / 0.5);
     animation: scanning 1.5s ease-in-out infinite;
     z-index: 10;
 }
@@ -63,7 +63,7 @@
 .scan-overlay {
     position: absolute;
     inset: 0;
-    border: 2px solid hsl(var(--p));
+    border: 2px solid oklch(var(--p));
     border-radius: 0.5rem;
 }
 
@@ -84,8 +84,8 @@
 
 /* Step Styles */
 .step.step-primary .collapse-title {
-    background-color: hsl(var(--p));
-    color: hsl(var(--pc));
+    background-color: oklch(var(--p));
+    color: oklch(var(--pc));
 }
 
 .step:not(.step-primary) .collapse-content {
@@ -137,25 +137,25 @@
 
 .steps .step:before {
     height: var(--connector-size);
-    background-color: hsl(var(--b3));
+    background-color: oklch(var(--b3));
 }
 
 .steps .step.step-primary:before {
-    background-color: hsl(var(--p));
+    background-color: oklch(var(--p));
 }
 
 .steps .step:after {
     width: var(--size);
     height: var(--size);
-    background-color: hsl(var(--b3));
-    border: var(--connector-size) solid hsl(var(--b2));
+    background-color: oklch(var(--b3));
+    border: var(--connector-size) solid oklch(var(--b2));
     font-size: 0.8rem;
 }
 
 .steps .step.step-primary:after {
-    background-color: hsl(var(--p));
-    border-color: hsl(var(--p));
-    color: hsl(var(--pc));
+    background-color: oklch(var(--p));
+    border-color: oklch(var(--p));
+    color: oklch(var(--pc));
 }
 
 /* Content Area */
@@ -242,23 +242,23 @@
 
 /* Toast Varianten */
 #toast-container .alert-error {
-    background-color: hsl(var(--er));
-    color: hsl(var(--erc));
+    background-color: oklch(var(--er));
+    color: oklch(var(--erc));
 }
 
 #toast-container .alert-success {
-    background-color: hsl(var(--su));
-    color: hsl(var(--suc));
+    background-color: oklch(var(--su));
+    color: oklch(var(--suc));
 }
 
 #toast-container .alert-info {
-    background-color: hsl(var(--in));
-    color: hsl(var(--inc));
+    background-color: oklch(var(--in));
+    color: oklch(var(--inc));
 }
 
 #toast-container .alert-warning {
-    background-color: hsl(var(--wa));
-    color: hsl(var(--wac));
+    background-color: oklch(var(--wa));
+    color: oklch(var(--wac));
 }
 
 /* Scanning Animation */
@@ -337,4 +337,4 @@ canvas {
     .scan-area {
         min-height: 100px;
     }
-} 
+}

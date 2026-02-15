@@ -1,46 +1,49 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="space-y-4">
+<div class="space-y-6">
     <!-- Suchleiste und Filter -->
-    <div class="card bg-base-100 shadow-lg card-compact">
-        <div class="card-body">
-            <!-- Suchleiste und Aktionen -->
-            <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+    <div class="card card-modern bg-base-100 shadow-xl overflow-visible">
+        <div class="card-body p-6">
+            <div class="flex flex-col lg:flex-row gap-6 items-end">
+                <!-- Suchleiste -->
+                <div class="form-control flex-1 w-full">
+                    <label class="label px-1">
+                        <span class="label-text font-bold uppercase tracking-widest text-[10px] opacity-50">Suchen</span>
+                    </label>
+                    <div class="relative group w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors"></i>
+                        <input type="text"
+                               placeholder="In dieser Liste suchen..."
+                               class="input input-bordered w-full pl-12 h-12 bg-base-200/50 border-none focus:bg-base-200 transition-all rounded-xl"
                                id="searchInput">
-                        <button class="btn btn-square">
-                            <i class="fas fa-search"></i>
-                        </button>
                     </div>
                 </div>
 
-                <!-- Aktionen -->
-                {% block actions %}{% endblock %}
-            </div>
+                <!-- Filter Blocks -->
+                <div class="flex flex-wrap gap-3 items-end">
+                    {% block filters %}{% endblock %}
+                </div>
 
-            <!-- Filter -->
-            <div class="flex flex-wrap gap-3 mt-4">
-                {% block filters %}{% endblock %}
+                <!-- Aktionen -->
+                <div class="flex gap-2">
+                    {% block actions %}{% endblock %}
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Datentabelle -->
-    <div class="card bg-base-100 shadow-lg">
+    <div class="card card-modern bg-base-100 shadow-xl overflow-hidden">
         <div class="card-body p-0">
-            <div class="table-container">
+            <div class="overflow-x-auto">
                 <table class="table table-zebra w-full">
-                    <thead>
-                        <tr>
+                    <thead class="bg-base-200/50">
+                        <tr class="border-b border-base-content/5">
                             {% block table_headers %}{% endblock %}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-base-content/5">
                         {% block table_rows %}{% endblock %}
                     </tbody>
                 </table>
@@ -50,19 +53,22 @@
 
     <!-- Kontext-Hilfe (optional) -->
     {% if help_title or help_items %}
-    <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-            <h3 class="card-title text-lg">
-                <i class="fas fa-question-circle text-primary mr-2"></i>
-                {{ help_title or 'Hilfe' }}
+    <div class="card bg-primary/5 border border-primary/10 shadow-sm">
+        <div class="card-body p-6">
+            <h3 class="card-title text-base font-black uppercase tracking-tight text-primary">
+                <i class="fas fa-lightbulb"></i>
+                {{ help_title or 'Hilfe & Tipps' }}
             </h3>
             {% if help_text %}
-            <p class="text-sm opacity-75 mb-2">{{ help_text }}</p>
+            <p class="text-sm text-base-content/70 mb-3">{{ help_text }}</p>
             {% endif %}
             {% if help_items %}
-            <ul class="list-disc list-inside text-sm space-y-1">
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                 {% for item in help_items %}
-                <li>{{ item }}</li>
+                <li class="flex gap-3 items-start text-sm text-base-content/80">
+                    <i class="fas fa-check-circle text-primary/40 mt-0.5"></i>
+                    <span>{{ item }}</span>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
@@ -93,14 +99,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none py-2';
             wrapper.innerHTML = `
                 ${th.innerHTML}
-                <span class="sort-icons opacity-50">
-                    <i class="fas fa-sort"></i>
+                <span class="sort-icons opacity-30 group-hover:opacity-100 transition-opacity">
+                    <i class="fas fa-sort text-[10px]"></i>
                 </span>
             `;
             th.innerHTML = '';
+            th.classList.add('group');
             th.appendChild(wrapper);
 
             wrapper.addEventListener('click', () => {
@@ -114,8 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
-        
-        // Update Sort-Direction
+
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
@@ -123,41 +129,33 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
 
-        // Update Sort-Icons
         table.querySelectorAll('.sort-icons').forEach(icon => {
-            icon.innerHTML = '<i class="fas fa-sort"></i>';
+            icon.innerHTML = '<i class="fas fa-sort text-[10px]"></i>';
+            icon.classList.add('opacity-30');
         });
-        
+
         const currentIcon = th.querySelector('.sort-icons');
+        currentIcon.classList.remove('opacity-30');
         if (currentSort.direction === 'asc') {
-            currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
+            currentIcon.innerHTML = '<i class="fas fa-sort-up text-[10px]"></i>';
         } else {
-            currentIcon.innerHTML = '<i class="fas fa-sort-down"></i>';
+            currentIcon.innerHTML = '<i class="fas fa-sort-down text-[10px]"></i>';
         }
 
-        // Sortiere die Zeilen
         rows.sort((a, b) => {
-            const aValue = a.children[column]?.textContent || '';
-            const bValue = b.children[column]?.textContent || '';
-            
-            if (currentSort.direction === 'asc') {
-                return aValue.localeCompare(bValue);
-            } else {
-                return bValue.localeCompare(aValue);
-            }
+            const aValue = a.children[column]?.textContent.trim() || '';
+            const bValue = b.children[column]?.textContent.trim() || '';
+            return currentSort.direction === 'asc'
+                ? aValue.localeCompare(bValue, undefined, {numeric: true, sensitivity: 'base'})
+                : bValue.localeCompare(aValue, undefined, {numeric: true, sensitivity: 'base'});
         });
 
-        // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
     }
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
-    console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
     function initializeFilters() {
-        console.log('Initializing filters...');
         const categoryFilter = document.getElementById('categoryFilter');
         const locationFilter = document.getElementById('locationFilter');
         const statusFilter = document.getElementById('statusFilter');
@@ -171,104 +169,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStatus = !status || row.dataset.status === status;
-
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
         }
 
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
+        if(categoryFilter) categoryFilter.addEventListener('change', applyFilters);
+        if(locationFilter) locationFilter.addEventListener('change', applyFilters);
+        if(statusFilter) statusFilter.addEventListener('change', applyFilters);
     }
 
-    // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
-        console.log('=== LOADING TOOL PREVIEWS ===');
-        
         const toolPreviews = document.querySelectorAll('.tool-media-preview');
-        console.log(`Found ${toolPreviews.length} tool previews`);
-        
-        toolPreviews.forEach((preview, index) => {
+        toolPreviews.forEach(preview => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
-            console.log(`[${index}] Loading preview for tool ${barcode}, saved preview: ${savedPreviewImage}`);
-            
             if (barcode) {
-                const url = `/media/tools/${barcode}/list`;
-                console.log(`[${index}] Fetching from: ${url}`);
-                
-                fetch(url)
-                    .then(response => {
-                        console.log(`[${index}] Response status:`, response.status);
-                        return response.json();
-                    })
+                fetch(`/media/tools/${barcode}/list`)
+                    .then(r => r.json())
                     .then(data => {
-                        console.log(`[${index}] Media data:`, data);
-                        
                         if (data.success && data.media_list && data.media_list.length > 0) {
-                            // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
-                            let previewImage = data.media_list[0];
-                            
-                            // Wenn ein gespeichertes Preview-Bild existiert, verwende es
-                            if (savedPreviewImage && savedPreviewImage !== '') {
-                                const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
-                                if (savedImage) {
-                                    console.log(`[${index}] Found saved preview image:`, savedImage);
-                                    previewImage = savedImage;
-                                } else {
-                                    console.log(`[${index}] Saved preview image not found in media list`);
-                                }
+                            let img = data.media_list[0];
+                            if (savedPreviewImage) {
+                                const saved = data.media_list.find(i => i.filename === savedPreviewImage);
+                                if (saved) img = saved;
                             }
-                            
-                            console.log(`[${index}] Using preview image:`, previewImage);
-                            console.log(`[${index}] Image URL:`, previewImage.url);
-                            
-                            // Test: Zeige das Bild direkt an
-                            const imgHtml = `<img src="${previewImage.url}" alt="Werkzeug Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
-                            console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
-                            preview.innerHTML = imgHtml;
-                            
-                            // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
-                            setTimeout(() => {
-                                const img = preview.querySelector('img');
-                                if (img) {
-                                    console.log(`[${index}] Image element found, src:`, img.src);
-                                    img.onload = () => console.log(`[${index}] Image loaded successfully`);
-                                    img.onerror = () => console.log(`[${index}] Image failed to load`);
-                                } else {
-                                    console.log(`[${index}] No image element found after setting HTML`);
-                                }
-                            }, 100);
-                            
-                        } else {
-                            console.log(`[${index}] No media found for tool ${barcode}`);
+                            preview.innerHTML = `<img src="${img.url}" class="w-12 h-12 object-cover rounded-xl shadow-sm">`;
                         }
-                    })
-                    .catch(error => {
-                        console.error(`[${index}] Fehler beim Laden der Medien-Vorschau:`, error);
                     });
-            } else {
-                console.log(`[${index}] No barcode found`);
             }
         });
     }
-
-    // Sofortige Ausführung für Tools
-    console.log('Running tools page script immediately');
     initializeFilters();
     loadToolPreviews();
     {% endif %}
 
-    // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
-    console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
     function initializeFilters() {
-        console.log('Initializing filters...');
         const categoryFilter = document.getElementById('categoryFilter');
         const locationFilter = document.getElementById('locationFilter');
         const stockFilter = document.getElementById('stockFilter');
@@ -282,93 +218,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStock = !stock || row.dataset.stock === stock;
-
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
         }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
+        if(categoryFilter) categoryFilter.addEventListener('change', applyFilters);
+        if(locationFilter) locationFilter.addEventListener('change', applyFilters);
+        if(stockFilter) stockFilter.addEventListener('change', applyFilters);
     }
-
-    // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
-        console.log('=== LOADING CONSUMABLE PREVIEWS ===');
-        
-        const consumablePreviews = document.querySelectorAll('.consumable-media-preview');
-        console.log(`Found ${consumablePreviews.length} consumable previews`);
-        
-        consumablePreviews.forEach((preview, index) => {
-            const barcode = preview.dataset.barcode;
-            const savedPreviewImage = preview.dataset.previewImage;
-            
-            console.log(`[${index}] Loading preview for consumable ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+        const previews = document.querySelectorAll('.consumable-media-preview');
+        previews.forEach(p => {
+            const barcode = p.dataset.barcode;
             if (barcode) {
-                const url = `/media/consumables/${barcode}/list`;
-                console.log(`[${index}] Fetching from: ${url}`);
-                
-                fetch(url)
-                    .then(response => {
-                        console.log(`[${index}] Response status:`, response.status);
-                        return response.json();
-                    })
+                fetch(`/media/consumables/${barcode}/list`)
+                    .then(r => r.json())
                     .then(data => {
-                        console.log(`[${index}] Media data:`, data);
-                        
                         if (data.success && data.media_list && data.media_list.length > 0) {
-                            // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
-                            let previewImage = data.media_list[0];
-                            
-                            // Wenn ein gespeichertes Preview-Bild existiert, verwende es
-                            if (savedPreviewImage && savedPreviewImage !== '') {
-                                const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
-                                if (savedImage) {
-                                    console.log(`[${index}] Found saved preview image:`, savedImage);
-                                    previewImage = savedImage;
-                                } else {
-                                    console.log(`[${index}] Saved preview image not found in media list`);
-                                }
-                            }
-                            
-                            console.log(`[${index}] Using preview image:`, previewImage);
-                            console.log(`[${index}] Image URL:`, previewImage.url);
-                            
-                            // Test: Zeige das Bild direkt an
-                            const imgHtml = `<img src="${previewImage.url}" alt="Verbrauchsgut Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
-                            console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
-                            preview.innerHTML = imgHtml;
-                            
-                            // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
-                            setTimeout(() => {
-                                const img = preview.querySelector('img');
-                                if (img) {
-                                    console.log(`[${index}] Image element found, src:`, img.src);
-                                    img.onload = () => console.log(`[${index}] Image loaded successfully`);
-                                    img.onerror = () => console.log(`[${index}] Image failed to load`);
-                                } else {
-                                    console.log(`[${index}] No image element found after setting HTML`);
-                                }
-                            }, 100);
-                            
-                        } else {
-                            console.log(`[${index}] No media found for consumable ${barcode}`);
+                            p.innerHTML = `<img src="${data.media_list[0].url}" class="w-12 h-12 object-cover rounded-xl shadow-sm">`;
                         }
-                    })
-                    .catch(error => {
-                        console.error(`[${index}] Fehler beim Laden der Medien-Vorschau:`, error);
                     });
-            } else {
-                console.log(`[${index}] No barcode found`);
             }
         });
     }
-
-    // Sofortige Ausführung für Verbrauchsgüter
-    console.log('Running consumables page script immediately');
     initializeFilters();
     loadConsumablePreviews();
     {% endif %}
@@ -377,4 +248,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Delete Script -->
 <script src="{{ url_for('static', filename='js/delete.js') }}"></script>
-{% endblock %} 
+{% endblock %}

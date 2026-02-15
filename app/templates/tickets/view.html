@@ -126,7 +126,7 @@ function displayPublicMessages(messages) {
     
     if (messages.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-8 text-gray-500">
+            <div class="text-center py-8 text-base-content/60">
                 <i class="fas fa-comments text-2xl mb-2"></i>
                 <p>Keine Nachrichten vorhanden</p>
             </div>
@@ -409,13 +409,13 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
 
 <div class="container mx-auto px-4 py-8">
     <!-- Ticket Header -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="bg-base-100 rounded-lg shadow-md p-6 mb-6">
         <div class="flex justify-between items-start mb-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">
+                <h1 class="text-2xl font-bold text-base-content">
                     Auftrag #{{ ticket.ticket_number or ticket.id }}: {{ ticket.title }}
                 </h1>
-                <p class="text-gray-600 mt-2">{{ ticket.description }}</p>
+                <p class="text-base-content/70 mt-2">{{ ticket.description }}</p>
             </div>
             <div class="text-right">
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
@@ -427,7 +427,7 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                     {{ ticket.status|title }}
                 </span>
                 {% if ticket.responsible %}
-                <div class="mt-2 text-sm text-gray-700">
+                <div class="mt-2 text-sm text-base-content/90">
                     Verantwortlich: <strong>{{ ticket.responsible }}</strong>
                 </div>
                 {% endif %}
@@ -463,13 +463,13 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Linke Spalte: Ticket-Aktionen -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="bg-base-100 rounded-lg shadow-md p-6 mb-6">
                 <h3 class="text-lg font-semibold mb-4">Ticket-Aktionen</h3>
                 
                 <!-- Status ändern -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status ändern</label>
-                    <select onchange="updateTicketStatus(this.value)" class="w-full border border-gray-300 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Status ändern</label>
+                    <select onchange="updateTicketStatus(this.value)" class="w-full border border-base-content/20 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                         <option value="offen" {% if ticket.status == 'offen' %}selected{% endif %}>Offen</option>
                         <option value="in_arbeit" {% if ticket.status == 'in_arbeit' %}selected{% endif %}>In Arbeit</option>
                         <option value="wartend" {% if ticket.status == 'wartend' %}selected{% endif %}>Wartend</option>
@@ -480,13 +480,13 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
 
                 <!-- Zuweisung ändern -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Zuweisung</label>
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Zuweisung</label>
                     <div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-2">
                         {% for user in workers %}
                         <label class="flex items-center">
                             <input type="checkbox" name="assigned_users" value="{{ user.username }}"
                                    {% if user.username in assigned_users %}checked{% endif %}
-                                   class="rounded border-gray-300 text-blue-600" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
+                                   class="rounded border-base-content/20 text-blue-600" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                             <span class="ml-2 text-sm">{{ user.firstname }} {{ user.lastname }} ({{ user.username }})</span>
                         </label>
                         {% endfor %}
@@ -498,9 +498,9 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
 
                 <!-- Verantwortliche Person -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Verantwortliche Person</label>
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Verantwortliche Person</label>
                     <div class="flex gap-2">
-                        <select id="responsibleSelect" class="w-full border border-gray-300 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
+                        <select id="responsibleSelect" class="w-full border border-base-content/20 rounded-md px-3 py-2" {% if not (current_user.role == 'admin' or ticket.responsible == current_user.username) %}disabled{% endif %}>
                             <option value="">Nicht gesetzt</option>
                             {% for user in workers %}
                                 <option value="{{ user.username }}" {% if ticket.responsible == user.username %}selected{% endif %}>{{ user.firstname or '' }} {{ user.lastname or '' }} ({{ user.username }})</option>
@@ -512,8 +512,8 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
 
                 <!-- Ticket-Details bearbeiten -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategorie</label>
-                    <select id="categoryInput" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Kategorie</label>
+                    <select id="categoryInput" class="w-full border border-base-content/20 rounded-md px-3 py-2">
                         {% for category in categories %}
                             <option value="{{ category }}" {% if ticket.category == category %}selected{% endif %}>{{ category }}</option>
                         {% endfor %}
@@ -521,17 +521,17 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Geschätzte Zeit (Minuten)</label>
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Geschätzte Zeit (Minuten)</label>
                     <input type="number" id="estimatedTimeInput" step="1" min="0" 
                            value="{{ ticket.estimated_time or 0 }}" 
-                           class="w-full border border-gray-300 rounded-md px-3 py-2">
+                           class="w-full border border-base-content/20 rounded-md px-3 py-2">
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fälligkeitsdatum</label>
+                    <label class="block text-sm font-medium text-base-content/90 mb-2">Fälligkeitsdatum</label>
                     <input type="datetime-local" id="dueDateInput" 
                            value="{% if ticket.due_date %}{{ ticket.due_date.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
-                           class="w-full border border-gray-300 rounded-md px-3 py-2">
+                           class="w-full border border-base-content/20 rounded-md px-3 py-2">
                 </div>
 
                 <button onclick="saveTicketChanges()" class="w-full px-4 py-2 rounded-md mb-6 font-medium bg-blue-600 text-white hover:bg-blue-700">
@@ -573,7 +573,7 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                         <!-- Medien werden hier dynamisch geladen -->
                     </div>
                     
-                    <div id="no-media-message" class="text-gray-500 text-center py-4 text-sm" style="display: none;">
+                    <div id="no-media-message" class="text-base-content/60 text-center py-4 text-sm" style="display: none;">
                         Keine Medien vorhanden
                     </div>
                     
@@ -590,7 +590,7 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
         <!-- Rechte Spalte: Nachrichten und Historie -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Nachrichten-Sektion -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-base-100 rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold mb-4">
                     <i class="fas fa-comments mr-2"></i>
                     Nachrichten
@@ -614,7 +614,7 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
                 </div>
                 
                 <!-- Nachrichten Container -->
-                <div id="public-messages-container" class="space-y-3 max-h-64 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+                <div id="public-messages-container" class="space-y-3 max-h-64 overflow-y-auto border rounded-lg p-4 bg-base-200">
                     <div class="flex justify-center items-center py-8">
                         <div class="loading loading-spinner loading-md"></div>
                         <span class="ml-2">Lade Nachrichten...</span>
@@ -623,14 +623,14 @@ console.log('saveTicketChanges verfügbar:', typeof saveTicketChanges);
             </div>
 
             <!-- Ticket-Historie -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-base-100 rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold mb-4">
                     <i class="fas fa-history mr-2"></i>
                     Änderungshistorie
                 </h3>
                 
                 <!-- History-Container -->
-                <div id="historyContainer" class="space-y-3 max-h-64 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+                <div id="historyContainer" class="space-y-3 max-h-64 overflow-y-auto border rounded-lg p-4 bg-base-200">
                     <div class="flex justify-center items-center py-8">
                         <div class="loading loading-spinner loading-md"></div>
                         <span class="ml-2">Lade Historie...</span>

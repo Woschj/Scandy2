@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="card bg-white shadow-lg">
+    <div class="card bg-base-100 shadow-lg">
         <div class="card-header bg-gradient-to-r from-blue-600 to-blue-700">
             <h5 class="card-title text-white font-semibold">Synchronisation</h5>
         </div>
@@ -14,7 +14,7 @@
             {% if config.SERVER_MODE %}
                 <h6>Server-Modus aktiv</h6>
                 <p>Server-URL: http://{{ config.LOCAL_IP }}:5000</p>
-                
+
                 <h6>Letzte Synchronisationen</h6>
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -44,12 +44,12 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="client_name" class="form-label">Client-Name</label>
-                        <input type="text" class="form-control" id="client_name" name="client_name" 
+                        <input type="text" class="form-control" id="client_name" name="client_name"
                                value="{{ settings.get('client_name', '') }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="server_url" class="form-label">Server-URL</label>
-                        <input type="url" class="form-control" id="server_url" name="server_url" 
+                        <input type="url" class="form-control" id="server_url" name="server_url"
                                value="{{ settings.get('server_url', '') }}" required>
                     </div>
                     <div class="mb-3">
@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <div class="card bg-white shadow-lg">
+    <div class="card bg-base-100 shadow-lg">
         <div class="card-header bg-gradient-to-r from-blue-600 to-blue-700">
             <h5 class="card-title text-white font-semibold">Aktuelle Ausleihen</h5>
         </div>
@@ -128,5 +128,5 @@
             });
         }
     </script>
-    {% endif %} 
+    {% endif %}
 {% endblock %} 

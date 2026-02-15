@@ -16,14 +16,14 @@
   </div>
 
   <div class="flex justify-center">
-    <div id="card-container" class="card bg-white shadow-xl" style="width: 85.6mm; height: 54mm;">
+    <div id="card-container" class="card bg-base-100 shadow-xl" style="width: 85.6mm; height: 54mm;">
       <div class="card-body p-3 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src="{{ url_for('static', filename='images/scandy-logo.png') }}" alt="Logo" style="height: 12mm;">
             <span class="text-sm font-bold tracking-wide">Scandy</span>
           </div>
-          <span class="dept text-xs text-gray-500">{{ worker.department or '' }}</span>
+          <span class="dept text-xs text-base-content/60">{{ worker.department or '' }}</span>
         </div>
         <div>
           <div class="text-sm font-bold leading-tight">{{ worker.firstname }} {{ worker.lastname }}</div>

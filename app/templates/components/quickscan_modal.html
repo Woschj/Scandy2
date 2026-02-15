@@ -2,37 +2,48 @@
 <dialog id="quickScanModal" class="modal">
     <div class="modal-box w-full max-w-4xl max-h-[95vh] flex flex-col p-4 relative overflow-y-auto">
         <button class="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost text-xl" onclick="document.getElementById('quickScanModal').close()" aria-label="Schließen">&times;</button>
-        <h3 class="font-bold text-base mb-4 text-center">QuickScan</h3>
-        <div class="flex flex-col md:flex-row gap-6 mb-6 justify-center items-center">
+        <div class="text-center mb-8 mt-2">
+            <h3 class="text-3xl font-black tracking-tight mb-1">Quick<span class="text-primary">Scan</span></h3>
+            <p class="text-xs uppercase tracking-[0.2em] font-bold opacity-30">Transaktions-Terminal</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8 mb-8 justify-center items-center">
             <!-- Karte: Werkzeug/Verbrauchsgut -->
-            <div id="itemCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('item')">
-                <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-tools text-2xl text-primary mb-1"></i>
-                    <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
-                    <div id="itemCardContent">
-                        <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
+            <div id="itemCard" class="card-modern card w-full md:w-80 bg-base-200/50 cursor-pointer group" onclick="QuickScan.activateInput('item')">
+                <div class="card-body items-center text-center py-10">
+                    <div class="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-tools text-3xl text-primary"></i>
+                    </div>
+                    <h2 class="card-title text-lg font-black leading-tight mb-2">Inventar scannen</h2>
+                    <div id="itemCardContent" class="min-h-[40px] flex items-center justify-center">
+                        <p class="text-xs font-bold uppercase tracking-wider opacity-40">Bereit für Scan</p>
                     </div>
                 </div>
             </div>
             <!-- Karte: Mitarbeiter -->
-            <div id="workerCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('worker')">
-                <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
-                    <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
-                    <div id="workerCardContent">
-                        <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
+            <div id="workerCard" class="card-modern card w-full md:w-80 bg-base-200/50 cursor-pointer group" onclick="QuickScan.activateInput('worker')">
+                <div class="card-body items-center text-center py-10">
+                    <div class="w-20 h-20 rounded-3xl bg-secondary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fas fa-id-badge text-3xl text-secondary"></i>
+                    </div>
+                    <h2 class="card-title text-lg font-black leading-tight mb-2">Personal scannen</h2>
+                    <div id="workerCardContent" class="min-h-[40px] flex items-center justify-center">
+                        <p class="text-xs font-bold uppercase tracking-wider opacity-40">Bereit für Scan</p>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Sichtbares Eingabefeld, das nur bei aktiver Karte angezeigt wird -->
-        <div class="flex flex-col items-center gap-2 mt-4">
-            <div id="quickScanActiveInputContainer" class="hidden w-full max-w-sm">
-                <input type="text" id="quickScanActiveInput" class="input input-bordered w-full" autocomplete="off" />
+        <div class="flex flex-col items-center gap-6 mt-4">
+            <div id="quickScanActiveInputContainer" class="hidden w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="relative">
+                    <input type="text" id="quickScanActiveInput" class="input input-bordered w-full h-14 text-center text-xl font-bold tracking-widest rounded-2xl bg-base-200 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all" placeholder="Barcode" autocomplete="off" />
+                    <div class="absolute inset-x-4 bottom-0 h-0.5 bg-primary origin-left animate-scan-line"></div>
+                </div>
             </div>
-            <div class="flex gap-2 mt-2">
-                <button class="btn btn-ghost hover:btn-warning active:scale-95 transition" type="button" onclick="QuickScan.reset()">Reset</button>
-                <button class="btn btn-primary hover:btn-success active:scale-95 transition" id="quickScanConfirmBtn" type="button" onclick="QuickScan.confirm()" disabled>Bestätigen</button>
+            <div class="flex gap-4 mt-2">
+                <button class="btn btn-ghost btn-lg rounded-2xl px-8 hover:bg-base-content/5 active:scale-95 transition-all uppercase tracking-widest text-xs font-black" type="button" onclick="QuickScan.reset()">Reset</button>
+                <button class="btn btn-primary btn-lg rounded-2xl px-12 shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase tracking-widest text-xs font-black" id="quickScanConfirmBtn" type="button" onclick="QuickScan.confirm()" disabled>Bestätigen</button>
             </div>
         </div>
     </div>

@@ -34,8 +34,8 @@ def init_app(app):
     app.register_blueprint(setup_bp)
 
     # Register Core Menu Items
-    plugin_manager.register_menu_item(MenuItem('Dashboard', 'dashboard.index', 'fas fa-tachometer-alt', order=10, group='Übersicht'))
-    plugin_manager.register_menu_item(MenuItem('Über Scandy', 'main.about', 'fas fa-question-circle', order=100, group='Allgemein'))
+    plugin_manager.register_menu_item(MenuItem('Dashboard', 'dashboard.index', 'fas fa-th-large', order=10, group='Übersicht'))
+    plugin_manager.register_menu_item(MenuItem('Über Scandy', 'main.about', 'fas fa-info-circle', order=100, group='Allgemein'))
 
     # Register Plugins
     plugin_manager.init_app(app)

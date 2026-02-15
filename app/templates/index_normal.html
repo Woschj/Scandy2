@@ -15,13 +15,13 @@
     </div>
 
     <!-- Hero-Sektion -->
-    <div class="hero bg-base-100 rounded-box shadow-xl mb-8">
-        <div class="hero-content text-center">
+    <div class="hero glass-panel rounded-3xl mb-8 overflow-hidden border border-base-content/5">
+        <div class="hero-content text-center py-12">
             <div class="max-w-2xl">
-                <h1 class="text-4xl font-bold mb-4">Willkommen bei Scandy</h1>
-                <p class="text-xl mb-6">Ihr digitales System für {{ app_labels.tools.name }}, {{ app_labels.consumables.name }} und {{ app_labels.tickets.name }}</p>
+                <h1 class="text-5xl font-black mb-4 tracking-tight">Willkommen bei <span class="text-primary">Scandy</span></h1>
+                <p class="text-xl mb-8 opacity-70">Ihr modernes System für {{ app_labels.tools.name }}, {{ app_labels.consumables.name }} und {{ app_labels.tickets.name }}</p>
                 {% if not current_user.is_authenticated %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg rounded-2xl px-8 shadow-xl shadow-primary/20">
                     <i class="fas fa-sign-in-alt mr-2"></i>Anmelden
                 </a>
                 {% endif %}
@@ -65,109 +65,86 @@
     <!-- Statistik-Karten -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Werkzeug-Statistiken -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <div class="mb-4">
-                    <h2 class="card-title">
-                        <i class="{{ app_labels.tools.icon }} text-primary mr-2"></i>
-                        {{ app_labels.tools.name }}
-                    </h2>
-                    <div class="text-center mt-2">
-                        <span class="badge badge-primary badge-lg">{{ tool_stats.total }} Gesamt</span>
+        <div class="card-modern card bg-base-100">
+            <div class="card-body p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                        <i class="{{ app_labels.tools.icon }} text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest opacity-40">{{ app_labels.tools.name }}</h2>
+                        <div class="text-2xl font-black">{{ tool_stats.total }}</div>
                     </div>
                 </div>
                 <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Verfügbar</span>
-                        <span class="badge badge-success gap-2">
-                            <i class="fas fa-check"></i>
-                            {{ tool_stats.available }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Verfügbar</span>
+                        <span class="text-sm font-black text-success">{{ tool_stats.available }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Ausgeliehen</span>
-                        <span class="badge badge-warning gap-2">
-                            <i class="fas fa-hand-holding"></i>
-                            {{ tool_stats.lent }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Ausgeliehen</span>
+                        <span class="text-sm font-black text-warning">{{ tool_stats.lent }}</span>
                     </div>
                     {% if overdue_loans and overdue_loans|length > 0 %}
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Überfällig</span>
-                        <span class="badge badge-error gap-2">
-                            <i class="fas fa-clock"></i>
-                            {{ overdue_loans|length }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-error/10 text-error">
+                        <span class="text-xs font-bold uppercase">Überfällig</span>
+                        <span class="text-sm font-black">{{ overdue_loans|length }}</span>
                     </div>
                     {% endif %}
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Defekt</span>
-                        <span class="badge badge-error gap-2">
-                            <i class="fas fa-times"></i>
-                            {{ tool_stats.defect }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Defekt</span>
+                        <span class="text-sm font-black text-error">{{ tool_stats.defect }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Verbrauchsmaterial-Statistiken -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <div class="mb-4">
-                    <h2 class="card-title">
-                        <i class="{{ app_labels.consumables.icon }} text-secondary mr-2"></i>
-                        {{ app_labels.consumables.name }}
-                    </h2>
-                    <div class="text-center mt-2">
-                        <span class="badge badge-secondary badge-lg">{{ consumable_stats.total }} Artikel</span>
+        <div class="card-modern card bg-base-100">
+            <div class="card-body p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+                        <i class="{{ app_labels.consumables.icon }} text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest opacity-40">{{ app_labels.consumables.name }}</h2>
+                        <div class="text-2xl font-black">{{ consumable_stats.total }}</div>
                     </div>
                 </div>
                 <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Ausreichend</span>
-                        <span class="badge badge-success gap-2">
-                            <i class="fas fa-check"></i>
-                            {{ consumable_stats.sufficient }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Ausreichend</span>
+                        <span class="text-sm font-black text-success">{{ consumable_stats.sufficient }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Nachbestellen</span>
-                        <span class="badge badge-warning gap-2">
-                            <i class="fas fa-exclamation"></i>
-                            {{ consumable_stats.warning }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Nachbestellen</span>
+                        <span class="text-sm font-black text-warning">{{ consumable_stats.warning }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Kritisch</span>
-                        <span class="badge badge-error gap-2">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            {{ consumable_stats.critical }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50 text-error">
+                        <span class="text-xs font-bold uppercase opacity-60">Kritisch</span>
+                        <span class="text-sm font-black">{{ consumable_stats.critical }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Mitarbeiter-Statistiken -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <div class="mb-4">
-                    <h2 class="card-title">
-                        <i class="fas fa-users text-accent mr-2"></i>
-                        Mitarbeiter
-                    </h2>
-                    <div class="text-center mt-2">
-                        <span class="badge badge-accent badge-lg">{{ worker_stats.total }} Gesamt</span>
+        <div class="card-modern card bg-base-100">
+            <div class="card-body p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                        <i class="fas fa-users text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest opacity-40">Personal</h2>
+                        <div class="text-2xl font-black">{{ worker_stats.total }}</div>
                     </div>
                 </div>
                 <div class="space-y-3">
-                    <!-- Abteilungsverteilung -->
-                    <div class="text-sm font-bold mb-2">Nach Abteilung:</div>
                     {% for dept in worker_stats.by_department %}
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">{{ dept.name }}</span>
-                        <span class="badge badge-ghost">{{ dept.count }}</span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">{{ dept.name }}</span>
+                        <span class="text-sm font-black">{{ dept.count }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -175,38 +152,29 @@
         </div>
 
         <!-- Ticket-Statistiken -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <div class="mb-4">
-                    <h2 class="card-title">
-                        <i class="{{ app_labels.tickets.icon }} text-info mr-2"></i>
-                        {{ app_labels.tickets.name }}
-                    </h2>
-                    <div class="text-center mt-2">
-                        <span class="badge badge-info badge-lg">{{ ticket_stats.total if ticket_stats else 0 }} Gesamt</span>
+        <div class="card-modern card bg-base-100">
+            <div class="card-body p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center text-info">
+                        <i class="{{ app_labels.tickets.icon }} text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest opacity-40">{{ app_labels.tickets.name }}</h2>
+                        <div class="text-2xl font-black">{{ ticket_stats.total if ticket_stats else 0 }}</div>
                     </div>
                 </div>
                 <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Offen</span>
-                        <span class="badge badge-warning gap-2">
-                            <i class="fas fa-clock"></i>
-                            {{ ticket_stats.open if ticket_stats else 0 }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Offen</span>
+                        <span class="text-sm font-black text-warning">{{ ticket_stats.open if ticket_stats else 0 }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">In Bearbeitung</span>
-                        <span class="badge badge-info gap-2">
-                            <i class="fas fa-cogs"></i>
-                            {{ ticket_stats.in_progress if ticket_stats else 0 }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">In Arbeit</span>
+                        <span class="text-sm font-black text-info">{{ ticket_stats.in_progress if ticket_stats else 0 }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">Geschlossen</span>
-                        <span class="badge badge-success gap-2">
-                            <i class="fas fa-check-circle"></i>
-                            {{ ticket_stats.closed if ticket_stats else 0 }}
-                        </span>
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-base-200/50">
+                        <span class="text-xs font-bold uppercase opacity-60">Erledigt</span>
+                        <span class="text-sm font-black text-success">{{ ticket_stats.closed if ticket_stats else 0 }}</span>
                     </div>
                 </div>
             </div>

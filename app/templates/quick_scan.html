@@ -10,16 +10,16 @@
 {% block page_content %}
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold mb-6">QuickScan</h1>
-    
+
     <!-- Schritt 1: Artikel scannen -->
     <div id="step1" class="mb-8">
         <h2 class="text-xl font-semibold mb-4">
             <i class="{{ app_labels.tools.icon }} text-primary mr-2"></i>
             {{ app_labels.tools.name }} ausleihen
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow">
+        <div class="bg-base-100 p-6 rounded-lg shadow">
             <input type="text" id="itemScanInput" class="w-full p-2 border rounded mb-4" placeholder="Barcode scannen...">
-            <div id="processedItemInput" class="text-gray-500 opacity-50 mb-4">Keine Eingabe</div>
+            <div id="processedItemInput" class="text-base-content/60 opacity-50 mb-4">Keine Eingabe</div>
             <button id="confirmItemBtn" class="hidden bg-blue-500 text-white px-4 py-2 rounded">Bestätigen</button>
         </div>
     </div>
@@ -30,16 +30,16 @@
             <i class="{{ app_labels.consumables.icon }} text-secondary mr-2"></i>
             {{ app_labels.consumables.name }} ausgeben
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow">
+        <div class="bg-base-100 p-6 rounded-lg shadow">
             <input type="text" id="workerScanInput" class="w-full p-2 border rounded mb-4" placeholder="Mitarbeiter-Barcode scannen...">
-            <div id="processedWorkerInput" class="text-gray-500 opacity-50 mb-4">Keine Eingabe</div>
+            <div id="processedWorkerInput" class="text-base-content/60 opacity-50 mb-4">Keine Eingabe</div>
             <button id="confirmWorkerButton" class="hidden bg-blue-500 text-white px-4 py-2 rounded">Bestätigen</button>
         </div>
     </div>
 
     <!-- Bestätigungsmodal -->
     <div id="quickScanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <div class="bg-base-100 p-6 rounded-lg shadow-lg max-w-md w-full">
             <h3 class="text-xl font-semibold mb-4">Bestätigung</h3>
             <div id="confirmationMessage" class="mb-4"></div>
             <div class="flex justify-end space-x-4">

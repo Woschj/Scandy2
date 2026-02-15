@@ -49,17 +49,17 @@
                                class="input input-bordered mb-4">
 
                         <!-- Werkzeug-Liste -->
-                        <div id="toolsList" class="h-96 overflow-hidden bg-white rounded-lg shadow border border-gray-200">
-                            <div class="p-4 border-b bg-gray-50">
-                                <h3 class="font-semibold text-gray-800">{{ app_labels.tools.name }}</h3>
+                        <div id="toolsList" class="h-96 overflow-hidden bg-base-100 rounded-lg shadow border border-base-content/10">
+                            <div class="p-4 border-b bg-base-200">
+                                <h3 class="font-semibold text-base-content">{{ app_labels.tools.name }}</h3>
                             </div>
                             <select size="10" 
                                     id="toolSelect"
                                     onchange="ManualLending.selectItem(this.value)"
-                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-white text-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-base-100 text-base-content border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 {% for tool in tools %}
                                     <option value="tool:{{ tool.id }}:{{ tool.barcode }}:{{ tool.name }}"
-                                            class="p-3 hover:bg-blue-50 cursor-pointer text-gray-800">
+                                            class="p-3 hover:bg-blue-50 cursor-pointer text-base-content">
                                         {{ tool.name }} (#{{ tool.barcode }})
                                         {% if tool.current_status == 'lent' %}
                                             - Ausgeliehen
@@ -74,17 +74,17 @@
                         </div>
 
                         <!-- Verbrauchsmaterial-Liste -->
-                        <div id="consumablesList" class="h-96 overflow-hidden bg-white rounded-lg shadow border border-gray-200 hidden">
-                            <div class="p-4 border-b bg-gray-50">
-                                <h3 class="font-semibold text-gray-800">{{ app_labels.consumables.name }}</h3>
+                        <div id="consumablesList" class="h-96 overflow-hidden bg-base-100 rounded-lg shadow border border-base-content/10 hidden">
+                            <div class="p-4 border-b bg-base-200">
+                                <h3 class="font-semibold text-base-content">{{ app_labels.consumables.name }}</h3>
                             </div>
                             <select size="10" 
                                     id="consumableSelect"
                                     onchange="ManualLending.selectItem(this.value)"
-                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-white text-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-base-100 text-base-content border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 {% for item in consumables %}
                                     <option value="consumable:{{ item.id }}:{{ item.barcode }}:{{ item.name }}"
-                                            class="p-3 hover:bg-blue-50 cursor-pointer text-gray-800">
+                                            class="p-3 hover:bg-blue-50 cursor-pointer text-base-content">
                                         {{ item.name }} ({{ item.quantity }} Stk)
                                     </option>
                                 {% endfor %}
@@ -123,17 +123,17 @@
                                class="input input-bordered mb-4">
 
                         <!-- Mitarbeiter-Liste -->
-                        <div class="h-96 overflow-hidden bg-white rounded-lg shadow border border-gray-200">
-                            <div class="p-4 border-b bg-gray-50">
-                                <h3 class="font-semibold text-gray-800">Mitarbeiter</h3>
+                        <div class="h-96 overflow-hidden bg-base-100 rounded-lg shadow border border-base-content/10">
+                            <div class="p-4 border-b bg-base-200">
+                                <h3 class="font-semibold text-base-content">Mitarbeiter</h3>
                             </div>
                             <select size="10" 
                                     id="workerSelect"
                                     onchange="ManualLending.selectWorker(this.value)"
-                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-white text-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full h-[calc(100%-4rem)] overflow-y-auto p-2 bg-base-100 text-base-content border-0 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 {% for worker in workers %}
                                     <option value="worker:{{ worker.barcode }}:{{ worker.firstname }}:{{ worker.lastname }}:{{ worker.department }}"
-                                            class="p-3 hover:bg-blue-50 cursor-pointer text-gray-800">
+                                            class="p-3 hover:bg-blue-50 cursor-pointer text-base-content">
                                         {{ worker.firstname }} {{ worker.lastname }}
                                         {% if worker.department %}({{ worker.department }}){% endif %}
                                     </option>
@@ -162,13 +162,13 @@
                         
                         <!-- Item Vorschau -->
                         <div class="mb-4">
-                            <p class="text-sm font-medium text-gray-500">Artikel</p>
+                            <p class="text-sm font-medium text-base-content/60">Artikel</p>
                             <div id="previewItem">Kein Artikel ausgewählt</div>
                         </div>
                         
                         <!-- Mengenfeld (nur für {{ app_labels.consumables.name }}) -->
                         <div id="amountField" class="mb-4 hidden">
-                            <label class="text-sm font-medium text-gray-500">Menge</label>
+                            <label class="text-sm font-medium text-base-content/60">Menge</label>
                             <input type="number" 
                                    id="amount" 
                                    class="input input-bordered w-full" 
@@ -178,7 +178,7 @@
                         
                         <!-- Worker Vorschau -->
                         <div class="mb-4">
-                            <p class="text-sm font-medium text-gray-500">Mitarbeiter</p>
+                            <p class="text-sm font-medium text-base-content/60">Mitarbeiter</p>
                             <div id="previewWorker">Kein Mitarbeiter ausgewählt</div>
                         </div>
                     </div>
@@ -215,7 +215,7 @@
     {% if current_lendings %}
     <div class="overflow-x-auto">
         <table class="min-w-full table-auto" id="lendingsTable">
-            <thead class="bg-gray-50">
+            <thead class="bg-base-200">
                 <tr>
                     <th class="px-4 py-2 text-left cursor-pointer" data-sort="item">
                         Artikel
@@ -274,7 +274,7 @@
         </table>
     </div>
     {% else %}
-    <p class="text-gray-600">Keine aktiven Ausleihen vorhanden.</p>
+    <p class="text-base-content/70">Keine aktiven Ausleihen vorhanden.</p>
     {% endif %}
 </div>
 

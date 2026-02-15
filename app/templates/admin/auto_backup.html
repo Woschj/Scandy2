@@ -4,50 +4,50 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <div class="card bg-white shadow-lg border border-gray-200">
+    <div class="card bg-base-100 shadow-lg border border-base-content/10">
         <div class="card-body">
-            <h2 class="card-title mb-6 text-gray-800">
+            <h2 class="card-title mb-6 text-base-content">
                 <i class="fas fa-clock mr-2 text-orange-500"></i>
                 Automatisches Backup-System
             </h2>
 
             <!-- Status-Karte -->
-            <div class="card bg-gray-50 border border-gray-200 mb-6">
+            <div class="card bg-base-200 border border-base-content/10 mb-6">
                 <div class="card-body">
-                    <h3 class="card-title text-lg mb-4 text-gray-700">System-Status</h3>
+                    <h3 class="card-title text-lg mb-4 text-base-content/90">System-Status</h3>
                     <div id="autoBackupStatus" class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Status:</span>
+                            <span class="font-semibold text-base-content/70">Status:</span>
                             <span id="statusIndicator" class="badge badge-info">Lade...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Nächste Backups:</span>
-                            <span id="nextBackup" class="text-sm text-gray-700 font-medium">Lade...</span>
+                            <span class="font-semibold text-base-content/70">Nächste Backups:</span>
+                            <span id="nextBackup" class="text-sm text-base-content/90 font-medium">Lade...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Backup-Zeiten:</span>
-                            <span id="backupTimes" class="text-sm text-gray-700 font-medium">Lade...</span>
+                            <span class="font-semibold text-base-content/70">Backup-Zeiten:</span>
+                            <span id="backupTimes" class="text-sm text-base-content/90 font-medium">Lade...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Nächstes wöchentliches Backup:</span>
-                            <span id="nextWeeklyBackup" class="text-sm text-gray-700 font-medium">Lade...</span>
+                            <span class="font-semibold text-base-content/70">Nächstes wöchentliches Backup:</span>
+                            <span id="nextWeeklyBackup" class="text-sm text-base-content/90 font-medium">Lade...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Letztes wöchentliches Backup:</span>
-                            <span id="lastWeeklyBackup" class="text-sm text-gray-700 font-medium">Lade...</span>
+                            <span class="font-semibold text-base-content/70">Letztes wöchentliches Backup:</span>
+                            <span id="lastWeeklyBackup" class="text-sm text-base-content/90 font-medium">Lade...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-gray-600">Wöchentliche Backup-E-Mail:</span>
-                            <span id="weeklyBackupEmail" class="text-sm text-gray-700 font-medium">Lade...</span>
+                            <span class="font-semibold text-base-content/70">Wöchentliche Backup-E-Mail:</span>
+                            <span id="weeklyBackupEmail" class="text-sm text-base-content/90 font-medium">Lade...</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Steuerung -->
-            <div class="card bg-gray-50 border border-gray-200 mb-6">
+            <div class="card bg-base-200 border border-base-content/10 mb-6">
                 <div class="card-body">
-                    <h3 class="card-title text-lg mb-4 text-gray-700">Steuerung</h3>
+                    <h3 class="card-title text-lg mb-4 text-base-content/90">Steuerung</h3>
                     <div class="flex gap-4 flex-wrap">
                         <button id="startAutoBackup" class="btn btn-success">
                             <i class="fas fa-play mr-2"></i>
@@ -70,9 +70,9 @@
             </div>
 
             <!-- Konfiguration -->
-            <div class="card bg-gray-50 border border-gray-200 mb-6">
+            <div class="card bg-base-200 border border-base-content/10 mb-6">
                 <div class="card-body">
-                    <h3 class="card-title text-lg mb-4 text-gray-700">Konfiguration</h3>
+                    <h3 class="card-title text-lg mb-4 text-base-content/90">Konfiguration</h3>
                     
                     <!-- Backup-Zeiten konfigurieren -->
                     <div class="mb-6">
@@ -81,9 +81,9 @@
                             <input type="hidden" name="action" value="save_times">
                             <div>
                                 <label class="label">
-                                    <span class="label-text font-semibold text-gray-600">Backup-Zeiten konfigurieren:</span>
+                                    <span class="label-text font-semibold text-base-content/70">Backup-Zeiten konfigurieren:</span>
                                 </label>
-                                <div class="text-sm text-gray-500 mb-2">
+                                <div class="text-sm text-base-content/60 mb-2">
                                     Geben Sie die gewünschten Backup-Zeiten im Format HH:MM ein, getrennt durch Kommas (z.B. 06:00,18:00)
                                 </div>
                                 <input type="text" name="backup_times" 
@@ -105,9 +105,9 @@
                             <input type="hidden" name="action" value="save_weekly_time">
                             <div>
                                 <label class="label">
-                                    <span class="label-text font-semibold text-gray-600">Wöchentliche Backup-Zeit (Freitag):</span>
+                                    <span class="label-text font-semibold text-base-content/70">Wöchentliche Backup-Zeit (Freitag):</span>
                                 </label>
-                                <div class="text-sm text-gray-500 mb-2">
+                                <div class="text-sm text-base-content/60 mb-2">
                                     Geben Sie die gewünschte Zeit für das wöchentliche Backup-Archiv im Format HH:MM ein
                                 </div>
                                 <input type="text" name="weekly_backup_time" 
@@ -129,9 +129,9 @@
                             <input type="hidden" name="action" value="save_weekly_email">
                             <div>
                                 <label class="label">
-                                    <span class="label-text font-semibold text-gray-600">E-Mail für wöchentliche Backups:</span>
+                                    <span class="label-text font-semibold text-base-content/70">E-Mail für wöchentliche Backups:</span>
                                 </label>
-                                <div class="text-sm text-gray-500 mb-2">
+                                <div class="text-sm text-base-content/60 mb-2">
                                     Geben Sie die E-Mail-Adresse ein, an die das wöchentliche Backup-Archiv gesendet werden soll
                                 </div>
                                 <input type="email" name="weekly_backup_email" 
@@ -149,9 +149,9 @@
                     <div class="space-y-4">
                         <div>
                             <label class="label">
-                                <span class="label-text font-semibold text-gray-600">Backup-Inhalt:</span>
+                                <span class="label-text font-semibold text-base-content/70">Backup-Inhalt:</span>
                             </label>
-                            <div class="text-sm text-gray-600">
+                            <div class="text-sm text-base-content/70">
                                 <p>• Werkzeuge, Verbrauchsmaterialien, Mitarbeiter</p>
                                 <p>• Ausleihen, Tickets, Einstellungen</p>
                                 <p>• Alle Datenbank-Collections</p>
@@ -159,18 +159,18 @@
                         </div>
                         <div>
                             <label class="label">
-                                <span class="label-text font-semibold text-gray-600">Aufbewahrung:</span>
+                                <span class="label-text font-semibold text-base-content/70">Aufbewahrung:</span>
                             </label>
-                            <div class="text-sm text-gray-600">
+                            <div class="text-sm text-base-content/70">
                                 <p>• Letzte 10 Backups werden behalten</p>
                                 <p>• Alte Backups werden automatisch gelöscht</p>
                             </div>
                         </div>
                         <div>
                             <label class="label">
-                                <span class="label-text font-semibold text-gray-600">Wöchentliche Backup-Archive:</span>
+                                <span class="label-text font-semibold text-base-content/70">Wöchentliche Backup-Archive:</span>
                             </label>
-                            <div class="text-sm text-gray-600">
+                            <div class="text-sm text-base-content/70">
                                 <p>• Jeden Freitag wird ein ZIP-Archiv aller aktuellen Backups erstellt</p>
                                 <p>• Das Archiv wird automatisch per E-Mail versendet</p>
                                 <p>• Maximale E-Mail-Größe: 25MB</p>
@@ -182,12 +182,12 @@
             </div>
 
             <!-- Logs -->
-            <div class="card bg-gray-50 border border-gray-200">
+            <div class="card bg-base-200 border border-base-content/10">
                 <div class="card-body">
-                    <h3 class="card-title text-lg mb-4 text-gray-700">Backup-Logs</h3>
-                    <div class="bg-white p-4 rounded-lg border border-gray-200">
-                        <div id="backupLogs" class="font-mono text-sm h-64 overflow-y-auto text-gray-700">
-                            <p class="text-center text-gray-500">Lade Logs...</p>
+                    <h3 class="card-title text-lg mb-4 text-base-content/90">Backup-Logs</h3>
+                    <div class="bg-base-100 p-4 rounded-lg border border-base-content/10">
+                        <div id="backupLogs" class="font-mono text-sm h-64 overflow-y-auto text-base-content/90">
+                            <p class="text-center text-base-content/60">Lade Logs...</p>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -352,7 +352,7 @@ function loadBackupLogs() {
                     ).join('');
                     logsContainer.scrollTop = logsContainer.scrollHeight;
                 } else {
-                    logsContainer.innerHTML = '<p class="text-center text-gray-500">Keine Logs verfügbar</p>';
+                    logsContainer.innerHTML = '<p class="text-center text-base-content/60">Keine Logs verfügbar</p>';
                 }
             } else {
                 showToast('error', 'Fehler beim Laden der Logs');

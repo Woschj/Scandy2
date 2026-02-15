@@ -7,7 +7,7 @@
     <!-- Übersichtskarten -->
     <div class="grid-responsive">
         <!-- Werkzeuge -->
-        <div class="card bg-base-100 shadow-lg card-compact">
+        <div class="card card-modern bg-base-100 shadow-lg card-compact">
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-lg">
@@ -41,7 +41,7 @@
         </div>
 
         <!-- Verbrauchsgüter -->
-        <div class="card bg-base-100 shadow-lg card-compact">
+        <div class="card card-modern bg-base-100 shadow-lg card-compact">
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-lg">
@@ -69,7 +69,7 @@
 
         <!-- Mitarbeiter -->
         {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
-        <div class="card bg-base-100 shadow-lg card-compact">
+        <div class="card card-modern bg-base-100 shadow-lg card-compact">
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-lg">
@@ -92,7 +92,7 @@
 
         <!-- Tickets -->
         {% if current_user.is_authenticated %}
-        <div class="card bg-base-100 shadow-lg card-compact">
+        <div class="card card-modern bg-base-100 shadow-lg card-compact">
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <h2 class="card-title text-lg">
