@@ -1,15 +1,18 @@
-/* Permanente Sidebar Anpassungen */
+/* Permanente Sidebar Anpassungen - NetBox Theme */
 
 /* Sidebar permanent sichtbar */
 .sidebar-permanent {
     width: 226px !important;
     transition: none !important;
+    background: #2b333d !important;
+    border-right: none !important;
 }
 
 /* Hauptinhalt anpassen */
 .main-content-with-sidebar {
     margin-left: 226px !important;
     width: calc(100% - 226px) !important;
+    background-color: #f5f8fa !important;
 }
 
 /* Navbar anpassen */
@@ -18,41 +21,25 @@
     width: calc(100% - 226px) !important;
 }
 
-/* Responsive Design für mobile Geräte */
-@media (max-width: 768px) {
-    .sidebar-permanent {
-        width: 100% !important;
-        height: auto !important;
-        position: relative !important;
-    }
-    
-    .main-content-with-sidebar {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-    
-    .navbar-with-sidebar {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-}
-
 /* Sidebar Navigation Items */
 .sidebar-nav-item {
-    padding-left: 0.5rem !important;
-    margin-bottom: 0.25rem !important;
-    border-radius: 0 0.5rem 0.5rem 0 !important;
-    transition: background-color 0.2s ease !important;
+    padding-left: 1rem !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    transition: background-color 0.1s ease !important;
+    color: #d2d3d3 !important;
+    border-left: 3px solid transparent !important;
 }
 
-/* Sidebar Hover- und Aktiveffekte verstärken */
+/* Sidebar Hover- und Aktiveffekte */
 .sidebar-nav-item:hover {
-  background: var(--fallback-b1, #f3f4f6) !important;
-  color: var(--fallback-p, #2563eb) !important;
+  background: #3d4852 !important;
+  color: #ffffff !important;
 }
-.sidebar-nav-item.active, .sidebar-nav-item.bg-primary {
-  background: var(--fallback-p, #2563eb) !important;
-  color: #fff !important;
+.sidebar-nav-item.active {
+  background: #3d4852 !important;
+  color: #ffffff !important;
+  border-left: 3px solid #004d99 !important;
   font-weight: 600;
 }
 
@@ -61,10 +48,3 @@
     opacity: 1 !important;
     transition: none !important;
 }
-
-/* Container Anpassungen */
-.container-with-sidebar {
-    max-width: calc(100% - 226px) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-} 
