@@ -50,6 +50,42 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* Accessibility: Screen reader only utility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Accessibility: Skip link visibility on focus */
+        .sr-only:focus,
+        .focus\:not-sr-only:focus {
+            position: fixed !important;
+            top: 1rem !important;
+            left: 1rem !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 0.75rem 1.5rem !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            clip: auto !important;
+            clip-path: none !important;
+            white-space: normal !important;
+            z-index: 10000 !important;
+            background-color: #004d99 !important;
+            color: white !important;
+            border-radius: 0.25rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+        }
+
         /* BTZ-Köln Farbschema */
         :root {
             --btz-primary: #0066cc;
@@ -227,11 +263,12 @@
 </head>
 
 <body class="min-h-screen bg-base-200">
+    <a href="#main-content" class="sr-only focus:not-sr-only btn btn-primary fixed top-2 left-2 z-[9999]">Zum Hauptinhalt springen</a>
     <div class="flex flex-col min-h-screen">
         <!-- Vertikales Seitenmenü -->
         <div class="fixed left-0 top-0 h-full w-[226px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
-            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
+            <div class="w-full h-16 min-h-[4rem] px-0" id="quickScanTrigger" role="button" tabindex="0" aria-label="QuickScan öffnen" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
                 <div class="w-full h-20 overflow-hidden transition-all duration-300 flex items-center justify-center group
                     {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}hover:bg-[#3d4852] cursor-pointer{% endif %}">
                     <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-12 h-12 object-contain transition-transform duration-300 group-hover:opacity-80 group-hover:brightness-110">
@@ -411,10 +448,10 @@
                 </a>
                 {% if current_user.is_authenticated %}
                 <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <button type="button" tabindex="0" class="btn btn-ghost btn-sm">
                         <i class="fas fa-building mr-2"></i>
                         {{ departments_ctx.current or departments.current or 'Abteilung wählen' }}
-                    </label>
+                    </button>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-60">
                         {% for dep in (departments_ctx.allowed or departments.allowed) %}
                         <li>
@@ -428,9 +465,9 @@
                 {% endif %}
                 {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
                 <div class="dropdown dropdown-end">
-                    <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <button type="button" tabindex="0" class="btn btn-ghost btn-sm" aria-label="Hauptmenü">
                         <i class="fas fa-bars"></i>
-                    </label>
+                    </button>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52">
                         <li>
                             <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and 'admin.dashboard' in request.endpoint %}active{% endif %}">
@@ -481,7 +518,8 @@
                     </ul>
                 </div>
                 <a href="{{ url_for('admin.trash') }}" 
-                   class="btn btn-ghost btn-circle btn-sm text-error relative">
+                   class="btn btn-ghost btn-circle btn-sm text-error relative"
+                   aria-label="Papierkorb">
                     <i class="fas fa-trash-alt"></i>
                     {% if trash_count is defined and trash_count > 0 %}
                     <span class="absolute -top-2 -right-2 bg-error text-white rounded-full w-5 h-5 
@@ -495,7 +533,7 @@
                     <a href="{{ url_for('auth.profile') }}" class="text-sm mr-2 hidden md:inline hover:text-primary transition-colors duration-200" title="Mein Profil bearbeiten">
                         <i class="fas fa-user mr-1"></i>{{ current_user.username }}
                     </a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm" title="Logout">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm" title="Logout" aria-label="Abmelden">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 {% else %}
@@ -507,7 +545,7 @@
         </div>
 
         <!-- Main Content -->
-        <main class="relative z-0 ml-[226px] main-content-with-sidebar">
+        <main id="main-content" class="relative z-0 ml-[226px] main-content-with-sidebar">
             {% block content %}
             <div class="container mx-auto">
                 <!-- Info-Karte (nur für QuickScan) -->
