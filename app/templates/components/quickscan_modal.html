@@ -1,11 +1,13 @@
 <!-- QuickScan Modal -->
 <dialog id="quickScanModal" class="modal">
     <div class="modal-box w-full max-w-4xl max-h-[95vh] flex flex-col p-4 relative overflow-y-auto">
-        <button class="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost text-xl" onclick="document.getElementById('quickScanModal').close()" aria-label="Schließen">&times;</button>
+        <button class="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost text-xl" onclick="document.getElementById('quickScanModal').close()" aria-label="Schließen">
+            <span aria-hidden="true">&times;</span>
+        </button>
         <h3 class="font-bold text-base mb-4 text-center">QuickScan</h3>
         <div class="flex flex-col md:flex-row gap-6 mb-6 justify-center items-center">
             <!-- Karte: Werkzeug/Verbrauchsgut -->
-            <div id="itemCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('item')">
+            <div id="itemCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" onclick="QuickScan.activateInput('item')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
                     <i class="fas fa-tools text-2xl text-primary mb-1"></i>
                     <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
@@ -15,7 +17,7 @@
                 </div>
             </div>
             <!-- Karte: Mitarbeiter -->
-            <div id="workerCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('worker')">
+            <div id="workerCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" onclick="QuickScan.activateInput('worker')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
                     <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
                     <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
