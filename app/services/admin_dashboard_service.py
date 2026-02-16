@@ -306,12 +306,36 @@ class AdminDashboardService:
             except Exception as e:
                 logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
 
-            # Legacy-Fallback für alte Ausleihen ohne expected_return_date
+            # Legacy-Fallback für alte Ausleihen ohne expected_return_date (Bolt ⚡ N+1 Fix)
             try:
-                active_lendings = list(mongodb.find('lendings', {
-                    'returned_at': {'$exists': False},
-                    'expected_return_date': {'$exists': False}
-                }))
+                legacy_pipeline = [
+                    {
+                        '$match': {
+                            'returned_at': {'$exists': False},
+                            'expected_return_date': {'$exists': False}
+                        }
+                    },
+                    {
+                        '$lookup': {
+                            'from': 'tools',
+                            'localField': 'tool_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'tool_info'
+                        }
+                    },
+                    {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': True}},
+                    {
+                        '$lookup': {
+                            'from': 'workers',
+                            'localField': 'worker_barcode',
+                            'foreignField': 'barcode',
+                            'as': 'worker_info'
+                        }
+                    },
+                    {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
+                ]
+
+                active_lendings = mongodb.aggregate('lendings', legacy_pipeline)
                 
                 for lending in active_lendings:
                     try:
@@ -323,8 +347,9 @@ class AdminDashboardService:
                         if lent_at and isinstance(lent_at, datetime):
                             days_overdue = (datetime.now() - lent_at).days
                             if days_overdue > 14:
-                                tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode', '')})
-                                worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode', '')})
+                                # Nutze bereits geladene Daten statt find_one (Bolt ⚡)
+                                tool = lending.get('tool_info')
+                                worker = lending.get('worker_info')
                                 
                                 if tool and worker:
                                     tool = AdminDashboardService._safe_document_processing(tool)
