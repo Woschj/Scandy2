@@ -32,11 +32,11 @@ def index():
             current_app.logger.error(f"MongoDB-Verbindung nicht verfügbar: {str(db_error)}")
             # Wähle das Template basierend auf der Benutzerrolle
             if not current_user.is_authenticated:
-                template_name = 'index_public.html'
+                template_name = 'index/public.html'
             elif current_user.role == 'teilnehmer':
-                template_name = 'index_teilnehmer.html'
+                template_name = 'index/teilnehmer.html'
             else:
-                template_name = 'index_normal.html'
+                template_name = 'index/normal.html'
             # Bei DB-Problemen keine Timesheet-Quick-Funktion anzeigen
             timesheet_prefill = None
             timesheet_quick_enabled = False
@@ -111,11 +111,11 @@ def index():
 
         # Wähle das Template basierend auf der Benutzerrolle
         if not current_user.is_authenticated:
-            template_name = 'index_public.html'
+            template_name = 'index/public.html'
         elif current_user.role == 'teilnehmer':
-            template_name = 'index_teilnehmer.html'
+            template_name = 'index/teilnehmer.html'
         else:
-            template_name = 'index_normal.html'
+            template_name = 'index/normal.html'
 
         return render_template(template_name,
                            tool_stats=tool_stats,
@@ -133,7 +133,7 @@ def index():
         current_app.logger.error(f"Fehler beim Laden der Startseite: [Interner Fehler]")
         import traceback
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-        return render_template('index_public.html',
+        return render_template('index/public.html',
                            tool_stats={'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
                            consumable_stats={'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
                            worker_stats={'total': 0, 'by_department': []},
@@ -220,4 +220,4 @@ def emergency_admin():
 @bp.route('/about')
 def about():
     """Zeigt die About-Seite mit Systemdokumentation"""
-    return render_template('about.html') 
+    return render_template('main/about.html')

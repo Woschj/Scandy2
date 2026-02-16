@@ -28,21 +28,21 @@ def setup_admin():
         password_confirm = request.form.get('password_confirm')
         
         if not username or len(username) < 3:
-            return render_template('setup_admin.html', error='Der Benutzername muss mindestens 3 Zeichen lang sein.')
+            return render_template('setup/admin.html', error='Der Benutzername muss mindestens 3 Zeichen lang sein.')
         if len(username) > 50:
-            return render_template('setup_admin.html', error='Der Benutzername darf maximal 50 Zeichen lang sein.')
+            return render_template('setup/admin.html', error='Der Benutzername darf maximal 50 Zeichen lang sein.')
         if len(password) < 8:
-            return render_template('setup_admin.html', error='Das Passwort muss mindestens 8 Zeichen lang sein.')
+            return render_template('setup/admin.html', error='Das Passwort muss mindestens 8 Zeichen lang sein.')
         if password != password_confirm:
-            return render_template('setup_admin.html', error='Die Passwörter stimmen nicht überein.')
+            return render_template('setup/admin.html', error='Die Passwörter stimmen nicht überein.')
         # Erstelle den Admin-Benutzer
         success, message = create_admin_user(username, password, 'admin')
         if success:
             return redirect(url_for('setup.settings'))
         else:
-            return render_template('setup_admin.html', error=message)
+            return render_template('setup/admin.html', error=message)
                 
-    return render_template('setup_admin.html')
+    return render_template('setup/admin.html')
 
 @bp.route('/setup/settings', methods=['GET', 'POST'])
 def settings():
@@ -93,7 +93,7 @@ def settings():
         for row in rows:
             settings[row['key']] = row['value']
             
-        return render_template('setup_settings.html',
+        return render_template('setup/settings.html',
             label_tools_name=settings.get('label_tools_name', 'Werkzeuge'),
             label_tools_icon=settings.get('label_tools_icon', 'fas fa-tools'),
             label_consumables_name=settings.get('label_consumables_name', 'Verbrauchsmaterial'),
@@ -149,7 +149,7 @@ def setup_optional():
             
         except Exception as e:
             logger.error(f"Fehler beim Speichern der optionalen Einstellungen: [Interner Fehler]")
-            return render_template('setup_optional.html', error='Fehler beim Speichern der Einstellungen')
+            return render_template('setup/optional.html', error='Fehler beim Speichern der Einstellungen')
     
     # GET: Lade vorhandene Einstellungen für die Anzeige
     try:
@@ -180,14 +180,14 @@ def setup_optional():
         if not current_departments:
             current_departments = ['IT', 'Produktion', 'Verwaltung']
         
-        return render_template('setup_optional.html',
+        return render_template('setup/optional.html',
                              categories=current_categories,
                              locations=current_locations,
                              departments=current_departments)
                              
     except Exception as e:
         logger.error(f"Fehler beim Laden der optionalen Einstellungen: [Interner Fehler]")
-        return render_template('setup_optional.html', error='Fehler beim Laden der Einstellungen')
+        return render_template('setup/optional.html', error='Fehler beim Laden der Einstellungen')
 
 def is_admin_user_present():
     """Prüft ob ein Admin-Benutzer existiert."""
