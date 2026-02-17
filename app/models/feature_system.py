@@ -18,7 +18,7 @@ class FeatureSystem:
     
     # Kern-Features, die immer aktiviert sein sollten
     CORE_FEATURES = {
-        'tools', 'consumables', 'workers', 'lending_system', 'job_board'
+        'tools', 'consumables', 'workers', 'lending_system'
     }
     
     # Standard-Feature-Einstellungen

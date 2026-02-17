@@ -3,9 +3,8 @@ from . import dashboard
 from . import users
 from . import system
 from . import notices
-from . import software
 from . import custom_fields
 from . import trash
 from . import tickets
-from . import backup
 from . import debug
+from . import plugins

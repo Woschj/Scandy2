@@ -149,14 +149,6 @@ def setup_system_initialization(app):
     except Exception as e:
         logging.warning(f"Could not ensure default role permissions: [Interner Fehler]")
 
-    # Start automatic backup system
-    try:
-        from app.utils.auto_backup import start_auto_backup
-        with app.app_context():
-            start_auto_backup()
-            logging.info("Automatic backup system started")
-    except Exception as e:
-        logging.error(f"Error starting automatic backup system: [Interner Fehler]")
 
     # Perform comprehensive dashboard repair on startup
     try:

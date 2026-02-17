@@ -12,7 +12,7 @@ def index():
     """Dashboard-Hauptseite"""
     # Für Teilnehmer: Weiterleitung zu Wochenberichten
     if current_user.role == 'teilnehmer':
-        return redirect(url_for('workers.teilnehmer_timesheet_list'))
+        return redirect(url_for('weekly_reports.teilnehmer_timesheet_list'))
     
     # Verwende den zentralen Statistics Service
     from app.services.statistics_service import StatisticsService

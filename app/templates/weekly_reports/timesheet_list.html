@@ -4,7 +4,7 @@
     <h1 class="text-2xl font-bold mb-6">Wochenberichte</h1>
 
     <div class="mb-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
-        <a href="{{ url_for('workers.timesheet_create') }}" class="btn btn-primary">Neuen Wochenbericht anlegen</a>
+        <a href="{{ url_for('weekly_reports.timesheet_create') }}" class="btn btn-primary">Neuen Wochenbericht anlegen</a>
     </div>
 
     {% if timesheets %}
@@ -13,7 +13,7 @@
             <thead>
                 <tr>
                     <th>
-                        <a href="{{ url_for('workers.timesheet_list', sort='year_' ~ ('asc' if request.args.get('sort') == 'year_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
+                        <a href="{{ url_for('weekly_reports.timesheet_list', sort='year_' ~ ('asc' if request.args.get('sort') == 'year_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
                             Jahr
                             <div class="flex flex-col">
                                 <span class="text-xs {% if request.args.get('sort') == 'year_desc' %}text-primary{% endif %}">▲</span>
@@ -22,7 +22,7 @@
                         </a>
                     </th>
                     <th>
-                        <a href="{{ url_for('workers.timesheet_list', sort='kw_' ~ ('asc' if request.args.get('sort') == 'kw_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
+                        <a href="{{ url_for('weekly_reports.timesheet_list', sort='kw_' ~ ('asc' if request.args.get('sort') == 'kw_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
                             KW
                             <div class="flex flex-col">
                                 <span class="text-xs {% if request.args.get('sort') == 'kw_desc' %}text-primary{% endif %}">▲</span>
@@ -31,7 +31,7 @@
                         </a>
                     </th>
                     <th>
-                        <a href="{{ url_for('workers.timesheet_list', sort='filled_' ~ ('asc' if request.args.get('sort') == 'filled_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
+                        <a href="{{ url_for('weekly_reports.timesheet_list', sort='filled_' ~ ('asc' if request.args.get('sort') == 'filled_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
                             Tage ausgefüllt
                             <div class="flex flex-col">
                                 <span class="text-xs {% if request.args.get('sort') == 'filled_desc' %}text-primary{% endif %}">▲</span>
@@ -40,7 +40,7 @@
                         </a>
                     </th>
                     <th>
-                        <a href="{{ url_for('workers.timesheet_list', sort='created_' ~ ('asc' if request.args.get('sort') == 'created_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
+                        <a href="{{ url_for('weekly_reports.timesheet_list', sort='created_' ~ ('asc' if request.args.get('sort') == 'created_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
                             Erstellt am
                             <div class="flex flex-col">
                                 <span class="text-xs {% if request.args.get('sort') == 'created_desc' %}text-primary{% endif %}">▲</span>
@@ -49,7 +49,7 @@
                         </a>
                     </th>
                     <th>
-                        <a href="{{ url_for('workers.timesheet_list', sort='updated_' ~ ('asc' if request.args.get('sort') == 'updated_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
+                        <a href="{{ url_for('weekly_reports.timesheet_list', sort='updated_' ~ ('asc' if request.args.get('sort') == 'updated_desc' else 'desc')) }}" class="flex items-center gap-2 hover:text-primary">
                             Letzte Änderung
                             <div class="flex flex-col">
                                 <span class="text-xs {% if request.args.get('sort') == 'updated_desc' %}text-primary{% endif %}">▲</span>
@@ -88,15 +88,15 @@
                     <td>{{ ts.updated_at_de }}</td>
                     <td class="flex flex-row gap-2">
                         {% if ts.user_id == current_user.username or current_user.is_admin %}
-                        <form method="POST" action="{{ url_for('workers.timesheet_delete', ts_id=ts._id) }}" onsubmit="return confirm('Diesen Wochenbericht wirklich löschen?');">
+                        <form method="POST" action="{{ url_for('weekly_reports.timesheet_delete', ts_id=ts._id) }}" onsubmit="return confirm('Diesen Wochenbericht wirklich löschen?');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-error" title="Löschen">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
                         {% endif %}
-                        <a href="{{ url_for('workers.timesheet_edit', ts_id=ts._id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
-                        <a href="{{ url_for('workers.timesheet_download', ts_id=ts._id) }}" class="btn btn-sm btn-accent ml-2">Download</a>
+                        <a href="{{ url_for('weekly_reports.timesheet_edit', ts_id=ts._id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>
+                        <a href="{{ url_for('weekly_reports.timesheet_download', ts_id=ts._id) }}" class="btn btn-sm btn-accent ml-2">Download</a>
                     </td>
                 </tr>
                 {% endfor %}

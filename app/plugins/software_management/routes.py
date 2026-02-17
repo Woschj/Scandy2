@@ -1,5 +1,13 @@
-from .blueprint import bp
-from .shared import *
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import logging
+from app.models.mongodb_database import mongodb, is_feature_enabled
+from app.utils.decorators import mitarbeiter_required
+from bson import ObjectId
+from datetime import datetime
+
+bp = Blueprint('software_management', __name__)
+logger = logging.getLogger(__name__)
+
 @bp.route('/software')
 @mitarbeiter_required
 def get_software():
@@ -256,7 +264,7 @@ def software_management():
         # Hole alle Nutzergruppen
         groups_list = list(mongodb.find('user_groups', {}, sort=[('name', 1)]))
 
-        return render_template('admin/software_management.html',
+        return render_template('software_management/software_management.html',
                              software_list=software_list,
                              groups_list=groups_list)
 

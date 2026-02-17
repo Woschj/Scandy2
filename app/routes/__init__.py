@@ -8,21 +8,6 @@ from app.routes.dashboard import bp as dashboard_bp
 from app.routes.setup import bp as setup_bp
 from app.core.plugins import plugin_manager
 
-# Import plugins to register them
-import app.plugins.tools
-import app.plugins.consumables
-import app.plugins.workers
-import app.plugins.lending
-import app.plugins.tickets
-import app.plugins.canteen
-import app.plugins.jobs
-import app.plugins.media
-import app.plugins.mobile
-import app.plugins.quick_scan
-import app.plugins.history
-import app.plugins.backup
-import app.plugins.email_templates
-
 def init_app(app):
     """Registriert alle Blueprints mit ihren URL-Präfixen"""
     # Core Blueprints
@@ -33,7 +18,7 @@ def init_app(app):
     app.register_blueprint(api_bp)
     app.register_blueprint(setup_bp)
 
-    # Register Plugins
+    # Register Plugins (now uses dynamic discovery)
     plugin_manager.init_app(app)
 
 __all__ = [

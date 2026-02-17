@@ -1,4 +1,6 @@
 import logging
+import os
+import importlib
 from flask import Blueprint, g, abort, redirect, url_for, flash
 from functools import wraps
 from app.models.feature_system import is_feature_enabled
@@ -41,7 +43,28 @@ class PluginManager:
                 return redirect(url_for('dashboard.index'))
 
     @classmethod
+    def discover_plugins(cls, app):
+        """Automatically discovers and registers plugins in app/plugins/"""
+        plugins_dir = os.path.join(app.root_path, 'plugins')
+        if not os.path.exists(plugins_dir):
+            logger.warning(f"Plugins directory not found: {plugins_dir}")
+            return
+
+        for name in os.listdir(plugins_dir):
+            plugin_path = os.path.join(plugins_dir, name)
+            if os.path.isdir(plugin_path) and not name.startswith('__'):
+                if os.path.exists(os.path.join(plugin_path, '__init__.py')):
+                    try:
+                        importlib.import_module(f'app.plugins.{name}')
+                        logger.info(f"Plugin discovered and imported: {name}")
+                    except Exception as e:
+                        logger.error(f"Error importing plugin {name}: {e}")
+
+    @classmethod
     def init_app(cls, app):
+        # Discover plugins first
+        cls.discover_plugins(app)
+
         for plugin in cls._plugins.values():
             if plugin.url_prefix:
                 app.register_blueprint(plugin.blueprint, url_prefix=plugin.url_prefix)

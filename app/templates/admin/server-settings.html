@@ -30,69 +30,6 @@
         <!-- Linke Spalte: Backup-Verwaltung -->
         <div class="space-y-6">
             
-            <!-- Auto-Backup Status -->
-            <div id="section-backup" class="card bg-base-100 shadow">
-                <div class="card-body">
-                    <div class="collapse collapse-arrow bg-base-200">
-                        <input type="checkbox" checked />
-                        <div class="collapse-title text-lg font-semibold">
-                            <i class="fas fa-robot text-primary mr-2"></i> Automatisches Backup
-                        </div>
-                        <div class="collapse-content">
-                            <!-- Status Cards -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div class="stat bg-base-200 rounded-lg p-4">
-                                    <div class="stat-figure text-primary">
-                                        <i class="fas fa-heartbeat text-2xl"></i>
-                                    </div>
-                                    <div class="stat-title text-sm">Status</div>
-                                    <div class="stat-value text-lg" id="autoBackupStatus">Lade...</div>
-                                </div>
-                                
-                                <div class="stat bg-base-200 rounded-lg p-4">
-                                    <div class="stat-figure text-secondary">
-                                        <i class="fas fa-clock text-2xl"></i>
-                                    </div>
-                                    <div class="stat-title text-sm">Backup-Zeiten</div>
-                                    <div class="stat-value text-lg" id="backupTimesDisplay">–</div>
-                                </div>
-                            </div>
-
-                            <!-- Nächstes Backup -->
-                            <div class="bg-base-200 rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-calendar-alt text-info mr-3"></i>
-                                        <div>
-                                            <div class="font-medium">Nächstes Backup</div>
-                                            <div class="text-sm opacity-70" id="nextBackupTime">–</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Steuerung -->
-                            <div class="flex flex-wrap gap-2 items-end">
-                                <button id="startAutoBackup" class="btn btn-success btn-sm">
-                                    <i class="fas fa-play mr-2"></i>Starten
-                                </button>
-                                <button id="stopAutoBackup" class="btn btn-error btn-sm">
-                                    <i class="fas fa-stop mr-2"></i>Stoppen
-                                </button>
-                                <div class="form-control ml-auto">
-                                    <label class="label"><span class="label-text">Zeiten (CSV)</span></label>
-                                    <div class="flex gap-2">
-                                        <input id="scheduleTimes" type="text" placeholder="06:00,18:00" class="input input-bordered input-sm w-40">
-                                        <input id="weeklyTime" type="text" placeholder="17:00" class="input input-bordered input-sm w-28">
-                                        <button id="saveSchedule" class="btn btn-primary btn-sm">Speichern</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Backup erstellen -->
             <div id="section-create-backup" class="card bg-base-100 shadow">
                 <div class="card-body">
@@ -132,7 +69,7 @@
                                     <div>
                                         <div class="font-semibold">Datenbank-Backup</div>
                                         <div class="text-sm text-base-content/60">
-                                            Nur Datenbank und Konfiguration
+                                            Nur Datenbank (JSON)
                                         </div>
                                     </div>
                                 </div>
@@ -146,7 +83,7 @@
                 </div>
             </div>
 
-            <!-- Backup hochladen (ZIP oder JSON) -->
+            <!-- Backup hochladen -->
             <div id="section-restore" class="card bg-base-100 shadow">
                 <div class="card-body">
                     <h2 class="text-lg font-semibold mb-3"><i class="fas fa-upload text-primary mr-2"></i> Backup wiederherstellen</h2>
@@ -157,27 +94,15 @@
                                 <i class="fas fa-cloud-upload-alt text-4xl text-base-content/40 mb-3"></i>
                                 <p class="text-lg font-medium mb-2">Backup hochladen</p>
                                 <p class="text-sm text-base-content/60 mb-4">
-                                    ZIP- oder JSON-Backup hierher ziehen oder klicken zum Auswählen
+                                    ZIP-Backup hierher ziehen oder klicken zum Auswählen
                                 </p>
-                                <input type="file" name="backup_file" accept=".zip,.json" class="file-input file-input-bordered w-full max-w-xs" required>
+                                <input type="file" name="backup_file" accept=".zip" class="file-input file-input-bordered w-full max-w-xs" required>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-                            <div class="form-control">
-                                <label class="label"><span class="label-text">Restore‑Modus</span></label>
-                                <select name="mode" id="restoreMode" class="select select-bordered select-sm">
-                                    <option value="replace" selected>Ersetzen (Drop & Restore)</option>
-                                    <option value="merge">Zusammenführen (Upsert)</option>
-                                </select>
-                            </div>
-                            <div class="form-control">
-                                <label class="label cursor-pointer"><span class="label-text">Medien wiederherstellen</span>
-                                    <input name="include_media" id="restoreIncludeMedia" type="checkbox" class="toggle toggle-sm" checked>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-accent w-full">
-                                <i class="fas fa-undo mr-2"></i>Backup hochladen und anwenden
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn btn-accent">
+                                <i class="fas fa-upload mr-2"></i>Backup hochladen
                             </button>
                         </div>
                             </form>
@@ -421,241 +346,6 @@ function closeIconSelector() {
     currentIconPreview = null;
 }
 
-// Software-Verwaltung
-let softwareList = [];
-let userGroupsList = [];
-let departmentsList = [];
-
-// Software laden
-async function loadSoftware() {
-    try {
-        const response = await fetch('/admin/software');
-        const data = await response.json();
-        
-        if (data.success) {
-            softwareList = data.software;
-            renderSoftwareList();
-            renderSoftwareCheckboxes();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Laden der Software:', error);
-        showToast('error', 'Fehler beim Laden der Software');
-    }
-}
-
-// Software-Liste rendern
-function renderSoftwareList() {
-    const container = document.getElementById('softwareList');
-    if (!container) return;
-    
-    if (softwareList.length === 0) {
-        container.innerHTML = '<p class="text-base-content/60 text-sm">Keine Software vorhanden</p>';
-        return;
-    }
-    
-    container.innerHTML = softwareList.map(software => `
-        <div class="flex items-center justify-between p-2 bg-base-100 rounded border">
-            <div class="flex-1">
-                <div class="font-medium">${software.name}</div>
-                ${software.category ? `<div class="text-sm text-base-content/60">Kategorie: ${software.category}</div>` : ''}
-                ${software.description ? `<div class="text-sm text-base-content/60">${software.description}</div>` : ''}
-            </div>
-            <button onclick="deleteSoftware('${software._id}', '${software.name}')" class="btn btn-error btn-xs">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `).join('');
-}
-
-// Software-Checkboxes rendern
-function renderSoftwareCheckboxes() {
-    const container = document.getElementById('softwareCheckboxes');
-    if (!container) return;
-    
-    if (softwareList.length === 0) {
-        container.innerHTML = '<p class="text-base-content/60 text-sm">Keine Software verfügbar</p>';
-        return;
-    }
-    
-    container.innerHTML = softwareList.map(software => `
-        <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" name="software" value="${software._id}" class="checkbox checkbox-sm">
-            <span class="text-sm">${software.name}</span>
-            ${software.category ? `<span class="text-xs text-base-content/60">(${software.category})</span>` : ''}
-        </label>
-    `).join('');
-}
-
-// Software hinzufügen
-const addSoftwareForm = document.getElementById('addSoftwareForm');
-if (addSoftwareForm) addSoftwareForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch('/admin/software/add', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('success', data.message);
-            this.reset();
-            await loadSoftware();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Hinzufügen der Software:', error);
-        showToast('error', 'Fehler beim Hinzufügen der Software');
-    }
-});
-
-// Software löschen
-async function deleteSoftware(id, name) {
-    if (!confirm(`Möchten Sie die Software "${name}" wirklich löschen?`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/admin/software/delete/${id}`, {
-            method: 'POST'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('success', data.message);
-            await loadSoftware();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Löschen der Software:', error);
-        showToast('error', 'Fehler beim Löschen der Software');
-    }
-}
-
-// Nutzergruppen laden
-async function loadUserGroups() {
-    try {
-        const response = await fetch('/admin/user_groups');
-        const data = await response.json();
-        
-        if (data.success) {
-            userGroupsList = data.groups;
-            renderUserGroupsList();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Laden der Nutzergruppen:', error);
-        showToast('error', 'Fehler beim Laden der Nutzergruppen');
-    }
-}
-
-// Nutzergruppen-Liste rendern
-function renderUserGroupsList() {
-    const container = document.getElementById('userGroupsList');
-    if (!container) return;
-    
-    if (userGroupsList.length === 0) {
-        container.innerHTML = '<p class="text-base-content/60 text-sm">Keine Nutzergruppen vorhanden</p>';
-        return;
-    }
-    
-    container.innerHTML = userGroupsList.map(group => {
-        const softwareNames = group.software ? group.software.map(swId => {
-            const software = softwareList.find(s => s._id === swId);
-            return software ? software.name : 'Unbekannte Software';
-        }).join(', ') : 'Keine Software';
-        
-        return `
-            <div class="flex items-center justify-between p-2 bg-base-100 rounded border">
-                <div class="flex-1">
-                    <div class="font-medium">${group.name}</div>
-                    ${group.description ? `<div class="text-sm text-base-content/60">${group.description}</div>` : ''}
-                    <div class="text-sm text-base-content/60">Software: ${softwareNames || 'Keine'}</div>
-                </div>
-                <div class="flex gap-1">
-                    <button onclick="editUserGroup('${group._id}')" class="btn btn-outline btn-xs">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteUserGroup('${group._id}', '${group.name}')" class="btn btn-error btn-xs">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Nutzergruppe hinzufügen
-const addUserGroupForm = document.getElementById('addUserGroupForm');
-if (addUserGroupForm) addUserGroupForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch('/admin/user_groups/add', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('success', data.message);
-            this.reset();
-            // Checkboxes zurücksetzen
-            this.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-            await loadUserGroups();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Hinzufügen der Nutzergruppe:', error);
-        showToast('error', 'Fehler beim Hinzufügen der Nutzergruppe');
-    }
-});
-
-// Nutzergruppe löschen
-async function deleteUserGroup(id, name) {
-    if (!confirm(`Möchten Sie die Nutzergruppe "${name}" wirklich löschen?`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/admin/user_groups/delete/${id}`, {
-            method: 'POST'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('success', data.message);
-            await loadUserGroups();
-        } else {
-            showToast('error', data.message);
-        }
-    } catch (error) {
-        console.error('Fehler beim Löschen der Nutzergruppe:', error);
-        showToast('error', 'Fehler beim Löschen der Nutzergruppe');
-    }
-}
-
-// Nutzergruppe bearbeiten
-function editUserGroup(id) {
-    // TODO: Implementiere Edit-Modal
-    alert('Edit-Funktion wird noch implementiert');
-}
-
 // Backup-UI Logik
 async function refreshBackupList() {
     try {
@@ -667,7 +357,7 @@ async function refreshBackupList() {
         const rows = (data.backups||[]).map(b => `
             <tr>
                 <td>${b.filename}</td>
-                <td>${b.includes_media ? 'Voll' : 'DB'}</td>
+                <td>ZIP</td>
                 <td>${b.size}</td>
                 <td>${b.created_at}</td>
                 <td class="text-right space-x-1">
@@ -682,27 +372,10 @@ async function refreshBackupList() {
     }
 }
 
-async function refreshBackupStatus() {
-    try {
-        const res = await fetch('/backup/status');
-        const data = await res.json();
-        if (!data.success) return;
-        const st = document.getElementById('autoBackupStatus');
-        const bt = document.getElementById('backupTimesDisplay');
-        const nb = document.getElementById('nextBackupTime');
-        if (st) st.textContent = (data.status.running ? 'Aktiv' : 'Inaktiv') + ' (2× täglich, 7 Tage Retention)';
-        if (bt && Array.isArray(data.status.backup_times)) bt.textContent = data.status.backup_times.join(', ');
-        if (nb && data.status.next_backup) nb.textContent = data.status.next_backup;
-    } catch(e) { /* ignore */ }
-}
-
 async function restoreBackup(filename) {
+    if (!confirm('Diesen Backup wirklich wiederherstellen? Aktuelle Daten werden überschrieben.')) return;
     try {
-        const modeSel = document.getElementById('restoreMode');
-        const mode = modeSel ? modeSel.value : 'replace';
-        const includeMediaEl = document.getElementById('restoreIncludeMedia');
-        const include_media = includeMediaEl ? !!includeMediaEl.checked : true;
-        const res = await fetch('/backup/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({filename, include_media, mode})});
+        const res = await fetch('/backup/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({filename})});
         const data = await res.json();
         showToast(data.success ? 'success' : 'error', data.message || (data.success?'Wiederhergestellt':'Fehler'));
     } catch (e) {
@@ -711,6 +384,7 @@ async function restoreBackup(filename) {
 }
 
 async function deleteBackup(filename) {
+    if (!confirm('Diesen Backup wirklich löschen?')) return;
     try {
         const res = await fetch('/backup/delete/'+encodeURIComponent(filename), {method:'DELETE'});
         const data = await res.json();
@@ -738,12 +412,11 @@ async function uploadBackup(ev) {
 
 document.addEventListener('DOMContentLoaded', function() {
     refreshBackupList();
-    refreshBackupStatus();
     // Create buttons
     const btnFull = document.getElementById('createUnifiedBackupBtn');
     if (btnFull) btnFull.addEventListener('click', async () => {
         try {
-            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:true, compress:true})});
+            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:true})});
             const data = await res.json();
             showToast(data.success ? 'success' : 'error', data.message || (data.success?'Backup erstellt':'Fehler'));
             if (data.success) refreshBackupList();
@@ -752,33 +425,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnDb = document.getElementById('createBackupNoMediaBtn');
     if (btnDb) btnDb.addEventListener('click', async () => {
         try {
-            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:false, compress:true})});
+            const res = await fetch('/backup/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({include_media:false})});
             const data = await res.json();
             showToast(data.success ? 'success' : 'error', data.message || (data.success?'Backup erstellt':'Fehler'));
             if (data.success) refreshBackupList();
         } catch (e) { showToast('error', 'Fehler beim Erstellen'); }
-    });
-    // Start/Stop Scheduler
-    const btnStart = document.getElementById('startAutoBackup');
-    if (btnStart) btnStart.addEventListener('click', async () => {
-        try { const r = await fetch('/backup/start', {method:'POST'}); const d = await r.json(); showToast(d.success?'success':'error', d.message||''); refreshBackupStatus(); } catch(e){ showToast('error','Start fehlgeschlagen'); }
-    });
-    const btnStop = document.getElementById('stopAutoBackup');
-    if (btnStop) btnStop.addEventListener('click', async () => {
-        try { const r = await fetch('/backup/stop', {method:'POST'}); const d = await r.json(); showToast(d.success?'success':'error', d.message||''); refreshBackupStatus(); } catch(e){ showToast('error','Stop fehlgeschlagen'); }
-    });
-    // Save schedule
-    const btnSave = document.getElementById('saveSchedule');
-    if (btnSave) btnSave.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        const times = (document.getElementById('scheduleTimes')||{}).value || '';
-        const weekly = (document.getElementById('weeklyTime')||{}).value || '';
-        try {
-            const r = await fetch('/backup/schedule', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({times, weekly_time: weekly})});
-            const d = await r.json();
-            showToast(d.success?'success':'error', d.success?'Zeitplan gespeichert':'Fehler beim Speichern');
-            refreshBackupStatus();
-        } catch(e){ showToast('error','Zeitplan speichern fehlgeschlagen'); }
     });
 });
 

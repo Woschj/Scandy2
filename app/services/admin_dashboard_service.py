@@ -372,29 +372,14 @@ class AdminDashboardService:
     def get_backup_info() -> Dict[str, Any]:
         """Hole Backup-Informationen"""
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.simple_backup import simple_backup
             
-            backup_dir = backup_manager.backup_dir
-            backups = []
-            
-            if backup_dir.exists():
-                for backup_file in backup_dir.glob('*.json'):
-                    if backup_file.is_file():
-                        stat = backup_file.stat()
-                        backups.append({
-                            'filename': backup_file.name,
-                            'size': stat.st_size,
-                            'modified': datetime.fromtimestamp(stat.st_mtime),
-                            'size_mb': round(stat.st_size / (1024 * 1024), 2)
-                        })
-            
-            # Sortiere nach Änderungsdatum (neueste zuerst)
-            backups.sort(key=lambda x: x['modified'], reverse=True)
+            backups = simple_backup.list_backups()
             
             return {
                 'backups': backups,
                 'total_count': len(backups),
-                'total_size_mb': sum(b['size_mb'] for b in backups)
+                'total_size_mb': sum(float(b['size'].split()[0]) for b in backups if 'MB' in b['size']) # Very rough approximation
             }
             
         except Exception as e:

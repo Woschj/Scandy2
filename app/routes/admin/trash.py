@@ -654,41 +654,20 @@ def delete_ticket_category_legacy(category):
 @bp.route('/backup/delete/<filename>', methods=['DELETE'])
 @admin_required
 def delete_backup(filename):
-    """Löscht ein Backup (JSON oder Native)"""
+    """Löscht ein Backup"""
     try:
-        from app.utils.backup_manager import backup_manager
-        import shutil
+        from app.utils.simple_backup import simple_backup
 
-        backup_path = backup_manager.backup_dir / filename
-
-        if not backup_path.exists():
+        if simple_backup.delete_backup(filename):
+            return jsonify({
+                'status': 'success',
+                'message': 'Backup erfolgreich gelöscht'
+            })
+        else:
             return jsonify({
                 'status': 'error',
                 'message': 'Backup nicht gefunden'
             }), 404
-
-        # Prüfe Backup-Typ
-        is_native = backup_path.is_dir() and filename.startswith('scandy_native_backup_')
-        is_zip = backup_path.is_file() and filename.endswith('.zip')
-
-        if is_zip:
-            # Lösche ZIP Backup (Datei)
-            backup_path.unlink()
-            backup_type = 'zip'
-        elif is_native:
-            # Lösche natives Backup (Verzeichnis)
-            shutil.rmtree(backup_path)
-            backup_type = 'native'
-        else:
-            # Lösche JSON Backup (Datei)
-            backup_path.unlink()
-            backup_type = 'json'
-
-        return jsonify({
-            'status': 'success',
-            'message': f'{backup_type.capitalize()} Backup erfolgreich gelöscht',
-            'backup_type': backup_type
-        })
 
     except Exception as e:
         logger.error(f"Fehler beim Löschen des Backups: [Interner Fehler]")

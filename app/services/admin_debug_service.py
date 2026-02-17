@@ -56,19 +56,19 @@ class AdminDebugService:
             Dictionary mit Backup-Informationen
         """
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.simple_backup import simple_backup
             
             backup_info = {
-                'backup_dir': str(backup_manager.backup_dir),
-                'backup_dir_exists': backup_manager.backup_dir.exists(),
-                'backup_dir_writable': os.access(backup_manager.backup_dir, os.W_OK),
+                'backup_dir': str(simple_backup.backup_dir),
+                'backup_dir_exists': simple_backup.backup_dir.exists(),
+                'backup_dir_writable': os.access(simple_backup.backup_dir, os.W_OK),
                 'backup_files': [],
                 'total_backups': 0,
                 'total_size_mb': 0
             }
             
-            if backup_manager.backup_dir.exists():
-                backup_files = list(backup_manager.backup_dir.glob('*.zip'))
+            if simple_backup.backup_dir.exists():
+                backup_files = list(simple_backup.backup_dir.glob('*.zip'))
                 backup_info['backup_files'] = [f.name for f in backup_files]
                 backup_info['total_backups'] = len(backup_files)
                 backup_info['total_size_mb'] = sum(f.stat().st_size for f in backup_files) / (1024 * 1024)

@@ -21,7 +21,7 @@ import logging
 
 from datetime import datetime, timedelta
 
-from app.utils.backup_manager import backup_manager
+from app.utils.simple_backup import simple_backup
 
 import openpyxl
 
@@ -316,10 +316,9 @@ def _create_enhanced_consumables_sheet(ws, consumables_data):
 def create_mongodb_backup():
     """Erstellt ein MongoDB-Backup"""
     try:
-        from app.utils.backup_manager import BackupManager
+        from app.utils.simple_backup import simple_backup
 
-        backup_manager = BackupManager()
-        backup_filename = backup_manager.create_backup()
+        backup_filename = simple_backup.create_backup()
 
         if backup_filename:
             logger.info(f"MongoDB-Backup erfolgreich erstellt: {backup_filename}")

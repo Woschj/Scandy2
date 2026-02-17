@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Plugin-Verwaltung - Scandy{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <!-- Seitentitel -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content mb-2">
+                <i class="fas fa-puzzle-piece text-primary mr-3"></i>
+                Plugin-Verwaltung
+            </h1>
+            <p class="text-base-content/70">Erweitern Sie Scandy mit zusätzlichen Modulen.</p>
+        </div>
+
+        <button onclick="document.getElementById('uploadPluginModal').showModal()" class="btn btn-primary">
+            <i class="fas fa-upload mr-2"></i>Plugin hochladen
+        </button>
+    </div>
+
+    <!-- Plugins-Liste -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for plugin in plugins %}
+        <div class="card bg-base-100 shadow-xl border border-base-200">
+            <div class="card-body">
+                <div class="flex justify-between items-start">
+                    <h2 class="card-title text-xl font-bold">
+                        <i class="fas fa-box text-secondary mr-2"></i>
+                        {{ plugin.name }}
+                    </h2>
+                    <div class="badge badge-success">Installiert</div>
+                </div>
+
+                <p class="text-sm text-base-content/60 mt-2">
+                    <i class="fas fa-folder mr-1"></i> {{ plugin.path }}
+                </p>
+
+                <div class="mt-4 flex flex-col gap-2">
+                    <div class="text-xs text-base-content/50">
+                        Installiert am: {{ plugin.installed_at|format_datetime if plugin.installed_at else 'Unbekannt' }}
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-6">
+                    <form action="{{ url_for('admin.delete_plugin', plugin_name=plugin.name) }}" method="POST" onsubmit="return confirm('Möchten Sie dieses Plugin wirklich deinstallieren?')">
+                        <button type="submit" class="btn btn-error btn-outline btn-sm">
+                            <i class="fas fa-trash mr-2"></i>Deinstallieren
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center bg-base-200 rounded-xl">
+            <i class="fas fa-puzzle-piece text-6xl text-base-content/20 mb-4"></i>
+            <h3 class="text-xl font-bold">Keine Plugins gefunden</h3>
+            <p class="text-base-content/60">Laden Sie Ihr erstes Plugin hoch, um den Funktionsumfang zu erweitern.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="alert alert-info mt-12">
+        <i class="fas fa-info-circle text-2xl"></i>
+        <div>
+            <h3 class="font-bold">Hinweis zur Aktivierung</h3>
+            <p class="text-sm">Neu installierte Plugins werden erst nach einem Neustart des Servers vollständig geladen. Deinstallierte Plugins werden sofort deaktiviert.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Plugin Modal -->
+<dialog id="uploadPluginModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Plugin hochladen</h3>
+        <p class="text-sm text-base-content/60 mb-6">Wählen Sie eine ZIP-Datei aus, die das Plugin enthält.</p>
+
+        <form action="{{ url_for('admin.upload_plugin') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div class="form-control">
+                <input type="file" name="plugin_file" class="file-input file-input-bordered file-input-primary w-full" accept=".zip" required>
+            </div>
+
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('uploadPluginModal').close()">Abbrechen</button>
+                <button type="submit" class="btn btn-primary">Hochladen & Installieren</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endblock %}

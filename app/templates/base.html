@@ -295,8 +295,8 @@
 
             {# Wochenplan-Link für alle authentifizierten Benutzer - nur wenn Feature aktiviert #}
             {% if current_user.is_authenticated and current_user.timesheet_enabled and features_enabled.get('weekly_reports', False) %}
-            <a href="{{ url_for('workers.timesheet_list') }}" 
-               class="sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('workers.timesheet') %}active{% endif %}">
+            <a href="{{ url_for('weekly_reports.timesheet_list') }}"
+               class="sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('weekly_reports.timesheet') %}active{% endif %}">
                  <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
                      <i class="fas fa-clock text-lg"></i>
                      {% if unfilled_timesheet_days is defined and unfilled_timesheet_days > 0 %}
@@ -439,7 +439,7 @@
                         </li>
                         {% if feature_settings.get('software_management', False) %}
                         <li>
-                            <a href="{{ url_for('admin.software_management') }}" class="rounded-lg py-2">
+                            <a href="{{ url_for('software_management.software_management') }}" class="rounded-lg py-2">
                                 <i class="fas fa-desktop mr-2 w-5"></i>Software & Gruppen
                             </a>
                         </li>
@@ -447,6 +447,11 @@
                         <li>
                             <a href="{{ url_for('admin.feature_settings') }}" class="rounded-lg py-2">
                                 <i class="fas fa-toggle-on mr-2 w-5"></i>Features
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.list_plugins') }}" class="rounded-lg py-2">
+                                <i class="fas fa-puzzle-piece mr-2 w-5"></i>Plugins
                             </a>
                         </li>
                         <li>

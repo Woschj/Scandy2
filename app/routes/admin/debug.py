@@ -213,9 +213,9 @@ def validate_lending_consistency():
 def fix_missing_created_at():
     """Korrigiert fehlende created_at Felder in der Datenbank"""
     try:
-        from app.services.admin_backup_service import AdminBackupService
+        from app.services.admin_debug_service import AdminDebugService
 
-        fixed_count = AdminBackupService._fix_missing_created_at_fields()
+        fixed_count = AdminDebugService.fix_missing_created_at_fields()
 
         return jsonify({
             'success': True,
@@ -317,7 +317,8 @@ def fix_dashboard_complete():
 
         # 1. Backup-Felder korrigieren
         try:
-            result['fixes']['backup_fields'] = AdminBackupService._fix_missing_created_at_fields()
+            from app.services.admin_debug_service import AdminDebugService
+            result['fixes']['backup_fields'] = AdminDebugService.fix_missing_created_at_fields()
         except Exception as e:
             result['errors'].append(f"Backup-Felder: [Interner Fehler]")
 
@@ -474,10 +475,10 @@ def dashboard_status():
         # Wenn es Fehler gibt, versuche automatische Korrektur
         if status['errors']:
             try:
-                from app.services.admin_backup_service import AdminBackupService
+                from app.services.admin_debug_service import AdminDebugService
 
                 # Führe Backup-Feld-Korrektur aus
-                fixed_count = AdminBackupService._fix_missing_created_at_fields()
+                fixed_count = AdminDebugService.fix_missing_created_at_fields()
                 status['fixes_applied'] = fixed_count
 
                 # Teste erneut nach der Korrektur
@@ -971,7 +972,8 @@ def fix_dashboard_simple():
 
         # 2. Führe Backup-Feld-Korrektur aus
         try:
-            fixed_count = AdminBackupService._fix_missing_created_at_fields()
+            from app.services.admin_debug_service import AdminDebugService
+            fixed_count = AdminDebugService.fix_missing_created_at_fields()
             result['fixes_applied'] = fixed_count
             result['message'] += f"{fixed_count} fehlende Felder korrigiert. "
         except Exception as e:

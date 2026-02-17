@@ -9,7 +9,6 @@ import json
 import colorsys
 import logging
 from datetime import datetime, timedelta
-from app.utils.backup_manager import backup_manager
 import openpyxl
 from io import BytesIO
 import time

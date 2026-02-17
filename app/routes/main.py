@@ -18,7 +18,7 @@ def index():
 
     # Für eingeloggte Teilnehmer: Keine Weiterleitung - sie können die Startseite sehen
     # if current_user.is_authenticated and current_user.role == 'teilnehmer':
-    #     return redirect(url_for('workers.timesheet_list'))
+    #     return redirect(url_for('weekly_reports.timesheet_list'))
 
     try:
         # Prüfe ob MongoDB verfügbar ist

@@ -552,24 +552,6 @@ def create_app(test_config=None):
     logging.info("CSRF-Schutz deaktiviert - alle Routen ohne CSRF-Validierung")
 
     
-    # ===== AUTOMATISCHES BACKUP-SYSTEM STARTEN (mit sicherer Fehlerbehandlung) =====
-    def start_backup_system_safe():
-        """Startet das Backup-System mit besserer Fehlerbehandlung"""
-        try:
-            from app.utils.auto_backup import start_auto_backup
-            with app.app_context():
-                start_auto_backup()
-                logging.info("Automatisches Backup-System gestartet")
-        except ImportError:
-            logging.warning("Backup-System-Module nicht verfügbar, überspringe Backup-System-Start")
-        except Exception as e:
-            logging.error(f"Fehler beim Starten des automatischen Backup-Systems: [Interner Fehler]")
-            logging.info("App startet trotzdem ohne Backup-System fort")
-
-    # Starte Backup-System in separatem Thread (nicht-blockierend bei Fehlern)
-    import threading
-    backup_thread = threading.Thread(target=start_backup_system_safe, daemon=True, name="BackupSystem")
-    backup_thread.start()
     
     # ===== AUTOMATISCHE DASHBOARD-REPARATUR BEIM START (im Hintergrund) =====
     def run_dashboard_repair():

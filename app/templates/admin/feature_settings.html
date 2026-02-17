@@ -51,10 +51,11 @@
                                     <i class="fas fa-briefcase mr-2"></i>
                                     Jobbörse
                                 </span>
-                                <input type="checkbox" class="toggle toggle-primary" checked disabled>
+                                <input type="checkbox" name="feature_job_board" class="toggle toggle-primary"
+                                       {% if feature_settings.get('job_board', True) %}checked{% endif %}>
                             </label>
                             <div class="text-sm text-base-content/60 ml-6">
-                                Stellenangebote und Jobverwaltung (immer aktiv)
+                                Stellenangebote und Jobverwaltung
                             </div>
                         </div>
                         
