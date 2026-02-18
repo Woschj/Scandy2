@@ -1,24 +1,36 @@
 <!-- QuickScan Modal -->
 <dialog id="quickScanModal" class="modal">
     <div class="modal-box w-full max-w-4xl max-h-[95vh] flex flex-col p-4 relative overflow-y-auto">
-        <button class="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost text-xl" onclick="document.getElementById('quickScanModal').close()" aria-label="Schließen">&times;</button>
+        <button class="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost text-xl" onclick="document.getElementById('quickScanModal').close()" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
         <h3 class="font-bold text-base mb-4 text-center">QuickScan</h3>
         <div class="flex flex-col md:flex-row gap-6 mb-6 justify-center items-center">
             <!-- Karte: Werkzeug/Verbrauchsgut -->
-            <div id="itemCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('item')">
+            <div id="itemCard"
+                 role="button"
+                 tabindex="0"
+                 aria-labelledby="itemCardTitle"
+                 onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }"
+                 class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-primary/50"
+                 onclick="QuickScan.activateInput('item')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-tools text-2xl text-primary mb-1"></i>
-                    <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
+                    <i class="fas fa-tools text-2xl text-primary mb-1" aria-hidden="true"></i>
+                    <h2 id="itemCardTitle" class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
                     <div id="itemCardContent">
                         <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
                     </div>
                 </div>
             </div>
             <!-- Karte: Mitarbeiter -->
-            <div id="workerCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" onclick="QuickScan.activateInput('worker')">
+            <div id="workerCard"
+                 role="button"
+                 tabindex="0"
+                 aria-labelledby="workerCardTitle"
+                 onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }"
+                 class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-secondary/50"
+                 onclick="QuickScan.activateInput('worker')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
-                    <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
+                    <i class="fas fa-id-badge text-2xl text-secondary mb-1" aria-hidden="true"></i>
+                    <h2 id="workerCardTitle" class="card-title text-base mb-1">Mitarbeiter</h2>
                     <div id="workerCardContent">
                         <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
                     </div>
@@ -28,7 +40,7 @@
         <!-- Sichtbares Eingabefeld, das nur bei aktiver Karte angezeigt wird -->
         <div class="flex flex-col items-center gap-2 mt-4">
             <div id="quickScanActiveInputContainer" class="hidden w-full max-w-sm">
-                <input type="text" id="quickScanActiveInput" class="input input-bordered w-full" autocomplete="off" />
+                <input type="text" id="quickScanActiveInput" class="input input-bordered w-full" autocomplete="off" aria-label="Barcode scannen oder eingeben" />
             </div>
             <div class="flex gap-2 mt-2">
                 <button class="btn btn-ghost hover:btn-warning active:scale-95 transition" type="button" onclick="QuickScan.reset()">Reset</button>
@@ -47,7 +59,7 @@
                 <label class="label">
                     <span class="label-text">Menge</span>
                 </label>
-                <input type="number" id="quantityInput" class="input input-bordered" min="1" value="1" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;">
+                <input type="number" id="quantityInput" class="input input-bordered" min="1" value="1" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;" aria-label="Menge">
             </div>
             <div class="flex justify-end space-x-4">
                 <button type="button" onclick="QuickScan.closeQuantityModal()" class="btn btn-ghost">Abbrechen</button>
@@ -66,7 +78,7 @@
                 <label class="label">
                     <span class="label-text">Voraussichtliche Rückgabe</span>
                 </label>
-                <input type="date" id="returnDateInput" class="input input-bordered" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;">
+                <input type="date" id="returnDateInput" class="input input-bordered" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;" aria-label="Rückgabedatum">
             </div>
             <div class="text-sm text-base-content/60 mt-2">
                 <i class="fas fa-info-circle mr-1"></i>

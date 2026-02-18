@@ -1074,6 +1074,13 @@ const QuickScan = {
             return;
         }
 
+        const btn = document.getElementById('quickScanConfirmBtn');
+        const originalHTML = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Verarbeitung...';
+        }
+
         try {
             // Daten für die API zusammenstellen
             const requestData = {
@@ -1108,11 +1115,19 @@ const QuickScan = {
             } else {
                 showQuickScanToast('success', data.message);
                 this.reset();
-                document.getElementById('quickScanModal').close();
+                const modal = document.getElementById('quickScanModal');
+                if (modal) modal.close();
             }
         } catch (error) {
             console.error('Error:', error);
             showQuickScanToast('error', 'Ein Fehler ist aufgetreten');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                // Re-validate button state based on remaining inputs if modal wasn't closed
+                updateQuickScanButton();
+            }
         }
     }
 };
