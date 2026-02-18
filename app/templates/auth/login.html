@@ -25,25 +25,25 @@
 
             <form method="POST" action="{{ url_for('auth.login') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
+
                 <div class="form-control mb-4">
-                    <label class="label">
+                    <label class="label" for="username">
                         <span class="label-text">Benutzername</span>
                     </label>
-                    <input type="text" name="username" class="input input-bordered" required autofocus>
+                    <input type="text" id="username" name="username" class="input input-bordered" required autofocus>
                 </div>
 
                 <div class="form-control mb-4">
-                    <label class="label">
+                    <label class="label" for="password">
                         <span class="label-text">Passwort</span>
                     </label>
-                    <input type="password" name="password" class="input input-bordered" required>
+                    <input type="password" id="password" name="password" class="input input-bordered" required>
                 </div>
 
                 <div class="form-control mb-6">
-                    <label class="label cursor-pointer">
+                    <label class="label cursor-pointer" for="remember">
                         <span class="label-text">Angemeldet bleiben</span>
-                        <input type="checkbox" name="remember" class="checkbox checkbox-primary">
+                        <input type="checkbox" id="remember" name="remember" class="checkbox checkbox-primary">
                     </label>
                 </div>
 

@@ -8,13 +8,14 @@
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
-                    <div class="input-group">
+                    <div class="join">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput">
-                        <button class="btn btn-square">
-                            <i class="fas fa-search"></i>
+                               class="input input-bordered w-full join-item"
+                               id="searchInput"
+                               aria-label="Suchen">
+                        <button class="btn btn-square join-item" aria-label="Suchen">
+                            <i class="fas fa-search" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
