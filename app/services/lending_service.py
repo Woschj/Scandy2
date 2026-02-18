@@ -341,27 +341,47 @@ class LendingService:
     
     @staticmethod
     def get_active_lendings() -> list:
-        """Holt alle aktiven Ausleihen"""
+        """
+        Holt alle aktiven Ausleihen
+        OPTIMIERT: Verwendet Aggregation-Pipeline zur Vermeidung von N+1 Queries
+        """
         try:
-            active_lendings = mongodb.find('lendings', {'returned_at': None})
+            pipeline = [
+                {'$match': {'returned_at': None}},
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool'
+                    }
+                },
+                {'$unwind': '$tool'},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker'
+                    }
+                },
+                {'$unwind': '$worker'},
+                {
+                    '$addFields': {
+                        'tool_name': '$tool.name',
+                        'worker_name': {'$concat': ['$worker.firstname', ' ', '$worker.lastname']}
+                    }
+                },
+                {
+                    '$project': {
+                        'tool': 0,
+                        'worker': 0
+                    }
+                },
+                {'$sort': {'lent_at': -1}}
+            ]
             
-            # Erweitere mit Tool- und Worker-Informationen
-            enriched_lendings = []
-            for lending in active_lendings:
-                tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
-                
-                if tool and worker:
-                    enriched_lendings.append({
-                        **lending,
-                        'tool_name': tool['name'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'lent_at': lending['lent_at']
-                    })
-            
-            # Sortiere nach Datum (neueste zuerst)
-            enriched_lendings.sort(key=lambda x: x.get('lent_at', datetime.min), reverse=True)
-            return enriched_lendings
+            return mongodb.aggregate('lendings', pipeline)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden aktiver Ausleihen: [Interner Fehler]")
