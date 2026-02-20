@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block filters %}
-<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="departmentFilter">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="departmentFilter" aria-label="Abteilung filtern">
     <option value="">Alle Abteilungen</option>
     {% for department in departments %}
     <option value="{{ department }}">{{ department }}</option>
@@ -93,10 +93,16 @@
     </td>
     <td class="text-right">
         <div class="btn-group">
-            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="Mitarbeiter bearbeiten"
+               title="Mitarbeiter bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('worker', '{{ worker.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('worker', '{{ worker.barcode }}')"
+                    aria-label="Mitarbeiter löschen"
+                    title="Mitarbeiter löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>

@@ -399,7 +399,10 @@
                 </a>
                 {% if current_user.is_authenticated %}
                 <div class="dropdown dropdown-end">
-                    <button type="button" tabindex="0" class="btn btn-ghost btn-sm text-slate-600 hover:bg-slate-100">
+                    <button type="button"
+                            tabindex="0"
+                            class="btn btn-ghost btn-sm text-slate-600 hover:bg-slate-100"
+                            aria-label="{{ departments_ctx.current or departments.current or 'Abteilung wählen' }}">
                         <i class="fas fa-building mr-2"></i>
                         <span class="hidden sm:inline">{{ departments_ctx.current or departments.current or 'Abteilung wählen' }}</span>
                     </button>
