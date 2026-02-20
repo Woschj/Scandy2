@@ -93,19 +93,42 @@ class StatisticsService:
     
     @staticmethod
     def _get_overdue_loans() -> List[Dict[str, Any]]:
-        """Findet alle überfälligen Ausleihen"""
+        """Findet alle überfälligen Ausleihen (Optimiert mit Aggregation zur Vermeidung von N+1 Problemen)"""
         try:
             today = datetime.now().date()
             
-            # Finde alle aktiven Ausleihen mit Rückgabedatum
-            active_loans = list(mongodb.find('lendings', {
-                'returned_at': None,
-                'expected_return_date': {'$exists': True, '$ne': None}
-            }))
+            # Verwende Aggregation zum Beziehen aller Daten in einem Rutsch
+            pipeline = [
+                {
+                    '$match': {
+                        'returned_at': None,
+                        'expected_return_date': {'$exists': True, '$ne': None}
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool_info'
+                    }
+                },
+                {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': True}},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
+            ]
             
+            all_active_loans = mongodb.aggregate('lendings', pipeline)
             overdue_loans = []
             
-            for loan in active_loans:
+            for loan in all_active_loans:
                 expected_date = loan.get('expected_return_date')
                 if not expected_date:
                     continue
@@ -113,20 +136,26 @@ class StatisticsService:
                 # Konvertiere String zu datetime falls nötig
                 if isinstance(expected_date, str):
                     try:
-                        expected_date = datetime.strptime(expected_date, '%Y-%m-%d')
-                    except ValueError:
+                        # Versuche verschiedene Formate
+                        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
+                            try:
+                                expected_date = datetime.strptime(expected_date, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            continue
+                    except Exception:
                         continue
                 
                 # Prüfe ob überfällig
-                if expected_date.date() < today:
-                    # Hole Tool-Informationen
-                    tool = mongodb.find_one('tools', {'barcode': loan.get('tool_barcode')})
+                if hasattr(expected_date, 'date') and expected_date.date() < today:
+                    tool = loan.get('tool_info', {})
+                    worker = loan.get('worker_info', {})
                     
-                    # Hole Mitarbeiter-Informationen
-                    worker = mongodb.find_one('workers', {
-                        'barcode': loan.get('worker_barcode'),
-                        'deleted': {'$ne': True}
-                    })
+                    # Filter gelöschte Worker
+                    if worker and worker.get('deleted') == True:
+                        worker = {}
                     
                     # Berechne Tage überfällig
                     days_overdue = (today - expected_date.date()).days
@@ -134,7 +163,7 @@ class StatisticsService:
                     overdue_loans.append({
                         'tool_name': tool.get('name') if tool else 'Unbekanntes Werkzeug',
                         'tool_barcode': loan.get('tool_barcode'),
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}" if worker else 'Unbekannt',
+                        'worker_name': f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip() if worker else 'Unbekannt',
                         'worker_barcode': loan.get('worker_barcode'),
                         'expected_return_date': expected_date,
                         'days_overdue': days_overdue,
