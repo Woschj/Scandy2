@@ -1,5 +1,9 @@
-## 2026-02-14 - Accessibility and Semantic Improvements in Layout
+# Palette's Journal - UX & Accessibility Learnings
 
-**Learning:** DaisyUI v4 recommends using `<button type="button">` instead of `<label>` for dropdown triggers. Additionally, theme variables (like `--p` for primary) are stored as raw values and should be wrapped in `oklch()` when used in custom CSS. Focus-visible styles are critical for keyboard navigation in custom sidebar components.
+## 2026-02-15 - [QuickScan Modal Accessibility]
+**Learning:** Custom interactive cards implemented as `div`s need `role="button"`, `tabindex="0"`, and `onkeydown` handlers to be accessible to keyboard users. Additionally, dynamic content updates in these cards should be wrapped in `aria-live="polite"` regions to be announced by screen readers.
+**Action:** Always check custom selection UI for keyboard accessibility and ensure dynamic updates are announced.
 
-**Action:** Always prefer `<button>` for interactive elements and ensure color variables are correctly wrapped in their color space function (e.g., `oklch()`) in CSS blocks. Always provide `:focus-visible` styles for custom navigation items. Use `disabled` attribute on buttons to ensure accessibility.
+## 2026-02-15 - [Semantic Form Labels]
+**Learning:** Even with clear visual labels, missing `for` attributes on `<label>` elements prevents proper association with inputs for assistive technologies.
+**Action:** Explicitly link labels and inputs using `for` and `id` attributes in all form components.

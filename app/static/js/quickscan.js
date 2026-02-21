@@ -962,7 +962,9 @@ const QuickScan = {
             input.value = '';
             inputContainer.classList.remove('hidden');
             input.focus();
-            input.placeholder = type === 'item' ? 'Werkzeug/Verbrauchsgut scannen oder eingeben' : 'Mitarbeiter scannen oder eingeben';
+            const placeholder = type === 'item' ? 'Werkzeug/Verbrauchsgut scannen oder eingeben' : 'Mitarbeiter scannen oder eingeben';
+            input.placeholder = placeholder;
+            input.setAttribute('aria-label', placeholder);
         }
         // Kartenfarben setzen
         this.setCardState('item', type === 'item' ? 'selected' : (this.scannedItem ? 'success' : 'default'));
