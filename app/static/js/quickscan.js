@@ -604,6 +604,14 @@ const QuickScan = {
             return;
         }
 
+        const btn = document.getElementById('quickScanConfirmBtn');
+        const originalContent = btn ? btn.innerHTML : 'Bestätigen';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs mr-2"></span>Verarbeiten...';
+        }
+
         try {
             const response = await fetch('/api/quickscan/process_lending', {
                 method: 'POST',
@@ -626,7 +634,7 @@ const QuickScan = {
                 
                 // Schließe das Modal
                 const modal = document.getElementById('quickScanModal');
-                if (modal) {
+                if (modal && typeof modal.close === 'function') {
                     modal.close();
                 }
                 
@@ -643,6 +651,12 @@ const QuickScan = {
         } catch (error) {
             console.error("Fehler bei der Verarbeitung:", error);
             this.showError("Fehler bei der Verarbeitung");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                this.updateConfirmButtonState();
+            }
         }
     },
 
@@ -1076,6 +1090,14 @@ const QuickScan = {
             return;
         }
 
+        const btn = document.getElementById('quickScanConfirmBtn');
+        const originalContent = btn ? btn.innerHTML : 'Bestätigen';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs mr-2"></span>Verarbeiten...';
+        }
+
         try {
             // Daten für die API zusammenstellen
             const requestData = {
@@ -1110,11 +1132,20 @@ const QuickScan = {
             } else {
                 showQuickScanToast('success', data.message);
                 this.reset();
-                document.getElementById('quickScanModal').close();
+                const modal = document.getElementById('quickScanModal');
+                if (modal && typeof modal.close === 'function') {
+                    modal.close();
+                }
             }
         } catch (error) {
             console.error('Error:', error);
             showQuickScanToast('error', 'Ein Fehler ist aufgetreten');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                this.updateConfirmButtonState();
+            }
         }
     }
 };

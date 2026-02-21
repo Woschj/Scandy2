@@ -34,37 +34,83 @@ class ToolService:
     
     def get_all_tools(self) -> List[Dict[str, Any]]:
         """
-        Holt alle aktiven Werkzeuge
+        Holt alle aktiven Werkzeuge mit aktuellem Ausleihstatus (optimiert via Aggregation)
         
         Returns:
             List: Liste aller Werkzeuge
         """
         try:
-            query = {'deleted': {'$ne': True}}
+            # Basis-Filter für Werkzeuge
+            match_query = {'deleted': {'$ne': True}}
             if getattr(g, 'current_department', None):
-                query['department'] = g.current_department
-            tools = list(mongodb.find('tools', query))
+                match_query['department'] = g.current_department
+
+            # Aggregation-Pipeline zur Vermeidung von N+1 Lookups
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'localField': 'barcode',
+                        'foreignField': 'tool_barcode',
+                        'as': 'active_lendings'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'current_lending': {
+                            '$arrayElemAt': [
+                                {'$filter': {
+                                    'input': '$active_lendings',
+                                    'as': 'l',
+                                    'cond': {'$eq': ['$$l.returned_at', None]}
+                                }},
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'current_lending.worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'worker': {'$arrayElemAt': ['$worker_info', 0]}
+                    }
+                }
+            ]
+
+            tools = mongodb.aggregate('tools', pipeline)
             
-            # Datetime-Felder konvertieren und zusätzliche Informationen hinzufügen
+            # Post-Processing in Python (für Datumskonvertierung und Status-Logik)
             processed_tools = []
+            now_date = datetime.now().date()
+
             for tool in tools:
                 try:
                     tool = self._convert_datetime_fields(tool)
                     tool['id'] = str(tool['_id'])
                     
-                    # Aktuelle Ausleihe hinzufügen
-                    current_lending = self._get_lending_service().get_current_lending(tool['barcode'])
+                    current_lending = tool.get('current_lending')
                     if current_lending:
+                        worker = tool.get('worker', {})
+                        worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip() or 'Unbekannt'
+
                         tool['is_borrowed'] = True
-                        tool['current_borrower'] = current_lending.get('worker_name', 'Unbekannt')
+                        tool['current_borrower'] = worker_name
                         tool['lent_to_worker_barcode'] = current_lending.get('worker_barcode')
-                        tool['lent_to_worker_name'] = current_lending.get('worker_name', 'Unbekannt')
+                        tool['lent_to_worker_name'] = worker_name
                         tool['lent_at'] = current_lending.get('lent_at')
                         tool['expected_return_date'] = current_lending.get('expected_return_date')
                         
                         # Prüfe ob das Werkzeug überfällig ist
-                        if current_lending.get('expected_return_date'):
-                            expected_date = current_lending['expected_return_date']
+                        expected_date = tool['expected_return_date']
+                        if expected_date:
                             # Konvertiere String zu datetime falls nötig
                             if isinstance(expected_date, str):
                                 try:
@@ -73,7 +119,7 @@ class ToolService:
                                     expected_date = None
                             
                             # Prüfe ob überfällig
-                            if expected_date and expected_date.date() < datetime.now().date():
+                            if expected_date and (isinstance(expected_date, datetime) and expected_date.date() < now_date):
                                 tool['status'] = 'überfällig'
                             else:
                                 tool['status'] = 'ausgeliehen'
@@ -88,6 +134,12 @@ class ToolService:
                         if not tool.get('status'):
                             tool['status'] = 'verfügbar'
                     
+                    # Aufräumen der temporären Aggregations-Felder
+                    tool.pop('active_lendings', None)
+                    tool.pop('current_lending', None)
+                    tool.pop('worker_info', None)
+                    tool.pop('worker', None)
+
                     processed_tools.append(tool)
                 except Exception as tool_error:
                     logger.error(f"Fehler beim Verarbeiten von Werkzeug {tool.get('barcode', 'unbekannt')}: {str(tool_error)}")
@@ -719,4 +771,4 @@ class ToolService:
             
         except Exception as e:
             logger.error(f"Fehler beim Zusammenführen der Software aus Nutzergruppen: [Interner Fehler]")
-            return tool 
+            return tool

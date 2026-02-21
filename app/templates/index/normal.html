@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Startseite{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Hero-Sektion -->
+    <div class="hero bg-white rounded-3xl border border-slate-100 shadow-sm mb-12 overflow-hidden">
+        <div class="hero-content py-16 text-center">
+            <div class="max-w-2xl">
+                <div class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-50 text-indigo-600 mb-6 border border-indigo-100">
+                    <span class="relative flex h-2 w-2 mr-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                    System Online
+                </div>
+                <h1 class="text-5xl font-black mb-6 tracking-tight text-slate-900">Willkommen bei <span class="text-indigo-600">Scandy</span></h1>
+                <p class="text-xl mb-10 text-slate-500 font-medium leading-relaxed">Ihr modernes, digitales System für die effiziente Verwaltung von {{ app_labels.tools.name }}, {{ app_labels.consumables.name }} und {{ app_labels.tickets.name }}.</p>
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-10 shadow-lg shadow-indigo-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Anmelden
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if duplicate_barcodes and duplicate_barcodes|length > 0 %}
+    <div class="alert alert-error shadow-sm mb-8 rounded-2xl border-none">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+        <div class="flex-1">
+            <span class="font-bold">Achtung: Es gibt doppelte Barcodes!</span>
+            <p class="text-sm opacity-90">Bitte beheben Sie diese Duplikate in der Datenbank, um Fehlscans zu vermeiden.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistik-Karten -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <!-- Werkzeug-Statistiken -->
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <i class="{{ app_labels.tools.icon }} text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ tool_stats.total }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.tools.name }}</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">Verfügbar</span>
+                        <span class="text-emerald-600">{{ tool_stats.available }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">Ausgeliehen</span>
+                        <span class="text-amber-600">{{ tool_stats.lent }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verbrauchsmaterial-Statistiken -->
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600">
+                        <i class="{{ app_labels.consumables.icon }} text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ consumable_stats.total }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.consumables.name }}</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">Kritisch</span>
+                        <span class="text-rose-600 font-bold">{{ consumable_stats.critical }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">Nachbestellen</span>
+                        <span class="text-amber-600">{{ consumable_stats.warning }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mitarbeiter-Statistiken -->
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <i class="fas fa-users text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ worker_stats.total }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">Mitarbeiter</h2>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for dept in worker_stats.by_department %}
+                    <span class="badge badge-ghost badge-sm py-3 px-3 rounded-lg border-slate-100">{{ dept.count }} {{ dept.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket-Statistiken -->
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600">
+                        <i class="{{ app_labels.tickets.icon }} text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ ticket_stats.total if ticket_stats else 0 }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.tickets.name }}</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">Offen</span>
+                        <span class="text-amber-600">{{ ticket_stats.open if ticket_stats else 0 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-500">In Arbeit</span>
+                        <span class="text-sky-600">{{ ticket_stats.in_progress if ticket_stats else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hilfe & Anleitungen -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div class="card">
+            <div class="card-body p-8">
+                {% if current_user.is_authenticated and current_user.timesheet_enabled and weekly_reports_enabled and timesheet_quick_enabled %}
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-clock text-indigo-500 mr-3"></i>
+                    Zeiterfassung
+                </h2>
+                <form method="POST" action="{{ url_for('workers.quick_update_timesheet') }}" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-bold text-slate-600">Startzeit</span></label>
+                            <input type="time" name="start_time" class="input input-bordered rounded-xl" value="{{ timesheet_prefill and timesheet_prefill.start or '' }}">
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-bold text-slate-600">Endzeit</span></label>
+                            <input type="time" name="end_time" class="input input-bordered rounded-xl" value="{{ timesheet_prefill and timesheet_prefill.end or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-600">Tätigkeiten</span></label>
+                        <textarea name="tasks" class="textarea textarea-bordered rounded-xl h-32" placeholder="Was hast du heute gemacht?">{{ timesheet_prefill and timesheet_prefill.tasks or '' }}</textarea>
+                    </div>
+                    <div class="flex gap-4 pt-2">
+                        <button type="submit" class="btn btn-primary flex-1">
+                            <i class="fas fa-save mr-2"></i>Speichern
+                        </button>
+                        <a href="{{ url_for('workers.timesheet_list') }}" class="btn btn-ghost border-slate-200">Wochenberichte</a>
+                    </div>
+                </form>
+                {% else %}
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">Hinweise</h2>
+                <p class="text-slate-500 leading-relaxed">Die Wochenplan-Erfassung ist aktuell deaktiviert. Eine ausführliche Anleitung finden Sie unter „Über Scandy“.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-bullhorn text-amber-500 mr-3"></i>
+                    Wichtige Mitteilungen
+                </h2>
+                <div class="space-y-4">
+                    {% if notices and notices|length > 0 %}
+                        {% for n in notices %}
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0 text-amber-500">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="text-slate-700 font-medium pt-1">{{ n.message }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-12 text-slate-400">
+                            <i class="fas fa-ghost text-4xl mb-4 opacity-20 block"></i>
+                            Keine neuen Mitteilungen
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

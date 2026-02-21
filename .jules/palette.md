@@ -5,3 +5,7 @@
 ## 2026-02-15 - [Keyboard Handlers for Custom Buttons]
 **Learning:** When turning a `div` or other non-button element into a button using `role="button"` and `tabindex="0"`, simply adding a click handler is insufficient. An `onkeydown` handler for "Enter" and " " (Space) is required, and `event.preventDefault()` must be called for the Space key to prevent the page from scrolling.
 **Action:** Use `onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }"` for all custom interactive elements.
+
+## 2026-02-15 - [Async Action Feedback]
+**Learning:** Async action triggers (e.g., 'Confirm' buttons) should provide visual feedback by displaying a loading spinner and becoming disabled during processing. The button's original state (HTML content and disabled property) must be restored using a 'finally' block in JavaScript to ensure the UI remains functional regardless of the outcome.
+**Action:** Use a `try...catch...finally` pattern for all async UI interactions to manage loading states and ensure consistency.
