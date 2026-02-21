@@ -243,7 +243,7 @@
                     <!-- Scanner Animation -->
                     <div class="absolute w-full h-0.5 bg-primary/50 -top-1 left-0 animate-scanner after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-primary/30"></div>
                 </div>
-            </div>
+            </button>
             
             <!-- Trennlinie -->
             <div class="sidebar-divider"></div>
@@ -475,8 +475,9 @@
                 {% endif %}
                 {% if current_user.is_authenticated %}
                     <div class="h-8 w-px bg-slate-100 mx-1"></div>
-                    <a href="{{ url_for('auth.profile') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors duration-200 hidden md:block" title="Mein Profil bearbeiten">
-                        {{ current_user.username }}
+                    <a href="{{ url_for('auth.profile') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors duration-200 flex items-center" title="Mein Profil bearbeiten" aria-label="Profil bearbeiten">
+                        <i class="fas fa-user md:hidden mr-1"></i>
+                        <span class="hidden md:inline">{{ current_user.username }}</span>
                     </a>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-slate-100" title="Logout" aria-label="Abmelden">
                         <i class="fas fa-sign-out-alt"></i>

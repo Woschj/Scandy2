@@ -93,15 +93,39 @@ class StatisticsService:
     
     @staticmethod
     def _get_overdue_loans() -> List[Dict[str, Any]]:
-        """Findet alle überfälligen Ausleihen"""
+        """Findet alle überfälligen Ausleihen (Optimiert mit Aggregation zur Vermeidung von N+1 Problemen)"""
         try:
             today = datetime.now().date()
             
-            # Finde alle aktiven Ausleihen mit Rückgabedatum
-            active_loans = list(mongodb.find('lendings', {
-                'returned_at': None,
-                'expected_return_date': {'$exists': True, '$ne': None}
-            }))
+            # Aggregation-Pipeline zur Vermeidung von N+1 Problemen (Bolt ⚡)
+            pipeline = [
+                {
+                    '$match': {
+                        'returned_at': None,
+                        'expected_return_date': {'$exists': True, '$ne': None}
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool_info'
+                    }
+                },
+                {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': True}},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
+            ]
+
+            active_loans = mongodb.aggregate('lendings', pipeline)
             
             overdue_loans = []
             
@@ -119,14 +143,13 @@ class StatisticsService:
                 
                 # Prüfe ob überfällig
                 if expected_date.date() < today:
-                    # Hole Tool-Informationen
-                    tool = mongodb.find_one('tools', {'barcode': loan.get('tool_barcode')})
+                    # Nutze die bereits geladenen Informationen statt neuer Datenbankabfragen (N+1 Fix Bolt ⚡)
+                    tool = loan.get('tool_info')
+                    worker = loan.get('worker_info')
                     
-                    # Hole Mitarbeiter-Informationen
-                    worker = mongodb.find_one('workers', {
-                        'barcode': loan.get('worker_barcode'),
-                        'deleted': {'$ne': True}
-                    })
+                    # Filter für gelöschte Mitarbeiter (da mongomock kein complex lookup unterstützt)
+                    if worker and worker.get('deleted') == True:
+                        worker = None
                     
                     # Berechne Tage überfällig
                     days_overdue = (today - expected_date.date()).days
@@ -134,7 +157,7 @@ class StatisticsService:
                     overdue_loans.append({
                         'tool_name': tool.get('name') if tool else 'Unbekanntes Werkzeug',
                         'tool_barcode': loan.get('tool_barcode'),
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}" if worker else 'Unbekannt',
+                        'worker_name': f"{worker['firstname']} {worker['lastname']}" if (worker and worker.get('firstname') and worker.get('lastname')) else 'Unbekannt',
                         'worker_barcode': loan.get('worker_barcode'),
                         'expected_return_date': expected_date,
                         'days_overdue': days_overdue,
@@ -147,7 +170,7 @@ class StatisticsService:
             return overdue_loans
             
         except Exception as e:
-            logger.error(f"Fehler beim Berechnen überfälliger Ausleihen: [Interner Fehler]")
+            logger.error(f"Fehler beim Berechnen überfälliger Ausleihen: {e}")
             return []
     
     @staticmethod

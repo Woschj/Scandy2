@@ -9,9 +9,9 @@
             <!-- Karte: Werkzeug/Verbrauchsgut -->
             <div id="itemCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" onclick="QuickScan.activateInput('item')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-tools text-2xl text-primary mb-1"></i>
+                    <i class="fas fa-tools text-2xl text-primary mb-1" aria-hidden="true"></i>
                     <h2 class="card-title text-base mb-1">Werkzeug / Verbrauchsgut</h2>
-                    <div id="itemCardContent">
+                    <div id="itemCardContent" aria-live="polite">
                         <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
                     </div>
                 </div>
@@ -19,9 +19,9 @@
             <!-- Karte: Mitarbeiter -->
             <div id="workerCard" class="card w-[320px] h-[320px] bg-base-200 cursor-pointer transition hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] border-2 border-transparent" role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" onclick="QuickScan.activateInput('worker')">
                 <div class="card-body flex flex-col items-center justify-center h-full">
-                    <i class="fas fa-id-badge text-2xl text-secondary mb-1"></i>
+                    <i class="fas fa-id-badge text-2xl text-secondary mb-1" aria-hidden="true"></i>
                     <h2 class="card-title text-base mb-1">Mitarbeiter</h2>
-                    <div id="workerCardContent">
+                    <div id="workerCardContent" aria-live="polite">
                         <p class="text-sm opacity-50">Klicken &amp; Barcode scannen oder eingeben</p>
                     </div>
                 </div>
@@ -30,6 +30,7 @@
         <!-- Sichtbares Eingabefeld, das nur bei aktiver Karte angezeigt wird -->
         <div class="flex flex-col items-center gap-2 mt-4">
             <div id="quickScanActiveInputContainer" class="hidden w-full max-w-sm">
+                <label for="quickScanActiveInput" class="sr-only">Barcode scannen oder manuell eingeben</label>
                 <input type="text" id="quickScanActiveInput" class="input input-bordered w-full" autocomplete="off" />
             </div>
             <div class="flex gap-2 mt-2">
@@ -46,7 +47,7 @@
         <h3 class="font-bold text-lg mb-4">Menge eingeben</h3>
         <div class="space-y-4">
             <div class="form-control">
-                <label class="label">
+                <label class="label" for="quantityInput">
                     <span class="label-text">Menge</span>
                 </label>
                 <input type="number" id="quantityInput" class="input input-bordered" min="1" value="1" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;">
@@ -65,13 +66,13 @@
         <h3 class="font-bold text-lg mb-4">Rückgabedatum festlegen</h3>
         <div class="space-y-4">
             <div class="form-control">
-                <label class="label">
+                <label class="label" for="returnDateInput">
                     <span class="label-text">Voraussichtliche Rückgabe</span>
                 </label>
                 <input type="date" id="returnDateInput" class="input input-bordered" style="height: 3rem; line-height: 1.5; padding: 0.5rem 1rem;">
             </div>
             <div class="text-sm text-base-content/60 mt-2">
-                <i class="fas fa-info-circle mr-1"></i>
+                <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>
                 Standard: 2 Wochen ab heute. Sie können das Datum anpassen.
             </div>
             <div class="flex justify-end space-x-4">
