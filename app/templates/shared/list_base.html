@@ -8,13 +8,22 @@
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput">
-                        <button class="btn btn-square">
-                            <i class="fas fa-search"></i>
+                    <div class="join w-full">
+                        <div class="relative flex-1">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered w-full join-item pr-10"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button id="clearSearch"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                                    type="button"
+                                    aria-label="Suche löschen">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-square join-item" aria-label="Suchen">
+                            <i class="fas fa-search" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -76,14 +85,32 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    function updateSearch(searchTerm) {
+        searchTerm = searchTerm.toLowerCase();
+        document.querySelectorAll('.data-row').forEach(row => {
+            const searchableContent = row.textContent.toLowerCase();
+            row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+        });
+
+        if (clearSearch) {
+            clearSearch.classList.toggle('hidden', searchTerm === '');
+        }
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+            updateSearch(e.target.value);
         });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                updateSearch('');
+                searchInput.focus();
+            });
+        }
     }
 
     // Sortier-Funktionalität
