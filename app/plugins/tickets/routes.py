@@ -2051,7 +2051,7 @@ def _handle_auftrag_creation(external=False):
                     # E-Mail-Fehler soll den Auftrag nicht verhindern
             
             # Für alle Benutzer zur Bestätigungsseite
-            return render_template('auftrag_public_success.html', 
+            return render_template('tickets/public_success.html',
                                  ticket_number=ticket_data['ticket_number'],
                                  ticket=ticket_data)
             

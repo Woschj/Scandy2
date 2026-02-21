@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @login_required
 @not_teilnehmer_required
 def quick_scan():
-    return render_template('quick_scan.html')
+    return render_template('quick_scan/index.html')
 
 @bp.route('/process', methods=['POST'])
 @login_required

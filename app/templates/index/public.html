@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Scandy - Digitales Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Hero-Sektion -->
+    <div class="hero bg-white rounded-3xl border border-slate-100 shadow-sm mb-16 overflow-hidden">
+        <div class="hero-content py-20 text-center">
+            <div class="max-w-3xl">
+                <!-- Scandy Logo -->
+                <div class="mb-10">
+                    <div class="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-indigo-200">
+                        <img src="{{ url_for('static', filename='images/scandy-logo.png') }}"
+                             alt="Scandy Logo"
+                             class="w-14 h-14 object-contain brightness-0 invert">
+                    </div>
+                    <h1 class="text-6xl font-black mb-6 tracking-tight text-slate-900">Scandy</h1>
+                </div>
+                <h2 class="text-4xl font-extrabold mb-8 tracking-tight text-slate-800">Digitales Werkzeug- und Verbrauchsmaterialmanagement</h2>
+                <p class="text-xl mb-12 text-slate-500 font-medium leading-relaxed">
+                    Ein modernes, benutzerfreundliches System für die effiziente Verwaltung von Werkzeugen,
+                    Verbrauchsmaterialien, Aufträgen und Wochenberichten.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-12 shadow-lg shadow-indigo-100">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Jetzt anmelden
+                    </a>
+                    <a href="{{ url_for('tickets.create_ticket') if url_for('tickets.create_ticket') else '#' }}" class="btn btn-ghost bg-slate-100 hover:bg-slate-200 btn-lg px-12">
+                        <i class="fas fa-file-alt mr-2"></i>Auftrag erstellen
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features-Sektion -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <!-- Werkzeug-Management -->
+        <div class="card group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body p-10 text-center">
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-tools text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Werkzeug-Management</h3>
+                <p class="text-slate-500 font-medium leading-relaxed">
+                    Verwalten Sie Werkzeuge und Verbrauchsmaterialien digital mit Barcode-Scanner.
+                    Einfache Ausleihe, Rückgabe und Bestandsübersicht.
+                </p>
+            </div>
+        </div>
+        <!-- Auftrags-Management -->
+        <div class="card group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body p-10 text-center">
+                <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-600 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-ticket-alt text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Auftrags-Management</h3>
+                <p class="text-slate-500 font-medium leading-relaxed">
+                    Erstellen und verwalten Sie Aufträge digital.
+                    Verfolgen Sie den Fortschritt und kommunizieren Sie effizient im Team.
+                </p>
+            </div>
+        </div>
+        <!-- Wochenplan-Feature -->
+        <div class="card group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body p-10 text-center">
+                <div class="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-sky-600 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Wochenberichte</h3>
+                <p class="text-slate-500 font-medium leading-relaxed">
+                    Integrierte Zeiterfassung für Teilnehmer und Mitarbeiter.
+                    Einfache Erfassung, Verwaltung und Export für mehr Transparenz.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+// QuickScan-Button für nicht eingeloggte Nutzer deaktivieren
+window.addEventListener('DOMContentLoaded', function() {
+    var trigger = document.getElementById('quickScanTrigger');
+    if (trigger && !{{ 'true' if current_user.is_authenticated else 'false' }}) {
+        trigger.title = 'QuickScan ist nur für eingeloggte Nutzer verfügbar';
+        trigger.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
+    }
+});
+</script>
+{% endblock %}

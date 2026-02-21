@@ -3,65 +3,50 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="max-w-7xl mx-auto space-y-10">
     <!-- Übersichtskarten -->
-    <div class="grid-responsive">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Werkzeuge -->
-        <div class="card bg-base-100 shadow-lg card-compact">
-            <div class="card-body">
-                <div class="flex items-center justify-between">
-                    <h2 class="card-title text-lg">
-                        <i class="fas fa-tools text-primary"></i>
-                        {{ app_labels.tools.name }}
-                    </h2>
-                    <div class="badge badge-primary">{{ tool_stats.total }}</div>
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-tools text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ tool_stats.total }}</span>
                 </div>
-                <div class="stats stats-horizontal w-full">
-                    <div class="stat">
-                        <div class="stat-title">Verfügbar</div>
-                        <div class="stat-value text-success">{{ tool_stats.available }}</div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.tools.name }}</h2>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Verfügbar</div>
+                        <div class="text-emerald-600 font-bold">{{ tool_stats.available }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">Ausgeliehen</div>
-                        <div class="stat-value text-warning">{{ tool_stats.lent }}</div>
+                    <div class="flex-1 border-l border-slate-100 pl-4">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Geliehen</div>
+                        <div class="text-amber-600 font-bold">{{ tool_stats.lent }}</div>
                     </div>
-                    {% if overdue_loans %}
-                    <div class="stat">
-                        <div class="stat-title">Überfällig</div>
-                        <div class="stat-value text-error">{{ overdue_loans|length }}</div>
-                    </div>
-                    {% else %}
-                    <div class="stat">
-                        <div class="stat-title">Defekt</div>
-                        <div class="stat-value text-error">{{ tool_stats.defect }}</div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Verbrauchsgüter -->
-        <div class="card bg-base-100 shadow-lg card-compact">
-            <div class="card-body">
-                <div class="flex items-center justify-between">
-                    <h2 class="card-title text-lg">
-                        <i class="{{ app_labels.consumables.icon }} text-primary"></i>
-                        {{ app_labels.consumables.name }}
-                    </h2>
-                    <div class="badge badge-primary">{{ consumable_stats.total }}</div>
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600">
+                        <i class="{{ app_labels.consumables.icon }} text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ consumable_stats.total }}</span>
                 </div>
-                <div class="stats stats-horizontal w-full">
-                    <div class="stat">
-                        <div class="stat-title">Ausreichend</div>
-                        <div class="stat-value text-success">{{ consumable_stats.sufficient }}</div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.consumables.name }}</h2>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Kritisch</div>
+                        <div class="text-rose-600 font-bold">{{ consumable_stats.critical }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">Warnung</div>
-                        <div class="stat-value text-warning">{{ consumable_stats.warning }}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Kritisch</div>
-                        <div class="stat-value text-error">{{ consumable_stats.critical }}</div>
+                    <div class="flex-1 border-l border-slate-100 pl-4">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Warnung</div>
+                        <div class="text-amber-600 font-bold">{{ consumable_stats.warning }}</div>
                     </div>
                 </div>
             </div>
@@ -69,21 +54,18 @@
 
         <!-- Mitarbeiter -->
         {% if current_user.is_authenticated and current_user.is_mitarbeiter %}
-        <div class="card bg-base-100 shadow-lg card-compact">
-            <div class="card-body">
-                <div class="flex items-center justify-between">
-                    <h2 class="card-title text-lg">
-                        <i class="fas fa-users text-primary"></i>
-                        Mitarbeiter
-                    </h2>
-                    <div class="badge badge-primary">{{ worker_stats.total }}</div>
-                </div>
-                <div class="stats stats-horizontal w-full">
-                    {% for dept in worker_stats.by_department[:3] %}
-                    <div class="stat">
-                        <div class="stat-title">{{ dept.department }}</div>
-                        <div class="stat-value">{{ dept.count }}</div>
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <i class="fas fa-users text-2xl"></i>
                     </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ worker_stats.total }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">Mitarbeiter</h2>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    {% for dept in worker_stats.by_department[:2] %}
+                    <span class="text-[11px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-md">{{ dept.count }} {{ dept.name }}</span>
                     {% endfor %}
                 </div>
             </div>
@@ -92,27 +74,23 @@
 
         <!-- Tickets -->
         {% if current_user.is_authenticated %}
-        <div class="card bg-base-100 shadow-lg card-compact">
-            <div class="card-body">
-                <div class="flex items-center justify-between">
-                    <h2 class="card-title text-lg">
-                        <i class="{{ app_labels.tickets.icon }} text-primary"></i>
-                        {{ app_labels.tickets.name }}
-                    </h2>
-                    <div class="badge badge-primary">{{ ticket_stats.total }}</div>
+        <div class="card group hover:-translate-y-1">
+            <div class="card-body p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600">
+                        <i class="{{ app_labels.tickets.icon }} text-2xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold text-slate-900">{{ ticket_stats.total if ticket_stats else 0 }}</span>
                 </div>
-                <div class="stats stats-horizontal w-full">
-                    <div class="stat">
-                        <div class="stat-title">Offen</div>
-                        <div class="stat-value text-warning">{{ ticket_stats.open }}</div>
+                <h2 class="text-lg font-bold text-slate-800 mb-4">{{ app_labels.tickets.name }}</h2>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Offen</div>
+                        <div class="text-amber-600 font-bold">{{ ticket_stats.open if ticket_stats else 0 }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">In Bearbeitung</div>
-                        <div class="stat-value text-info">{{ ticket_stats.in_progress }}</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Geschlossen</div>
-                        <div class="stat-value text-success">{{ ticket_stats.closed }}</div>
+                    <div class="flex-1 border-l border-slate-100 pl-4">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Aktiv</div>
+                        <div class="text-sky-600 font-bold">{{ ticket_stats.in_progress if ticket_stats else 0 }}</div>
                     </div>
                 </div>
             </div>
@@ -120,96 +98,87 @@
         {% endif %}
     </div>
 
-    <!-- Bestandsprognose -->
-    {% if consumables_forecast %}
-    <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-            <h2 class="card-title">
-                <i class="fas fa-chart-line text-primary"></i>
-                Bestandsprognose Verbrauchsgüter
-            </h2>
-            <p class="text-sm text-base-content/70 mb-4">Basierend auf dem durchschnittlichen Verbrauch der letzten 30 Tage</p>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {% for item in consumables_forecast %}
-                <div class="card bg-base-200 card-compact">
-                    <div class="card-body p-4">
-                        <h3 class="font-bold text-sm mb-2">{{ item.name }}</h3>
-                        <div class="radial-progress text-primary" style="--value:{{ (item.days_remaining/90)*100 if item.days_remaining < 90 else 100 }};">
-                            {{ item.days_remaining }} Tage
+    <!-- Alerts Section -->
+    <div class="space-y-6">
+        <!-- Überfällige Ausleihen Warnung -->
+        {% if overdue_loans %}
+        <div class="p-8 rounded-3xl bg-rose-50 border border-rose-100 flex flex-col md:flex-row gap-8 items-start md:items-center">
+            <div class="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0 text-rose-500 text-2xl">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-xl font-black text-rose-900 mb-2">{{ overdue_loans|length }} überfällige Ausleihen gefunden!</h3>
+                <div class="flex flex-wrap gap-4 mt-4">
+                    {% for loan in overdue_loans[:3] %}
+                    <div class="bg-white/60 px-4 py-2 rounded-xl text-sm font-bold text-rose-800 border border-rose-100">
+                        {{ loan.tool_name }} <span class="mx-2 opacity-30">|</span> {{ loan.worker_name }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="{{ url_for('tools.index') }}?statusFilter=überfällig" class="btn bg-rose-600 hover:bg-rose-700 text-white border-none px-8 rounded-xl">
+                Alle anzeigen
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Duplikate Warnung -->
+        {% if duplicate_barcodes %}
+        <div class="alert alert-warning rounded-2xl border-none shadow-sm p-6">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+            <span class="font-bold">Achtung: {{ duplicate_barcodes|length }} doppelte Barcodes im System gefunden.</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Bestandsprognose -->
+        {% if consumables_forecast %}
+        <div class="lg:col-span-2 card">
+            <div class="card-body p-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-8 flex items-center tracking-tight">
+                    <i class="fas fa-chart-line text-indigo-500 mr-3"></i>
+                    Bestandsprognose
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for item in consumables_forecast[:4] %}
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-6 group hover:bg-white hover:shadow-md transition-all duration-300">
+                        <div class="radial-progress text-indigo-600 font-bold text-xs" style="--value:{{ (item.days_remaining/90)*100 if item.days_remaining < 90 else 100 }}; --size:4rem; --thickness: 6px;">
+                            {{ item.days_remaining }}d
                         </div>
-                        <div class="text-xs mt-2 space-y-1">
-                            <p>Aktueller Bestand: {{ item.current_amount }}</p>
-                            <p>Täglicher Verbrauch: {{ item.avg_daily_usage }}</p>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-slate-900 truncate mb-1">{{ item.name }}</h3>
+                            <p class="text-xs text-slate-500 font-medium">Verbrauch: {{ item.avg_daily_usage }}/Tag</p>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Duplikate Warnung -->
-    {% if duplicate_barcodes %}
-    <div class="alert alert-warning">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Warnung: {{ duplicate_barcodes|length }} doppelte Barcodes gefunden. Bitte überprüfen Sie die Daten.</span>
-    </div>
-    {% endif %}
-
-    <!-- Überfällige Ausleihen Warnung -->
-    {% if overdue_loans %}
-    <div class="alert alert-error">
-        <i class="fas fa-clock"></i>
-        <div class="flex-1">
-            <h3 class="font-bold">{{ overdue_loans|length }} überfällige Ausleihe{{ "n" if overdue_loans|length != 1 else "" }} gefunden!</h3>
-            <div class="text-sm mt-2">
-                {% for loan in overdue_loans[:3] %}
-                <div class="mb-1">
-                    <strong>{{ loan.tool_name }}</strong> an {{ loan.worker_name }} 
-                    ({{ loan.days_overdue }} Tag{{ "e" if loan.days_overdue != 1 else "" }} überfällig)
-                </div>
-                {% endfor %}
-                {% if overdue_loans|length > 3 %}
-                <div class="mt-2 text-xs opacity-80">
-                    ... und {{ overdue_loans|length - 3 }} weitere
-                </div>
-                {% endif %}
-            </div>
-            <div class="mt-3">
-                <a href="{{ url_for('tools.index') }}?statusFilter=überfällig" class="btn btn-sm btn-error">
-                    <i class="fas fa-list mr-2"></i>Alle überfälligen anzeigen
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Aktuelle Mitteilungen -->
-    {% if notices %}
-    <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-            <h2 class="card-title">
-                <i class="fas fa-bullhorn text-primary"></i>
-                Aktuelle Mitteilungen
-            </h2>
-            <div class="space-y-3">
-                {% for notice in notices %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <div>
-                        <h3 class="font-bold">{{ notice.title }}</h3>
-                        <p class="text-sm">{{ notice.content }}</p>
-                        {% if notice.created_at %}
-                        <p class="text-xs opacity-70">{{ notice.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
-                        {% endif %}
+        <!-- Aktuelle Mitteilungen -->
+        <div class="card {% if not consumables_forecast %}lg:col-span-3{% endif %}">
+            <div class="card-body p-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-8 flex items-center tracking-tight">
+                    <i class="fas fa-bullhorn text-amber-500 mr-3"></i>
+                    Mitteilungen
+                </h2>
+                <div class="space-y-4">
+                    {% for notice in notices[:3] %}
+                    <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                        <h3 class="font-bold text-slate-900 text-sm mb-1">{{ notice.title }}</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">{{ notice.content }}</p>
                     </div>
+                    {% else %}
+                    <div class="text-center py-12 text-slate-400">
+                        <i class="fas fa-ghost text-4xl mb-4 opacity-20 block"></i>
+                        Keine Mitteilungen
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
-{% endblock %} 
+{% endblock %}

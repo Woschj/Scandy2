@@ -13,132 +13,127 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Quick Actions -->
-    <div class="mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-            <div class="flex gap-2">
-                <!-- Entfernt: export_all_data nicht vorhanden -->
-                <!-- <a href="#" class="btn btn-outline btn-sm"> -->
-                    <i class="fas fa-download mr-2"></i>Standard Export
-                </a>
-                <!-- Entfernt: export_excel_detailed nicht vorhanden -->
-                <!-- <a href="#" class="btn btn-primary btn-sm"> -->
-                    <i class="fas fa-file-excel mr-2"></i>Detaillierter Excel Export
-                </a>
-                {% if has_permission(current_user.role, 'settings', 'manage') %}
-                <!-- JSON-Backup-Import-Button entfernt: Umzug in Systemeinstellungen -->
-                {% endif %}
-            </div>
+<div class="max-w-7xl mx-auto">
+    <!-- Header Area -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+        <div>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Admin Dashboard</h1>
+            <p class="text-slate-500 font-medium">Systemübersicht und zentrale Verwaltung</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <button class="btn btn-ghost bg-white border-slate-200 shadow-sm hover:bg-slate-50">
+                <i class="fas fa-download mr-2 text-slate-400"></i>Standard Export
+            </button>
+            <button class="btn btn-primary shadow-lg shadow-indigo-100">
+                <i class="fas fa-file-excel mr-2"></i>Detaillierter Excel Export
+            </button>
         </div>
     </div>
     
-    <!-- Statistik-Karten: immer eigene Zeile -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-8">
+    <!-- Statistik-Karten -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         <!-- {{ app_labels.tools.name }}-Statistiken -->
-        <div class="card bg-base-100 shadow-md h-80">
-            <div class="card-body p-3 h-full flex flex-col justify-between">
-                <h2 class="card-title text-base mb-2">
-                    <i class="{{ app_labels.tools.icon }} text-primary"></i>
-                    {{ app_labels.tools.name }}
-                </h2>
-                <div class="stats stats-vertical flex-1">
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Gesamt</div>
-                        <div class="stat-value text-lg">{{ tool_stats.total }}</div>
+        <div class="card bg-white h-96">
+            <div class="card-body p-8">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6">
+                    <i class="{{ app_labels.tools.icon }} text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mb-6">{{ app_labels.tools.name }}</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Gesamt</span>
+                        <span class="font-bold text-slate-900 text-lg">{{ tool_stats.total }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Verfügbar</div>
-                        <div class="stat-value text-success text-lg">{{ tool_stats.available }}</div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Verfügbar</span>
+                        <span class="font-bold text-emerald-600 text-lg">{{ tool_stats.available }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Ausgeliehen</div>
-                        <div class="stat-value text-warning text-lg">{{ tool_stats.lent }}</div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Ausgeliehen</span>
+                        <span class="font-bold text-amber-500 text-lg">{{ tool_stats.lent }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Defekt</div>
-                        <div class="stat-value text-error text-lg">{{ tool_stats.defect }}</div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-sm font-medium text-slate-500">Defekt</span>
+                        <span class="font-bold text-rose-500 text-lg">{{ tool_stats.defect }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- {{ app_labels.consumables.name }}-Statistiken -->
-        <div class="card bg-base-100 shadow-md h-80">
-            <div class="card-body p-3 h-full flex flex-col justify-between">
-                <h2 class="card-title text-base mb-2">
-                    <i class="{{ app_labels.consumables.icon }} text-primary"></i>
-                    {{ app_labels.consumables.name }}
-                </h2>
-                <div class="stats stats-vertical flex-1">
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Gesamt</div>
-                        <div class="stat-value text-lg">{{ consumable_stats.total }}</div>
+        <div class="card bg-white h-96">
+            <div class="card-body p-8">
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 mb-6">
+                    <i class="{{ app_labels.consumables.icon }} text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mb-6">{{ app_labels.consumables.name }}</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Gesamt</span>
+                        <span class="font-bold text-slate-900 text-lg">{{ consumable_stats.total }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Ausreichend</div>
-                        <div class="stat-value text-success text-lg">{{ consumable_stats.sufficient }}</div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Ausreichend</span>
+                        <span class="font-bold text-emerald-600 text-lg">{{ consumable_stats.sufficient }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Warnung</div>
-                        <div class="stat-value text-warning text-lg">{{ consumable_stats.warning }}</div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium text-slate-500">Warnung</span>
+                        <span class="font-bold text-amber-500 text-lg">{{ consumable_stats.warning }}</span>
                     </div>
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Kritisch</div>
-                        <div class="stat-value text-error text-lg">{{ consumable_stats.critical }}</div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-sm font-medium text-slate-500">Kritisch</span>
+                        <span class="font-bold text-rose-500 text-lg">{{ consumable_stats.critical }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- Mitarbeiter-Statistiken -->
-        <div class="card bg-base-100 shadow-md h-80">
-            <div class="card-body p-3 h-full flex flex-col justify-between">
-                <h2 class="card-title text-base mb-2">
-                    <i class="fas fa-users text-primary"></i>
-                    Mitarbeiter
-                </h2>
-                <div class="stats stats-vertical flex-1">
-                    <div class="stat py-1">
-                        <div class="stat-title text-xs">Gesamt</div>
-                        <div class="stat-value text-lg">{{ worker_stats.total }}</div>
+        <div class="card bg-white h-96">
+            <div class="card-body p-8 flex flex-col">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 mb-6 flex-shrink-0">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex-shrink-0">Mitarbeiter</h2>
+                <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                    <span class="text-sm font-medium text-slate-500">Gesamt</span>
+                    <span class="font-bold text-slate-900 text-3xl">{{ worker_stats.total }}</span>
+                </div>
+                <div class="overflow-y-auto flex-1 pr-2">
+                    {% for dept in worker_stats.by_department %}
+                    <div class="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
+                        <span class="text-sm font-medium text-slate-600">{{ dept.name or 'Ohne Abteilung' }}</span>
+                        <span class="badge badge-ghost rounded-lg font-bold">{{ dept.count }}</span>
                     </div>
-                    <div class="overflow-y-auto max-h-28 text-xs">
-                        {% for dept in worker_stats.by_department %}
-                        <div class="stat py-1">
-                            <div class="stat-title text-xs">{{ dept.name or 'Ohne Abteilung' }}</div>
-                            <div class="stat-value text-lg">{{ dept.count }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
+
         <!-- Aktuelle Ausleihen -->
-        <div class="card bg-base-100 shadow-md h-80">
-            <div class="card-body p-3 h-full flex flex-col justify-between">
-                <h2 class="card-title text-base mb-2">
-                    <i class="fas fa-clock text-primary"></i>
-                    Aktuelle Ausleihen
-                </h2>
-                <div class="overflow-x-auto flex-1">
-                    <table class="table table-zebra w-full text-xs">
+        <div class="card bg-white h-96">
+            <div class="card-body p-8 flex flex-col">
+                <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600 mb-6 flex-shrink-0">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex-shrink-0">Aktuelle Ausleihen</h2>
+                <div class="overflow-y-auto flex-1 -mx-4 px-4">
+                    <table class="table w-full">
                         <thead>
-                            <tr>
-                                <th>{{ app_labels.tools.name }}</th>
-                                <th>Mitarbeiter</th>
-                                <th>Datum</th>
+                            <tr class="!bg-transparent border-b border-slate-100">
+                                <th class="!px-0 !py-2 !text-[10px]">Name</th>
+                                <th class="!px-0 !py-2 !text-[10px]">Von</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-xs">
                             {% for lending in current_lendings %}
-                            <tr>
-                                <td>{{ lending.tool_name }}</td>
-                                <td>{{ lending.worker_name }}</td>
-                                <td>{{ lending.lent_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="!px-0 !py-3 font-semibold text-slate-800">{{ lending.tool_name }}</td>
+                                <td class="!px-0 !py-3 text-slate-500">{{ lending.worker_name }}</td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="3" class="text-center">Keine aktiven Ausleihen</td>
+                                <td colspan="2" class="text-center py-8 text-slate-400">Keine Ausleihen</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -148,194 +143,87 @@
         </div>
     </div>
 
-    <!-- Warnungen und Hinweise: eigene Zeile -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        <!-- {{ app_labels.tools.name }}-Warnungen -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-exclamation-triangle text-warning"></i>
+    <!-- Warnungen und Hinweise -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <!-- Werkzeug-Warnungen -->
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-amber-500 mr-3"></i>
                     {{ app_labels.tools.name }}-Warnungen
                 </h2>
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tool in warnings.defect_tools %}
-                            <tr>
-                                <td>{{ tool.name }}</td>
-                                <td>
-                                    <span class="badge badge-{{ tool.severity }}">
-                                        {{ tool.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="2" class="text-center">Keine Warnungen</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="space-y-4">
+                    {% for tool in warnings.defect_tools %}
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-rose-50 border border-rose-100/50">
+                        <span class="font-semibold text-rose-900 text-sm truncate pr-2">{{ tool.name }}</span>
+                        <span class="badge badge-error badge-sm rounded-lg">{{ tool.status }}</span>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-10 text-slate-400 text-sm">Alles in Ordnung</div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- {{ app_labels.consumables.name }}-Warnungen -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-exclamation-triangle text-warning"></i>
+        <!-- Verbrauchsmaterial-Warnungen -->
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-amber-500 mr-3"></i>
                     {{ app_labels.consumables.name }}-Warnungen
                 </h2>
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for consumable in warnings.low_stock_consumables %}
-                            <tr>
-                                <td>{{ consumable.name }}</td>
-                                <td>
-                                    <span class="badge badge-{{ consumable.severity }}">
-                                        {{ consumable.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="2" class="text-center">Keine Warnungen</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="space-y-4">
+                    {% for consumable in warnings.low_stock_consumables %}
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-100/50">
+                        <span class="font-semibold text-amber-900 text-sm truncate pr-2">{{ consumable.name }}</span>
+                        <span class="badge badge-warning badge-sm rounded-lg">{{ consumable.status }}</span>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-10 text-slate-400 text-sm">Bestände ausreichend</div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
         <!-- Überfällige Ausleihen -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-clock text-error"></i>
-                    Überfällige Ausleihen
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-clock text-rose-500 mr-3"></i>
+                    Überfällig
                 </h2>
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>Werkzeug</th>
-                                <th>Mitarbeiter</th>
-                                <th>Tage überfällig</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for loan in warnings.overdue_lendings %}
-                            <tr>
-                                <td>
-                                    <a href="{{ url_for('tools.detail', barcode=loan.tool_barcode) }}" class="link link-primary">
-                                        {{ loan.tool_name }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('workers.worker_detail', original_barcode=loan.worker_barcode) }}" class="link link-primary">
-                                        {{ loan.worker_name }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <span class="badge badge-{{ loan.severity }}">
-                                        {{ loan.days_overdue }} Tag{{ "e" if loan.days_overdue != 1 else "" }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="3" class="text-center">Keine überfälligen Ausleihen</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="space-y-4">
+                    {% for loan in warnings.overdue_lendings %}
+                    <div class="p-4 rounded-xl bg-rose-50 border border-rose-100/50">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold text-rose-900 text-sm">{{ loan.tool_name }}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-rose-400">{{ loan.days_overdue }} Tage</span>
+                        </div>
+                        <span class="text-xs text-rose-700 opacity-70">{{ loan.worker_name }}</span>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-10 text-slate-400 text-sm">Keine Verzüge</div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Startseiten-Hinweise verwalten (kompakt) -->
-    <div class="card bg-base-100 shadow-xl mb-8">
-        <div class="card-body">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="card-title">
-                    <i class="fas fa-bullhorn text-info"></i>
-                    Startseiten-Hinweise (aktuelle Abteilung)
-                </h2>
-                <a href="{{ url_for('api.create_notice') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus mr-2"></i> Neuer Hinweis
-                </a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="table w-full">
-                    <thead>
-                        <tr>
-                            <th>Titel</th>
-                            <th>Inhalt</th>
-                            <th>Priorität</th>
-                            <th>Status</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for n in notices %}
-                        <tr>
-                            <td class="whitespace-nowrap">{{ n.title }}</td>
-                            <td class="max-w-md truncate">{{ n.message }}</td>
-                            <td>{{ n.priority or 0 }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if n.is_active else 'error' }}">{{ 'Aktiv' if n.is_active else 'Inaktiv' }}</span>
-                            </td>
-                            <td class="text-right">
-                                <!-- Entfernt: edit_notice nicht vorhanden -->
-                                <!-- <a href="#" class="btn btn-ghost btn-sm"> -->
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" class="text-center">Keine Hinweise vorhanden</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- Verwaltung (Standorte, Kategorien, Handlungsfelder) – jetzt in System-Einstellungen verschoben -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+    <!-- Verwaltung (Standorte, Kategorien, Handlungsfelder) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <!-- Standorte -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-map-marker-alt text-primary"></i>
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-map-marker-alt text-indigo-500 mr-3"></i>
                     Standorte
                 </h2>
-                <div class="overflow-y-auto max-h-64">
-                    <table class="table table-zebra w-full">
+                <div class="overflow-y-auto max-h-64 mb-6 -mx-4 px-4">
+                    <table class="table w-full">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th class="text-right">Aktionen</th>
+                            <tr class="!bg-transparent border-b border-slate-100">
+                                <th class="!px-0 !py-2">Name</th>
+                                <th class="!px-0 !py-2 text-right">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody id="locationsList">
@@ -343,26 +231,26 @@
                         </tbody>
                     </table>
                 </div>
-                <form id="addLocationForm" class="mt-4 flex gap-2">
-                    <input type="text" name="name" class="input input-bordered flex-1" placeholder="Standort eingeben" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Hinzufügen</button>
+                <form id="addLocationForm" class="flex gap-2">
+                    <input type="text" name="name" class="input input-bordered rounded-xl flex-1 shadow-sm" placeholder="Neuer Standort" required>
+                    <button type="submit" class="btn btn-primary rounded-xl px-6">Hinzufügen</button>
                 </form>
             </div>
         </div>
 
         <!-- Kategorien -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-tags text-primary"></i>
+        <div class="card">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-tags text-indigo-500 mr-3"></i>
                     Kategorien
                 </h2>
-                <div class="overflow-y-auto max-h-64">
-                    <table class="table table-zebra w-full">
+                <div class="overflow-y-auto max-h-64 mb-6 -mx-4 px-4">
+                    <table class="table w-full">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th class="text-right">Aktionen</th>
+                            <tr class="!bg-transparent border-b border-slate-100">
+                                <th class="!px-0 !py-2">Name</th>
+                                <th class="!px-0 !py-2 text-right">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody id="categoriesList">
@@ -370,26 +258,26 @@
                         </tbody>
                     </table>
                 </div>
-                <form id="addCategoryForm" class="mt-4 flex gap-2">
-                                            <input type="text" name="name" class="input input-bordered flex-1" placeholder="Kategorie eingeben" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Hinzufügen</button>
+                <form id="addCategoryForm" class="flex gap-2">
+                    <input type="text" name="name" class="input input-bordered rounded-xl flex-1 shadow-sm" placeholder="Neue Kategorie" required>
+                    <button type="submit" class="btn btn-primary rounded-xl px-6">Hinzufügen</button>
                 </form>
             </div>
         </div>
 
         <!-- Handlungsfelder -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">
-                    <i class="fas fa-ticket-alt text-primary"></i>
+        <div class="card lg:col-span-2">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                    <i class="fas fa-ticket-alt text-indigo-500 mr-3"></i>
                     Handlungsfelder
                 </h2>
-                <div class="overflow-y-auto max-h-64">
-                    <table class="table table-zebra w-full">
+                <div class="overflow-y-auto max-h-64 mb-6 -mx-4 px-4">
+                    <table class="table w-full">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th class="text-right">Aktionen</th>
+                            <tr class="!bg-transparent border-b border-slate-100">
+                                <th class="!px-0 !py-2">Name</th>
+                                <th class="!px-0 !py-2 text-right">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody id="ticketCategoriesList">
@@ -397,10 +285,61 @@
                         </tbody>
                     </table>
                 </div>
-                <form id="addTicketCategoryForm" class="mt-4 flex gap-2">
-                                            <input type="text" name="name" class="input input-bordered flex-1" placeholder="Handlungsfeld eingeben" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Hinzufügen</button>
+                <form id="addTicketCategoryForm" class="flex gap-2 max-w-md">
+                    <input type="text" name="name" class="input input-bordered rounded-xl flex-1 shadow-sm" placeholder="Neues Handlungsfeld" required>
+                    <button type="submit" class="btn btn-primary rounded-xl px-6">Hinzufügen</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Startseiten-Hinweise -->
+    <div class="card mb-12">
+        <div class="card-body p-8">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">
+                    <i class="fas fa-bullhorn text-indigo-500 mr-3"></i>
+                    Hinweise verwalten
+                </h2>
+                <a href="{{ url_for('api.create_notice') }}" class="btn btn-primary btn-sm px-6">
+                    <i class="fas fa-plus mr-2"></i> Neuer Hinweis
+                </a>
+            </div>
+            <div class="table-container border-none shadow-none">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Titel</th>
+                            <th>Inhalt</th>
+                            <th>Priorität</th>
+                            <th>Status</th>
+                            <th class="text-right">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notices %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="font-bold text-slate-900">{{ n.title }}</td>
+                            <td class="max-w-md"><div class="truncate text-slate-500">{{ n.message }}</div></td>
+                            <td><span class="badge badge-ghost rounded-lg">{{ n.priority or 0 }}</span></td>
+                            <td>
+                                <span class="badge {{ 'badge-success' if n.is_active else 'badge-error' }} badge-outline rounded-lg font-bold text-[10px] px-3">
+                                    {{ 'Aktiv' if n.is_active else 'Inaktiv' }}
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <button class="btn btn-ghost btn-circle btn-xs text-slate-400 hover:text-indigo-600">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-12 text-slate-400 font-medium">Keine Hinweise konfiguriert</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -410,11 +349,9 @@
 
 {% block scripts %}
 {{ super() }}
-<!-- Trenddaten als JSON, damit kein Jinja in JS-Code stört -->
 <script nonce="{{ csp_nonce }}" id="consumable-trend-data" type="application/json">{{ (stats.consumable_trend if stats is defined and stats.consumable_trend is defined else {}) | tojson | safe }}</script>
 <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script nonce="{{ csp_nonce }}">
-// Chart initialisieren wenn das Element existiert und Daten vorhanden sind
 function initChart() {
     const chartCanvas = document.getElementById('consumableTrendChart');
     const trendEl = document.getElementById('consumable-trend-data');
@@ -433,161 +370,16 @@ function initChart() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
+                    legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
                 }
             }
         });
     }
 }
-
-// Abteilungsverwaltung
-const DepartmentManager = {
-    init() {
-        const form = document.getElementById('addDepartmentForm');
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleAddDepartment(e));
-            this.loadDepartments();
-        }
-    },
-
-    async loadDepartments() {
-        const tbody = document.getElementById('departmentsList');
-        if (!tbody) return;
-
-        try {
-            const response = await fetch('/admin/departments');
-            const data = await response.json();
-            if (data.success) {
-                this.renderDepartments(data.departments);
-            } else {
-                showToast('error', 'Fehler beim Laden der Abteilungen');
-            }
-        } catch (error) {
-            console.error('Fehler beim Laden der Abteilungen:', error);
-            showToast('error', 'Fehler beim Laden der Abteilungen');
-        }
-    },
-
-    renderDepartments(departments) {
-        const tbody = document.getElementById('departmentsList');
-        if (!tbody) return;
-
-        tbody.innerHTML = departments.map(dept => `
-            <tr>
-                <td>${dept.name}</td>
-                <td class="text-right">
-                    <button onclick="DepartmentManager.deleteDepartment('${dept.name}')" 
-                            class="btn btn-error btn-xs">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    },
-
-    async handleAddDepartment(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        const submitButton = form.querySelector('button[type="submit"]');
-        
-        // Button deaktivieren um Duplikate zu verhindern
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-        try {
-            const response = await fetch('/admin/departments/add', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                form.reset();
-                this.loadDepartments();
-                showToast('success', 'Abteilung hinzugefügt');
-            } else {
-                showToast('error', data.message || 'Fehler beim Hinzufügen');
-            }
-        } catch (error) {
-            console.error('Fehler beim Hinzufügen:', error);
-            showToast('error', 'Fehler beim Hinzufügen');
-        } finally {
-            // Button wieder aktivieren
-            submitButton.disabled = false;
-            submitButton.innerHTML = 'Hinzufügen';
-        }
-    },
-
-    async deleteDepartment(name) {
-        if (!confirm(`Möchten Sie die Abteilung "${name}" wirklich löschen?`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/admin/departments/delete/${encodeURIComponent(name)}`, {
-                method: 'POST'
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                this.loadDepartments();
-                showToast('success', 'Abteilung gelöscht');
-            } else {
-                showToast('error', data.message || 'Fehler beim Löschen');
-            }
-        } catch (error) {
-            console.error('Fehler beim Löschen:', error);
-            showToast('error', 'Fehler beim Löschen');
-        }
-    }
-};
-
-// Standortverwaltung
-// Inline-Location-Manager entfernt – zentrale Logik in app/static/js/admin-dashboard.js
-
-        // Kategorieverwaltung
-// Inline-Category-Manager entfernt – zentrale Logik in app/static/js/admin-dashboard.js
-
-function returnTool(barcode) {
-    if (!confirm('Möchten Sie dieses {{ app_labels.tools.name }} wirklich zurückgeben?')) {
-        return;
-    }
-    
-    window.LendingService.returnItem(barcode)
-        .then(success => {
-            if (success) {
-                window.location.reload();
-            }
-        });
-}
-
-
-
-// Initialisierung der Manager beim Laden der Seite
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialisierung erfolgt in app/static/js/admin-dashboard.js
-    initChart();
-});
+document.addEventListener('DOMContentLoaded', initChart);
 </script>
-{% endblock %} 
+{% endblock %}
