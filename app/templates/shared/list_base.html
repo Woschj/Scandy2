@@ -9,13 +9,20 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="input-group relative flex">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered w-full pr-10"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button"
+                                id="clearSearch"
+                                class="absolute right-14 top-1/2 -translate-y-1/2 btn btn-ghost btn-circle btn-xs z-10 hidden"
+                                aria-label="Suche löschen"
+                                title="Suche löschen">
+                            <i class="fas fa-times opacity-50"></i>
+                        </button>
+                        <button type="button" class="btn btn-square btn-primary" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,14 +85,34 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+
+            // Clear-Button anzeigen/ausblenden
+            if (clearSearch) {
+                if (searchTerm.length > 0) {
+                    clearSearch.classList.remove('hidden');
+                } else {
+                    clearSearch.classList.add('hidden');
+                }
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.focus();
+                searchInput.dispatchEvent(new Event('input'));
+            });
+        }
     }
 
     // Sortier-Funktionalität
