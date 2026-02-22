@@ -204,14 +204,66 @@ class ConsumableService:
     
     @staticmethod
     def get_statistics() -> Dict[str, Any]:
-        """Holt Statistiken für Verbrauchsmaterialien"""
+        """
+        Holt Statistiken für Verbrauchsmaterialien
+        OPTIMIERT: Verwendet MongoDB Aggregation Pipeline für bessere Performance (Bolt ⚡)
+        Reduziert Datenbank-Roundtrips und Speicherverbrauch durch serverseitige Berechnung.
+        """
         try:
-            all_consumables = ConsumableService.get_all_consumables()
+            # Aggregation-Pipeline zur Berechnung aller Statistiken in einem Aufruf
+            pipeline = [
+                {'$match': {'deleted': {'$ne': True}}},
+                {
+                    '$facet': {
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}},
+                            {'$sort': {'count': -1}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}},
+                            {'$sort': {'count': -1}}
+                        ],
+                        'stock_levels': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'sufficient': {
+                                        '$sum': {
+                                            '$cond': [{'$gte': ['$quantity', '$min_quantity']}, 1, 0]
+                                        }
+                                    },
+                                    'warning': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [{'$lt': ['$quantity', '$min_quantity']}, {'$gt': ['$quantity', 0]}]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'critical': {
+                                        '$sum': {
+                                            '$cond': [{'$eq': ['$quantity', 0]}, 1, 0]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+            results = list(mongodb.aggregate('consumables', pipeline))
+            if not results:
+                return ConsumableService._get_fallback_statistics()
+
+            result = results[0]
             
+            # Formatieren der Ergebnisse für die UI-Kompatibilität
             stats = {
-                'total_consumables': len(all_consumables),
-                'categories': {},
-                'locations': {},
+                'total_consumables': 0,
+                'categories': {item['_id']: item['count'] for item in result.get('categories', [])},
+                'locations': {item['_id']: item['count'] for item in result.get('locations', [])},
                 'stock_levels': {
                     'sufficient': 0,
                     'warning': 0,
@@ -219,36 +271,29 @@ class ConsumableService:
                 }
             }
             
-            # Kategorie- und Standort-Statistiken
-            for consumable in all_consumables:
-                category = consumable.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
+            if result.get('stock_levels'):
+                sl = result['stock_levels'][0]
+                stats['total_consumables'] = sl.get('total', 0)
+                stats['stock_levels']['sufficient'] = sl.get('sufficient', 0)
+                stats['stock_levels']['warning'] = sl.get('warning', 0)
+                stats['stock_levels']['critical'] = sl.get('critical', 0)
                 
-                location = consumable.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-                
-                # Bestandslevel
-                quantity = consumable.get('quantity', 0)
-                min_quantity = consumable.get('min_quantity', 0)
-                
-                if quantity >= min_quantity:
-                    stats['stock_levels']['sufficient'] += 1
-                elif quantity > 0:
-                    stats['stock_levels']['warning'] += 1
-                else:
-                    stats['stock_levels']['critical'] += 1
-            
             return stats
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: [Interner Fehler]")
-            return {
-                'total_consumables': 0,
-                'categories': {},
-                'locations': {},
-                'stock_levels': {
-                    'sufficient': 0,
-                    'warning': 0,
-                    'critical': 0
-                }
-            } 
+            return ConsumableService._get_fallback_statistics()
+
+    @staticmethod
+    def _get_fallback_statistics() -> Dict[str, Any]:
+        """Gibt leere Fallback-Statistiken zurück"""
+        return {
+            'total_consumables': 0,
+            'categories': {},
+            'locations': {},
+            'stock_levels': {
+                'sufficient': 0,
+                'warning': 0,
+                'critical': 0
+            }
+        }
