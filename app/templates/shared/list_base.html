@@ -9,13 +9,19 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="join w-full relative">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered join-item w-full pr-16"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button"
+                                id="clearSearch"
+                                class="btn btn-ghost btn-xs btn-circle absolute right-14 top-1/2 -translate-y-1/2 hidden"
+                                aria-label="Suche löschen">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,14 +84,33 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
+        const handleSearch = () => {
+            const searchTerm = searchInput.value;
+            if (clearSearch) {
+                clearSearch.classList.toggle('hidden', searchTerm.length === 0);
+            }
+            const searchTermLower = searchTerm.toLowerCase();
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                row.style.display = searchableContent.includes(searchTermLower) ? '' : 'none';
             });
-        });
+        };
+
+        searchInput.addEventListener('input', handleSearch);
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                handleSearch();
+                searchInput.focus();
+            });
+        }
+
+        // Initialer Check (z.B. bei Browser-Autocomplete oder Zurück-Button)
+        handleSearch();
     }
 
     // Sortier-Funktionalität
@@ -95,7 +120,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1 -mx-1';
+            wrapper.setAttribute('role', 'button');
+            wrapper.setAttribute('tabindex', '0');
+            wrapper.setAttribute('aria-label', `Sortieren nach ${th.textContent.trim()}`);
+
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -105,9 +134,17 @@ document.addEventListener('DOMContentLoaded', function() {
             th.innerHTML = '';
             th.appendChild(wrapper);
 
-            wrapper.addEventListener('click', () => {
+            const triggerSort = () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
+            };
+
+            wrapper.addEventListener('click', triggerSort);
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    triggerSort();
+                }
             });
         }
     });
@@ -125,11 +162,14 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
 
-        // Update Sort-Icons
-        table.querySelectorAll('.sort-icons').forEach(icon => {
-            icon.innerHTML = '<i class="fas fa-sort"></i>';
+        // Update Sort-Icons und ARIA
+        table.querySelectorAll('th').forEach(header => {
+            header.removeAttribute('aria-sort');
+            const icon = header.querySelector('.sort-icons');
+            if (icon) icon.innerHTML = '<i class="fas fa-sort"></i>';
         });
         
+        th.setAttribute('aria-sort', currentSort.direction === 'asc' ? 'ascending' : 'descending');
         const currentIcon = th.querySelector('.sort-icons');
         if (currentSort.direction === 'asc') {
             currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
