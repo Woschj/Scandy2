@@ -95,7 +95,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg p-1 -m-1';
+            wrapper.setAttribute('role', 'button');
+            wrapper.setAttribute('tabindex', '0');
+            const colName = th.textContent.trim();
+            wrapper.setAttribute('aria-label', `Sortieren nach ${colName}`);
+
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -105,9 +110,17 @@ document.addEventListener('DOMContentLoaded', function() {
             th.innerHTML = '';
             th.appendChild(wrapper);
 
-            wrapper.addEventListener('click', () => {
+            const sortHandler = () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
+            };
+
+            wrapper.addEventListener('click', sortHandler);
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    sortHandler();
+                }
             });
         }
     });
@@ -117,6 +130,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         
+        // Reset all th aria-sort
+        table.querySelectorAll("th").forEach(header => {
+            header.removeAttribute("aria-sort");
+        });
         // Update Sort-Direction
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -124,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.column = column;
             currentSort.direction = 'asc';
         }
+        th.setAttribute("aria-sort", currentSort.direction === "asc" ? "ascending" : "descending");
 
         // Update Sort-Icons
         table.querySelectorAll('.sort-icons').forEach(icon => {
