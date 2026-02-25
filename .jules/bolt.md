@@ -11,3 +11,7 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+
+## 2026-02-25 - [Batch Loading vs. Aggregation Join]
+**Learning:** For features that require counts from related collections (like ticket messages), a single `$match` + `$group` aggregation on the target collection followed by Python-side mapping is often cleaner and safer than a complex `$lookup` with sub-pipelines, especially when dealing with mixed-type foreign keys (ObjectId vs. String).
+**Action:** Use batch loading with a `$group` aggregation when joining related counts to ensure compatibility and simplicity while still eliminating N+1 bottlenecks.

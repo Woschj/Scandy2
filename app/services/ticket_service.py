@@ -269,6 +269,43 @@ class TicketService:
                 all_tickets = list(all_tickets)
                 logger.debug(f"Alle Tickets gefunden: {len(all_tickets)}")
             
+            # Nachrichtenanzahl gesammelt laden (Bolt ⚡ N+1 Fix)
+            # Nutze Set für automatische Deduplizierung und verbesserte Performance
+            unique_ticket_ids = set()
+            for t_list in [open_tickets, assigned_tickets, all_tickets]:
+                if t_list:
+                    for t in t_list:
+                        if t.get('_id'):
+                            unique_ticket_ids.add(t['_id'])
+
+            # Map für schnellere Zuordnung
+            message_counts = {}
+            if unique_ticket_ids:
+                all_ids_list = list(unique_ticket_ids)
+                # Eindeutige IDs sammeln (sowohl als ObjectId als auch als String für Kompatibilität)
+                all_ticket_ids_str = [str(tid) for tid in all_ids_list]
+
+                # Kombiniere beide Formate und dedupliziere für die Abfrage
+                query_ids = list(set(all_ids_list + all_ticket_ids_str))
+
+                pipeline = [
+                    {
+                        '$match': {
+                            'ticket_id': {'$in': query_ids}
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$ticket_id',
+                            'count': {'$sum': 1}
+                        }
+                    }
+                ]
+                results = list(mongodb.aggregate('ticket_messages', pipeline))
+                for res in results:
+                    tid = str(res['_id'])
+                    message_counts[tid] = message_counts.get(tid, 0) + res['count']
+
             # Nachrichtenanzahl und Auftragsdetails hinzufügen
             logger.debug(f"Verarbeite {len(open_tickets)} offene, {len(assigned_tickets)} zugewiesene, {len(all_tickets)} alle Tickets")
             
@@ -279,15 +316,8 @@ class TicketService:
                     # ID-Feld für Template-Kompatibilität
                     ticket['id'] = str(ticket['_id'])
                     
-                    # Nachrichtenanzahl laden (korrekte Collection)
-                    # Unterstütze Messages, deren ticket_id als String oder ObjectId gespeichert ist
-                    messages = mongodb.find('ticket_messages', {
-                        '$or': [
-                            {'ticket_id': str(ticket['_id'])},
-                            {'ticket_id': ticket.get('_id')}
-                        ]
-                    })
-                    ticket['message_count'] = len(list(messages))
+                    # Nachrichtenanzahl aus der Map zuweisen (Bolt ⚡)
+                    ticket['message_count'] = message_counts.get(ticket['id'], 0)
                     
                     # Auftragsdetails laden (falls vorhanden)
                     if ticket.get('auftrag_details'):
