@@ -44,6 +44,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-10">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <i class="fas fa-search fa-3x mb-4 opacity-20"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Versuchen Sie es mit anderen Suchbegriffen oder Filtern.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +87,17 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+
+    function checkNoResults() {
+        const noResultsRow = document.getElementById('noResultsRow');
+        if (!noResultsRow) return;
+
+        const visibleRowsCount = Array.from(document.querySelectorAll('.data-row'))
+            .filter(row => row.style.display !== 'none').length;
+
+        noResultsRow.style.display = visibleRowsCount === 0 ? '' : 'none';
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
@@ -85,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+            checkNoResults();
         });
     }
 
@@ -176,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            checkNoResults();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -287,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            checkNoResults();
         }
 
         categoryFilter.addEventListener('change', applyFilters);

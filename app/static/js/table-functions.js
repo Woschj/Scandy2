@@ -4,7 +4,8 @@ function initializeTable(tableId, options = {}) {
 
     const searchInput = document.getElementById('searchInput');
     const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
+    // Nur echte Daten-Zeilen (nicht die "Keine Ergebnisse"-Zeile)
+    const rows = Array.from(tbody.querySelectorAll('tr:not(#noResultsRow)'));
     let sortDirection = {};
 
     // Filter-Funktion
@@ -40,6 +41,16 @@ function initializeTable(tableId, options = {}) {
 
             row.style.display = showRow ? '' : 'none';
         });
+        checkNoResults();
+    }
+
+    // Hilfsfunktion für "Keine Ergebnisse"
+    function checkNoResults() {
+        const noResultsRow = document.getElementById('noResultsRow');
+        if (!noResultsRow) return;
+
+        const visibleRowsCount = rows.filter(row => row.style.display !== 'none').length;
+        noResultsRow.style.display = visibleRowsCount === 0 ? '' : 'none';
     }
 
     // Sortier-Funktion
