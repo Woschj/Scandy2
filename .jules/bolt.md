@@ -11,3 +11,7 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+
+## 2026-02-26 - [N+1 Query Optimization in Lending Service]
+**Learning:** Found N+1 query bottlenecks in `LendingService` methods (`get_active_lendings`, `get_recent_consumable_usage`, etc.) where related tool and worker data were fetched in loops. These methods were also being manually replicated with loops in the `manual_lending` route.
+**Action:** Replace manual loops with MongoDB aggregation pipelines using `$lookup` and `$unwind`. Ensure the route uses these optimized service methods instead of implementing its own loops. Use `$unwind` without `preserveNullAndEmptyArrays` to replicate "inner join" filtering logic when required.

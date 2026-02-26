@@ -121,47 +121,35 @@ def manual_lending():
         # Verbrauchsmaterialien laden
         consumables = mongodb.find('consumables', {'deleted': {'$ne': True}}, sort=[('name', 1)])
 
-        # Hole aktuelle Ausleihen
+        # Hole aktuelle Ausleihen (Bolt ⚡ Optimiert mit LendingService Aggregation zur Vermeidung von N+1 Problemen)
         current_lendings = []
+        from app.services.lending_service import LendingService
 
-        # Aktuelle Werkzeug-Ausleihen
-        active_tool_lendings = mongodb.find('lendings', {'returned_at': None})
+        # Aktuelle Werkzeug-Ausleihen (Bolt ⚡ N+1 Fix)
+        active_tool_lendings = LendingService.get_active_lendings()
         for lending in active_tool_lendings:
-            tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-            worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
+            current_lendings.append({
+                'item_name': lending.get('tool_name', 'Unbekanntes Werkzeug'),
+                'item_barcode': lending.get('tool_barcode', ''),
+                'worker_name': lending.get('worker_name', 'Unbekannter Mitarbeiter'),
+                'worker_barcode': lending.get('worker_barcode', ''),
+                'action_date': lending.get('lent_at'),
+                'category': 'Werkzeug',
+                'amount': None
+            })
 
-            if tool and worker:
-                current_lendings.append({
-                    'item_name': tool['name'],
-                    'item_barcode': tool['barcode'],
-                    'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                    'worker_barcode': worker['barcode'],
-                    'action_date': lending['lent_at'],
-                    'category': 'Werkzeug',
-                    'amount': None
-                })
-
-        # Aktuelle Verbrauchsmaterial-Ausgaben (letzte 30 Tage)
-        thirty_days_ago = datetime.now() - timedelta(days=30)
-        recent_consumable_usages = mongodb.find('consumable_usages', {
-            'used_at': {'$gte': thirty_days_ago},
-            'quantity': {'$lt': 0}  # Nur Ausgaben (negative Werte), nicht Entnahmen
-        })
-
+        # Aktuelle Verbrauchsmaterial-Ausgaben der letzten 30 Tage (Bolt ⚡ N+1 Fix)
+        recent_consumable_usages = LendingService.get_recent_consumable_usage(limit=100, days=30, only_outputs=True)
         for usage in recent_consumable_usages:
-            consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-            worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
-
-            if consumable and worker:
-                current_lendings.append({
-                    'item_name': consumable['name'],
-                    'item_barcode': consumable['barcode'],
-                    'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                    'worker_barcode': worker['barcode'],
-                    'action_date': usage['used_at'],
-                    'category': 'Verbrauchsmaterial',
-                    'amount': usage['quantity']
-                })
+            current_lendings.append({
+                'item_name': usage.get('consumable_name', 'Unbekanntes Material'),
+                'item_barcode': usage.get('consumable_barcode', ''),
+                'worker_name': usage.get('worker_name', 'Unbekannter Mitarbeiter'),
+                'worker_barcode': usage.get('worker_barcode', ''),
+                'action_date': usage.get('used_at'),
+                'category': 'Verbrauchsmaterial',
+                'amount': usage.get('quantity')
+            })
 
         # Sortiere nach Datum (neueste zuerst)
         def safe_date_key(lending):
