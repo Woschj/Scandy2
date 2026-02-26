@@ -9,13 +9,16 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="join w-full relative">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered join-item w-full pr-10"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button id="clearSearch" type="button" class="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 hidden z-[10]" aria-label="Suche löschen">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,14 +81,24 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
+            if (clearSearch) clearSearch.classList.toggle('hidden', !e.target.value);
             const searchTerm = e.target.value.toLowerCase();
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
     }
 
     // Sortier-Funktionalität
@@ -95,7 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1 -mx-1';
+            wrapper.setAttribute('role', 'button');
+            wrapper.setAttribute('tabindex', '0');
+            wrapper.setAttribute('aria-label', `Sortieren nach ${th.textContent.trim()}`);
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -105,9 +121,18 @@ document.addEventListener('DOMContentLoaded', function() {
             th.innerHTML = '';
             th.appendChild(wrapper);
 
-            wrapper.addEventListener('click', () => {
+            const performSort = () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
+                th.parentElement.querySelectorAll('th').forEach(h => h.removeAttribute('aria-sort'));
+                th.setAttribute('aria-sort', currentSort.direction === 'asc' ? 'ascending' : 'descending');
+            };
+            wrapper.addEventListener('click', performSort);
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    performSort();
+                }
             });
         }
     });
