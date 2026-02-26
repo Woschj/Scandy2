@@ -9,13 +9,23 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput"
-                               aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                    <div class="join w-full">
+                        <div class="relative flex-1">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered w-full join-item pr-10 focus:ring-primary/20"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button type="button"
+                                    id="clearSearch"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/30 hover:text-base-content/70 transition-colors duration-200"
+                                    style="display: none;"
+                                    aria-label="Suche löschen"
+                                    title="Suche löschen">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-square join-item border-l-0" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -44,6 +54,19 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100%" class="text-center py-12">
+                                <div class="flex flex-col items-center justify-center space-y-3 opacity-50">
+                                    <div class="bg-base-200 p-4 rounded-full">
+                                        <i class="fas fa-search fa-2x"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-lg font-bold">Keine Ergebnisse gefunden</p>
+                                        <p class="text-sm">Probieren Sie es mit anderen Suchbegriffen oder setzen Sie die Filter zurück.</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,14 +101,40 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            document.querySelectorAll('.data-row').forEach(row => {
+            const rows = document.querySelectorAll('.data-row');
+            let hasResults = false;
+
+            rows.forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const matches = searchableContent.includes(searchTerm);
+                row.style.display = matches ? '' : 'none';
+                if (matches) hasResults = true;
             });
+
+            // Toggle clear button
+            if (clearSearch) {
+                clearSearch.style.display = searchTerm.length === 0 ? 'none' : 'block';
+            }
+
+            // Toggle no results row
+            if (noResultsRow) {
+                noResultsRow.style.display = (searchTerm.length > 0 && !hasResults) ? 'table-row' : 'none';
+            }
         });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
     }
 
     // Sortier-Funktionalität
