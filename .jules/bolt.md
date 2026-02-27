@@ -11,3 +11,7 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+
+## 2026-02-27 - [Batching Polymorphic ID Counts]
+**Learning:** In this codebase, `ticket_id` (and similar references) can be stored as either a string or an `ObjectId`. When batch-counting associated documents (like messages for tickets), the `$match` filter must include both representations in the `$in` list to ensure no data is missed, and results must be aggregated by the string representation in Python to merge counts from both formats.
+**Action:** Use `query_ids = list(all_ids) + [ObjectId(tid) for tid in all_ids]` in `$match` and handle string-key mapping when processing aggregation results.

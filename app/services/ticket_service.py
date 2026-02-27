@@ -269,25 +269,49 @@ class TicketService:
                 all_tickets = list(all_tickets)
                 logger.debug(f"Alle Tickets gefunden: {len(all_tickets)}")
             
-            # Nachrichtenanzahl und Auftragsdetails hinzufügen
+            # Nachrichtenanzahl und Auftragsdetails hinzufügen (Optimiert mit Batch-Abfrage Bolt ⚡)
             logger.debug(f"Verarbeite {len(open_tickets)} offene, {len(assigned_tickets)} zugewiesene, {len(all_tickets)} alle Tickets")
             
+            # Alle Ticket-IDs sammeln für Batch-Abfrage
+            all_ticket_ids = set()
+            for ticket_list in [open_tickets, assigned_tickets, all_tickets]:
+                for ticket in ticket_list:
+                    all_ticket_ids.add(str(ticket['_id']))
+
+            # Message-Counts in einem Rutsch laden
+            message_counts = {}
+            if all_ticket_ids:
+                try:
+                    # Sammle sowohl String- als auch ObjectId-Repräsentationen
+                    query_ids = list(all_ticket_ids)
+                    try:
+                        from bson import ObjectId
+                        query_ids.extend([ObjectId(tid) for tid in all_ticket_ids if len(tid) == 24])
+                    except Exception:
+                        pass
+
+                    pipeline = [
+                        {'$match': {'ticket_id': {'$in': query_ids}}},
+                        {'$group': {'_id': '$ticket_id', 'count': {'$sum': 1}}}
+                    ]
+
+                    results = mongodb.aggregate('ticket_messages', pipeline)
+                    for res in results:
+                        tid = str(res['_id'])
+                        message_counts[tid] = message_counts.get(tid, 0) + res['count']
+                except Exception as e:
+                    logger.error(f"Fehler beim Batch-Laden der Nachrichtenanzahl: {e}")
+
             for ticket_list in [open_tickets, assigned_tickets, all_tickets]:
                 for ticket in ticket_list:
                     logger.debug(f"Verarbeite Ticket: {ticket.get('title', 'Kein Titel')} (ID: {ticket.get('_id')})")
                     
                     # ID-Feld für Template-Kompatibilität
-                    ticket['id'] = str(ticket['_id'])
+                    ticket_id_str = str(ticket['_id'])
+                    ticket['id'] = ticket_id_str
                     
-                    # Nachrichtenanzahl laden (korrekte Collection)
-                    # Unterstütze Messages, deren ticket_id als String oder ObjectId gespeichert ist
-                    messages = mongodb.find('ticket_messages', {
-                        '$or': [
-                            {'ticket_id': str(ticket['_id'])},
-                            {'ticket_id': ticket.get('_id')}
-                        ]
-                    })
-                    ticket['message_count'] = len(list(messages))
+                    # Nachrichtenanzahl aus Batch-Ergebnis (Bolt ⚡)
+                    ticket['message_count'] = message_counts.get(ticket_id_str, 0)
                     
                     # Auftragsdetails laden (falls vorhanden)
                     if ticket.get('auftrag_details'):
