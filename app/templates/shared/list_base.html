@@ -7,15 +7,24 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
+                <div class="flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput"
-                               aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                    <div class="join w-full">
+                        <div class="relative flex-1">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered w-full join-item pr-10"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button type="button"
+                                    id="clearSearch"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle z-10"
+                                    style="display: none;"
+                                    aria-label="Suche löschen">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-primary join-item px-6" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -44,6 +53,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-10 text-base-content/50">
+                                <i class="fas fa-search mb-3 text-3xl block"></i>
+                                Keine Ergebnisse für Ihre Suche gefunden.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,13 +93,38 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            let hasVisibleRows = false;
+
+            // Toggle Clear-Button
+            if (clearSearch) {
+                clearSearch.style.display = searchTerm ? '' : 'none';
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isMatch = searchableContent.includes(searchTerm);
+                row.style.display = isMatch ? '' : 'none';
+                if (isMatch) hasVisibleRows = true;
             });
+
+            // Toggle No-Results-Row
+            if (noResultsRow) {
+                noResultsRow.style.display = (!hasVisibleRows && searchTerm) ? 'table-row' : 'none';
+            }
+        });
+    }
+
+    if (clearSearch && searchInput) {
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
         });
     }
 
@@ -95,7 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            const columnName = th.textContent.trim();
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1';
+            wrapper.setAttribute('role', 'button');
+            wrapper.setAttribute('tabindex', '0');
+            wrapper.setAttribute('aria-label', `Sortieren nach ${columnName}`);
+
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -105,9 +150,17 @@ document.addEventListener('DOMContentLoaded', function() {
             th.innerHTML = '';
             th.appendChild(wrapper);
 
-            wrapper.addEventListener('click', () => {
+            const triggerSort = () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
+            };
+
+            wrapper.addEventListener('click', triggerSort);
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    triggerSort();
+                }
             });
         }
     });
@@ -133,8 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentIcon = th.querySelector('.sort-icons');
         if (currentSort.direction === 'asc') {
             currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
+            th.setAttribute('aria-sort', 'ascending');
         } else {
             currentIcon.innerHTML = '<i class="fas fa-sort-down"></i>';
+            th.setAttribute('aria-sort', 'descending');
         }
 
         // Sortiere die Zeilen
