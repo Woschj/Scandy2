@@ -341,26 +341,51 @@ class LendingService:
     
     @staticmethod
     def get_active_lendings() -> list:
-        """Holt alle aktiven Ausleihen"""
+        """Holt alle aktiven Ausleihen (optimiert via Aggregation Bolt ⚡)"""
         try:
-            active_lendings = mongodb.find('lendings', {'returned_at': None})
+            # Aggregation-Pipeline zur Vermeidung von N+1 Lookups
+            # Wir nutzen $lookup, um Tool- und Mitarbeiter-Informationen in einem Rutsch zu laden
+            pipeline = [
+                {'$match': {'returned_at': None}},
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool_info'
+                    }
+                },
+                {'$unwind': '$tool_info'},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': '$worker_info'},
+                {
+                    '$addFields': {
+                        'tool_name': '$tool_info.name',
+                        'worker_name': {'$concat': [
+                            {'$ifNull': ['$worker_info.firstname', '']},
+                            ' ',
+                            {'$ifNull': ['$worker_info.lastname', '']}
+                        ]}
+                    }
+                },
+                {'$project': {'tool_info': 0, 'worker_info': 0}},
+                {'$sort': {'lent_at': -1}}
+            ]
+
+            enriched_lendings = mongodb.aggregate('lendings', pipeline)
             
-            # Erweitere mit Tool- und Worker-Informationen
-            enriched_lendings = []
-            for lending in active_lendings:
-                tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
-                
-                if tool and worker:
-                    enriched_lendings.append({
-                        **lending,
-                        'tool_name': tool['name'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'lent_at': lending['lent_at']
-                    })
-            
-            # Sortiere nach Datum (neueste zuerst)
-            enriched_lendings.sort(key=lambda x: x.get('lent_at', datetime.min), reverse=True)
+            # Sicherstellen, dass worker_name sauber formatiert ist (Bolt ⚡)
+            for lending in enriched_lendings:
+                wn = lending.get('worker_name', '').strip()
+                lending['worker_name'] = wn if wn else 'Unbekannt'
+
             return enriched_lendings
             
         except Exception as e:
@@ -369,27 +394,50 @@ class LendingService:
     
     @staticmethod
     def get_recent_consumable_usage(limit: int = 10) -> list:
-        """Holt die letzten Verbrauchsmaterial-Entnahmen"""
+        """Holt die letzten Verbrauchsmaterial-Entnahmen (optimiert via Aggregation Bolt ⚡)"""
         try:
-            recent_usages = mongodb.find('consumable_usages')
-            # Sortiere und limitiere
-            recent_usages.sort(key=lambda x: x.get('used_at', datetime.min), reverse=True)
-            recent_usages = recent_usages[:limit]
+            # Aggregation-Pipeline zur Vermeidung von N+1 Lookups und In-Memory Sorting
+            pipeline = [
+                {'$sort': {'used_at': -1}},
+                {'$limit': limit},
+                {
+                    '$lookup': {
+                        'from': 'consumables',
+                        'localField': 'consumable_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'consumable_info'
+                    }
+                },
+                {'$unwind': '$consumable_info'},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': '$worker_info'},
+                {
+                    '$addFields': {
+                        'consumable_name': '$consumable_info.name',
+                        'worker_name': {'$concat': [
+                            {'$ifNull': ['$worker_info.firstname', '']},
+                            ' ',
+                            {'$ifNull': ['$worker_info.lastname', '']}
+                        ]}
+                    }
+                },
+                {'$project': {'consumable_info': 0, 'worker_info': 0}}
+            ]
+
+            enriched_usages = mongodb.aggregate('consumable_usages', pipeline)
             
-            # Erweitere mit Consumable- und Worker-Informationen
-            enriched_usages = []
-            for usage in recent_usages:
-                consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
+            # Sicherstellen, dass worker_name sauber formatiert ist (Bolt ⚡)
+            for usage in enriched_usages:
+                wn = usage.get('worker_name', '').strip()
+                usage['worker_name'] = wn if wn else 'Unbekannt'
                 
-                if consumable and worker:
-                    enriched_usages.append({
-                        'consumable_name': consumable['name'],
-                        'quantity': usage['quantity'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'used_at': usage['used_at']
-                    })
-            
             return enriched_usages
             
         except Exception as e:
