@@ -7,3 +7,7 @@
 ## 2026-02-15 - [Semantic Form Labels]
 **Learning:** Even with clear visual labels, missing `for` attributes on `<label>` elements prevents proper association with inputs for assistive technologies.
 **Action:** Explicitly link labels and inputs using `for` and `id` attributes in all form components.
+
+## 2026-03-03 - [Unified List Filtering]
+**Learning:** Consolidating search and filter logic into a single "unified" function in the base template prevents fragmented filter states where search results don't respect dropdown filters (and vice versa). Providing a "No results" row with visual feedback (icon + text) significantly improves the UX when filters are too restrictive.
+**Action:** Use unified filtering logic for all list views and always include a "No results" feedback state.
