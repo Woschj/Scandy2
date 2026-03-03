@@ -9,13 +9,22 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput"
-                               aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                    <div class="join w-full">
+                        <div class="relative flex-1 join-item">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered w-full pr-10"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button type="button"
+                                    id="clearSearch"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-circle"
+                                    style="display: none;"
+                                    aria-label="Suche löschen">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -44,6 +53,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine passenden Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,14 +93,40 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            let hasResults = false;
+
+            // Toggle Clear-Button
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchTerm ? '' : 'none';
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isMatch = searchableContent.includes(searchTerm);
+                row.style.display = isMatch ? '' : 'none';
+                if (isMatch) hasResults = true;
             });
+
+            // Toggle No-Results feedback
+            if (noResultsRow) {
+                noResultsRow.style.display = (searchTerm && !hasResults) ? 'table-row' : 'none';
+            }
         });
+
+        // Clear search functionality
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
     }
 
     // Sortier-Funktionalität
@@ -95,7 +136,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1';
+            wrapper.setAttribute('role', 'button');
+            wrapper.setAttribute('tabindex', '0');
+            const colName = th.textContent.trim();
+            wrapper.setAttribute('aria-label', `Sortieren nach ${colName}`);
+
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -105,9 +151,17 @@ document.addEventListener('DOMContentLoaded', function() {
             th.innerHTML = '';
             th.appendChild(wrapper);
 
-            wrapper.addEventListener('click', () => {
+            const handleSort = () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
+            };
+
+            wrapper.addEventListener('click', handleSort);
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSort();
+                }
             });
         }
     });
@@ -115,8 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
+
         // Update Sort-Direction
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -125,11 +179,14 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
 
-        // Update Sort-Icons
-        table.querySelectorAll('.sort-icons').forEach(icon => {
-            icon.innerHTML = '<i class="fas fa-sort"></i>';
+        // Update ARIA-Sort and Icons
+        table.querySelectorAll('th').forEach(header => {
+            header.removeAttribute('aria-sort');
+            const icon = header.querySelector('.sort-icons');
+            if (icon) icon.innerHTML = '<i class="fas fa-sort"></i>';
         });
-        
+
+        th.setAttribute('aria-sort', currentSort.direction === 'asc' ? 'ascending' : 'descending');
         const currentIcon = th.querySelector('.sort-icons');
         if (currentSort.direction === 'asc') {
             currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
@@ -139,9 +196,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Sortiere die Zeilen
         rows.sort((a, b) => {
-            const aValue = a.children[column]?.textContent || '';
-            const bValue = b.children[column]?.textContent || '';
-            
+            const aValue = a.children[column]?.textContent.trim() || '';
+            const bValue = b.children[column]?.textContent.trim() || '';
+
+            // Versuche numerischen Vergleich falls möglich
+            const aNum = parseFloat(aValue.replace(/[^\d.-]/g, ''));
+            const bNum = parseFloat(bValue.replace(/[^\d.-]/g, ''));
+
+            if (!isNaN(aNum) && !isNaN(bNum) && /^\d/.test(aValue) && /^\d/.test(bValue)) {
+                return currentSort.direction === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+
             if (currentSort.direction === 'asc') {
                 return aValue.localeCompare(bValue);
             } else {
@@ -149,8 +214,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Entferne und füge sortierte Zeilen wieder hinzu
-        rows.forEach(row => tbody.appendChild(row));
+        // Füge sortierte Zeilen wieder hinzu (vor dem noResultsRow)
+        const noResultsRow = document.getElementById('noResultsRow');
+        rows.forEach(row => {
+            if (noResultsRow) {
+                tbody.insertBefore(row, noResultsRow);
+            } else {
+                tbody.appendChild(row);
+            }
+        });
     }
 
     // Tool-spezifische Funktionen
@@ -187,20 +259,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
-        
+
         const toolPreviews = document.querySelectorAll('.tool-media-preview');
         console.log(`Found ${toolPreviews.length} tool previews`);
-        
+
         toolPreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for tool ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/tools/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -208,11 +280,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -223,16 +295,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Werkzeug Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -244,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for tool ${barcode}`);
                         }
@@ -298,20 +370,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
-        
+
         const consumablePreviews = document.querySelectorAll('.consumable-media-preview');
         console.log(`Found ${consumablePreviews.length} consumable previews`);
-        
+
         consumablePreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for consumable ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/consumables/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -319,11 +391,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -334,16 +406,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Verbrauchsgut Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -355,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for consumable ${barcode}`);
                         }
