@@ -11,3 +11,7 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+
+## 2025-05-15 - [Multi-dimensional Stats with $facet]
+**Learning:** Calculating statistics across multiple dimensions (categories, locations, stock levels) using a single `$facet` aggregation pipeline is significantly more efficient than multiple queries or Python-side loops. It reduces database round-trips to one and leverages the database engine for grouping and counting.
+**Action:** Use `$facet` for dashboard or report statistics involving multiple independent counts or groupings. Ensure that multi-tenancy is handled (e.g., via the `mongodb.aggregate` wrapper in this repo).
