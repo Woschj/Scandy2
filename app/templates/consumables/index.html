@@ -55,8 +55,8 @@
 
 {% block table_rows %}
 {% for consumable in consumables %}
-<tr class="hover data-row" 
-    data-category="{{ consumable.category }}" 
+<tr class="hover data-row"
+    data-category="{{ consumable.category }}"
     data-location="{{ consumable.location }}"
     data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
     <td>
@@ -100,10 +100,16 @@
     </td>
     <td class="text-right">
         <div class="btn-group">
-            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               title="Bearbeiten"
+               aria-label="Verbrauchsgut {{ consumable.name }} bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteConsumable('{{ consumable.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteConsumable('{{ consumable.barcode }}')"
+                    title="Löschen"
+                    aria-label="Verbrauchsgut {{ consumable.name }} löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
