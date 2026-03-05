@@ -271,30 +271,64 @@ class TicketService:
             
             # Nachrichtenanzahl und Auftragsdetails hinzufügen
             logger.debug(f"Verarbeite {len(open_tickets)} offene, {len(assigned_tickets)} zugewiesene, {len(all_tickets)} alle Tickets")
-            
+
+            # Bolt ⚡ Optimization: Batch-Abfrage für Nachrichtenanzahl zur Vermeidung von N+1 Query-Bottlenecks
+            all_processed_tickets = []
+            seen_ids = set()
+            for t_list in [open_tickets, assigned_tickets, all_tickets]:
+                for t in t_list:
+                    t_id = str(t['_id'])
+                    if t_id not in seen_ids:
+                        all_processed_tickets.append(t)
+                        seen_ids.add(t_id)
+
+            message_counts = {}
+            if all_processed_tickets:
+                # Sammle alle Ticket-IDs (sowohl als String als auch als ObjectId für maximale Kompatibilität)
+                ticket_ids_for_query = []
+                try:
+                    from bson import ObjectId
+                except ImportError:
+                    ObjectId = None
+
+                for t in all_processed_tickets:
+                    t_id = t['_id']
+                    ticket_ids_for_query.append(str(t_id))
+                    try:
+                        if ObjectId and isinstance(t_id, str) and len(t_id) == 24:
+                            ticket_ids_for_query.append(ObjectId(t_id))
+                        else:
+                            ticket_ids_for_query.append(t_id)
+                    except Exception:
+                        pass
+
+                # Aggregation zur Zählung der Nachrichten in einem Rutsch
+                pipeline = [
+                    {'$match': {'ticket_id': {'$in': list(set(ticket_ids_for_query))}}},
+                    {'$group': {'_id': '$ticket_id', 'count': {'$sum': 1}}}
+                ]
+                count_results = mongodb.aggregate('ticket_messages', pipeline)
+                # Map Results (behandle String/ObjectId Schlüssel konsistent)
+                for res in count_results:
+                    res_id = str(res['_id'])
+                    message_counts[res_id] = message_counts.get(res_id, 0) + res['count']
+
             for ticket_list in [open_tickets, assigned_tickets, all_tickets]:
                 for ticket in ticket_list:
                     logger.debug(f"Verarbeite Ticket: {ticket.get('title', 'Kein Titel')} (ID: {ticket.get('_id')})")
-                    
+
                     # ID-Feld für Template-Kompatibilität
                     ticket['id'] = str(ticket['_id'])
-                    
-                    # Nachrichtenanzahl laden (korrekte Collection)
-                    # Unterstütze Messages, deren ticket_id als String oder ObjectId gespeichert ist
-                    messages = mongodb.find('ticket_messages', {
-                        '$or': [
-                            {'ticket_id': str(ticket['_id'])},
-                            {'ticket_id': ticket.get('_id')}
-                        ]
-                    })
-                    ticket['message_count'] = len(list(messages))
-                    
+
+                    # Nutze vorab berechnete Nachrichtenanzahl (Bolt ⚡)
+                    ticket['message_count'] = message_counts.get(ticket['id'], 0)
+
                     # Auftragsdetails laden (falls vorhanden)
                     if ticket.get('auftrag_details'):
                         ticket['has_auftrag_details'] = True
                     else:
                         ticket['has_auftrag_details'] = False
-                    
+
                     # Datum-Formatierung
                     ticket = self._convert_datetime_fields(ticket)
             
