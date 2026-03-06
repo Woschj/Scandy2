@@ -93,10 +93,17 @@
     </td>
     <td class="text-right">
         <div class="btn-group">
-            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="{{ worker.firstname }} {{ worker.lastname }} bearbeiten"
+               title="Bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('worker', '{{ worker.barcode }}')">
+            <button type="button"
+                    class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('worker', '{{ worker.barcode }}')"
+                    aria-label="{{ worker.firstname }} {{ worker.lastname }} löschen"
+                    title="Löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>

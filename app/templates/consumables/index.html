@@ -100,10 +100,17 @@
     </td>
     <td class="text-right">
         <div class="btn-group">
-            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="{{ consumable.name }} bearbeiten"
+               title="Bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteConsumable('{{ consumable.barcode }}')">
+            <button type="button"
+                    class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('consumable', '{{ consumable.barcode }}')"
+                    aria-label="{{ consumable.name }} löschen"
+                    title="Löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>

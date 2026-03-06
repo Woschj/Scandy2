@@ -158,10 +158,17 @@
     <td class="text-right">
         <div class="btn-group">
             {% if tool.barcode %}
-            <a href="{{ url_for('tools.detail', barcode=tool.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('tools.detail', barcode=tool.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="{{ tool.name }} bearbeiten"
+               title="Bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('tool', '{{ tool.barcode }}')">
+            <button type="button"
+                    class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('tool', '{{ tool.barcode }}')"
+                    aria-label="{{ tool.name }} löschen"
+                    title="Löschen">
                 <i class="fas fa-trash"></i>
             </button>
             {% else %}

@@ -9,13 +9,22 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
-                               id="searchInput"
-                               aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                    <div class="join w-full">
+                        <div class="relative flex-1 join-item">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered w-full pr-10 join-item"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button type="button"
+                                    id="clearSearch"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/30 hover:text-base-content/60 transition-colors"
+                                    style="display: none;"
+                                    aria-label="Suche löschen">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-primary join-item px-6" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -44,6 +53,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-12 bg-base-100/50">
+                                <div class="flex flex-col items-center gap-2 opacity-50">
+                                    <i class="fas fa-search text-4xl mb-2"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suchbegriffe oder Filter an.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -75,18 +93,75 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+/**
+ * Zentralisierte Such- und Filterfunktion
+ */
+function updateSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    if (!searchInput) return;
+
+    const searchTerm = searchInput.value.toLowerCase();
+
+    // Toggle Clear-Button
+    if (clearBtn) {
+        clearBtn.style.display = searchTerm ? '' : 'none';
+    }
+
+    // Finde alle aktiven Filter (IDs enden auf 'Filter')
+    const filters = Array.from(document.querySelectorAll('select[id$="Filter"]')).map(select => ({
+        id: select.id.replace('Filter', ''),
+        value: select.value
+    }));
+
+    let visibleCount = 0;
+    document.querySelectorAll('.data-row').forEach(row => {
+        // 1. Text-Suche
+        const searchableContent = row.textContent.toLowerCase();
+        const matchesSearch = searchableContent.includes(searchTerm);
+
+        // 2. Dropdown-Filter
+        const matchesFilters = filters.every(filter => {
+            if (!filter.value) return true;
+            const rowValue = row.dataset[filter.id];
+            return rowValue === filter.value;
+        });
+
+        const isVisible = matchesSearch && matchesFilters;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    // Zeige/Verstecke "Keine Ergebnisse" Zeile
+    if (noResultsRow) {
+        noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearch');
+
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+        searchInput.addEventListener('input', updateSearch);
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            updateSearch();
+            searchInput.focus();
         });
     }
+
+    // Alle Filter-Dropdowns automatisch registrieren
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.addEventListener('change', updateSearch);
+    });
+
+    // Initialer Aufruf
+    updateSearch();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -116,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
-        
+
         // Update Sort-Direction
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -129,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
         table.querySelectorAll('.sort-icons').forEach(icon => {
             icon.innerHTML = '<i class="fas fa-sort"></i>';
         });
-        
+
         const currentIcon = th.querySelector('.sort-icons');
         if (currentSort.direction === 'asc') {
             currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
@@ -141,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.sort((a, b) => {
             const aValue = a.children[column]?.textContent || '';
             const bValue = b.children[column]?.textContent || '';
-            
+
             if (currentSort.direction === 'asc') {
                 return aValue.localeCompare(bValue);
             } else {
@@ -155,52 +230,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
-    console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
-        
+
         const toolPreviews = document.querySelectorAll('.tool-media-preview');
         console.log(`Found ${toolPreviews.length} tool previews`);
-        
+
         toolPreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for tool ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/tools/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -208,11 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -223,16 +269,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Werkzeug Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -244,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for tool ${barcode}`);
                         }
@@ -259,59 +305,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Tools
-    console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
-    console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
-        
+
         const consumablePreviews = document.querySelectorAll('.consumable-media-preview');
         console.log(`Found ${consumablePreviews.length} consumable previews`);
-        
+
         consumablePreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for consumable ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/consumables/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -319,11 +334,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -334,16 +349,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Verbrauchsgut Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -355,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for consumable ${barcode}`);
                         }
@@ -370,8 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Verbrauchsgüter
-    console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
