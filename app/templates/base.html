@@ -187,7 +187,7 @@
             margin: 1rem;
             border-radius: 1rem;
             height: 4rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid rgba(255,255,255,0.1);
             cursor: pointer;
             position: relative;
@@ -195,12 +195,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            width: calc(100% - 2rem);
         }
 
-        #quickScanTrigger:hover {
+        #quickScanTrigger:not(:disabled):hover {
             background: #334155; /* Slate 700 */
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        #quickScanTrigger:not(:disabled):active {
+            transform: translateY(0);
+            scale: 0.98;
+        }
+
+        #quickScanTrigger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Trennlinie */
@@ -235,13 +246,19 @@
         <!-- Vertikales Seitenmenü -->
         <div class="fixed left-0 top-0 h-full w-[260px] flex flex-col pt-0 pb-4 z-[90] transition-all duration-300 group sidebar-permanent">
             <!-- QuickScan-Trigger -->
-            <div id="quickScanTrigger" role="button" tabindex="0" aria-label="QuickScan öffnen" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); this.click(); }" data-role="{{ current_user.role }}" title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
-                <div class="w-full h-full overflow-hidden transition-all duration-300 flex items-center justify-center group
-                    {% if not current_user.is_authenticated or current_user.role == 'teilnehmer' %}opacity-50 cursor-not-allowed{% else %}cursor-pointer{% endif %}">
+            {% set quickscan_disabled = not current_user.is_authenticated or current_user.role == 'teilnehmer' %}
+            <button type="button" id="quickScanTrigger"
+                    {% if quickscan_disabled %}disabled{% endif %}
+                    aria-label="QuickScan öffnen"
+                    data-role="{{ current_user.role }}"
+                    title="{% if not current_user.is_authenticated %}Quick Scan (nicht verfügbar für nicht eingeloggte Benutzer){% elif current_user.role == 'teilnehmer' %}Quick Scan (nicht verfügbar für Teilnehmer){% else %}Quick Scan öffnen{% endif %}">
+                <div class="w-full h-full overflow-hidden transition-all duration-300 flex items-center justify-center group">
                     <img src="/static/images/scandy-logo.png" alt="Scandy Logo" class="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110">
                     <span class="ml-3 text-lg font-bold text-white tracking-tight">QuickScan</span>
                     <!-- Scanner Animation -->
+                    {% if not quickscan_disabled %}
                     <div class="absolute w-full h-0.5 bg-primary/50 -top-1 left-0 animate-scanner after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-primary/30"></div>
+                    {% endif %}
                 </div>
             </button>
             
@@ -605,14 +622,8 @@
         /* QuickScan-Trigger als moderner Button */
         #quickScanTrigger {
             overflow: hidden;
-            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; position: relative;
             z-index: 100;
         }
-        
-        /* Deaktivierter QuickScan Button */
-        #quickScanTrigger.disabled { opacity: .5; cursor: not-allowed; }
         
         /* Responsive Design */
         @media (max-width: 768px) {
