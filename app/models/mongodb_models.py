@@ -970,6 +970,10 @@ def create_mongodb_indexes():
         mongodb.create_index('ticket_history', 'created_at')
         # Compound-Index für Ticket + Datum
         mongodb.create_index('ticket_history', [('ticket_id', 1), ('created_at', -1)])
+
+        # Job-Indizes
+        mongodb.create_index('jobs', 'job_number', unique=True)
+        mongodb.create_index('jobs', [('created_at', -1)])
         
         # System-Locks (Auto-Backup Koordination)
         try:
