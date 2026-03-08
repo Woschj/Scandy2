@@ -9,13 +9,20 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="join w-full">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button"
+                                id="clearSearch"
+                                class="btn join-item btn-ghost hover:bg-base-200"
+                                aria-label="Suche löschen"
+                                style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,13 +85,34 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    function updateSearch() {
+        if (!searchInput) return;
+
+        const searchTerm = searchInput.value.toLowerCase();
+
+        // Clear-Button Sichtbarkeit
+        if (clearSearch) {
+            clearSearch.style.display = searchTerm ? '' : 'none';
+        }
+
+        // Zeilen filtern
+        document.querySelectorAll('.data-row').forEach(row => {
+            const searchableContent = row.textContent.toLowerCase();
+            row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+        });
+    }
+
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+        searchInput.addEventListener('input', updateSearch);
+    }
+
+    if (clearSearch && searchInput) {
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            updateSearch();
+            searchInput.focus();
         });
     }
 
