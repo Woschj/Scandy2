@@ -3,7 +3,7 @@ Zentraler Lending Service für Scandy
 Alle Ausleihe/Rückgabe-Logik an einem Ort
 """
 from typing import Dict, Any, Tuple, Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.mongodb_database import mongodb
 import logging
 
@@ -341,26 +341,46 @@ class LendingService:
     
     @staticmethod
     def get_active_lendings() -> list:
-        """Holt alle aktiven Ausleihen"""
+        """
+        Holt alle aktiven Ausleihen (optimiert via Aggregation)
+        Reduziert Datenbank-Roundtrips von N+1 auf 1.
+        """
         try:
-            active_lendings = mongodb.find('lendings', {'returned_at': None})
+            pipeline = [
+                {'$match': {'returned_at': None}},
+                {'$sort': {'lent_at': -1}},
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool'
+                    }
+                },
+                {'$unwind': '$tool'},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker'
+                    }
+                },
+                {'$unwind': '$worker'}
+            ]
+
+            results = mongodb.aggregate('lendings', pipeline)
             
-            # Erweitere mit Tool- und Worker-Informationen
             enriched_lendings = []
-            for lending in active_lendings:
-                tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
+            for doc in results:
+                tool = doc.pop('tool', {})
+                worker = doc.pop('worker', {})
+
+                doc['tool_name'] = tool.get('name', 'Unbekannt')
+                doc['worker_name'] = f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip() or 'Unbekannt'
+
+                enriched_lendings.append(doc)
                 
-                if tool and worker:
-                    enriched_lendings.append({
-                        **lending,
-                        'tool_name': tool['name'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'lent_at': lending['lent_at']
-                    })
-            
-            # Sortiere nach Datum (neueste zuerst)
-            enriched_lendings.sort(key=lambda x: x.get('lent_at', datetime.min), reverse=True)
             return enriched_lendings
             
         except Exception as e:
@@ -368,27 +388,66 @@ class LendingService:
             return []
     
     @staticmethod
-    def get_recent_consumable_usage(limit: int = 10) -> list:
-        """Holt die letzten Verbrauchsmaterial-Entnahmen"""
+    def get_recent_consumable_usage(limit: int = 10, days: int = None, only_outputs: bool = False) -> list:
+        """
+        Holt die letzten Verbrauchsmaterial-Entnahmen (optimiert via Aggregation)
+
+        Args:
+            limit: Maximale Anzahl an Einträgen
+            days: Zeitraum in Tagen (optional)
+            only_outputs: Nur Ausgaben (quantity < 0) berücksichtigen
+        """
         try:
-            recent_usages = mongodb.find('consumable_usages')
-            # Sortiere und limitiere
-            recent_usages.sort(key=lambda x: x.get('used_at', datetime.min), reverse=True)
-            recent_usages = recent_usages[:limit]
+            match_query = {}
+            if days:
+                start_date = datetime.now() - timedelta(days=days)
+                match_query['used_at'] = {'$gte': start_date}
+
+            if only_outputs:
+                match_query['quantity'] = {'$lt': 0}
+
+            pipeline = []
+            if match_query:
+                pipeline.append({'$match': match_query})
+
+            pipeline.extend([
+                {'$sort': {'used_at': -1}},
+                {'$limit': limit},
+                {
+                    '$lookup': {
+                        'from': 'consumables',
+                        'localField': 'consumable_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'consumable'
+                    }
+                },
+                {'$unwind': '$consumable'},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker'
+                    }
+                },
+                {'$unwind': '$worker'}
+            ])
+
+            results = mongodb.aggregate('consumable_usages', pipeline)
             
-            # Erweitere mit Consumable- und Worker-Informationen
             enriched_usages = []
-            for usage in recent_usages:
-                consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
+            for doc in results:
+                consumable = doc.pop('consumable', {})
+                worker = doc.pop('worker', {})
                 
-                if consumable and worker:
-                    enriched_usages.append({
-                        'consumable_name': consumable['name'],
-                        'quantity': usage['quantity'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'used_at': usage['used_at']
-                    })
+                enriched_usages.append({
+                    'consumable_name': consumable.get('name', 'Unbekannt'),
+                    'consumable_barcode': consumable.get('barcode', ''),
+                    'quantity': doc.get('quantity', 0),
+                    'worker_name': f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip() or 'Unbekannt',
+                    'worker_barcode': worker.get('barcode', ''),
+                    'used_at': doc.get('used_at')
+                })
             
             return enriched_usages
             
