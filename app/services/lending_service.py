@@ -341,27 +341,41 @@ class LendingService:
     
     @staticmethod
     def get_active_lendings() -> list:
-        """Holt alle aktiven Ausleihen"""
+        """Holt alle aktiven Ausleihen (optimiert mit Aggregation)"""
         try:
-            active_lendings = mongodb.find('lendings', {'returned_at': None})
+            # Verwende Aggregation um N+1 Queries zu vermeiden
+            pipeline = [
+                {'$match': {'returned_at': None}},
+                {'$sort': {'lent_at': -1}},
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_tool'
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_worker'
+                    }
+                },
+                # Unwind ohne preserveNullAndEmptyArrays, um Original-Filter-Verhalten beizubehalten
+                {'$unwind': '$_tool'},
+                {'$unwind': '$_worker'},
+                {
+                    '$addFields': {
+                        'tool_name': '$_tool.name',
+                        'worker_name': {'$concat': ['$_worker.firstname', ' ', '$_worker.lastname']}
+                    }
+                },
+                {'$project': {'_tool': 0, '_worker': 0}}
+            ]
             
-            # Erweitere mit Tool- und Worker-Informationen
-            enriched_lendings = []
-            for lending in active_lendings:
-                tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
-                
-                if tool and worker:
-                    enriched_lendings.append({
-                        **lending,
-                        'tool_name': tool['name'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'lent_at': lending['lent_at']
-                    })
-            
-            # Sortiere nach Datum (neueste zuerst)
-            enriched_lendings.sort(key=lambda x: x.get('lent_at', datetime.min), reverse=True)
-            return enriched_lendings
+            return mongodb.aggregate('lendings', pipeline)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden aktiver Ausleihen: [Interner Fehler]")
@@ -369,28 +383,42 @@ class LendingService:
     
     @staticmethod
     def get_recent_consumable_usage(limit: int = 10) -> list:
-        """Holt die letzten Verbrauchsmaterial-Entnahmen"""
+        """Holt die letzten Verbrauchsmaterial-Entnahmen (optimiert mit Aggregation)"""
         try:
-            recent_usages = mongodb.find('consumable_usages')
-            # Sortiere und limitiere
-            recent_usages.sort(key=lambda x: x.get('used_at', datetime.min), reverse=True)
-            recent_usages = recent_usages[:limit]
+            # Verwende Aggregation um N+1 Queries zu vermeiden
+            pipeline = [
+                {'$sort': {'used_at': -1}},
+                {'$limit': limit},
+                {
+                    '$lookup': {
+                        'from': 'consumables',
+                        'localField': 'consumable_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_consumable'
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_worker'
+                    }
+                },
+                # Unwind ohne preserveNullAndEmptyArrays, um Original-Filter-Verhalten beizubehalten
+                {'$unwind': '$_consumable'},
+                {'$unwind': '$_worker'},
+                {
+                    '$project': {
+                        'consumable_name': '$_consumable.name',
+                        'quantity': '$quantity',
+                        'worker_name': {'$concat': ['$_worker.firstname', ' ', '$_worker.lastname']},
+                        'used_at': '$used_at'
+                    }
+                }
+            ]
             
-            # Erweitere mit Consumable- und Worker-Informationen
-            enriched_usages = []
-            for usage in recent_usages:
-                consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-                worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
-                
-                if consumable and worker:
-                    enriched_usages.append({
-                        'consumable_name': consumable['name'],
-                        'quantity': usage['quantity'],
-                        'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                        'used_at': usage['used_at']
-                    })
-            
-            return enriched_usages
+            return mongodb.aggregate('consumable_usages', pipeline)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Entnahmen: [Interner Fehler]")
@@ -399,7 +427,7 @@ class LendingService:
     @staticmethod
     def get_worker_consumable_history(worker_barcode: str) -> List[Dict[str, Any]]:
         """
-        Holt die Verbrauchsmaterial-Historie für einen Mitarbeiter
+        Holt die Verbrauchsmaterial-Historie für einen Mitarbeiter (optimiert mit Aggregation)
         
         Args:
             worker_barcode: Barcode des Mitarbeiters
@@ -408,33 +436,29 @@ class LendingService:
             List[Dict]: Liste der Verbrauchsmaterial-Ausgaben
         """
         try:
-            # Hole alle Verbrauchsmaterial-Ausgaben des Mitarbeiters
-            usages = mongodb.find('consumable_usages', {'worker_barcode': worker_barcode})
+            # Verwende Aggregation um N+1 Queries zu vermeiden
+            pipeline = [
+                {'$match': {'worker_barcode': worker_barcode}},
+                {'$sort': {'used_at': -1}},
+                {
+                    '$lookup': {
+                        'from': 'consumables',
+                        'localField': 'consumable_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_consumable'
+                    }
+                },
+                # Unwind OHNE preserveNullAndEmptyArrays, um Original-Filter-Verhalten beizubehalten
+                {'$unwind': '$_consumable'},
+                {
+                    '$addFields': {
+                        'consumable_name': '$_consumable.name'
+                    }
+                },
+                {'$project': {'_consumable': 0}}
+            ]
             
-            # Erweitere mit Consumable-Informationen
-            enriched_usages = []
-            for usage in usages:
-                consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-                if consumable:
-                    usage['consumable_name'] = consumable.get('name', '')
-                    usage['consumable_barcode'] = usage['consumable_barcode']
-                    enriched_usages.append(usage)
-            
-            # Sortiere nach Datum (neueste zuerst)
-            def safe_date_key(usage):
-                used_at = usage.get('used_at')
-                if isinstance(used_at, str):
-                    try:
-                        return datetime.strptime(used_at, '%Y-%m-%d %H:%M:%S')
-                    except (ValueError, TypeError):
-                        return datetime.min
-                elif isinstance(used_at, datetime):
-                    return used_at
-                else:
-                    return datetime.min
-            
-            enriched_usages.sort(key=safe_date_key, reverse=True)
-            return enriched_usages
+            return mongodb.aggregate('consumable_usages', pipeline)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Historie: [Interner Fehler]")
@@ -477,7 +501,7 @@ class LendingService:
     @staticmethod
     def get_tool_lending_history(tool_barcode: str) -> List[Dict[str, Any]]:
         """
-        Holt die Ausleihhistorie für ein Werkzeug
+        Holt die Ausleihhistorie für ein Werkzeug (optimiert mit Aggregation)
         
         Args:
             tool_barcode: Barcode des Werkzeugs
@@ -486,32 +510,29 @@ class LendingService:
             List[Dict]: Liste der Ausleihen
         """
         try:
-            lendings = mongodb.find('lendings', {'tool_barcode': tool_barcode})
+            # Verwende Aggregation um N+1 Queries zu vermeiden
+            pipeline = [
+                {'$match': {'tool_barcode': tool_barcode}},
+                {'$sort': {'lent_at': -1}},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': '_worker'
+                    }
+                },
+                # Unwind OHNE preserveNullAndEmptyArrays, um Original-Filter-Verhalten beizubehalten
+                {'$unwind': '$_worker'},
+                {
+                    '$addFields': {
+                        'worker_name': {'$concat': ['$_worker.firstname', ' ', '$_worker.lastname']}
+                    }
+                },
+                {'$project': {'_worker': 0}}
+            ]
             
-            # Erweitere mit Worker-Informationen
-            enriched_lendings = []
-            for lending in lendings:
-                worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
-                if worker:
-                    lending['worker_name'] = f"{worker['firstname']} {worker['lastname']}"
-                
-                enriched_lendings.append(lending)
-            
-            # Sortiere nach Datum (neueste zuerst)
-            def safe_date_key(lending):
-                lent_at = lending.get('lent_at')
-                if isinstance(lent_at, str):
-                    try:
-                        return datetime.strptime(lent_at, '%Y-%m-%d %H:%M:%S')
-                    except (ValueError, TypeError):
-                        return datetime.min
-                elif isinstance(lent_at, datetime):
-                    return lent_at
-                else:
-                    return datetime.min
-            
-            enriched_lendings.sort(key=safe_date_key, reverse=True)
-            return enriched_lendings
+            return mongodb.aggregate('lendings', pipeline)
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Ausleihhistorie: [Interner Fehler]")
