@@ -9,13 +9,16 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="join w-full">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered w-full join-item"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button" id="clearSearch" class="btn btn-square join-item" style="display: none;" aria-label="Suche löschen">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,14 +81,30 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+
+            // Toggle Clear-Button
+            if (clearSearch) {
+                clearSearch.style.display = searchTerm ? '' : 'none';
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
     }
 
     // Sortier-Funktionalität
