@@ -9,13 +9,20 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
-                        <input type="text" 
-                               placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                    <div class="join w-full">
+                        <input type="text"
+                               placeholder="Suchen..."
+                               class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button"
+                                class="btn btn-ghost join-item px-2"
+                                id="clearSearch"
+                                aria-label="Suche löschen"
+                                style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,13 +85,33 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearch');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+
+            // Toggle clear button
+            if (clearSearchBtn) {
+                if (searchTerm.length > 0) {
+                    clearSearchBtn.style.display = '';
+                } else {
+                    clearSearchBtn.style.display = 'none';
+                }
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+        });
+    }
+
+    if (clearSearchBtn && searchInput) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
         });
     }
 
@@ -94,8 +121,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Füge Sortier-Icons zu den Tabellen-Headers hinzu
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
+            const headerText = th.textContent.trim();
+            const wrapper = document.createElement('button');
+            wrapper.type = 'button';
+            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none w-full text-left font-bold focus:ring-2 focus:ring-primary/50 rounded p-1 transition-all';
+            wrapper.setAttribute('aria-label', `${headerText} sortieren`);
             wrapper.innerHTML = `
                 ${th.innerHTML}
                 <span class="sort-icons opacity-50">
@@ -104,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             th.innerHTML = '';
             th.appendChild(wrapper);
+            th.setAttribute('aria-sort', 'none');
 
             wrapper.addEventListener('click', () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
@@ -116,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
-        
+
         // Update Sort-Direction
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -125,23 +156,29 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
 
-        // Update Sort-Icons
-        table.querySelectorAll('.sort-icons').forEach(icon => {
-            icon.innerHTML = '<i class="fas fa-sort"></i>';
+        // Update Sort-Icons and ARIA
+        table.querySelectorAll('th').forEach(header => {
+            if (!header.classList.contains('no-sort')) {
+                header.setAttribute('aria-sort', 'none');
+                const icon = header.querySelector('.sort-icons');
+                if (icon) icon.innerHTML = '<i class="fas fa-sort"></i>';
+            }
         });
-        
+
         const currentIcon = th.querySelector('.sort-icons');
         if (currentSort.direction === 'asc') {
             currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
+            th.setAttribute('aria-sort', 'ascending');
         } else {
             currentIcon.innerHTML = '<i class="fas fa-sort-down"></i>';
+            th.setAttribute('aria-sort', 'descending');
         }
 
         // Sortiere die Zeilen
         rows.sort((a, b) => {
             const aValue = a.children[column]?.textContent || '';
             const bValue = b.children[column]?.textContent || '';
-            
+
             if (currentSort.direction === 'asc') {
                 return aValue.localeCompare(bValue);
             } else {
@@ -187,20 +224,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
-        
+
         const toolPreviews = document.querySelectorAll('.tool-media-preview');
         console.log(`Found ${toolPreviews.length} tool previews`);
-        
+
         toolPreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for tool ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/tools/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -208,11 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -223,16 +260,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Werkzeug Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -244,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for tool ${barcode}`);
                         }
@@ -298,20 +335,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
-        
+
         const consumablePreviews = document.querySelectorAll('.consumable-media-preview');
         console.log(`Found ${consumablePreviews.length} consumable previews`);
-        
+
         consumablePreviews.forEach((preview, index) => {
             const barcode = preview.dataset.barcode;
             const savedPreviewImage = preview.dataset.previewImage;
-            
+
             console.log(`[${index}] Loading preview for consumable ${barcode}, saved preview: ${savedPreviewImage}`);
-            
+
             if (barcode) {
                 const url = `/media/consumables/${barcode}/list`;
                 console.log(`[${index}] Fetching from: ${url}`);
-                
+
                 fetch(url)
                     .then(response => {
                         console.log(`[${index}] Response status:`, response.status);
@@ -319,11 +356,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         console.log(`[${index}] Media data:`, data);
-                        
+
                         if (data.success && data.media_list && data.media_list.length > 0) {
                             // Suche nach dem gespeicherten Preview-Bild oder verwende das erste
                             let previewImage = data.media_list[0];
-                            
+
                             // Wenn ein gespeichertes Preview-Bild existiert, verwende es
                             if (savedPreviewImage && savedPreviewImage !== '') {
                                 const savedImage = data.media_list.find(img => img.filename === savedPreviewImage);
@@ -334,16 +371,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] Saved preview image not found in media list`);
                                 }
                             }
-                            
+
                             console.log(`[${index}] Using preview image:`, previewImage);
                             console.log(`[${index}] Image URL:`, previewImage.url);
-                            
+
                             // Test: Zeige das Bild direkt an
                             const imgHtml = `<img src="${previewImage.url}" alt="Verbrauchsgut Vorschau" class="w-12 h-12 object-cover rounded-lg">`;
                             console.log(`[${index}] Setting HTML:`, imgHtml);
-                            
+
                             preview.innerHTML = imgHtml;
-                            
+
                             // Zusätzlicher Test: Prüfe ob das Bild geladen wurde
                             setTimeout(() => {
                                 const img = preview.querySelector('img');
@@ -355,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log(`[${index}] No image element found after setting HTML`);
                                 }
                             }, 100);
-                            
+
                         } else {
                             console.log(`[${index}] No media found for consumable ${barcode}`);
                         }
