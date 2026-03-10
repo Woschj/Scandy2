@@ -92,11 +92,11 @@
         {% endif %}
     </td>
     <td class="text-right">
-        <div class="btn-group">
-            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-sm btn-ghost">
+        <div class="join">
+            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-sm btn-ghost join-item" aria-label="Mitarbeiter bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('worker', '{{ worker.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error join-item" onclick="deleteItem('worker', '{{ worker.barcode }}')" aria-label="Mitarbeiter löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
