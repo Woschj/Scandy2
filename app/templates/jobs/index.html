@@ -166,7 +166,8 @@
                                 {% if current_user.is_authenticated and (current_user.role == 'admin' or job.created_by == current_user.id) %}
                                 <button onclick="deleteJob('{{ job.id }}')" 
                                         class="btn btn-ghost btn-sm text-error hover:text-error"
-                                        title="Job löschen">
+                                        title="Job löschen"
+                                        aria-label="Job '{{ job.title }}' löschen">
                                     <i class="fas fa-trash text-sm"></i>
                                 </button>
                                 {% endif %}
