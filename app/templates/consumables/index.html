@@ -55,10 +55,11 @@
 
 {% block table_rows %}
 {% for consumable in consumables %}
-<tr class="hover data-row" 
-    data-category="{{ consumable.category }}" 
+<tr class="hover data-row"
+    data-category="{{ consumable.category }}"
     data-location="{{ consumable.location }}"
-    data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
+    data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}"
+    data-barcode="{{ consumable.barcode }}">
     <td>
         <div class="consumable-media-preview" data-barcode="{{ consumable.barcode }}" data-preview-image="{{ consumable.preview_image or '' }}">
             <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
@@ -99,45 +100,19 @@
         {% endif %}
     </td>
     <td class="text-right">
-        <div class="btn-group">
-            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}" class="btn btn-sm btn-ghost">
+        <div class="join">
+            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}"
+               class="btn btn-sm btn-ghost join-item"
+               aria-label="Verbrauchsmaterial {{ consumable.name }} bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteConsumable('{{ consumable.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error join-item"
+                    onclick="deleteItem('consumable', '{{ consumable.barcode }}')"
+                    aria-label="Verbrauchsmaterial {{ consumable.name }} löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
     </td>
 </tr>
 {% endfor %}
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script nonce="{{ csp_nonce }}">
-// Lösch-Funktion
-function deleteConsumable(barcode) {
-    if (confirm('Möchten Sie dieses Verbrauchsmaterial wirklich löschen?')) {
-        fetch('/admin/consumables/delete', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ barcode: barcode })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message || 'Fehler beim Löschen des Verbrauchsmaterials');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Fehler beim Löschen des Verbrauchsmaterials');
-        });
-    }
-}
-</script>
 {% endblock %}
