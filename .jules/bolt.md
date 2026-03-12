@@ -11,3 +11,6 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+## 2025-07-14 - [MongoDB Aggregation and Mongomock Compatibility]
+**Learning:** The `mongomock` library used for testing does not support several modern MongoDB aggregation operators, notably `$trim` and `$dateFromString`. Using these in pipelines causes test failures during collection/execution.
+**Action:** Avoid string manipulation and date conversion operators in aggregation pipelines when possible. Perform these operations in Python during post-processing of the results to maintain test suite compatibility while still benefiting from the reduction in database roundtrips.
