@@ -99,11 +99,17 @@
         {% endif %}
     </td>
     <td class="text-right">
-        <div class="btn-group">
-            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}" class="btn btn-sm btn-ghost">
+        <div class="join">
+            <a href="{{ url_for('consumables.detail', barcode=consumable.barcode) }}"
+               class="btn btn-sm btn-ghost join-item"
+               aria-label="Verbrauchsmaterial bearbeiten"
+               title="Verbrauchsmaterial bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteConsumable('{{ consumable.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error join-item"
+                    onclick="deleteConsumable('{{ consumable.barcode }}')"
+                    aria-label="Verbrauchsmaterial löschen"
+                    title="Verbrauchsmaterial löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
