@@ -9,13 +9,16 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="input-group">
+                    <div class="join w-full">
                         <input type="text" 
                                placeholder="Suchen..." 
-                               class="input input-bordered w-full" 
+                               class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" class="btn btn-square" aria-label="Suche ausführen">
+                        <button type="button" id="clearSearch" class="btn join-item btn-ghost hidden" aria-label="Suche löschen">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -78,13 +81,32 @@
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+
+            if (clearSearch) {
+                if (searchTerm.length > 0) {
+                    clearSearch.classList.remove('hidden');
+                } else {
+                    clearSearch.classList.add('hidden');
+                }
+            }
+
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+        });
+    }
+
+    if (clearSearch && searchInput) {
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
         });
     }
 
@@ -94,18 +116,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Füge Sortier-Icons zu den Tabellen-Headers hinzu
     document.querySelectorAll('th').forEach(th => {
         if (!th.classList.contains('no-sort')) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 cursor-pointer select-none';
-            wrapper.innerHTML = `
-                ${th.innerHTML}
+            const button = document.createElement('button');
+            button.type = 'button';
+            const isRightAligned = th.classList.contains('text-right');
+            button.className = `flex items-center gap-2 select-none hover:bg-base-200 focus:ring-2 focus:ring-primary/50 rounded p-1 transition-all duration-200 ${isRightAligned ? 'justify-end w-full' : ''}`;
+            button.setAttribute('aria-label', `Sortieren nach ${th.textContent.trim()}`);
+            button.setAttribute('aria-sort', 'none');
+
+            button.innerHTML = `
+                <span>${th.innerHTML}</span>
                 <span class="sort-icons opacity-50">
                     <i class="fas fa-sort"></i>
                 </span>
             `;
             th.innerHTML = '';
-            th.appendChild(wrapper);
+            th.appendChild(button);
 
-            wrapper.addEventListener('click', () => {
+            button.addEventListener('click', () => {
                 const column = Array.from(th.parentElement.children).indexOf(th);
                 sortTable(column, th);
             });
@@ -116,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
+        const btn = th.querySelector('button');
         
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -125,16 +153,19 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
 
-        // Update Sort-Icons
-        table.querySelectorAll('.sort-icons').forEach(icon => {
-            icon.innerHTML = '<i class="fas fa-sort"></i>';
+        // Update Sort-Icons and aria-sort
+        table.querySelectorAll('th button').forEach(button => {
+            button.setAttribute('aria-sort', 'none');
+            const icon = button.querySelector('.sort-icons');
+            if (icon) icon.innerHTML = '<i class="fas fa-sort"></i>';
         });
         
-        const currentIcon = th.querySelector('.sort-icons');
-        if (currentSort.direction === 'asc') {
-            currentIcon.innerHTML = '<i class="fas fa-sort-up"></i>';
-        } else {
-            currentIcon.innerHTML = '<i class="fas fa-sort-down"></i>';
+        if (btn) {
+            btn.setAttribute('aria-sort', currentSort.direction === 'asc' ? 'ascending' : 'descending');
+            const currentIcon = btn.querySelector('.sort-icons');
+            if (currentIcon) {
+                currentIcon.innerHTML = currentSort.direction === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>';
+            }
         }
 
         // Sortiere die Zeilen
