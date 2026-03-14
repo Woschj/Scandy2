@@ -36,6 +36,9 @@ class IndexOptimizer:
             
             # System-Indizes
             IndexOptimizer._ensure_system_indexes()
+
+            # Job-Indizes (Bolt ⚡)
+            IndexOptimizer._ensure_job_indexes()
             
             logger.info("Index optimization completed successfully")
             
@@ -180,6 +183,24 @@ class IndexOptimizer:
             
         except Exception as e:
             logger.error(f"Error optimizing system indexes: [Interner Fehler]")
+
+    @staticmethod
+    def _ensure_job_indexes():
+        """Job-Indizes optimieren (Bolt ⚡)"""
+        try:
+            # Basis-Indizes
+            mongodb.create_index('jobs', 'job_number', unique=True)
+            mongodb.create_index('jobs', 'created_at')
+            mongodb.create_index('jobs', 'is_active')
+
+            # Such-Indizes
+            mongodb.create_index('jobs', 'title')
+            mongodb.create_index('jobs', 'company')
+
+            logger.info("Job indexes optimized")
+
+        except Exception as e:
+            logger.error(f"Error optimizing job indexes: {e}")
 
 
 class QueryOptimizer:
