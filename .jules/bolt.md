@@ -11,3 +11,7 @@
 ## 2025-05-15 - [Optimization with Aggregation Pipelines]
 **Learning:** This codebase frequently uses N+1 query patterns in service methods (e.g., looping through results and calling find_one). These can be significantly optimized using MongoDB aggregation pipelines with $lookup. However, mongomock (used in the test suite) has limited support for advanced $lookup features like 'let' and sub-pipelines.
 **Action:** Use simple $lookup (localField/foreignField) when possible to maintain test compatibility, and handle any additional filtering or data processing in Python if necessary, which still provides a massive performance win by reducing database roundtrips to 1.
+
+## 2026-03-14 - [Efficient ID/Number Generation]
+**Learning:** Found an O(N) bottleneck where the application scanned the entire collection to determine the next sequential ID (`job_number`).
+**Action:** Replace full-collection scans with a sorted query (`sort=[('field', -1)], limit=1`) and ensure a unique index exists on that field to provide O(1)/O(log N) lookup and guarantee consistency.

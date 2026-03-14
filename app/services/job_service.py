@@ -117,12 +117,10 @@ class JobService:
             
             mongodb = get_mongodb()
             
-            # Fortlaufende Job-ID generieren - einfachere Methode
-            all_jobs = mongodb.find('jobs', {})
-            next_job_number = 1
-            for job in all_jobs:
-                if 'job_number' in job and job['job_number'] >= next_job_number:
-                    next_job_number = job['job_number'] + 1
+            # Fortlaufende Job-ID generieren - optimierte Methode (Bolt ⚡)
+            # Statt alle Jobs zu laden (O(N)), suchen wir nur den mit der höchsten Nummer (O(1) mit Index)
+            latest_jobs = list(mongodb.find('jobs', {}, sort=[('job_number', -1)], limit=1))
+            next_job_number = (latest_jobs[0].get('job_number', 0) + 1) if latest_jobs else 1
             
 
             

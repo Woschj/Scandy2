@@ -128,184 +128,155 @@ class TicketService:
     def get_tickets_by_user(self, username: str, role: str, handlungsfelder: List[str] = None) -> Dict[str, List[Dict[str, Any]]]:
         """
         Holt Tickets basierend auf Benutzerrolle und Handlungsfeld-Zuweisungen
-        
-        Args:
-            username: Benutzername
-            role: Benutzerrolle
-            handlungsfelder: Liste der zugewiesenen Handlungsfelder (Ticket-Kategorien)
-            
-        Returns:
-            Dict: Verschiedene Ticket-Listen
+        Optimiert mit Batch-Queries und Aggregation (Bolt ⚡)
         """
         try:
-            logger.debug(f"Lade Tickets für Benutzer: {username}, Rolle: {role}, Handlungsfelder: {handlungsfelder}")
+            from bson import ObjectId
+            logger.debug(f"Lade Tickets für Benutzer: {username}, Rolle: {role}")
             
-            # Debug: Prüfe alle Tickets in der Datenbank
-            all_tickets_debug = list(mongodb.find('tickets', {}))
-            logger.debug(f"Gesamtanzahl Tickets in DB: {len(all_tickets_debug)}")
+            current_dept = getattr(g, 'current_department', None)
             
-            # Offene Tickets (nicht zugewiesene, offene Tickets)
-            open_query = {
-                '$and': [
-                    {
-                        '$or': [
-                            {'assigned_to': None},
-                            {'assigned_to': ''},
-                            {'assigned_to': {'$exists': False}}
-                        ]
-                    },
-                    {'status': 'offen'},
-                    {'deleted': {'$ne': True}}
+            # Basis-Match: nicht gelöscht
+            base_match = {'deleted': {'$ne': True}}
+            
+            # Department-Match logic (Bolt ⚡ restored robust behavior)
+            # Open and All: strict match
+            strict_dept_match = base_match.copy()
+            if current_dept:
+                strict_dept_match['department'] = current_dept
+
+            # Assigned: current or missing department
+            flexible_dept_match = base_match.copy()
+            if current_dept:
+                flexible_dept_match['$or'] = [
+                    {'department': current_dept},
+                    {'department': {'$exists': False}}
                 ]
-            }
-            if getattr(g, 'current_department', None):
-                open_query['$and'].append({'department': g.current_department})
-            
-            # Handlungsfeld-Filter für alle Rollen außer Admin
-            if role != 'admin' and handlungsfelder:
-                # Für alle Rollen außer Admin: Nur offene Tickets aus zugewiesenen Handlungsfeldern
-                open_query['$and'].append({'category': {'$in': handlungsfelder}})
-                logger.debug(f"Offene Tickets mit Handlungsfeld-Filter: {handlungsfelder}")
-            
-            logger.debug(f"Offene Tickets Query: {open_query}")
-            open_tickets = mongodb.find('tickets', open_query)
-            open_tickets = list(open_tickets)
-            logger.debug(f"Offene Tickets gefunden: {len(open_tickets)}")
-            
-            # Zugewiesene Tickets (alle Stati, inkl. abgeschlossene)
-            # 1) Legacy-Zuweisung über Feld "assigned_to"
-            assigned_tickets_legacy_query = {
-                '$and': [
-                    {'assigned_to': username},
-                    {'deleted': {'$ne': True}}
-                ]
-            }
-            if getattr(g, 'current_department', None):
-                assigned_tickets_legacy_query['$and'].append({
-                    '$or': [
-                        {'department': g.current_department},
-                        {'department': {'$exists': False}}
-                    ]
-                })
 
-            # Handlungsfeld-Filter für alle Rollen außer Admin
-            # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern –
-            # ein Nutzer muss alle ihm zugewiesenen Tickets sehen, unabhängig vom Handlungsfeld
-
-            logger.debug(f"Zugewiesene (Legacy) Tickets Query: {assigned_tickets_legacy_query}")
-            assigned_tickets_legacy = list(mongodb.find('tickets', assigned_tickets_legacy_query))
-            logger.debug(f"Zugewiesene (Legacy) Tickets gefunden: {len(assigned_tickets_legacy)}")
-
-            # 2) Mehrfachzuweisungen über Collection "ticket_assignments"
-            try:
-                user_assignments = list(mongodb.find('ticket_assignments', {'assigned_to': username}))
-                assignment_ticket_ids_raw = [ua.get('ticket_id') for ua in user_assignments if ua.get('ticket_id')]
-                # Konvertiere IDs für die Ticketsuche
-                assignment_ticket_ids = []
-                for raw_id in assignment_ticket_ids_raw:
-                    # Immer als String sammeln; die Datenbankschicht konvertiert bei Bedarf zu ObjectId
-                    assignment_ticket_ids.append(str(raw_id))
-
-                assigned_tickets_multi = []
-                if assignment_ticket_ids:
-                    assigned_tickets_multi_query = {
-                        '$and': [
-                            {'_id': {'$in': assignment_ticket_ids}},
-                            {'deleted': {'$ne': True}}
-                        ]
-                    }
-                    if getattr(g, 'current_department', None):
-                        assigned_tickets_multi_query['$and'].append({
-                            '$or': [
-                                {'department': g.current_department},
-                                {'department': {'$exists': False}}
-                            ]
-                        })
-                    # WICHTIG: Handlungsfelder NICHT für zugewiesene Tickets filtern
-
-                    logger.debug(f"Zugewiesene (Multi) Tickets Query: {assigned_tickets_multi_query}")
-                    assigned_tickets_multi = list(mongodb.find('tickets', assigned_tickets_multi_query))
-                else:
-                    logger.debug("Keine Mehrfachzuweisungen für Benutzer gefunden.")
-            except Exception as assign_err:
-                logger.error(f"Fehler beim Laden der Mehrfachzuweisungen: {assign_err}")
-                assigned_tickets_multi = []
-
-            # 3) Tickets, für die der Nutzer verantwortlich ist, ergänzen
-            responsible_query = {
-                '$and': [
-                    {'responsible': username},
-                    {'deleted': {'$ne': True}}
-                ]
-            }
-            if getattr(g, 'current_department', None):
-                responsible_query['$and'].append({
-                    '$or': [
-                        {'department': g.current_department},
-                        {'department': {'$exists': False}}
-                    ]
-                })
-            responsible_tickets = list(mongodb.find('tickets', responsible_query))
-
-            # 4) Zusammenführen und Duplikate entfernen
-            assigned_tickets_map = {}
-            for t in assigned_tickets_legacy + assigned_tickets_multi + responsible_tickets:
-                try:
-                    key = str(t.get('_id') or t.get('id'))
-                    assigned_tickets_map[key] = t
-                except Exception:
-                    continue
-            assigned_tickets = list(assigned_tickets_map.values())
-            logger.debug(f"Zugewiesene Tickets gesamt (dedupliziert): {len(assigned_tickets)}")
-            
-            # Alle Tickets (nur für Admin)
+            open_tickets = []
+            assigned_tickets = []
             all_tickets = []
+
             if role == 'admin':
-                all_query = {'deleted': {'$ne': True}}
-                if getattr(g, 'current_department', None):
-                    all_query['department'] = g.current_department
-                logger.debug(f"Alle Tickets Query: {all_query}")
-                all_tickets = mongodb.find('tickets', all_query)
-                all_tickets = list(all_tickets)
-                logger.debug(f"Alle Tickets gefunden: {len(all_tickets)}")
-            
-            # Nachrichtenanzahl und Auftragsdetails hinzufügen
-            logger.debug(f"Verarbeite {len(open_tickets)} offene, {len(assigned_tickets)} zugewiesene, {len(all_tickets)} alle Tickets")
-            
-            for ticket_list in [open_tickets, assigned_tickets, all_tickets]:
-                for ticket in ticket_list:
-                    logger.debug(f"Verarbeite Ticket: {ticket.get('title', 'Kein Titel')} (ID: {ticket.get('_id')})")
-                    
-                    # ID-Feld für Template-Kompatibilität
-                    ticket['id'] = str(ticket['_id'])
-                    
-                    # Nachrichtenanzahl laden (korrekte Collection)
-                    # Unterstütze Messages, deren ticket_id als String oder ObjectId gespeichert ist
-                    messages = mongodb.find('ticket_messages', {
-                        '$or': [
-                            {'ticket_id': str(ticket['_id'])},
-                            {'ticket_id': ticket.get('_id')}
-                        ]
-                    })
-                    ticket['message_count'] = len(list(messages))
-                    
-                    # Auftragsdetails laden (falls vorhanden)
-                    if ticket.get('auftrag_details'):
-                        ticket['has_auftrag_details'] = True
+                # Admins laden alle Tickets für die Abteilung einmalig (Bolt ⚡)
+                all_tickets = list(mongodb.find('tickets', strict_dept_match))
+
+                # In Python kategorisieren statt neuer DB-Abfragen
+                for t in all_tickets:
+                    # Offen: status=offen UND nicht zugewiesen (Bolt ⚡ restored: ignore responsible field)
+                    if t.get('status') == 'offen' and not t.get('assigned_to'):
+                        open_tickets.append(t)
+
+                    # Zugewiesen: an admin selbst
+                    if t.get('assigned_to') == username or t.get('responsible') == username:
+                        assigned_tickets.append(t)
+
+                # Zusätzliche Prüfung für Mehrfachzuweisungen bei Admins
+                user_assignments = list(mongodb.find('ticket_assignments', {'assigned_to': username}))
+                if user_assignments:
+                    multi_assigned_ids = {str(ua.get('ticket_id')) for ua in user_assignments}
+                    assigned_ids = {str(t['_id']) for t in assigned_tickets}
+                    for t in all_tickets:
+                        t_id = str(t['_id'])
+                        if t_id in multi_assigned_ids and t_id not in assigned_ids:
+                            assigned_tickets.append(t)
+            else:
+                # Nicht-Admins: Gezielte Abfragen
+
+                # 1. Offene Tickets in Handlungsfeldern (strict department)
+                open_query = strict_dept_match.copy()
+                open_query.update({
+                    'status': 'offen',
+                    '$or': [
+                        {'assigned_to': None},
+                        {'assigned_to': ''},
+                        {'assigned_to': {'$exists': False}}
+                    ]
+                })
+                if handlungsfelder:
+                    if '$and' in open_query:
+                        open_query['$and'].append({'category': {'$in': handlungsfelder}})
                     else:
-                        ticket['has_auftrag_details'] = False
-                    
-                    # Datum-Formatierung
-                    ticket = self._convert_datetime_fields(ticket)
+                        open_query['category'] = {'$in': handlungsfelder}
+
+                open_tickets = list(mongodb.find('tickets', open_query))
+
+                # 2. Zugewiesene Tickets (flexible department + Bolt ⚡ Konsolidiert)
+                user_assignments = list(mongodb.find('ticket_assignments', {'assigned_to': username}))
+                multi_assigned_ids = [str(ua.get('ticket_id')) for ua in user_assignments if ua.get('ticket_id')]
+
+                assigned_query = flexible_dept_match.copy()
+                # If flexible_dept_match already has $or, we need to wrap it
+                if '$or' in assigned_query:
+                    # Wrap existing department $or with assigned condition $or
+                    dept_or = assigned_query.pop('$or')
+                    assigned_query['$and'] = [
+                        {'$or': dept_or},
+                        {'$or': [
+                            {'assigned_to': username},
+                            {'responsible': username},
+                            {'_id': {'$in': multi_assigned_ids}}
+                        ]}
+                    ]
+                else:
+                    assigned_query['$or'] = [
+                        {'assigned_to': username},
+                        {'responsible': username},
+                        {'_id': {'$in': multi_assigned_ids}}
+                    ]
+                assigned_tickets = list(mongodb.find('tickets', assigned_query))
+
+            # --- Batch-Verarbeitung der Metadaten (Bolt ⚡) ---
+            all_relevant_tickets = []
+            seen_ids = set()
+            for t_list in [open_tickets, assigned_tickets, all_tickets]:
+                for t in t_list:
+                    t_id = str(t['_id'])
+                    if t_id not in seen_ids:
+                        all_relevant_tickets.append(t)
+                        seen_ids.add(t_id)
+
+            if not all_relevant_tickets:
+                return {'open_tickets': [], 'assigned_tickets': [], 'all_tickets': []}
+
+            # 1. Batch Message Counting (Aggregation)
+            t_ids_for_match = []
+            for t_id in seen_ids:
+                t_ids_for_match.append(t_id)
+                if len(t_id) == 24:
+                    try:
+                        t_ids_for_match.append(ObjectId(t_id))
+                    except Exception: pass
             
-            # Sortierung: Neueste zuerst
+            t_ids_for_match = list(set(t_ids_for_match))
+
+            msg_pipeline = [
+                {'$match': {'ticket_id': {'$in': t_ids_for_match}}},
+                {'$group': {'_id': '$ticket_id', 'count': {'$sum': 1}}}
+            ]
+            
+            msg_counts_raw = list(mongodb.aggregate('ticket_messages', msg_pipeline))
+            msg_counts = {}
+            for res in msg_counts_raw:
+                # Sum counts for mixed ID types (Bolt ⚡ bugfix)
+                t_id_key = str(res['_id'])
+                msg_counts[t_id_key] = msg_counts.get(t_id_key, 0) + res['count']
+
+            # 2. Post-Processing
+            for t in all_relevant_tickets:
+                t_id_str = str(t['_id'])
+                t['id'] = t_id_str
+                t['message_count'] = msg_counts.get(t_id_str, 0)
+                t['has_auftrag_details'] = bool(t.get('auftrag_details'))
+                t = self._convert_datetime_fields(t) # Bolt ⚡ bugfix: assign result
+
+            # Sortierung (Bolt ⚡ restored robust sorting)
             def safe_sort_key(ticket):
                 updated_at = ticket.get('updated_at')
                 if isinstance(updated_at, str):
                     try:
                         return datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S')
-                    except Exception as e:
-                        logger.warning(f"Fehler bei Datumskonvertierung updated_at: [Interner Fehler]")
+                    except Exception:
                         return datetime.min
                 elif isinstance(updated_at, datetime):
                     return updated_at
