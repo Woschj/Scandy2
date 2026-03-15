@@ -318,10 +318,31 @@ def dashboard():
 
             # Verarbeite Ausleihen für Anzeige
             processed_lendings = []
+
+            # Batch-Fetch für Tools und Worker zur Vermeidung von N+1 Queries
+            t_codes = list({
+                l.get('tool_barcode') for l in current_lendings
+                if l.get('tool_barcode')
+            })
+            w_codes = list({
+                l.get('worker_barcode') for l in current_lendings
+                if l.get('worker_barcode')
+            })
+
+            tools_cache = {}
+            if t_codes:
+                tools = mongodb.find('tools', {'barcode': {'$in': t_codes}})
+                tools_cache = {t.get('barcode'): t for t in tools}
+
+            workers_cache = {}
+            if w_codes:
+                workers = mongodb.find('workers', {'barcode': {'$in': w_codes}})
+                workers_cache = {w.get('barcode'): w for w in workers}
+
             for lending in current_lendings:
                 try:
-                    tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode', '')})
-                    worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode', '')})
+                    tool = tools_cache.get(lending.get('tool_barcode', ''))
+                    worker = workers_cache.get(lending.get('worker_barcode', ''))
 
                     if tool and worker:
                         # Sichere Datumsbehandlung
