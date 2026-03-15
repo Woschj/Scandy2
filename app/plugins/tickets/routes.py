@@ -1294,14 +1294,18 @@ def update_assignment(id):
         if success:
             # History-Logging für Zuweisungsänderung
             try:
-                from app.services.ticket_history_service import ticket_history_service
+                from app.services.ticket_history_service import ticket_history_service, AssignmentDetails
                 old_assignment_str = ', '.join(old_assigned_users) if old_assigned_users else 'Nicht zugewiesen'
                 new_assignment_str = ', '.join(assigned_users) if assigned_users else 'Nicht zugewiesen'
                 
+                details = AssignmentDetails(
+                    old_assignee=old_assignment_str,
+                    new_assignee=new_assignment_str
+                )
+
                 ticket_history_service.log_assignment(
                     ticket_id=str(id),
-                    old_assignee=old_assignment_str,
-                    new_assignee=new_assignment_str,
+                    details=details,
                     changed_by=current_user.username
                 )
             except Exception as history_error:
