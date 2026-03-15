@@ -615,9 +615,18 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
+            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
+            tools_cache = {}
+            if unique_tool_barcodes:
+                tools = mongodb.find('tools', {
+                    'barcode': {'$in': unique_tool_barcodes},
+                    'deleted': {'$ne': True}
+                })
+                tools_cache = {t.get('barcode'): t for t in tools}
+
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = mongodb.find_one('tools', {'barcode': tool_barcode, 'deleted': {'$ne': True}})
+                tool = tools_cache.get(tool_barcode)
                 
                 if not tool:
                     issues.append({
@@ -695,9 +704,18 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
+            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
+            tools_cache = {}
+            if unique_tool_barcodes:
+                tools = mongodb.find('tools', {
+                    'barcode': {'$in': unique_tool_barcodes},
+                    'deleted': {'$ne': True}
+                })
+                tools_cache = {t.get('barcode'): t for t in tools}
+
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = mongodb.find_one('tools', {'barcode': tool_barcode, 'deleted': {'$ne': True}})
+                tool = tools_cache.get(tool_barcode)
                 
                 if not tool:
                     # Werkzeug existiert nicht mehr, Ausleihe löschen
