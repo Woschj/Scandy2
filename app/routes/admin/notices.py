@@ -28,7 +28,7 @@ def create_notice():
         priority = request.form.get('priority')
         is_active = True if request.form.get('is_active') in ('on', 'true', '1') else False
 
-        success, message = AdminNotificationService.create_notice(title, content, notice_type, department=current_department, priority=priority, is_active=is_active)
+        success, message = AdminNotificationService.create_notice(title, content, notice_type=notice_type, department=current_department, priority=priority, is_active=is_active)
 
         if success:
             flash(message, 'success')
@@ -52,7 +52,7 @@ def edit_notice(id):
         priority = request.form.get('priority')
         is_active = True if request.form.get('is_active') in ('on', 'true', '1') else False
 
-        success, message = AdminNotificationService.update_notice(id, title, content, notice_type, department=current_department, priority=priority, is_active=is_active)
+        success, message = AdminNotificationService.update_notice(id, title, content, notice_type=notice_type, department=current_department, priority=priority, is_active=is_active)
 
         if success:
             flash(message, 'success')

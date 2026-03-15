@@ -394,19 +394,24 @@ class AdminNotificationService:
             return []
 
     @staticmethod
-    def create_notice(title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: int = 0, is_active: bool = True) -> Tuple[bool, str]:
+    def create_notice(title: str, content: str, **kwargs) -> Tuple[bool, str]:
         """
         Erstellt eine neue Benachrichtigung (Notice)
         
         Args:
             title: Titel der Benachrichtigung
             content: Inhalt der Benachrichtigung
-            notice_type: Typ der Benachrichtigung
+            **kwargs: Optionale Parameter (notice_type, department, priority, is_active)
             
         Returns:
             (success, message)
         """
         try:
+            notice_type = kwargs.get('notice_type', 'info')
+            department = kwargs.get('department')
+            priority = kwargs.get('priority', 0)
+            is_active = kwargs.get('is_active', True)
+
             notice_data = {
                 'title': title,
                 'message': content,
@@ -427,7 +432,7 @@ class AdminNotificationService:
             return False, f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]"
 
     @staticmethod
-    def update_notice(notice_id: str, title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: Optional[int] = None, is_active: Optional[bool] = None) -> Tuple[bool, str]:
+    def update_notice(notice_id: str, title: str, content: str, **kwargs) -> Tuple[bool, str]:
         """
         Aktualisiert eine Benachrichtigung (Notice)
         
@@ -435,12 +440,17 @@ class AdminNotificationService:
             notice_id: ID der Benachrichtigung
             title: Neuer Titel
             content: Neuer Inhalt
-            notice_type: Neuer Typ
+            **kwargs: Optionale Parameter (notice_type, department, priority, is_active)
             
         Returns:
             (success, message)
         """
         try:
+            notice_type = kwargs.get('notice_type', 'info')
+            department = kwargs.get('department')
+            priority = kwargs.get('priority')
+            is_active = kwargs.get('is_active')
+
             # Prüfe ob Benachrichtigung existiert
             notice = mongodb.find_one('homepage_notices', {'_id': notice_id})
             if not notice:
