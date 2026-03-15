@@ -116,9 +116,9 @@ function addInputField(button, name) {
     newInput.className = 'flex items-center gap-2';
     newInput.innerHTML = `
         <input type="text" name="${name}" class="input input-bordered flex-1" placeholder="Neuer Eintrag">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="removeInputField(this)">
-            <i class="fas fa-times"></i>
-        </button>
+        <button aria-label="Schließen" type="button" class="btn btn-ghost btn-sm" onclick="removeInputField(this)">
+<i class="fas fa-times"></i>
+</button>
     `;
     container.insertBefore(newInput, button);
 }

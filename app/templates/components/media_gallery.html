@@ -51,9 +51,9 @@
         <div class="modal-box max-w-4xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg">Medien-Vorschau</h3>
-                <button onclick="closeMediaModal()" class="btn btn-ghost btn-sm">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button aria-label="Schließen" onclick="closeMediaModal()" class="btn btn-ghost btn-sm">
+<i class="fas fa-times"></i>
+</button>
             </div>
             <img id="modalMediaImage" src="" alt="Medien-Vorschau" class="w-full h-auto max-h-96 object-contain">
         </div>
@@ -106,10 +106,10 @@ function displayMediaList(mediaList, entityType, entityId) {
             <form action="/media/${entityType}/${entityId}/delete/${media.filename}" 
                   method="post" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-error btn-xs" 
+                <button aria-label="Löschen" type="submit" class="btn btn-error btn-xs"
                         onclick="return confirm('Medium wirklich löschen?')">
-                    <i class="fas fa-trash"></i>
-                </button>
+<i class="fas fa-trash"></i>
+</button>
             </form>
         `;
         mediaListContainer.appendChild(mediaItem);

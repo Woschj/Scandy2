@@ -236,9 +236,9 @@
                                             <i id="toolsIconPreview" class="{{ app_labels.tools.icon }} text-xl"></i>
                                             <span class="text-sm">{{ app_labels.tools.icon }}</span>
                                         </div>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('toolsIconInput', 'toolsIconPreview')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <button aria-label="Bearbeiten" type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('toolsIconInput', 'toolsIconPreview')">
+<i class="fas fa-edit"></i>
+</button>
                                     </div>
                                     <input type="hidden" name="label_tools_icon" value="{{ app_labels.tools.icon }}" id="toolsIconInput">
                                 </div>
@@ -270,9 +270,9 @@
                                             <i id="consumablesIconPreview" class="{{ app_labels.consumables.icon }} text-xl"></i>
                                             <span class="text-sm">{{ app_labels.consumables.icon }}</span>
                                         </div>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('consumablesIconInput', 'consumablesIconPreview')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <button aria-label="Bearbeiten" type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('consumablesIconInput', 'consumablesIconPreview')">
+<i class="fas fa-edit"></i>
+</button>
                                     </div>
                                     <input type="hidden" name="label_consumables_icon" value="{{ app_labels.consumables.icon }}" id="consumablesIconInput">
                                 </div>
@@ -304,9 +304,9 @@
                                             <i id="ticketsIconPreview" class="{{ app_labels.tickets.icon }} text-xl"></i>
                                             <span class="text-sm">{{ app_labels.tickets.icon }}</span>
                                         </div>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('ticketsIconInput', 'ticketsIconPreview')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <button aria-label="Bearbeiten" type="button" class="btn btn-outline btn-sm" onclick="openIconSelector('ticketsIconInput', 'ticketsIconPreview')">
+<i class="fas fa-edit"></i>
+</button>
                                     </div>
                                     <input type="hidden" name="label_tickets_icon" value="{{ app_labels.tickets.icon }}" id="ticketsIconInput">
                                 </div>
@@ -462,9 +462,9 @@ function renderSoftwareList() {
                 ${software.category ? `<div class="text-sm text-base-content/60">Kategorie: ${software.category}</div>` : ''}
                 ${software.description ? `<div class="text-sm text-base-content/60">${software.description}</div>` : ''}
             </div>
-            <button onclick="deleteSoftware('${software._id}', '${software.name}')" class="btn btn-error btn-xs">
-                <i class="fas fa-trash"></i>
-            </button>
+            <button aria-label="Löschen" onclick="deleteSoftware('${software._id}', '${software.name}')" class="btn btn-error btn-xs">
+<i class="fas fa-trash"></i>
+</button>
         </div>
     `).join('');
 }
@@ -583,12 +583,12 @@ function renderUserGroupsList() {
                     <div class="text-sm text-base-content/60">Software: ${softwareNames || 'Keine'}</div>
                 </div>
                 <div class="flex gap-1">
-                    <button onclick="editUserGroup('${group._id}')" class="btn btn-outline btn-xs">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteUserGroup('${group._id}', '${group.name}')" class="btn btn-error btn-xs">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button aria-label="Bearbeiten" onclick="editUserGroup('${group._id}')" class="btn btn-outline btn-xs">
+<i class="fas fa-edit"></i>
+</button>
+                    <button aria-label="Löschen" onclick="deleteUserGroup('${group._id}', '${group.name}')" class="btn btn-error btn-xs">
+<i class="fas fa-trash"></i>
+</button>
                 </div>
             </div>
         `;
@@ -671,9 +671,15 @@ async function refreshBackupList() {
                 <td>${b.size}</td>
                 <td>${b.created_at}</td>
                 <td class="text-right space-x-1">
-                    <a class="btn btn-xs" href="/backup/download/${encodeURIComponent(b.filename)}"><i class="fas fa-download"></i></a>
-                    <button class="btn btn-xs btn-warning" onclick="restoreBackup('${b.filename}')"><i class="fas fa-undo"></i></button>
-                    <button class="btn btn-xs btn-error" onclick="deleteBackup('${b.filename}')"><i class="fas fa-trash"></i></button>
+                    <a aria-label="Herunterladen" class="btn btn-xs" href="/backup/download/${encodeURIComponent(b.filename)}">
+<i class="fas fa-download"></i>
+</a>
+                    <button aria-label="Wiederherstellen" class="btn btn-xs btn-warning" onclick="restoreBackup('${b.filename}')">
+<i class="fas fa-undo"></i>
+</button>
+                    <button aria-label="Löschen" class="btn btn-xs btn-error" onclick="deleteBackup('${b.filename}')">
+<i class="fas fa-trash"></i>
+</button>
                 </td>
             </tr>`).join('');
         tbody.innerHTML = rows || '<tr><td colspan="5" class="text-center py-8">Keine Backups gefunden</td></tr>';

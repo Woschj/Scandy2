@@ -221,9 +221,9 @@
     <div class="modal-box max-w-4xl">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Bild-Vorschau</h3>
-            <button onclick="closeImageModal()" class="btn btn-ghost btn-sm">
-                <i class="fas fa-times"></i>
-            </button>
+            <button aria-label="Schließen" onclick="closeImageModal()" class="btn btn-ghost btn-sm">
+<i class="fas fa-times"></i>
+</button>
         </div>
         <img id="modalImage" src="" alt="Bild-Vorschau" class="w-full h-auto max-h-96 object-contain">
     </div>
@@ -301,10 +301,10 @@ function displayMediaList() {
                      alt="Medien ${index + 1}"
                      class="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
                      onclick="openImageModal('${media.url}')">
-                <button onclick="deleteMedia('${media.filename}')" 
+                <button aria-label="Löschen" onclick="deleteMedia('${media.filename}')"
                         class="absolute top-1 right-1 btn btn-error btn-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                    <i class="fas fa-trash"></i>
-                </button>
+<i class="fas fa-trash"></i>
+</button>
             </div>
         `;
         container.appendChild(mediaItem);

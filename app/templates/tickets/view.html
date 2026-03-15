@@ -944,10 +944,10 @@ function displayModalMediaList(mediaList) {
                             <p class="text-xs text-red-600 truncate">${media.filename}</p>
                         </div>
                     </div>
-                    <button onclick="deleteModalMedia('${media.filename}')" 
+                    <button aria-label="Löschen" onclick="deleteModalMedia('${media.filename}')"
                             class="absolute top-1 right-1 btn btn-error btn-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-trash"></i>
-                    </button>
+<i class="fas fa-trash"></i>
+</button>
                 </div>
             `;
         } else {
@@ -958,10 +958,10 @@ function displayModalMediaList(mediaList) {
                          alt="Medien ${index + 1}"
                          class="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
                          onclick="openImageModal('${media.url}')">
-                    <button onclick="deleteModalMedia('${media.filename}')" 
+                    <button aria-label="Löschen" onclick="deleteModalMedia('${media.filename}')"
                             class="absolute top-1 right-1 btn btn-error btn-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-trash"></i>
-                    </button>
+<i class="fas fa-trash"></i>
+</button>
                 </div>
             `;
         }
@@ -1009,9 +1009,9 @@ function createImageModal() {
         <div class="modal-box max-w-4xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg">Bild-Vorschau</h3>
-                <button onclick="closeImageModal()" class="btn btn-ghost btn-sm">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button aria-label="Schließen" onclick="closeImageModal()" class="btn btn-ghost btn-sm">
+<i class="fas fa-times"></i>
+</button>
             </div>
             <img id="modalImage" src="" alt="Bild-Vorschau" class="w-full h-auto max-h-96 object-contain">
         </div>
@@ -1053,9 +1053,9 @@ function createPdfModal() {
         <div class="modal-box max-w-6xl w-11/12 h-4/5">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg" id="pdfTitle">PDF-Vorschau</h3>
-                <button onclick="closePdfModal()" class="btn btn-ghost btn-sm">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button aria-label="Schließen" onclick="closePdfModal()" class="btn btn-ghost btn-sm">
+<i class="fas fa-times"></i>
+</button>
             </div>
             <div class="h-full bg-base-100 rounded-lg overflow-hidden">
                 <iframe id="pdfIframe" 
@@ -1456,9 +1456,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="modal-box max-w-7xl w-11/12 h-4/5 bg-base-200">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Medien-Galerie</h3>
-            <button class="btn btn-sm btn-circle" onclick="closeMediaCarousel()">
-                <i class="fas fa-times"></i>
-            </button>
+            <button aria-label="Schließen" class="btn btn-sm btn-circle" onclick="closeMediaCarousel()">
+<i class="fas fa-times"></i>
+</button>
         </div>
         
         <div class="carousel-container h-96 bg-base-100 rounded-lg relative">
@@ -1467,12 +1467,12 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <!-- Navigation Buttons -->
-            <button id="carousel-prev" class="btn btn-circle btn-primary absolute left-4 top-1/2 transform -translate-y-1/2 z-50 hover:scale-110 transition-transform">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button id="carousel-next" class="btn btn-circle btn-primary absolute right-4 top-1/2 transform -translate-y-1/2 z-50 hover:scale-110 transition-transform">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+            <button aria-label="Zurück" id="carousel-prev" class="btn btn-circle btn-primary absolute left-4 top-1/2 transform -translate-y-1/2 z-50 hover:scale-110 transition-transform">
+<i class="fas fa-chevron-left"></i>
+</button>
+            <button aria-label="Weiter" id="carousel-next" class="btn btn-circle btn-primary absolute right-4 top-1/2 transform -translate-y-1/2 z-50 hover:scale-110 transition-transform">
+<i class="fas fa-chevron-right"></i>
+</button>
             
             <!-- Vollbild Button -->
             <button id="fullscreen-btn" class="btn btn-sm btn-secondary absolute top-4 right-4 z-50" onclick="openImageInNewTab()">

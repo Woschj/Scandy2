@@ -280,12 +280,12 @@
                             </td>
                             <td>
                                 <div class="flex gap-2">
-                                    <button onclick="editField('{{ field._id }}')" class="btn btn-primary btn-xs">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteField('{{ field._id }}', '{{ field.name }}')" class="btn btn-error btn-xs">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <button aria-label="Bearbeiten" onclick="editField('{{ field._id }}')" class="btn btn-primary btn-xs">
+<i class="fas fa-edit"></i>
+</button>
+                                    <button aria-label="Löschen" onclick="deleteField('{{ field._id }}', '{{ field.name }}')" class="btn btn-error btn-xs">
+<i class="fas fa-trash"></i>
+</button>
                                 </div>
                             </td>
                         </tr>
