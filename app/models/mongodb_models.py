@@ -395,12 +395,12 @@ class MongoDBTool:
         tool_barcodes = list(mongodb.find(cls.COLLECTION_NAME, {
             'deleted': {'$ne': True},
             'barcode': {'$exists': True, '$ne': None}
-        }, {'barcode': 1, 'name': 1}))
+        }, projection={'barcode': 1, 'name': 1}))
         
         consumable_barcodes = list(mongodb.find('consumables', {
             'deleted': {'$ne': True},
             'barcode': {'$exists': True, '$ne': None}
-        }, {'barcode': 1, 'name': 1}))
+        }, projection={'barcode': 1, 'name': 1}))
         
         # Barcode-Zählung
         barcode_count = {}
@@ -885,7 +885,7 @@ def create_mongodb_indexes():
         mongodb.create_index(MongoDBWorker.COLLECTION_NAME, [('department', 1), ('lastname', 1)])
         # TTL für geplante Löschung von Workern (falls mit User gekoppelt)
         try:
-            mongodb.create_index(MongoDBWorker.COLLECTION_NAME, 'delete_at', expire_after_seconds=0)
+            mongodb.create_index(MongoDBWorker.COLLECTION_NAME, 'delete_at', expireAfterSeconds=0)
         except Exception:
             pass
         
@@ -925,7 +925,7 @@ def create_mongodb_indexes():
         # TTL für geplante Löschung (löscht Dokumente automatisch nach Erreichen von delete_at)
         # Hinweis: delete_at muss als echtes Date-Feld gespeichert werden
         try:
-            mongodb.create_index(MongoDBUser.COLLECTION_NAME, 'delete_at', expire_after_seconds=0)
+            mongodb.create_index(MongoDBUser.COLLECTION_NAME, 'delete_at', expireAfterSeconds=0)
         except Exception:
             pass
         
@@ -973,7 +973,7 @@ def create_mongodb_indexes():
         
         # System-Locks (Auto-Backup Koordination)
         try:
-            mongodb.create_index('system_locks', 'created_at', expire_after_seconds=3600)
+            mongodb.create_index('system_locks', 'created_at', expireAfterSeconds=3600)
         except Exception:
             pass
         try:
