@@ -378,13 +378,13 @@ class TicketService:
             
             # History-Logging für Status-Änderung
             try:
-                from app.services.ticket_history_service import ticket_history_service
-                ticket_history_service.log_status_change(
-                    ticket_id=str(ticket_id),
+                from app.services.ticket_history_service import ticket_history_service, TicketStatusChange
+                change = TicketStatusChange(
                     old_status=old_status,
                     new_status=new_status,
                     changed_by=updated_by
                 )
+                ticket_history_service.log_status_change(ticket_id=str(ticket_id), change=change)
             except Exception as history_error:
                 logger.error(f"Fehler beim History-Logging für Status-Änderung: {history_error}")
             
@@ -744,11 +744,14 @@ class TicketService:
 
             # History-Logging
             try:
-                from app.services.ticket_history_service import ticket_history_service
+                from app.services.ticket_history_service import ticket_history_service, AssignmentDetails
+                details = AssignmentDetails(
+                    old_assignee=ticket.get('responsible') or 'Nicht gesetzt',
+                    new_assignee=responsible_username or 'Nicht gesetzt'
+                )
                 ticket_history_service.log_assignment(
                     ticket_id=str(ticket_id),
-                    old_assignee=ticket.get('responsible') or 'Nicht gesetzt',
-                    new_assignee=responsible_username or 'Nicht gesetzt',
+                    details=details,
                     changed_by=updated_by
                 )
             except Exception as history_error:

@@ -125,13 +125,17 @@ class ExcelExportService:
             # Lade Werkzeuge
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}, sort=[('name', 1)]))
             
+            # Lade aktive Ausleihen und Mitarbeiter vorab
+            active_lendings = list(mongodb.find('lendings', {'returned_at': None}))
+            lendings_by_tool = {l.get('tool_barcode'): l for l in active_lendings if l.get('tool_barcode')}
+
+            active_workers = list(mongodb.find('workers', {'deleted': {'$ne': True}}))
+            workers_by_barcode = {w.get('barcode'): w for w in active_workers if w.get('barcode')}
+
             # Schreibe Daten
             for row, tool in enumerate(tools, 2):
                 # Hole aktuelle Ausleihe
-                current_lending = mongodb.find_one('lendings', {
-                    'tool_barcode': tool.get('barcode'),
-                    'returned_at': None
-                })
+                current_lending = lendings_by_tool.get(tool.get('barcode'))
                 
                 # Hole Mitarbeiter-Info falls ausgeliehen
                 lent_to = None
@@ -139,10 +143,7 @@ class ExcelExportService:
                 return_date = None
                 
                 if current_lending:
-                    worker = mongodb.find_one('workers', {
-                        'barcode': current_lending.get('worker_barcode'),
-                        'deleted': {'$ne': True}
-                    })
+                    worker = workers_by_barcode.get(current_lending.get('worker_barcode'))
                     if worker:
                         lent_to = f"{worker.get('firstname', '')} {worker.get('lastname', '')}"
                     lent_since = current_lending.get('lent_at')
@@ -380,14 +381,26 @@ class ExcelExportService:
             # Lade Ausleihen
             lendings = list(mongodb.find('lendings', {}, sort=[('lent_at', -1)]))
             
+            # Sammle alle eindeutigen Barcodes für Bulk-Abfragen
+            tool_barcodes = list({lend.get('tool_barcode') for lend in lendings if lend.get('tool_barcode')})
+            worker_barcodes = list({lend.get('worker_barcode') for lend in lendings if lend.get('worker_barcode')})
+
+            # Lade benötigte Werkzeuge und Mitarbeiter in Bulk
+            tools_list = list(mongodb.find('tools', {'barcode': {'$in': tool_barcodes}})) if tool_barcodes else []
+            workers_list = list(mongodb.find('workers', {'barcode': {'$in': worker_barcodes}})) if worker_barcodes else []
+
+            # Erstelle Lookup-Dictionaries
+            tools_map = {t.get('barcode'): t for t in tools_list if t.get('barcode')}
+            workers_map = {w.get('barcode'): w for w in workers_list if w.get('barcode')}
+
             # Schreibe Daten
             for row, lending in enumerate(lendings, 2):
-                # Hole Werkzeug-Info
-                tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode')})
+                # Hole Werkzeug-Info aus Cache
+                tool = tools_map.get(lending.get('tool_barcode'))
                 tool_name = tool.get('name', 'Unbekannt') if tool else 'Unbekannt'
                 
-                # Hole Mitarbeiter-Info
-                worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode')})
+                # Hole Mitarbeiter-Info aus Cache
+                worker = workers_map.get(lending.get('worker_barcode'))
                 worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}" if worker else 'Unbekannt'
                 
                 # Berechne Status und Tage

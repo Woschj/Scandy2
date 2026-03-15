@@ -5,6 +5,7 @@ Protokolliert alle Änderungen an Tickets für eine vollständige Historie
 """
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
@@ -79,17 +80,13 @@ class TicketHistoryService:
             logger.error(f"Fehler beim Protokollieren der Ticket-Änderung: [Interner Fehler]", exc_info=True)
             return False
     
-    def log_status_change(self, ticket_id: str, old_status: str, new_status: str, 
-                         changed_by: str, note: Optional[str] = None) -> bool:
+    def log_status_change(self, ticket_id: str, change: TicketStatusChange) -> bool:
         """
         Protokolliert eine Status-Änderung
         
         Args:
             ticket_id: ID des Tickets
-            old_status: Alter Status
-            new_status: Neuer Status
-            changed_by: Benutzer der die Änderung vorgenommen hat
-            note: Optionale Notiz
+            change: TicketStatusChange Objekt mit den Details der Änderung
             
         Returns:
             bool: True wenn erfolgreich
@@ -103,17 +100,14 @@ class TicketHistoryService:
             context=ChangeContext(change_type='status_change', note=note)
         )
     
-    def log_assignment(self, ticket_id: str, old_assignee: Optional[str], new_assignee: Optional[str], 
-                      changed_by: str, note: Optional[str] = None) -> bool:
+    def log_assignment(self, ticket_id: str, details: AssignmentDetails, changed_by: str) -> bool:
         """
         Protokolliert eine Zuweisungsänderung
         
         Args:
             ticket_id: ID des Tickets
-            old_assignee: Alter Zugewiesener
-            new_assignee: Neuer Zugewiesener
+            details: Details zur Zuweisungsänderung (AssignmentDetails)
             changed_by: Benutzer der die Änderung vorgenommen hat
-            note: Optionale Notiz
             
         Returns:
             bool: True wenn erfolgreich
@@ -121,8 +115,8 @@ class TicketHistoryService:
         return self.log_change(
             ticket_id=ticket_id,
             field='assigned_to',
-            old_value=old_assignee or 'Nicht zugewiesen',
-            new_value=new_assignee or 'Nicht zugewiesen',
+            old_value=details.old_assignee or 'Nicht zugewiesen',
+            new_value=details.new_assignee or 'Nicht zugewiesen',
             changed_by=changed_by,
             context=ChangeContext(change_type='assignment', note=note)
         )
