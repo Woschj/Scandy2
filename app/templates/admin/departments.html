@@ -78,9 +78,9 @@ async function loadDepartments(){
       <div class="flex items-center justify-between p-2 bg-base-100 rounded border">
         <div class="flex items-center gap-2">
           <input class="input input-bordered input-xs w-56" value="${d.name}" id="rename-input-${encodeURIComponent(d.name)}">
-          <button class="btn btn-xs" onclick="renameDepartment('${d.name}')"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-xs" onclick="renameDepartment('${d.name}')" aria-label="Abteilung umbenennen"><i class="fas fa-pen"></i></button>
         </div>
-        <button class="btn btn-error btn-xs" onclick="openDeleteDialog('${d.name}')"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-error btn-xs" onclick="openDeleteDialog('${d.name}')" aria-label="Abteilung löschen"><i class="fas fa-trash"></i></button>
       </div>`).join('');
     c.innerHTML = items || '<div class="text-sm opacity-70">Keine Abteilungen vorhanden</div>';
   }catch(e){
