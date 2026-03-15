@@ -18,3 +18,7 @@
 ## 2026-03-15 - [LendingService N+1 Optimization]
 **Learning:** Multiple methods in `LendingService` (active lendings, recent usage, history) were performing N+1 database queries. These can be optimized into single aggregation pipelines using `$lookup`.
 **Action:** Use aggregation for joined data. In Top-K queries like `get_recent_consumable_usage`, place `$sort` and `$limit` BEFORE `$lookup` to minimize the join workload and improve memory efficiency.
+
+## 2024-05-19 - Benchmarking MongoDB locally
+**Learning:** `mongomock` does not natively simulate network latency or I/O bottlenecking, which makes N+1 benchmark queries locally appear unnaturally fast.
+**Action:** When benchmarking N+1 local optimizations using `mongomock`, create a MockMongo wrapper that intercepts calls to `find` and `find_one` and injects `time.sleep(0.005)` to accurately reflect the real-world performance benefits of an aggregation pipeline over multiple queries.

@@ -124,43 +124,87 @@ def manual_lending():
         # Hole aktuelle Ausleihen
         current_lendings = []
 
-        # Aktuelle Werkzeug-Ausleihen
-        active_tool_lendings = mongodb.find('lendings', {'returned_at': None})
-        for lending in active_tool_lendings:
-            tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-            worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
+        # Aktuelle Werkzeug-Ausleihen (Optimiert via Aggregation)
+        lending_pipeline = [
+            {'$match': {'returned_at': None}},
+            {
+                '$lookup': {
+                    'from': 'tools',
+                    'localField': 'tool_barcode',
+                    'foreignField': 'barcode',
+                    'as': 'tool_info'
+                }
+            },
+            {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': False}},
+            {
+                '$lookup': {
+                    'from': 'workers',
+                    'localField': 'worker_barcode',
+                    'foreignField': 'barcode',
+                    'as': 'worker_info'
+                }
+            },
+            {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': False}}
+        ]
 
+        active_tool_lendings = mongodb.aggregate('lendings', lending_pipeline)
+        for lending in active_tool_lendings:
+            tool = lending.get('tool_info', {})
+            worker = lending.get('worker_info', {})
             if tool and worker:
                 current_lendings.append({
-                    'item_name': tool['name'],
-                    'item_barcode': tool['barcode'],
-                    'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                    'worker_barcode': worker['barcode'],
-                    'action_date': lending['lent_at'],
+                    'item_name': tool.get('name', 'Unbekannt'),
+                    'item_barcode': tool.get('barcode', ''),
+                    'worker_name': f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip(),
+                    'worker_barcode': worker.get('barcode', ''),
+                    'action_date': lending.get('lent_at'),
                     'category': 'Werkzeug',
                     'amount': None
                 })
 
-        # Aktuelle Verbrauchsmaterial-Ausgaben (letzte 30 Tage)
+        # Aktuelle Verbrauchsmaterial-Ausgaben (letzte 30 Tage) (Optimiert via Aggregation)
         thirty_days_ago = datetime.now() - timedelta(days=30)
-        recent_consumable_usages = mongodb.find('consumable_usages', {
-            'used_at': {'$gte': thirty_days_ago},
-            'quantity': {'$lt': 0}  # Nur Ausgaben (negative Werte), nicht Entnahmen
-        })
+        usage_pipeline = [
+            {
+                '$match': {
+                    'used_at': {'$gte': thirty_days_ago},
+                    'quantity': {'$lt': 0}  # Nur Ausgaben (negative Werte), nicht Entnahmen
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'consumables',
+                    'localField': 'consumable_barcode',
+                    'foreignField': 'barcode',
+                    'as': 'consumable_info'
+                }
+            },
+            {'$unwind': {'path': '$consumable_info', 'preserveNullAndEmptyArrays': False}},
+            {
+                '$lookup': {
+                    'from': 'workers',
+                    'localField': 'worker_barcode',
+                    'foreignField': 'barcode',
+                    'as': 'worker_info'
+                }
+            },
+            {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': False}}
+        ]
+
+        recent_consumable_usages = mongodb.aggregate('consumable_usages', usage_pipeline)
 
         for usage in recent_consumable_usages:
-            consumable = mongodb.find_one('consumables', {'barcode': usage['consumable_barcode']})
-            worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
-
+            consumable = usage.get('consumable_info', {})
+            worker = usage.get('worker_info', {})
             if consumable and worker:
                 current_lendings.append({
-                    'item_name': consumable['name'],
-                    'item_barcode': consumable['barcode'],
-                    'worker_name': f"{worker['firstname']} {worker['lastname']}",
-                    'worker_barcode': worker['barcode'],
-                    'action_date': usage['used_at'],
+                    'item_name': consumable.get('name', 'Unbekannt'),
+                    'item_barcode': consumable.get('barcode', ''),
+                    'worker_name': f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip(),
+                    'worker_barcode': worker.get('barcode', ''),
+                    'action_date': usage.get('used_at'),
                     'category': 'Verbrauchsmaterial',
-                    'amount': usage['quantity']
+                    'amount': usage.get('quantity')
                 })
 
         # Sortiere nach Datum (neueste zuerst)
