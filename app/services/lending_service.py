@@ -580,22 +580,17 @@ class LendingService:
             
             # 1. Prüfe Werkzeuge mit falschem Status
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
-
-            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
-            active_lendings_cursor = mongodb.find('lendings', {
-                'returned_at': None,
-                'tool_barcode': {'$exists': True}
-            })
-            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
-
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe über Set
-                has_active_lending = barcode in active_lent_barcodes
+                # Prüfe aktive Ausleihe
+                active_lending = mongodb.find_one('lendings', {
+                    'tool_barcode': barcode,
+                    'returned_at': None
+                })
                 
-                if has_active_lending and status != 'ausgeliehen':
+                if active_lending and status != 'ausgeliehen':
                     issues.append({
                         'type': 'tool_status_mismatch',
                         'tool_barcode': barcode,
@@ -604,7 +599,7 @@ class LendingService:
                         'expected_status': 'ausgeliehen',
                         'message': f'Werkzeug {tool.get("name", "")} ist ausgeliehen aber Status ist "{status}"'
                     })
-                elif not has_active_lending and status == 'ausgeliehen':
+                elif not active_lending and status == 'ausgeliehen':
                     issues.append({
                         'type': 'tool_status_mismatch',
                         'tool_barcode': barcode,
@@ -620,20 +615,22 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
-            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
-            tools_cache = {}
-            if unique_tool_barcodes:
-                tools = mongodb.find('tools', {
-                    'barcode': {'$in': unique_tool_barcodes},
+            # Sammle alle relevanten Tool-Barcodes
+            tool_barcodes_to_check = list({lending.get('tool_barcode') for lending in orphaned_lendings if lending.get('tool_barcode')})
+
+            existing_tool_barcodes = set()
+            if tool_barcodes_to_check:
+                # Hole alle relevanten Tools mit einer einzigen Abfrage
+                existing_tools = list(mongodb.find('tools', {
+                    'barcode': {'$in': tool_barcodes_to_check},
                     'deleted': {'$ne': True}
-                })
-                tools_cache = {t.get('barcode'): t for t in tools}
+                }))
+                existing_tool_barcodes = {tool.get('barcode') for tool in existing_tools}
 
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = tools_cache.get(tool_barcode)
                 
-                if not tool:
+                if tool_barcode not in existing_tool_barcodes:
                     issues.append({
                         'type': 'orphaned_lending',
                         'lending_id': str(lending.get('_id')),
@@ -680,27 +677,23 @@ class LendingService:
             # 1. Werkzeuge mit falschem Status korrigieren
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
             
-            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
-            active_lendings_cursor = mongodb.find('lendings', {
-                'returned_at': None,
-                'tool_barcode': {'$exists': True}
-            })
-            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
-
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe über Set
-                has_active_lending = barcode in active_lent_barcodes
+                # Prüfe aktive Ausleihe
+                active_lending = mongodb.find_one('lendings', {
+                    'tool_barcode': barcode,
+                    'returned_at': None
+                })
                 
-                if has_active_lending and status != 'ausgeliehen':
+                if active_lending and status != 'ausgeliehen':
                     # Werkzeug ist ausgeliehen aber Status ist falsch
                     mongodb.update_one('tools', 
                                      {'barcode': barcode}, 
                                      {'$set': {'status': 'ausgeliehen'}})
                     fixed_count += 1
-                elif not has_active_lending and status == 'ausgeliehen':
+                elif not active_lending and status == 'ausgeliehen':
                     # Werkzeug ist nicht ausgeliehen aber Status ist falsch
                     mongodb.update_one('tools', 
                                      {'barcode': barcode}, 
@@ -713,20 +706,22 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
-            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
-            tools_cache = {}
-            if unique_tool_barcodes:
-                tools = mongodb.find('tools', {
-                    'barcode': {'$in': unique_tool_barcodes},
+            # Sammle alle relevanten Tool-Barcodes
+            tool_barcodes_to_check = list({lending.get('tool_barcode') for lending in orphaned_lendings if lending.get('tool_barcode')})
+
+            existing_tool_barcodes = set()
+            if tool_barcodes_to_check:
+                # Hole alle relevanten Tools mit einer einzigen Abfrage
+                existing_tools = list(mongodb.find('tools', {
+                    'barcode': {'$in': tool_barcodes_to_check},
                     'deleted': {'$ne': True}
-                })
-                tools_cache = {t.get('barcode'): t for t in tools}
+                }))
+                existing_tool_barcodes = {tool.get('barcode') for tool in existing_tools}
 
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = tools_cache.get(tool_barcode)
                 
-                if not tool:
+                if tool_barcode not in existing_tool_barcodes:
                     # Werkzeug existiert nicht mehr, Ausleihe löschen
                     mongodb.delete_one('lendings', {'_id': lending['_id']})
                     cleaned_count += 1
