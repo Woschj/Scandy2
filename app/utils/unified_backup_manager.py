@@ -110,11 +110,11 @@ class UnifiedBackupManager:
             
             # 4. Alles zusammenfassen
             final_backup_path = self._create_final_backup(
-                backup_name, 
-                db_backup_path, 
-                media_backup_path, 
-                config_backup_path,
-                compress
+                backup_name,
+                compress,
+                mongodb=db_backup_path,
+                media=media_backup_path,
+                config=config_backup_path
             )
             
             if final_backup_path:
@@ -396,9 +396,7 @@ class UnifiedBackupManager:
             print(f"  ❌ Fehler beim Konfigurations-Backup: [Interner Fehler]")
             return None
     
-    def _create_final_backup(self, backup_name: str, db_path: Path, 
-                            media_path: Optional[Path], config_path: Optional[Path],
-                            compress: bool) -> Optional[str]:
+    def _create_final_backup(self, backup_name: str, compress: bool, **paths: Optional[Path]) -> Optional[str]:
         """Erstellt das finale Backup-Paket"""
         try:
             final_backup_path = self.backup_dir / f"{backup_name}.zip"
@@ -418,36 +416,21 @@ class UnifiedBackupManager:
                     print(f"  ⚠️  Konnte Datei nicht hinzufügen ({arcname}): [Interner Fehler]")
 
             with zipfile.ZipFile(final_backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # MongoDB-Backup hinzufügen
-                if db_path and db_path.exists():
-                    for root, dirs, files in os.walk(db_path):
-                        for file in files:
-                            file_path = Path(root) / file
-                            arcname = f"mongodb/{file_path.relative_to(db_path)}"
-                            _add_file_with_checksum(zipf, file_path, arcname)
-                
-                # Medien-Backup hinzufügen
-                if media_path and media_path.exists():
-                    for root, dirs, files in os.walk(media_path):
-                        for file in files:
-                            file_path = Path(root) / file
-                            arcname = f"media/{file_path.relative_to(media_path)}"
-                            _add_file_with_checksum(zipf, file_path, arcname)
-                
-                # Konfigurations-Backup hinzufügen
-                if config_path and config_path.exists():
-                    for root, dirs, files in os.walk(config_path):
-                        for file in files:
-                            file_path = Path(root) / file
-                            arcname = f"config/{file_path.relative_to(config_path)}"
-                            _add_file_with_checksum(zipf, file_path, arcname)
+                # Dynamisch Backups hinzufügen
+                for prefix, path in paths.items():
+                    if path and path.exists():
+                        for root, dirs, files in os.walk(path):
+                            for file in files:
+                                file_path = Path(root) / file
+                                arcname = f"{prefix}/{file_path.relative_to(path)}"
+                                _add_file_with_checksum(zipf, file_path, arcname)
                 
                 # Backup-Metadaten hinzufügen
                 metadata = {
                     'backup_name': backup_name,
                     'created_at': datetime.now().isoformat(),
-                    'includes_media': media_path is not None,
-                    'includes_config': config_path is not None,
+                    'includes_media': paths.get('media') is not None,
+                    'includes_config': paths.get('config') is not None,
                     'compressed': compress,
                     'version': '2.0'
                 }
