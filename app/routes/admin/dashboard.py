@@ -136,13 +136,20 @@ def dashboard():
                 logger.info(f"  Ausleihe: Tool={lending.get('tool_barcode')}, Worker={lending.get('worker_barcode')}, ID={lending.get('_id')}")
 
             # Erstelle Set der ausgeliehenen Tool-Barcodes (entferne Duplikate)
+            # Bolt ⚡: Collect worker barcodes as well for bulk fetching
             lent_barcodes = set()
+            worker_barcodes = set()
             for lending in current_lendings:
-                tool_barcode = lending.get('tool_barcode')
-                if tool_barcode:
-                    lent_barcodes.add(tool_barcode)
+                tb = lending.get('tool_barcode')
+                wb = lending.get('worker_barcode')
+                if tb: lent_barcodes.add(tb)
+                if wb: worker_barcodes.add(wb)
 
-            logger.info(f"Dashboard Debug: {len(lent_barcodes)} eindeutige ausgeliehene Tools: {list(lent_barcodes)}")
+            # Bolt ⚡: Optimization - Bulk fetch tools and workers involved in active lendings to avoid N+1 queries
+            tools_cache = {t.get('barcode'): t for t in mongodb.find('tools', {'barcode': {'$in': list(lent_barcodes)}})}
+            workers_cache = {w.get('barcode'): w for w in mongodb.find('workers', {'barcode': {'$in': list(worker_barcodes)}})}
+
+            logger.info(f"Dashboard Debug: {len(lent_barcodes)} eindeutige ausgeliehene Tools")
 
             available_count = 0
             lent_count = 0
@@ -249,8 +256,9 @@ def dashboard():
             duplicate_lendings = {barcode: count for barcode, count in lending_counts.items() if count > 1}
             if duplicate_lendings:
                 logger.warning(f"Dashboard Debug: Doppelte Ausleihen gefunden: {duplicate_lendings}")
+                # Bolt ⚡: Optimization - Use bulk-fetched tools_cache instead of mongodb.find_one
                 for barcode, count in duplicate_lendings.items():
-                    tool = mongodb.find_one('tools', {'barcode': barcode})
+                    tool = tools_cache.get(barcode)
                     if tool:
                         tool_warnings.append({
                             'name': f"{tool.get('name', 'Unbekanntes Tool')} (Barcode: {barcode})",
@@ -258,70 +266,41 @@ def dashboard():
                             'severity': 'warning'
                         })
 
-            # Überfällige Ausleihen (mehr als 30 Tage)
-            overdue_lendings = []
-            for lending in current_lendings:
-                try:
-                    lent_at = lending.get('lent_at')
-                    if isinstance(lent_at, str):
-                        try:
-                            lent_at = datetime.strptime(lent_at, '%Y-%m-%d %H:%M:%S.%f')
-                        except ValueError:
-                            try:
-                                lent_at = datetime.strptime(lent_at, '%Y-%m-%d %H:%M:%S')
-                            except ValueError:
-                                continue
-
-                    if isinstance(lent_at, datetime):
-                        days_lent = (datetime.now() - lent_at).days
-                        if days_lent > 30:
-                            tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode')})
-                            worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode')})
-
-                            if tool and worker:
-                                overdue_lendings.append({
-                                    'name': f"{tool.get('name', 'Unbekanntes Tool')} - {worker.get('name', 'Unbekannter Worker')}",
-                                    'status': f'Überfällig ({days_lent} Tage)',
-                                    'severity': 'warning'
-                                })
-                except Exception as e:
-                    continue
-
-            tool_warnings.extend(overdue_lendings)
-
-            # Consumable-Warnungen - Verbesserte Logik
-            consumable_warnings = []
-            all_consumables = list(mongodb.find('consumables', {'deleted': {'$ne': True}}))
-
-            for consumable in all_consumables:
-                stock = consumable.get('stock', consumable.get('quantity', 0))
-                try:
-                    stock = int(stock) if stock is not None else 0
-                except (ValueError, TypeError):
-                    stock = 0
-
-                if stock <= 0:
-                    consumable_warnings.append({
-                        'message': f"{consumable.get('name', 'Unbekanntes Verbrauchsmaterial')} (Bestand: {stock})",
-                        'type': 'error',
-                        'icon': 'times'
-                    })
-                elif stock < 5:
-                    consumable_warnings.append({
-                        'message': f"{consumable.get('name', 'Unbekanntes Verbrauchsmaterial')} (Bestand: {stock})",
-                        'type': 'warning',
-                        'icon': 'exclamation-triangle'
-                    })
+            # Bolt ⚡: Removed redundant overdue lending and consumable stock check loops here
+            # as these are already computed and provided via AdminDashboardService.get_warnings()
+            # which is assigned to the 'warnings' variable used in the template.
 
             # Aktuelle Ausleihen
-            current_lendings = list(mongodb.find('lendings', {'returned_at': {'$exists': False}}))
+            # Bolt ⚡: Reuse current_lendings fetched earlier to avoid redundant DB call
+            # current_lendings = list(mongodb.find('lendings', {'returned_at': {'$exists': False}}))
 
             # Verarbeite Ausleihen für Anzeige
             processed_lendings = []
+
+            # Batch-Fetch für Tools und Worker zur Vermeidung von N+1 Queries
+            t_codes = list({
+                l.get('tool_barcode') for l in current_lendings
+                if l.get('tool_barcode')
+            })
+            w_codes = list({
+                l.get('worker_barcode') for l in current_lendings
+                if l.get('worker_barcode')
+            })
+
+            tools_cache = {}
+            if t_codes:
+                tools = mongodb.find('tools', {'barcode': {'$in': t_codes}})
+                tools_cache = {t.get('barcode'): t for t in tools}
+
+            workers_cache = {}
+            if w_codes:
+                workers = mongodb.find('workers', {'barcode': {'$in': w_codes}})
+                workers_cache = {w.get('barcode'): w for w in workers}
+
             for lending in current_lendings:
                 try:
-                    tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode', '')})
-                    worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode', '')})
+                    tool = tools_cache.get(lending.get('tool_barcode', ''))
+                    worker = workers_cache.get(lending.get('worker_barcode', ''))
 
                     if tool and worker:
                         # Sichere Datumsbehandlung
@@ -364,6 +343,13 @@ def dashboard():
             total_workers = 0
             total_tickets = 0
 
+        # Bolt ⚡: Merge manual tool_warnings into the main warnings object
+        if tool_warnings:
+            if 'defect_tools' not in warnings: warnings['defect_tools'] = []
+            warnings['defect_tools'].extend([tw for tw in tool_warnings if tw.get('status') == 'Defekt'])
+            # Add duplicate lendings to warnings
+            warnings['duplicate_lendings'] = [tw for tw in tool_warnings if 'Doppelte Ausleihen' in tw.get('status', '')]
+
         return render_template('admin/dashboard.html',
                              recent_activity=recent_activity,
                              material_usage=material_usage,
@@ -378,8 +364,6 @@ def dashboard():
                              tool_stats=tool_stats,
                              consumable_stats=consumable_stats,
                              worker_stats=worker_stats,
-                             tool_warnings=tool_warnings,
-                             consumable_warnings=consumable_warnings,
                              notices=notices)
 
     except Exception as e:
@@ -388,7 +372,7 @@ def dashboard():
         return render_template('admin/dashboard.html',
                              recent_activity=[],
                              material_usage={'usage_data': [], 'period_days': 30},
-                             warnings={'defect_tools': [], 'overdue_lendings': [], 'low_stock_consumables': []},
+                             warnings={'defect_tools': [], 'overdue_lendings': [], 'low_stock_consumables': [], 'duplicate_lendings': []},
                              consumables_forecast=[],
                              consumable_trend={},
                              total_tools=0,
@@ -399,8 +383,6 @@ def dashboard():
                              tool_stats={'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
                              consumable_stats={'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
                              worker_stats={'total': 0, 'by_department': []},
-                             tool_warnings=[],
-                             consumable_warnings=[],
                              notices=[])
 
 @bp.route('/tickets/<id>/export')
