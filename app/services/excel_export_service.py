@@ -483,25 +483,44 @@ class ExcelExportService:
             # Lade Ausgaben
             consumptions = list(mongodb.find('consumptions', {}, sort=[('consumed_at', -1)]))
             
+            # Lade alle Verbrauchsmaterialien und Mitarbeiter in Dictionaries für O(1) Lookup
+            consumables_data = list(mongodb.find('consumables', {}))
+            consumables_dict = {
+                c.get('barcode'): c for c in consumables_data if c.get('barcode')
+            }
+
+            workers_data = list(mongodb.find('workers', {}))
+            workers_dict = {
+                w.get('barcode'): w for w in workers_data if w.get('barcode')
+            }
+
             # Schreibe Daten
             for row, consumption in enumerate(consumptions, 2):
                 # Hole Verbrauchsmaterial-Info
-                consumable = mongodb.find_one('consumables', {'barcode': consumption.get('consumable_barcode')})
-                consumable_name = consumable.get('name', 'Unbekannt') if consumable else 'Unbekannt'
+                consumable_barcode = consumption.get('consumable_barcode')
+                consumable = consumables_dict.get(consumable_barcode)
+                c_name = consumable.get('name', 'Unbekannt') if consumable else 'Unbekannt'
                 unit = consumable.get('unit', '') if consumable else ''
                 
                 # Hole Mitarbeiter-Info
-                worker = mongodb.find_one('workers', {'barcode': consumption.get('worker_barcode')})
-                worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}" if worker else 'Unbekannt'
+                worker_barcode = consumption.get('worker_barcode')
+                worker = workers_dict.get(worker_barcode)
+                if worker:
+                    fname = worker.get('firstname', '')
+                    lname = worker.get('lastname', '')
+                    worker_name = f"{fname} {lname}"
+                else:
+                    worker_name = 'Unbekannt'
                 
+                consumed_at = consumption.get('consumed_at')
                 data = [
                     consumption.get('consumable_barcode', ''),
-                    consumable_name,
+                    c_name,
                     consumption.get('worker_barcode', ''),
                     worker_name,
                     consumption.get('quantity', 0),
                     unit,
-                    consumption.get('consumed_at', '').strftime('%d.%m.%Y %H:%M') if consumption.get('consumed_at') else '',
+                    consumed_at.strftime('%d.%m.%Y %H:%M') if consumed_at else '',
                     consumption.get('reason', '')
                 ]
                 
