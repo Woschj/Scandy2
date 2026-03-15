@@ -267,34 +267,58 @@ class NotificationService:
             # Werkzeuge die länger als 30 Tage ausgeliehen sind
             overdue_date = datetime.now() - timedelta(days=30)
             
-            overdue_lendings = mongodb.find('lendings', {
+            overdue_lendings = list(mongodb.find('lendings', {
                 'returned_at': None,
                 'lent_at': {'$lt': overdue_date}
-            })
+            }))
+
+            if not overdue_lendings:
+                return 0
+
+            t_barcodes = {x.get('tool_barcode') for x in overdue_lendings if x.get('tool_barcode')}
+            w_barcodes = {x.get('worker_barcode') for x in overdue_lendings if x.get('worker_barcode')}
+
+            tool_barcodes = list(t_barcodes)
+            worker_barcodes = list(w_barcodes)
+
+            tools_query = {'barcode': {'$in': tool_barcodes}}
+            workers_query = {'barcode': {'$in': worker_barcodes}}
+
+            tools_data = list(mongodb.find('tools', tools_query))
+            workers_data = list(mongodb.find('workers', workers_query))
+
+            tools_dict = {t.get('barcode'): t for t in tools_data}
+            workers_dict = {w.get('barcode'): w for w in workers_data}
             
             notification_count = 0
             
             for lending in overdue_lendings:
                 try:
-                    tool = mongodb.find_one('tools', {'barcode': lending['tool_barcode']})
-                    worker = mongodb.find_one('workers', {'barcode': lending['worker_barcode']})
+                    tool = tools_dict.get(lending.get('tool_barcode'))
+                    worker = workers_dict.get(lending.get('worker_barcode'))
                     
                     if tool and worker:
                         title = "Überfälliges Werkzeug"
-                        message = f"Das Werkzeug '{tool.get('name', '')}' ist seit über 30 Tagen an {worker.get('firstname', '')} {worker.get('lastname', '')} ausgeliehen."
+                        t_name = tool.get('name', '')
+                        w_first = worker.get('firstname', '')
+                        w_last = worker.get('lastname', '')
+                        message = (
+                            f"Das Werkzeug '{t_name}' ist seit über 30 Tagen "
+                            f"an {w_first} {w_last} ausgeliehen."
+                        )
                         
                         success, _ = self.create_system_alert(title, message, "warning")
                         if success:
                             notification_count += 1
                             
                 except Exception as e:
-                    logger.error(f"Fehler bei der Überfälligkeitsprüfung: [Interner Fehler]")
+                    logger.error("Fehler bei der Überfälligkeitsprüfung: %s", e)
                     continue
             
             return notification_count
             
         except Exception as e:
-            logger.error(f"Fehler bei der Überfälligkeitsprüfung: [Interner Fehler]")
+            logger.error("Fehler bei der Überfälligkeitsprüfung: %s", e)
             return 0
     
     def get_notification_settings(self) -> Dict[str, Any]:
