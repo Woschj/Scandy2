@@ -56,12 +56,13 @@
 {% endif %}
 <th>Ausgeliehen seit</th>
 <th>Ausgeliehen bis</th>
-<th class="text-right">Aktionen</th>
+<th class="text-right no-sort">Aktionen</th>
 {% endblock %}
 
 {% block table_rows %}
 {% for tool in tools %}
 <tr class="hover data-row" 
+    data-barcode="{{ tool.barcode }}"
     data-category="{{ tool.category or '' }}" 
     data-location="{{ tool.location or '' }}"
     data-status="{{ tool.status or '' }}">
@@ -158,10 +159,14 @@
     <td class="text-right">
         <div class="btn-group">
             {% if tool.barcode %}
-            <a href="{{ url_for('tools.detail', barcode=tool.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('tools.detail', barcode=tool.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="{{ app_labels.tools.name }} bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('tool', '{{ tool.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('tool', '{{ tool.barcode }}')"
+                    aria-label="{{ app_labels.tools.name }} löschen">
                 <i class="fas fa-trash"></i>
             </button>
             {% else %}

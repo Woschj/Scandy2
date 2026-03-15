@@ -31,12 +31,12 @@
 <th>E-Mail</th>
 <th>Benutzer</th>
 <th>Status</th>
-<th class="text-right">Aktionen</th>
+<th class="text-right no-sort">Aktionen</th>
 {% endblock %}
 
 {% block table_rows %}
 {% for worker in workers %}
-<tr class="hover data-row" data-department="{{ worker.department or '' }}">
+<tr class="hover data-row" data-department="{{ worker.department or '' }}" data-barcode="{{ worker.barcode }}">
     <td>
         <div class="flex items-center space-x-3">
             <div>
@@ -93,10 +93,14 @@
     </td>
     <td class="text-right">
         <div class="btn-group">
-            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}" class="btn btn-sm btn-ghost">
+            <a href="{{ url_for('workers.details', original_barcode=worker.barcode) }}"
+               class="btn btn-sm btn-ghost"
+               aria-label="Mitarbeiter bearbeiten">
                 <i class="fas fa-edit"></i>
             </a>
-            <button class="btn btn-sm btn-ghost btn-error" onclick="deleteItem('worker', '{{ worker.barcode }}')">
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('worker', '{{ worker.barcode }}')"
+                    aria-label="Mitarbeiter löschen">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
