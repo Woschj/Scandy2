@@ -430,9 +430,9 @@ class MongoDBDatabase:
         
         return list(collection.distinct(field, processed_filter))
     
-    def create_index(self, collection_name: str, field: Union[str, List[tuple]], unique: bool = False, sparse: bool = False, expire_after_seconds: Optional[int] = None):
+    def create_index(self, collection_name: str, field: Union[str, List[tuple]], **kwargs: Any):
         """Erstellt einen Index für eine Collection.
-        Unterstützt auch TTL-Indizes via expire_after_seconds.
+        Unterstützt alle nativen PyMongo Index-Optionen via kwargs (z.B. unique, sparse, expireAfterSeconds).
         """
         collection = self.get_collection(collection_name)
         try:
@@ -452,12 +452,10 @@ class MongoDBDatabase:
                     if index.get('name') == expected_name:
                         return
 
-            # Index erstellen (TTL falls expire_after_seconds gesetzt ist)
+            # Index erstellen (unterstützt alle PyMongo-Optionen via kwargs)
             collection.create_index(
                 field,
-                unique=unique,
-                sparse=sparse,
-                expireAfterSeconds=expire_after_seconds if expire_after_seconds is not None else None
+                **kwargs
             )
         except Exception as e:
             # Ignoriere bekannte Konflikte

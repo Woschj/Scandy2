@@ -241,14 +241,14 @@ def upload_media(entity_type, entity_id):
                 # History-Logging für Medien-Upload (nur bei Tickets)
                 if entity_type == 'tickets':
                     try:
-                        from app.services.ticket_history_service import ticket_history_service
+                        from app.services.ticket_history_service import ticket_history_service, ChangeContext
                         ticket_history_service.log_change(
                             ticket_id=str(entity_id),
                             field='medien',
                             old_value=None,
                             new_value=f"Datei hochgeladen: {filename}",
                             changed_by=current_user.username,
-                            change_type='media_added'
+                            context=ChangeContext(change_type='media_added')
                         )
                     except Exception as history_error:
                         loggers['errors'].error(f"Fehler beim History-Logging für Medien-Upload: {history_error}")
@@ -265,14 +265,14 @@ def upload_media(entity_type, entity_id):
             # History-Logging für Medien-Upload (nur bei Tickets) - Fallback
             if entity_type == 'tickets':
                 try:
-                    from app.services.ticket_history_service import ticket_history_service
+                    from app.services.ticket_history_service import ticket_history_service, ChangeContext
                     ticket_history_service.log_change(
                         ticket_id=str(entity_id),
                         field='medien',
                         old_value=None,
                         new_value=f"Datei hochgeladen: {filename}",
                         changed_by=current_user.username,
-                        change_type='media_added'
+                        context=ChangeContext(change_type='media_added')
                     )
                 except Exception as history_error:
                     loggers['errors'].error(f"Fehler beim History-Logging für Medien-Upload: {history_error}")
@@ -329,14 +329,14 @@ def delete_media(entity_type, entity_id, filename):
             # History-Logging für Medien-Löschung (nur bei Tickets)
             if entity_type == 'tickets':
                 try:
-                    from app.services.ticket_history_service import ticket_history_service
+                    from app.services.ticket_history_service import ticket_history_service, ChangeContext
                     ticket_history_service.log_change(
                         ticket_id=str(entity_id),
                         field='medien',
                         old_value=f"Datei: {filename}",
                         new_value=None,
                         changed_by=current_user.username,
-                        change_type='media_deleted'
+                        context=ChangeContext(change_type='media_deleted')
                     )
                 except Exception as history_error:
                     loggers['errors'].error(f"Fehler beim History-Logging für Medien-Löschung: {history_error}")
