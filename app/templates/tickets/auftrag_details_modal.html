@@ -63,7 +63,9 @@
                                 <td><input type="number" name="menge" class="menge-input input input-bordered w-24" value="{{ mat.menge }}" min="0" step="any"></td>
                                 <td><input type="number" name="einzelpreis" class="einzelpreis-input input input-bordered w-24" value="{{ mat.einzelpreis }}" min="0" step="any"></td>
                                 <td><input type="text" name="gesamtpreis" class="input input-bordered w-32" value="{{ (mat.menge * mat.einzelpreis)|round(2) }}" readonly></td>
-                                <td><button type="button" class="btn btn-error btn-sm delete-material-btn"><i class="fas fa-trash"></i></button></td>
+                                <td><button aria-label="Löschen" type="button" class="btn btn-error btn-sm delete-material-btn">
+<i class="fas fa-trash"></i>
+</button></td>
                             </tr>
                             {% endfor %}
                         {% endif %}
@@ -72,7 +74,9 @@
                             <td><input type="number" name="menge" class="menge-input input input-bordered w-24" min="0" step="any"></td>
                             <td><input type="number" name="einzelpreis" class="einzelpreis-input input input-bordered w-24" min="0" step="any"></td>
                             <td><input type="text" name="gesamtpreis" class="input input-bordered w-32" readonly></td>
-                            <td><button type="button" class="btn btn-error btn-sm delete-material-btn"><i class="fas fa-trash"></i></button></td>
+                            <td><button aria-label="Löschen" type="button" class="btn btn-error btn-sm delete-material-btn">
+<i class="fas fa-trash"></i>
+</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -101,7 +105,9 @@
                                     <td><input type="text" name="arbeit" class="arbeit-input input input-bordered w-full" value="{{ arbeit.arbeit }}"></td>
                                     <td><input type="number" name="arbeitsstunden" class="arbeitsstunden-input input input-bordered w-full" min="0" step="0.5" value="{{ arbeit.arbeitsstunden }}"></td>
                                     <td><input type="text" name="leistungskategorie" class="leistungskategorie-input input input-bordered w-full" value="{{ arbeit.leistungskategorie }}"></td>
-                                        <td><button type="button" class="btn btn-error btn-sm delete-arbeit-btn"><i class="fas fa-trash"></i></button></td>
+                                        <td><button aria-label="Löschen" type="button" class="btn btn-error btn-sm delete-arbeit-btn">
+<i class="fas fa-trash"></i>
+</button></td>
                                     </tr>
                             {% endfor %}
                         {% endif %}
@@ -109,7 +115,9 @@
                             <td><input type="text" name="arbeit" class="arbeit-input input input-bordered w-full"></td>
                             <td><input type="number" name="arbeitsstunden" class="arbeitsstunden-input input input-bordered w-full" min="0" step="0.5"></td>
                             <td><input type="text" name="leistungskategorie" class="leistungskategorie-input input input-bordered w-full"></td>
-                            <td><button type="button" class="btn btn-error btn-sm delete-arbeit-btn"><i class="fas fa-trash"></i></button></td>
+                            <td><button aria-label="Löschen" type="button" class="btn btn-error btn-sm delete-arbeit-btn">
+<i class="fas fa-trash"></i>
+</button></td>
                         </tr>
                     </tbody>
                 </table>

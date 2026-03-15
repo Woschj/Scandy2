@@ -42,10 +42,10 @@
                                 <form action="{{ url_for('api.delete_notice', id=notice.id) }}" 
                                       method="POST" class="inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-ghost btn-sm text-error"
+                                    <button aria-label="Löschen" type="submit" class="btn btn-ghost btn-sm text-error"
                                             onclick="return confirm('Möchten Sie diesen Hinweis wirklich löschen?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+<i class="fas fa-trash"></i>
+</button>
                                 </form>
                             </td>
                         </tr>

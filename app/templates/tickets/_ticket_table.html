@@ -48,10 +48,10 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('tickets.view', ticket_id=ticket.id) }}" 
+                    <a aria-label="Ansehen" href="{{ url_for('tickets.view', ticket_id=ticket.id) }}"
                        class="btn btn-sm btn-primary">
-                        <i class="fas fa-eye"></i>
-                    </a>
+<i class="fas fa-eye"></i>
+</a>
                 </td>
             </tr>
             {% endfor %}

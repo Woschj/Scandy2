@@ -90,9 +90,9 @@
                         {% if ts.user_id == current_user.username or current_user.is_admin %}
                         <form method="POST" action="{{ url_for('workers.timesheet_delete', ts_id=ts._id) }}" onsubmit="return confirm('Diesen Wochenbericht wirklich löschen?');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-error" title="Löschen">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <button aria-label="Löschen" type="submit" class="btn btn-sm btn-error" title="Löschen">
+<i class="fas fa-trash"></i>
+</button>
                         </form>
                         {% endif %}
                         <a href="{{ url_for('workers.timesheet_edit', ts_id=ts._id) }}" class="btn btn-sm btn-secondary">Bearbeiten</a>

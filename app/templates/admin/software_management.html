@@ -226,9 +226,9 @@ function renderSoftwareList() {
                 ${software.category ? `<div class="text-sm text-base-content/60">Kategorie: ${software.category}</div>` : ''}
                 ${software.description ? `<div class="text-sm text-base-content/60">${software.description}</div>` : ''}
             </div>
-            <button onclick="deleteSoftware('${software._id}', '${software.name}')" class="btn btn-error btn-xs">
-                <i class="fas fa-trash"></i>
-            </button>
+            <button aria-label="Löschen" onclick="deleteSoftware('${software._id}', '${software.name}')" class="btn btn-error btn-xs">
+<i class="fas fa-trash"></i>
+</button>
         </div>
     `).join('');
 }
@@ -346,12 +346,12 @@ function renderUserGroupsList() {
                     <div class="text-sm text-base-content/60">Software: ${softwareNames || 'Keine'}</div>
                 </div>
                 <div class="flex gap-1">
-                    <button onclick="editUserGroup('${group._id}')" class="btn btn-outline btn-xs">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteUserGroup('${group._id}', '${group.name}')" class="btn btn-error btn-xs">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button aria-label="Bearbeiten" onclick="editUserGroup('${group._id}')" class="btn btn-outline btn-xs">
+<i class="fas fa-edit"></i>
+</button>
+                    <button aria-label="Löschen" onclick="deleteUserGroup('${group._id}', '${group.name}')" class="btn btn-error btn-xs">
+<i class="fas fa-trash"></i>
+</button>
                 </div>
             </div>
         `;

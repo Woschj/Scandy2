@@ -165,9 +165,9 @@
 
                     <td>
                         <div class="flex space-x-2">
-                            <a href="{{ url_for('admin.edit_user', user_id=user._id) }}" class="btn btn-sm btn-outline btn-info" title="Bearbeiten">
-                                <i class="fas fa-edit"></i>
-                            </a>
+                            <a aria-label="Bearbeiten" href="{{ url_for('admin.edit_user', user_id=user._id) }}" class="btn btn-sm btn-outline btn-info" title="Bearbeiten">
+<i class="fas fa-edit"></i>
+</a>
                             
 
                             
@@ -175,9 +175,9 @@
                             <form action="{{ url_for('admin.delete_user', user_id=user._id) }}" method="post" class="inline-block"
                                   onsubmit="return confirm('Benutzer {{ user.username|e }} in den Papierkorb verschieben?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline btn-warning" title="In Papierkorb verschieben">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                <button aria-label="Löschen" type="submit" class="btn btn-sm btn-outline btn-warning" title="In Papierkorb verschieben">
+<i class="fas fa-trash"></i>
+</button>
                             </form>
                             {# Endgültig löschen entfernt: immer über Papierkorb #}
                         </div>
