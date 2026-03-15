@@ -7,9 +7,18 @@ Protokolliert alle Änderungen an Tickets für eine vollständige Historie
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass
 from app.models.mongodb_database import mongodb
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AssignmentDetails:
+    """Details einer Ticket-Zuweisung für die Historie"""
+    old_assignee: Optional[str]
+    new_assignee: Optional[str]
+    note: Optional[str] = None
 
 
 class TicketHistoryService:
@@ -94,17 +103,14 @@ class TicketHistoryService:
             note=note
         )
     
-    def log_assignment(self, ticket_id: str, old_assignee: Optional[str], new_assignee: Optional[str], 
-                      changed_by: str, note: Optional[str] = None) -> bool:
+    def log_assignment(self, ticket_id: str, details: AssignmentDetails, changed_by: str) -> bool:
         """
         Protokolliert eine Zuweisungsänderung
         
         Args:
             ticket_id: ID des Tickets
-            old_assignee: Alter Zugewiesener
-            new_assignee: Neuer Zugewiesener
+            details: Details zur Zuweisungsänderung (AssignmentDetails)
             changed_by: Benutzer der die Änderung vorgenommen hat
-            note: Optionale Notiz
             
         Returns:
             bool: True wenn erfolgreich
@@ -112,11 +118,11 @@ class TicketHistoryService:
         return self.log_change(
             ticket_id=ticket_id,
             field='assigned_to',
-            old_value=old_assignee or 'Nicht zugewiesen',
-            new_value=new_assignee or 'Nicht zugewiesen',
+            old_value=details.old_assignee or 'Nicht zugewiesen',
+            new_value=details.new_assignee or 'Nicht zugewiesen',
             changed_by=changed_by,
             change_type='assignment',
-            note=note
+            note=details.note
         )
     
     def log_creation(self, ticket_id: str, created_by: str, ticket_data: Dict[str, Any]) -> bool:

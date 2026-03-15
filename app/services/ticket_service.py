@@ -744,11 +744,14 @@ class TicketService:
 
             # History-Logging
             try:
-                from app.services.ticket_history_service import ticket_history_service
+                from app.services.ticket_history_service import ticket_history_service, AssignmentDetails
+                details = AssignmentDetails(
+                    old_assignee=ticket.get('responsible') or 'Nicht gesetzt',
+                    new_assignee=responsible_username or 'Nicht gesetzt'
+                )
                 ticket_history_service.log_assignment(
                     ticket_id=str(ticket_id),
-                    old_assignee=ticket.get('responsible') or 'Nicht gesetzt',
-                    new_assignee=responsible_username or 'Nicht gesetzt',
+                    details=details,
                     changed_by=updated_by
                 )
             except Exception as history_error:
