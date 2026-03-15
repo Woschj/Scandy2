@@ -1557,25 +1557,27 @@ def update_details(id):
                             'fertigstellungstermin': 'Fertigstellungstermin'
                         }.get(field, field)
                         
+                        from app.services.ticket_history_service import ChangeContext
                         ticket_history_service.log_change(
                             ticket_id=str(id),
                             field=field_name,
                             old_value=old_value,
                             new_value=new_value,
                             changed_by=current_user.username,
-                            change_type='update'
+                            context=ChangeContext(change_type='update')
                         )
                 
                 mongodb.update_one('auftrag_details', {'ticket_id': ticket_id_for_query}, {'$set': auftrag_details_daten})
             else:
                 # Neue Auftragsdetails erstellt
+                from app.services.ticket_history_service import ChangeContext
                 ticket_history_service.log_change(
                     ticket_id=str(id),
                     field='auftragsdetails',
                     old_value=None,
                     new_value='Auftragsdetails hinzugefügt',
                     changed_by=current_user.username,
-                    change_type='update'
+                    context=ChangeContext(change_type='update')
                 )
                 mongodb.insert_one('auftrag_details', auftrag_details_daten)
         except Exception as history_error:
