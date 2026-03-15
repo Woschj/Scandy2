@@ -395,12 +395,12 @@ class MongoDBTool:
         tool_barcodes = list(mongodb.find(cls.COLLECTION_NAME, {
             'deleted': {'$ne': True},
             'barcode': {'$exists': True, '$ne': None}
-        }, {'barcode': 1, 'name': 1}))
+        }, projection={'barcode': 1, 'name': 1}))
         
         consumable_barcodes = list(mongodb.find('consumables', {
             'deleted': {'$ne': True},
             'barcode': {'$exists': True, '$ne': None}
-        }, {'barcode': 1, 'name': 1}))
+        }, projection={'barcode': 1, 'name': 1}))
         
         # Barcode-Zählung
         barcode_count = {}

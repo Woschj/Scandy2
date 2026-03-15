@@ -173,9 +173,12 @@ class MongoDBDatabase:
         
         return result
     
-    def find(self, collection_name: str, filter_dict: Dict[str, Any] = None, 
-             sort: List[tuple] = None, limit: int = None, skip: int = None) -> List[Dict[str, Any]]:
-        """Findet mehrere Dokumente in einer Collection"""
+    def find(self, collection_name: str, filter_dict: Optional[Dict[str, Any]] = None,
+             **kwargs) -> List[Dict[str, Any]]:
+        """Findet mehrere Dokumente in einer Collection.
+        Zusätzliche Argumente wie 'sort', 'limit', 'skip', 'projection'
+        können als Keyword-Argumente übergeben werden.
+        """
         collection = self.get_collection(collection_name)
         
         if filter_dict is None:
@@ -186,16 +189,7 @@ class MongoDBDatabase:
         # Department-Scoping anwenden
         processed_filter = self._augment_filter_with_department(collection_name, processed_filter)
         
-        cursor = collection.find(processed_filter)
-        
-        if sort:
-            cursor = cursor.sort(sort)
-        
-        if skip:
-            cursor = cursor.skip(skip)
-        
-        if limit:
-            cursor = cursor.limit(limit)
+        cursor = collection.find(processed_filter, **kwargs)
         
         results = []
         for doc in cursor:
