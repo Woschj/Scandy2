@@ -15,3 +15,6 @@
 ## 2026-03-14 - [Efficient ID/Number Generation]
 **Learning:** Found an O(N) bottleneck where the application scanned the entire collection to determine the next sequential ID (`job_number`).
 **Action:** Replace full-collection scans with a sorted query (`sort=[('field', -1)], limit=1`) and ensure a unique index exists on that field to provide O(1)/O(log N) lookup and guarantee consistency.
+## 2026-03-15 - [LendingService N+1 Optimization]
+**Learning:** Multiple methods in `LendingService` (active lendings, recent usage, history) were performing N+1 database queries. These can be optimized into single aggregation pipelines using `$lookup`.
+**Action:** Use aggregation for joined data. In Top-K queries like `get_recent_consumable_usage`, place `$sort` and `$limit` BEFORE `$lookup` to minimize the join workload and improve memory efficiency.
