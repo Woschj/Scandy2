@@ -615,11 +615,22 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
+            # Sammle alle relevanten Tool-Barcodes
+            tool_barcodes_to_check = list({lending.get('tool_barcode') for lending in orphaned_lendings if lending.get('tool_barcode')})
+
+            existing_tool_barcodes = set()
+            if tool_barcodes_to_check:
+                # Hole alle relevanten Tools mit einer einzigen Abfrage
+                existing_tools = list(mongodb.find('tools', {
+                    'barcode': {'$in': tool_barcodes_to_check},
+                    'deleted': {'$ne': True}
+                }))
+                existing_tool_barcodes = {tool.get('barcode') for tool in existing_tools}
+
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = mongodb.find_one('tools', {'barcode': tool_barcode, 'deleted': {'$ne': True}})
                 
-                if not tool:
+                if tool_barcode not in existing_tool_barcodes:
                     issues.append({
                         'type': 'orphaned_lending',
                         'lending_id': str(lending.get('_id')),
@@ -695,11 +706,22 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
+            # Sammle alle relevanten Tool-Barcodes
+            tool_barcodes_to_check = list({lending.get('tool_barcode') for lending in orphaned_lendings if lending.get('tool_barcode')})
+
+            existing_tool_barcodes = set()
+            if tool_barcodes_to_check:
+                # Hole alle relevanten Tools mit einer einzigen Abfrage
+                existing_tools = list(mongodb.find('tools', {
+                    'barcode': {'$in': tool_barcodes_to_check},
+                    'deleted': {'$ne': True}
+                }))
+                existing_tool_barcodes = {tool.get('barcode') for tool in existing_tools}
+
             for lending in orphaned_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = mongodb.find_one('tools', {'barcode': tool_barcode, 'deleted': {'$ne': True}})
                 
-                if not tool:
+                if tool_barcode not in existing_tool_barcodes:
                     # Werkzeug existiert nicht mehr, Ausleihe löschen
                     mongodb.delete_one('lendings', {'_id': lending['_id']})
                     cleaned_count += 1
