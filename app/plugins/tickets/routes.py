@@ -1208,13 +1208,13 @@ def update_status(id):
 
         # History-Logging für Status-Änderung
         try:
-            from app.services.ticket_history_service import ticket_history_service, TicketStatusChange
-            change = TicketStatusChange(
+            from app.services.ticket_history_service import ticket_history_service
+            ticket_history_service.log_status_change(
+                ticket_id=str(id),
                 old_status=old_status,
                 new_status=new_status,
                 changed_by=current_user.username
             )
-            ticket_history_service.log_status_change(ticket_id=str(id), change=change)
         except Exception as history_error:
             logging.error(f"Fehler beim History-Logging für Status-Änderung: {history_error}")
 
@@ -1294,18 +1294,14 @@ def update_assignment(id):
         if success:
             # History-Logging für Zuweisungsänderung
             try:
-                from app.services.ticket_history_service import ticket_history_service, AssignmentDetails
+                from app.services.ticket_history_service import ticket_history_service
                 old_assignment_str = ', '.join(old_assigned_users) if old_assigned_users else 'Nicht zugewiesen'
                 new_assignment_str = ', '.join(assigned_users) if assigned_users else 'Nicht zugewiesen'
                 
-                details = AssignmentDetails(
-                    old_assignee=old_assignment_str,
-                    new_assignee=new_assignment_str
-                )
-
                 ticket_history_service.log_assignment(
                     ticket_id=str(id),
-                    details=details,
+                    old_assignee=old_assignment_str,
+                    new_assignee=new_assignment_str,
                     changed_by=current_user.username
                 )
             except Exception as history_error:
@@ -1557,27 +1553,25 @@ def update_details(id):
                             'fertigstellungstermin': 'Fertigstellungstermin'
                         }.get(field, field)
                         
-                        from app.services.ticket_history_service import ChangeContext
                         ticket_history_service.log_change(
                             ticket_id=str(id),
                             field=field_name,
                             old_value=old_value,
                             new_value=new_value,
                             changed_by=current_user.username,
-                            context=ChangeContext(change_type='update')
+                            change_type='update'
                         )
                 
                 mongodb.update_one('auftrag_details', {'ticket_id': ticket_id_for_query}, {'$set': auftrag_details_daten})
             else:
                 # Neue Auftragsdetails erstellt
-                from app.services.ticket_history_service import ChangeContext
                 ticket_history_service.log_change(
                     ticket_id=str(id),
                     field='auftragsdetails',
                     old_value=None,
                     new_value='Auftragsdetails hinzugefügt',
                     changed_by=current_user.username,
-                    context=ChangeContext(change_type='update')
+                    change_type='update'
                 )
                 mongodb.insert_one('auftrag_details', auftrag_details_daten)
         except Exception as history_error:

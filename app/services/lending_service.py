@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class LendingService:
     """Zentraler Service für alle Ausleihe/Rückgabe-Operationen"""
     
@@ -63,9 +64,9 @@ class LendingService:
             else:
                 return False, 'Ungültiger Item-Typ', {}
                 
-        except Exception as e:
-            logger.error(f"Fehler bei der Ausleihe-Verarbeitung: [Interner Fehler]")
-            return False, f'Fehler bei der Verarbeitung: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei der Ausleihe-Verarbeitung: [Interner Fehler]")
+            return False, 'Fehler bei der Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def _process_tool_lending(item_barcode: str, worker_barcode: str, action: str, worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -83,9 +84,9 @@ class LendingService:
             else:
                 return False, 'Ungültige Aktion für Werkzeug', {}
                 
-        except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
-            return False, f'Fehler bei der Werkzeug-Verarbeitung: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
+            return False, 'Fehler bei der Werkzeug-Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def _lend_tool(item_barcode: str, worker_barcode: str, tool: Dict[str, Any], worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -143,9 +144,9 @@ class LendingService:
                 'lending_id': str(lending_result)
             }
             
-        except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
-            return False, f'Fehler bei der Ausleihe: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei Werkzeug-Ausleihe: [Interner Fehler]")
+            return False, 'Fehler bei der Ausleihe: [Interner Fehler]', {}
     
     @staticmethod
     def _return_tool(item_barcode: str, worker_barcode: str, tool: Dict[str, Any], worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -183,9 +184,9 @@ class LendingService:
                     try:
                         lending_id = ObjectId(lending_id)
                         logger.info(f"String-ID zu ObjectId konvertiert: {lending_id}")
-                    except Exception as e:
-                        logger.error(f"Fehler beim Konvertieren der ID: [Interner Fehler]")
-                        return False, f'Fehler beim Konvertieren der ID: [Interner Fehler]', {}
+                    except Exception:
+                        logger.error("Fehler beim Konvertieren der ID: [Interner Fehler]")
+                        return False, 'Fehler beim Konvertieren der ID: [Interner Fehler]', {}
                 
                 lending_update_result = mongodb.update_one('lendings', 
                                                         {'_id': lending_id}, 
@@ -203,10 +204,10 @@ class LendingService:
                     logger.error(f"Fehler beim Markieren der Rückgabe für Ausleihe {active_lending['_id']}")
                     return False, 'Fehler beim Markieren der Rückgabe', {}
                 else:
-                    logger.info(f"Ausleihe erfolgreich markiert als zurückgegeben")
-            except Exception as e:
-                logger.error(f"Exception beim Markieren der Rückgabe: [Interner Fehler]")
-                return False, f'Fehler beim Markieren der Rückgabe: [Interner Fehler]', {}
+                    logger.info("Ausleihe erfolgreich markiert als zurückgegeben")
+            except Exception:
+                logger.error("Exception beim Markieren der Rückgabe: [Interner Fehler]")
+                return False, 'Fehler beim Markieren der Rückgabe: [Interner Fehler]', {}
             
             # Aktualisiere Werkzeug-Status
             try:
@@ -225,7 +226,7 @@ class LendingService:
                 
                 if not tool_update_result:
                     # Rollback: Setze Ausleihe zurück wenn Werkzeug-Update fehlschlägt
-                    logger.warning(f"Tool Update fehlgeschlagen, führe Rollback durch")
+                    logger.warning("Tool Update fehlgeschlagen, führe Rollback durch")
                     try:
                         mongodb.update_one('lendings', 
                                          {'_id': active_lending['_id']}, 
@@ -241,9 +242,9 @@ class LendingService:
                     
                     return False, 'Fehler beim Aktualisieren des Werkzeug-Status', {}
                 else:
-                    logger.info(f"Werkzeug-Status erfolgreich aktualisiert")
-            except Exception as e:
-                logger.error(f"Exception beim Aktualisieren des Werkzeug-Status: [Interner Fehler]")
+                    logger.info("Werkzeug-Status erfolgreich aktualisiert")
+            except Exception:
+                logger.error("Exception beim Aktualisieren des Werkzeug-Status: [Interner Fehler]")
                 # Rollback versuchen
                 try:
                     mongodb.update_one('lendings', 
@@ -258,7 +259,7 @@ class LendingService:
                 except Exception as rollback_error:
                     logger.error(f"Rollback fehlgeschlagen: {str(rollback_error)}")
                 
-                return False, f'Fehler beim Aktualisieren des Werkzeug-Status: [Interner Fehler]', {}
+                return False, 'Fehler beim Aktualisieren des Werkzeug-Status: [Interner Fehler]', {}
             
             logger.info(f"Werkzeug {tool['name']} erfolgreich zurückgegeben")
             
@@ -267,9 +268,9 @@ class LendingService:
                 'returned_at': datetime.now()
             }
             
-        except Exception as e:
-            logger.error(f"Fehler bei Werkzeug-Rückgabe: [Interner Fehler]", exc_info=True)
-            return False, f'Fehler bei der Rückgabe: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei Werkzeug-Rückgabe: [Interner Fehler]", exc_info=True)
+            return False, 'Fehler bei der Rückgabe: [Interner Fehler]', {}
     
     @staticmethod
     def _process_consumable_lending(item_barcode: str, worker_barcode: str, action: str, quantity: int, worker: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
@@ -335,9 +336,9 @@ class LendingService:
                 'usage_id': str(usage_result)
             }
             
-        except Exception as e:
-            logger.error(f"Fehler bei Verbrauchsmaterial-Entnahme: [Interner Fehler]")
-            return False, f'Fehler bei der Verbrauchsmaterial-Verarbeitung: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei Verbrauchsmaterial-Entnahme: [Interner Fehler]")
+            return False, 'Fehler bei der Verbrauchsmaterial-Verarbeitung: [Interner Fehler]', {}
     
     @staticmethod
     def get_active_lendings() -> list:
@@ -570,7 +571,7 @@ class LendingService:
     @staticmethod
     def validate_lending_consistency() -> Tuple[bool, str, Dict[str, Any]]:
         """
-        Validiert die Konsistenz der Ausleihdaten
+        Validiert die Konsistenz der Ausleihdaten (optimiert via Batch-Fetching) (Bolt ⚡)
         
         Returns:
             (is_consistent, message, issues)
@@ -578,22 +579,32 @@ class LendingService:
         try:
             issues = []
             
-            # 1. Prüfe Werkzeuge mit falschem Status
+            # O(1) Fetch all tools
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
 
-            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
-            active_lendings_cursor = mongodb.find('lendings', {
+            # O(1) Fetch all active lendings
+            active_lendings = list(mongodb.find('lendings', {
                 'returned_at': None,
                 'tool_barcode': {'$exists': True}
-            })
-            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
+            }))
 
+            # Map tools and lendings
+            tool_status_map = {t.get('barcode'): t.get('status') for t in tools}
+
+            active_lending_counts = {}
+            active_lending_barcodes = set()
+            for lending in active_lendings:
+                barcode = lending.get('tool_barcode')
+                if barcode:
+                    active_lending_counts[barcode] = active_lending_counts.get(barcode, 0) + 1
+                    active_lending_barcodes.add(barcode)
+
+            # 1. Prüfe Werkzeuge mit falschem Status
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe über Set
-                has_active_lending = barcode in active_lent_barcodes
+                has_active_lending = barcode in active_lending_barcodes
                 
                 if has_active_lending and status != 'ausgeliehen':
                     issues.append({
@@ -615,25 +626,9 @@ class LendingService:
                     })
             
             # 2. Prüfe verwaiste Ausleihen
-            orphaned_lendings = list(mongodb.find('lendings', {
-                'returned_at': None,
-                'tool_barcode': {'$exists': True}
-            }))
-            
-            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
-            tools_cache = {}
-            if unique_tool_barcodes:
-                tools = mongodb.find('tools', {
-                    'barcode': {'$in': unique_tool_barcodes},
-                    'deleted': {'$ne': True}
-                })
-                tools_cache = {t.get('barcode'): t for t in tools}
-
-            for lending in orphaned_lendings:
+            for lending in active_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = tools_cache.get(tool_barcode)
-                
-                if not tool:
+                if tool_barcode not in tool_status_map:
                     issues.append({
                         'type': 'orphaned_lending',
                         'lending_id': str(lending.get('_id')),
@@ -642,9 +637,7 @@ class LendingService:
                     })
             
             # 3. Prüfe doppelte aktive Ausleihen
-            tool_barcodes = [lending['tool_barcode'] for lending in orphaned_lendings]
-            for barcode in set(tool_barcodes):
-                count = tool_barcodes.count(barcode)
+            for barcode, count in active_lending_counts.items():
                 if count > 1:
                     issues.append({
                         'type': 'duplicate_active_lending',
@@ -661,14 +654,14 @@ class LendingService:
                 'issues': issues
             }
             
-        except Exception as e:
-            logger.error(f"Fehler bei der Konsistenzprüfung: [Interner Fehler]")
-            return False, f'Fehler bei der Konsistenzprüfung: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler bei der Konsistenzprüfung: [Interner Fehler]")
+            return False, 'Fehler bei der Konsistenzprüfung: [Interner Fehler]', {}
     
     @staticmethod
     def fix_lending_inconsistencies() -> Tuple[bool, str, Dict[str, Any]]:
         """
-        Behebt Inkonsistenzen in den Ausleihdaten
+        Behebt Inkonsistenzen in den Ausleihdaten (optimiert via Batch-Fetching) (Bolt ⚡)
         
         Returns:
             (success, message, statistics)
@@ -677,22 +670,34 @@ class LendingService:
             fixed_count = 0
             cleaned_count = 0
             
-            # 1. Werkzeuge mit falschem Status korrigieren
+            # O(1) Fetch tools and active lendings
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
-            
-            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
-            active_lendings_cursor = mongodb.find('lendings', {
+            active_lendings = list(mongodb.find('lendings', {
                 'returned_at': None,
                 'tool_barcode': {'$exists': True}
-            })
-            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
+            }))
+            
+            tool_status_map = {t.get('barcode'): t.get('status') for t in tools}
 
+            active_lending_counts = {}
+            active_lending_barcodes = set()
+            lending_by_barcode = {}
+
+            for lending in active_lendings:
+                barcode = lending.get('tool_barcode')
+                if barcode:
+                    active_lending_counts[barcode] = active_lending_counts.get(barcode, 0) + 1
+                    active_lending_barcodes.add(barcode)
+                    if barcode not in lending_by_barcode:
+                        lending_by_barcode[barcode] = []
+                    lending_by_barcode[barcode].append(lending)
+
+            # 1. Werkzeuge mit falschem Status korrigieren
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe über Set
-                has_active_lending = barcode in active_lent_barcodes
+                has_active_lending = barcode in active_lending_barcodes
                 
                 if has_active_lending and status != 'ausgeliehen':
                     # Werkzeug ist ausgeliehen aber Status ist falsch
@@ -708,39 +713,17 @@ class LendingService:
                     fixed_count += 1
             
             # 2. Verwaiste Ausleihen bereinigen
-            orphaned_lendings = list(mongodb.find('lendings', {
-                'returned_at': None,
-                'tool_barcode': {'$exists': True}
-            }))
-            
-            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
-            tools_cache = {}
-            if unique_tool_barcodes:
-                tools = mongodb.find('tools', {
-                    'barcode': {'$in': unique_tool_barcodes},
-                    'deleted': {'$ne': True}
-                })
-                tools_cache = {t.get('barcode'): t for t in tools}
-
-            for lending in orphaned_lendings:
+            for lending in active_lendings:
                 tool_barcode = lending.get('tool_barcode')
-                tool = tools_cache.get(tool_barcode)
-                
-                if not tool:
+                if tool_barcode not in tool_status_map:
                     # Werkzeug existiert nicht mehr, Ausleihe löschen
                     mongodb.delete_one('lendings', {'_id': lending['_id']})
                     cleaned_count += 1
             
             # 3. Doppelte aktive Ausleihen bereinigen (behalte die neueste)
-            tool_barcodes = [lending['tool_barcode'] for lending in orphaned_lendings]
-            for barcode in set(tool_barcodes):
-                count = tool_barcodes.count(barcode)
+            for barcode, count in active_lending_counts.items():
                 if count > 1:
-                    # Finde alle aktiven Ausleihen für dieses Werkzeug
-                    duplicate_lendings = list(mongodb.find('lendings', {
-                        'tool_barcode': barcode,
-                        'returned_at': None
-                    }))
+                    duplicate_lendings = lending_by_barcode[barcode]
                     
                     # Sortiere nach Datum (neueste zuerst)
                     duplicate_lendings.sort(key=lambda x: x.get('lent_at', datetime.min), reverse=True)
@@ -757,9 +740,9 @@ class LendingService:
                 'cleaned_lendings_count': cleaned_count
             }
             
-        except Exception as e:
-            logger.error(f"Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]")
-            return False, f'Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]', {}
+        except Exception:
+            logger.error("Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]")
+            return False, 'Fehler beim Beheben der Inkonsistenzen: [Interner Fehler]', {}
     
     @staticmethod
     def return_tool_centralized(tool_barcode: str, worker_barcode: str = None) -> Tuple[bool, str]:
@@ -818,6 +801,6 @@ class LendingService:
                 logger.warning(f"Rückgabe fehlgeschlagen: {message}")
                 return False, message
                 
-        except Exception as e:
-            logger.error(f"Fehler bei der zentralen Rückgabe: [Interner Fehler]", exc_info=True)
-            return False, f'Fehler bei der Rückgabe: [Interner Fehler]'
+        except Exception:
+            logger.error("Fehler bei der zentralen Rückgabe: [Interner Fehler]", exc_info=True)
+            return False, 'Fehler bei der Rückgabe: [Interner Fehler]'

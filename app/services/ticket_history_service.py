@@ -5,20 +5,11 @@ Protokolliert alle Änderungen an Tickets für eine vollständige Historie
 """
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Any, Optional, Union
 from app.models.mongodb_database import mongodb
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class ChangeContext:
-    """Kontext für eine Ticket-Änderung"""
-    change_type: str = 'update'
-    note: Optional[str] = None
 
 
 class TicketHistoryService:
@@ -28,9 +19,8 @@ class TicketHistoryService:
         """Initialisiert den Ticket-History-Service"""
         self.collection_name = 'ticket_history'
     
-    def log_change(self, ticket_id: str, field: str, old_value: Any,
-                   new_value: Any, changed_by: str,
-                   context: Optional[ChangeContext] = None) -> bool:
+    def log_change(self, ticket_id: str, field: str, old_value: Any, new_value: Any,
+                   changed_by: str, change_type: str = 'update', note: Optional[str] = None) -> bool:
         """
         Protokolliert eine Änderung an einem Ticket
         
@@ -40,20 +30,19 @@ class TicketHistoryService:
             old_value: Alter Wert
             new_value: Neuer Wert
             changed_by: Benutzer der die Änderung vorgenommen hat
-            context: Optionaler Kontext (change_type, note)
+            change_type: Art der Änderung (create, update, delete, status_change, assign, etc.)
+            note: Optionale Notiz zur Änderung
             
         Returns:
             bool: True wenn erfolgreich, False bei Fehler
         """
         try:
-            context = context or ChangeContext()
-
             # Konvertiere Werte zu String für einheitliche Speicherung
             old_str = self._format_value(old_value)
             new_str = self._format_value(new_value)
             
             # Überspringe Änderung wenn beide Werte identisch sind
-            if old_str == new_str and context.change_type == 'update':
+            if old_str == new_str and change_type == 'update':
                 return True
             
             history_entry = {
@@ -62,8 +51,8 @@ class TicketHistoryService:
                 'old_value': old_str,
                 'new_value': new_str,
                 'changed_by': changed_by,
-                'change_type': context.change_type,
-                'note': context.note,
+                'change_type': change_type,
+                'note': note,
                 'changed_at': datetime.now(),
                 'created_at': datetime.now()
             }
@@ -80,13 +69,17 @@ class TicketHistoryService:
             logger.error(f"Fehler beim Protokollieren der Ticket-Änderung: [Interner Fehler]", exc_info=True)
             return False
     
-    def log_status_change(self, ticket_id: str, change: TicketStatusChange) -> bool:
+    def log_status_change(self, ticket_id: str, old_status: str, new_status: str,
+                         changed_by: str, note: Optional[str] = None) -> bool:
         """
         Protokolliert eine Status-Änderung
         
         Args:
             ticket_id: ID des Tickets
-            change: TicketStatusChange Objekt mit den Details der Änderung
+            old_status: Alter Status
+            new_status: Neuer Status
+            changed_by: Benutzer der die Änderung vorgenommen hat
+            note: Optionale Notiz
             
         Returns:
             bool: True wenn erfolgreich
@@ -97,17 +90,21 @@ class TicketHistoryService:
             old_value=old_status,
             new_value=new_status,
             changed_by=changed_by,
-            context=ChangeContext(change_type='status_change', note=note)
+            change_type='status_change',
+            note=note
         )
     
-    def log_assignment(self, ticket_id: str, details: AssignmentDetails, changed_by: str) -> bool:
+    def log_assignment(self, ticket_id: str, old_assignee: Optional[str], new_assignee: Optional[str],
+                      changed_by: str, note: Optional[str] = None) -> bool:
         """
         Protokolliert eine Zuweisungsänderung
         
         Args:
             ticket_id: ID des Tickets
-            details: Details zur Zuweisungsänderung (AssignmentDetails)
+            old_assignee: Alter Zugewiesener
+            new_assignee: Neuer Zugewiesener
             changed_by: Benutzer der die Änderung vorgenommen hat
+            note: Optionale Notiz
             
         Returns:
             bool: True wenn erfolgreich
@@ -115,10 +112,11 @@ class TicketHistoryService:
         return self.log_change(
             ticket_id=ticket_id,
             field='assigned_to',
-            old_value=details.old_assignee or 'Nicht zugewiesen',
-            new_value=details.new_assignee or 'Nicht zugewiesen',
+            old_value=old_assignee or 'Nicht zugewiesen',
+            new_value=new_assignee or 'Nicht zugewiesen',
             changed_by=changed_by,
-            context=ChangeContext(change_type='assignment', note=note)
+            change_type='assignment',
+            note=note
         )
     
     def log_creation(self, ticket_id: str, created_by: str, ticket_data: Dict[str, Any]) -> bool:
@@ -133,14 +131,14 @@ class TicketHistoryService:
         Returns:
             bool: True wenn erfolgreich
         """
-        note_str = f"Kategorie: {ticket_data.get('category', 'Unbekannt')}, Priorität: {ticket_data.get('priority', 'Normal')}"
         return self.log_change(
             ticket_id=ticket_id,
             field='ticket',
             old_value=None,
             new_value=f"Ticket erstellt: {ticket_data.get('title', 'Unbekannt')}",
             changed_by=created_by,
-            context=ChangeContext(change_type='create', note=note_str)
+            change_type='create',
+            note=f"Kategorie: {ticket_data.get('category', 'Unbekannt')}, Priorität: {ticket_data.get('priority', 'Normal')}"
         )
     
     def log_message_added(self, ticket_id: str, message: str, added_by: str) -> bool:
@@ -164,7 +162,7 @@ class TicketHistoryService:
             old_value=None,
             new_value=f"Nachricht hinzugefügt: {short_message}",
             changed_by=added_by,
-            context=ChangeContext(change_type='message_added')
+            change_type='message_added'
         )
     
     def log_note_added(self, ticket_id: str, note: str, added_by: str) -> bool:
@@ -188,7 +186,7 @@ class TicketHistoryService:
             old_value=None,
             new_value=f"Notiz hinzugefügt: {short_note}",
             changed_by=added_by,
-            context=ChangeContext(change_type='note_added')
+            change_type='note_added'
         )
     
     def log_bulk_update(self, ticket_id: str, updates: Dict[str, Any], 

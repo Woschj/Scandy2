@@ -1,5 +1,5 @@
 # Stage 1: Build CSS using Tailwind
-FROM node:20-slim AS css-builder
+FROM public.ecr.aws/docker/library/node:20-slim AS css-builder
 WORKDIR /app
 COPY package*.json ./
 COPY tailwind.config.js ./
@@ -10,7 +10,7 @@ RUN npm install
 RUN npm run build:css
 
 # Stage 2: Final Python Runtime
-FROM python:3.11-slim
+FROM public.ecr.aws/docker/library/python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies (minimal)
