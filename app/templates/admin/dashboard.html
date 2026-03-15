@@ -158,18 +158,9 @@
                         <span class="font-semibold text-rose-900 text-sm truncate pr-2">{{ tool.name }}</span>
                         <span class="badge badge-error badge-sm rounded-lg">{{ tool.status }}</span>
                     </div>
-                    {% endfor %}
-
-                    {% for dup in warnings.duplicate_lendings %}
-                    <div class="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-100/50">
-                        <span class="font-semibold text-amber-900 text-sm truncate pr-2">{{ dup.name }}</span>
-                        <span class="badge badge-warning badge-sm rounded-lg">{{ dup.status }}</span>
-                    </div>
-                    {% endfor %}
-
-                    {% if not warnings.defect_tools and not warnings.duplicate_lendings %}
+                    {% else %}
                     <div class="text-center py-10 text-slate-400 text-sm">Alles in Ordnung</div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
             </div>
         </div>

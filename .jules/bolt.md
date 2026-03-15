@@ -18,7 +18,3 @@
 ## 2026-03-15 - [LendingService N+1 Optimization]
 **Learning:** Multiple methods in `LendingService` (active lendings, recent usage, history) were performing N+1 database queries. These can be optimized into single aggregation pipelines using `$lookup`.
 **Action:** Use aggregation for joined data. In Top-K queries like `get_recent_consumable_usage`, place `$sort` and `$limit` BEFORE `$lookup` to minimize the join workload and improve memory efficiency.
-
-## 2024-05-19 - [Route-level N+1 Query Aggregation Optimization]
-**Learning:** N+1 queries embedded within route-level Python loops (e.g., retrieving `tool` and `worker` via `mongodb.find_one()` inside a `for` loop) can be reliably replaced by MongoDB aggregation pipelines using `$lookup` and `$unwind`. In `app/routes/admin/system.py`, replacing these loops with an aggregation pipeline successfully and robustly eliminates the N+1 problem without altering the intended output behavior (because `$unwind` simulates an inner join). Using `.get('field', fallback)` when reconstructing dictionaries from the pipeline output safeguards against `KeyError` crashes.
-**Action:** When finding manual loops over database records that trigger additional queries per iteration, extract the logic into a single `$lookup`-based aggregation pipeline. Always use `.get()` to handle the result map defensively. Remember to delete temporary benchmark scripts before requesting code review or submitting.
