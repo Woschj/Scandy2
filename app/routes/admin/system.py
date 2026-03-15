@@ -147,7 +147,7 @@ def manual_lending():
                 'amount': None
             })
 
-        # Aktuelle Verbrauchsmaterial-Ausgaben (letzte 30 Tage)
+        # Aktuelle Verbrauchsmaterial-Ausgaben (letzte 30 Tage) (Optimiert via Aggregation)
         thirty_days_ago = datetime.now() - timedelta(days=30)
         recent_consumables_pipeline = [
             {
