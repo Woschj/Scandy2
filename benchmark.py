@@ -1,103 +1,48 @@
 import time
-from unittest.mock import patch, MagicMock
-from app.services.lending_service import LendingService
+from unittest.mock import MagicMock
 
-# Simulate old implementation for benchmarking
-class OldLendingService(LendingService):
-    @staticmethod
-    def validate_lending_consistency() -> tuple:
-        from app.models.mongodb_database import mongodb
+class MockMongo:
+    def __init__(self):
+        self.find_calls = 0
+        self.find_one_calls = 0
 
-        issues = []
-        tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
-        for tool in tools:
-            barcode = tool.get('barcode')
-            status = tool.get('status')
-            active_lending = mongodb.find_one('lendings', {
-                'tool_barcode': barcode,
-                'returned_at': None
-            })
-            if active_lending and status != 'ausgeliehen':
-                pass
-            elif not active_lending and status == 'ausgeliehen':
-                pass
-
-        # O(N) approach
-        orphaned_lendings = list(mongodb.find('lendings', {
-            'returned_at': None,
-            'tool_barcode': {'$exists': True}
-        }))
-
-        for lending in orphaned_lendings:
-            tool_barcode = lending.get('tool_barcode')
-            tool = mongodb.find_one('tools', {'barcode': tool_barcode, 'deleted': {'$ne': True}})
-            if not tool:
-                pass
-        return True, "Done", {}
-
-
-def run_benchmark():
-    num_tools = 500
-    num_orphaned = 1000
-
-    tools_data = [{'barcode': f'T{i}', 'status': 'verfügbar', 'deleted': False, 'name': f'Tool {i}'} for i in range(num_tools)]
-    lendings_data = [{'tool_barcode': f'ORPHAN_{i}', 'returned_at': None, '_id': str(i)} for i in range(num_orphaned)]
-
-    call_counts = {'find': 0, 'find_one': 0}
-
-    def mock_find(collection, query):
-        call_counts['find'] += 1
-        if collection == 'tools':
-            if '$in' in query.get('barcode', {}):
-                barcodes = query['barcode']['$in']
-                return [t for t in tools_data if t['barcode'] in barcodes]
-            return tools_data
-        elif collection == 'lendings':
-            return lendings_data
+    def find(self, collection, query, **kwargs):
+        self.find_calls += 1
+        if collection == 'lendings':
+            return [{'tool_barcode': f'T{i}', 'worker_barcode': f'W{i}'} for i in range(10000)]
+        elif collection == 'tools':
+            return [{'barcode': f'T{i}', 'name': f'Tool {i}'} for i in range(10000)]
+        elif collection == 'workers':
+            return [{'barcode': f'W{i}', 'firstname': 'F', 'lastname': 'L'} for i in range(10000)]
         return []
 
-    def mock_find_one(collection, query):
-        call_counts['find_one'] += 1
-        # Add artificial delay to simulate network latency
-        time.sleep(0.0005)
+    def find_one(self, collection, query):
+        self.find_one_calls += 1
+        # Simulate network latency
+        time.sleep(0.001)
         if collection == 'tools':
-            barcode = query.get('barcode')
-            for t in tools_data:
-                if t['barcode'] == barcode:
-                    return t
-            return None
-        elif collection == 'lendings':
-            return None
+            return {'barcode': query['barcode'], 'name': 'Tool'}
+        elif collection == 'workers':
+            return {'barcode': query['barcode'], 'firstname': 'F', 'lastname': 'L'}
         return None
 
-    # Benchmark Old Implementation
-    with patch('app.models.mongodb_database.mongodb.find', side_effect=mock_find), \
-         patch('app.models.mongodb_database.mongodb.find_one', side_effect=mock_find_one):
+def run_benchmark():
+    import app.services.excel_export_service as mod
 
-        call_counts['find'] = 0
-        call_counts['find_one'] = 0
-        start = time.time()
-        OldLendingService.validate_lending_consistency()
-        end = time.time()
-        old_time = end - start
-        old_find_one = call_counts['find_one']
+    mock_mongo = MockMongo()
+    mod.mongodb = mock_mongo
 
-    # Benchmark New Implementation
-    with patch('app.models.mongodb_database.mongodb.find', side_effect=mock_find), \
-         patch('app.models.mongodb_database.mongodb.find_one', side_effect=mock_find_one):
+    service = mod.ExcelExportService()
+    import openpyxl
+    service.workbook = openpyxl.Workbook()
 
-        call_counts['find'] = 0
-        call_counts['find_one'] = 0
-        start = time.time()
-        LendingService.validate_lending_consistency()
-        end = time.time()
-        new_time = end - start
-        new_find_one = call_counts['find_one']
+    start_time = time.time()
+    service._create_lendings_sheet()
+    end_time = time.time()
 
-    print(f"Old approach (O(N) queries): {old_time:.4f}s with {old_find_one} find_one calls")
-    print(f"New approach (O(1) queries): {new_time:.4f}s with {new_find_one} find_one calls")
-    print(f"Speedup: {old_time/new_time:.2f}x")
-    print(f"Query reduction: {old_find_one - new_find_one} fewer network roundtrips")
+    print(f"Time taken: {end_time - start_time:.4f} seconds")
+    print(f"find() calls: {mock_mongo.find_calls}")
+    print(f"find_one() calls: {mock_mongo.find_one_calls}")
 
 if __name__ == '__main__':
     run_benchmark()
