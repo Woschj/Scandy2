@@ -266,9 +266,87 @@ def dashboard():
                             'severity': 'warning'
                         })
 
-            # Bolt ⚡: Removed redundant overdue lending and consumable stock check loops here
-            # as these are already computed and provided via AdminDashboardService.get_warnings()
-            # which is assigned to the 'warnings' variable used in the template.
+            # Überfällige Ausleihen (mehr als 30 Tage)
+            overdue_lendings = []
+            overdue_items = []
+            tool_barcodes = set()
+            worker_barcodes = set()
+
+            for lending in current_lendings:
+                try:
+                    lent_at = lending.get('lent_at')
+                    if isinstance(lent_at, str):
+                        try:
+                            lent_at = datetime.strptime(lent_at, '%Y-%m-%d %H:%M:%S.%f')
+                        except ValueError:
+                            try:
+                                lent_at = datetime.strptime(lent_at, '%Y-%m-%d %H:%M:%S')
+                            except ValueError:
+                                continue
+
+                    if isinstance(lent_at, datetime):
+                        days_lent = (datetime.now() - lent_at).days
+                        if days_lent > 30:
+                            overdue_items.append((lending, days_lent))
+                            t_barcode = lending.get('tool_barcode')
+                            if t_barcode:
+                                tool_barcodes.add(t_barcode)
+                            w_barcode = lending.get('worker_barcode')
+                            if w_barcode:
+                                worker_barcodes.add(w_barcode)
+                except Exception as e:
+                    continue
+
+            if overdue_items:
+                tools_dict = {}
+                if tool_barcodes:
+                    tools_cursor = mongodb.find('tools', {'barcode': {'$in': list(tool_barcodes)}})
+                    tools_dict = {t.get('barcode'): t for t in tools_cursor if isinstance(t, dict)}
+
+                workers_dict = {}
+                if worker_barcodes:
+                    workers_cursor = mongodb.find('workers', {'barcode': {'$in': list(worker_barcodes)}})
+                    workers_dict = {w.get('barcode'): w for w in workers_cursor if isinstance(w, dict)}
+
+                for lending, days_lent in overdue_items:
+                    t_barcode = lending.get('tool_barcode')
+                    w_barcode = lending.get('worker_barcode')
+
+                    tool = tools_dict.get(t_barcode)
+                    worker = workers_dict.get(w_barcode)
+
+                    if tool and worker:
+                        overdue_lendings.append({
+                            'name': f"{tool.get('name', 'Unbekanntes Tool')} - {worker.get('name', 'Unbekannter Worker')}",
+                            'status': f'Überfällig ({days_lent} Tage)',
+                            'severity': 'warning'
+                        })
+
+            tool_warnings.extend(overdue_lendings)
+
+            # Consumable-Warnungen - Verbesserte Logik
+            consumable_warnings = []
+            all_consumables = list(mongodb.find('consumables', {'deleted': {'$ne': True}}))
+
+            for consumable in all_consumables:
+                stock = consumable.get('stock', consumable.get('quantity', 0))
+                try:
+                    stock = int(stock) if stock is not None else 0
+                except (ValueError, TypeError):
+                    stock = 0
+
+                if stock <= 0:
+                    consumable_warnings.append({
+                        'message': f"{consumable.get('name', 'Unbekanntes Verbrauchsmaterial')} (Bestand: {stock})",
+                        'type': 'error',
+                        'icon': 'times'
+                    })
+                elif stock < 5:
+                    consumable_warnings.append({
+                        'message': f"{consumable.get('name', 'Unbekanntes Verbrauchsmaterial')} (Bestand: {stock})",
+                        'type': 'warning',
+                        'icon': 'exclamation-triangle'
+                    })
 
             # Aktuelle Ausleihen
             # Bolt ⚡: Reuse current_lendings fetched earlier to avoid redundant DB call
