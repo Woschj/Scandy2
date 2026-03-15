@@ -427,13 +427,15 @@ class AdminNotificationService:
             return False, f"Fehler beim Erstellen der Benachrichtigung: [Interner Fehler]"
 
     @staticmethod
-    def update_notice(notice_id: str, **kwargs) -> Tuple[bool, str]:
+    def update_notice(notice_id: str, title: str, content: str, notice_type: str = 'info', department: Optional[str] = None, priority: Optional[int] = None, is_active: Optional[bool] = None) -> Tuple[bool, str]:
         """
         Aktualisiert eine Benachrichtigung (Notice)
         
         Args:
             notice_id: ID der Benachrichtigung
-            **kwargs: Zu aktualisierende Felder (z.B. title, content, notice_type, department, priority, is_active)
+            title: Neuer Titel
+            content: Neuer Inhalt
+            notice_type: Neuer Typ
             
         Returns:
             (success, message)
@@ -445,33 +447,21 @@ class AdminNotificationService:
                 return False, "Benachrichtigung nicht gefunden"
             
             # Aktualisiere Benachrichtigung
-            update_data = {'updated_at': datetime.now()}
-
-            if 'title' in kwargs:
-                update_data['title'] = kwargs['title']
-            if 'content' in kwargs:
-                update_data['message'] = kwargs['content']
-            elif 'message' in kwargs:
-                update_data['message'] = kwargs['message']
-
-            if 'notice_type' in kwargs:
-                update_data['type'] = kwargs['notice_type']
-            elif 'type' in kwargs:
-                update_data['type'] = kwargs['type']
-
-            if 'department' in kwargs:
-                update_data['department'] = kwargs['department']
-
-            if 'priority' in kwargs and kwargs['priority'] is not None:
-                update_data['priority'] = int(kwargs['priority'])
-
-            if 'is_active' in kwargs and kwargs['is_active'] is not None:
-                update_data['is_active'] = bool(kwargs['is_active'])
+            update_data = {
+                'title': title,
+                'message': content,
+                'type': notice_type,
+                'department': department,
+                'updated_at': datetime.now()
+            }
+            if priority is not None:
+                update_data['priority'] = int(priority)
+            if is_active is not None:
+                update_data['is_active'] = bool(is_active)
             
             mongodb.update_one('homepage_notices', {'_id': notice_id}, {'$set': update_data})
             
-            log_title = kwargs.get('title', notice.get('title', 'Unbekannt'))
-            logger.info(f"Benachrichtigung aktualisiert: {log_title}")
+            logger.info(f"Benachrichtigung aktualisiert: {title}")
             return True, "Benachrichtigung erfolgreich aktualisiert"
             
         except Exception as e:
