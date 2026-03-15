@@ -580,17 +580,22 @@ class LendingService:
             
             # 1. Prüfe Werkzeuge mit falschem Status
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
+
+            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
+            active_lendings_cursor = mongodb.find('lendings', {
+                'returned_at': None,
+                'tool_barcode': {'$exists': True}
+            })
+            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
+
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe
-                active_lending = mongodb.find_one('lendings', {
-                    'tool_barcode': barcode,
-                    'returned_at': None
-                })
+                # Prüfe aktive Ausleihe über Set
+                has_active_lending = barcode in active_lent_barcodes
                 
-                if active_lending and status != 'ausgeliehen':
+                if has_active_lending and status != 'ausgeliehen':
                     issues.append({
                         'type': 'tool_status_mismatch',
                         'tool_barcode': barcode,
@@ -599,7 +604,7 @@ class LendingService:
                         'expected_status': 'ausgeliehen',
                         'message': f'Werkzeug {tool.get("name", "")} ist ausgeliehen aber Status ist "{status}"'
                     })
-                elif not active_lending and status == 'ausgeliehen':
+                elif not has_active_lending and status == 'ausgeliehen':
                     issues.append({
                         'type': 'tool_status_mismatch',
                         'tool_barcode': barcode,
@@ -675,23 +680,27 @@ class LendingService:
             # 1. Werkzeuge mit falschem Status korrigieren
             tools = list(mongodb.find('tools', {'deleted': {'$ne': True}}))
             
+            # Alle aktiven Ausleihen auf einmal abrufen (Bolt ⚡)
+            active_lendings_cursor = mongodb.find('lendings', {
+                'returned_at': None,
+                'tool_barcode': {'$exists': True}
+            })
+            active_lent_barcodes = {l.get('tool_barcode') for l in active_lendings_cursor if l.get('tool_barcode')}
+
             for tool in tools:
                 barcode = tool.get('barcode')
                 status = tool.get('status')
                 
-                # Prüfe aktive Ausleihe
-                active_lending = mongodb.find_one('lendings', {
-                    'tool_barcode': barcode,
-                    'returned_at': None
-                })
+                # Prüfe aktive Ausleihe über Set
+                has_active_lending = barcode in active_lent_barcodes
                 
-                if active_lending and status != 'ausgeliehen':
+                if has_active_lending and status != 'ausgeliehen':
                     # Werkzeug ist ausgeliehen aber Status ist falsch
                     mongodb.update_one('tools', 
                                      {'barcode': barcode}, 
                                      {'$set': {'status': 'ausgeliehen'}})
                     fixed_count += 1
-                elif not active_lending and status == 'ausgeliehen':
+                elif not has_active_lending and status == 'ausgeliehen':
                     # Werkzeug ist nicht ausgeliehen aber Status ist falsch
                     mongodb.update_one('tools', 
                                      {'barcode': barcode}, 
