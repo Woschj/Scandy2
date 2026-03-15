@@ -5,6 +5,7 @@ Protokolliert alle Änderungen an Tickets für eine vollständige Historie
 """
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass
@@ -78,17 +79,13 @@ class TicketHistoryService:
             logger.error(f"Fehler beim Protokollieren der Ticket-Änderung: [Interner Fehler]", exc_info=True)
             return False
     
-    def log_status_change(self, ticket_id: str, old_status: str, new_status: str, 
-                         changed_by: str, note: Optional[str] = None) -> bool:
+    def log_status_change(self, ticket_id: str, change: TicketStatusChange) -> bool:
         """
         Protokolliert eine Status-Änderung
         
         Args:
             ticket_id: ID des Tickets
-            old_status: Alter Status
-            new_status: Neuer Status
-            changed_by: Benutzer der die Änderung vorgenommen hat
-            note: Optionale Notiz
+            change: TicketStatusChange Objekt mit den Details der Änderung
             
         Returns:
             bool: True wenn erfolgreich
@@ -96,11 +93,11 @@ class TicketHistoryService:
         return self.log_change(
             ticket_id=ticket_id,
             field='status',
-            old_value=old_status,
-            new_value=new_status,
-            changed_by=changed_by,
+            old_value=change.old_status,
+            new_value=change.new_status,
+            changed_by=change.changed_by,
             change_type='status_change',
-            note=note
+            note=change.note
         )
     
     def log_assignment(self, ticket_id: str, details: AssignmentDetails, changed_by: str) -> bool:

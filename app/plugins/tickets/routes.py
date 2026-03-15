@@ -1208,13 +1208,13 @@ def update_status(id):
 
         # History-Logging für Status-Änderung
         try:
-            from app.services.ticket_history_service import ticket_history_service
-            ticket_history_service.log_status_change(
-                ticket_id=str(id),
+            from app.services.ticket_history_service import ticket_history_service, TicketStatusChange
+            change = TicketStatusChange(
                 old_status=old_status,
                 new_status=new_status,
                 changed_by=current_user.username
             )
+            ticket_history_service.log_status_change(ticket_id=str(id), change=change)
         except Exception as history_error:
             logging.error(f"Fehler beim History-Logging für Status-Änderung: {history_error}")
 

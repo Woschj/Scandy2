@@ -483,8 +483,13 @@ def _send_email_direct(recipient, subject, body, attachments=None, mail_type="de
         logger.error("[MAIL] Fehler beim E-Mail-Versand")
         return False
 
-def _send_email_direct_html(recipient, subject, html_content=None, text_content=None, attachments=None, mail_type="default"):
+def _send_email_direct_html(recipient, subject, **kwargs):
     """Sendet HTML-E-Mails direkt über SMTP mit HTML- und Text-Inhalten"""
+    html_content = kwargs.get('html_content')
+    text_content = kwargs.get('text_content')
+    attachments = kwargs.get('attachments')
+    mail_type = kwargs.get('mail_type', 'default')
+
     try:
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
@@ -603,7 +608,7 @@ def send_email(to_email, subject, html_content=None, text_content=None, from_nam
         
         # Verwende direkte SMTP-Verbindung mit detailliertem Logging
         # Sende als HTML-E-Mail mit beiden Inhalten
-        success = _send_email_direct_html(to_email, subject, html_content, text_content, mail_type="auftrag")
+        success = _send_email_direct_html(to_email, subject, html_content=html_content, text_content=text_content, mail_type="auftrag")
         
         if success:
             logger.info(f"[MAIL][auftrag] E-Mail erfolgreich versendet: Empfänger={to_email}, Betreff={subject}, From={from_name}")
@@ -879,7 +884,7 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
             if rendered and (rendered.get('html_content') or rendered.get('text_content')):
                 subj = rendered.get('subject') or subject
                 logger.info(f"[MAIL][reset] Verwende E-Mail-Vorlage für Passwort-Reset")
-                success = _send_email_direct_html(recipient, subj, rendered.get('html_content'), rendered.get('text_content'), mail_type="reset")
+                success = _send_email_direct_html(recipient, subj, html_content=rendered.get('html_content'), text_content=rendered.get('text_content'), mail_type="reset")
                 if success:
                     logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Vorlage)")
                 else:
@@ -931,7 +936,7 @@ def send_password_reset_mail(recipient, password=None, reset_link=None):
 
         try:
             # Verwende HTML-Versand mit Text-Alternative
-            success = _send_email_direct_html(recipient, subject, html_body, text_body, mail_type="reset")
+            success = _send_email_direct_html(recipient, subject, html_content=html_body, text_content=text_body, mail_type="reset")
             if success:
                 logger.info(f"[MAIL][reset] Passwort-Reset-E-Mail erfolgreich an {recipient} gesendet (Fallback HTML)")
             else:
