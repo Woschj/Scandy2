@@ -260,6 +260,10 @@ def dashboard():
 
             # Überfällige Ausleihen (mehr als 30 Tage)
             overdue_lendings = []
+            overdue_items = []
+            tool_barcodes = set()
+            worker_barcodes = set()
+
             for lending in current_lendings:
                 try:
                     lent_at = lending.get('lent_at')
@@ -275,17 +279,40 @@ def dashboard():
                     if isinstance(lent_at, datetime):
                         days_lent = (datetime.now() - lent_at).days
                         if days_lent > 30:
-                            tool = mongodb.find_one('tools', {'barcode': lending.get('tool_barcode')})
-                            worker = mongodb.find_one('workers', {'barcode': lending.get('worker_barcode')})
-
-                            if tool and worker:
-                                overdue_lendings.append({
-                                    'name': f"{tool.get('name', 'Unbekanntes Tool')} - {worker.get('name', 'Unbekannter Worker')}",
-                                    'status': f'Überfällig ({days_lent} Tage)',
-                                    'severity': 'warning'
-                                })
+                            overdue_items.append((lending, days_lent))
+                            t_barcode = lending.get('tool_barcode')
+                            if t_barcode:
+                                tool_barcodes.add(t_barcode)
+                            w_barcode = lending.get('worker_barcode')
+                            if w_barcode:
+                                worker_barcodes.add(w_barcode)
                 except Exception as e:
                     continue
+
+            if overdue_items:
+                tools_dict = {}
+                if tool_barcodes:
+                    tools_cursor = mongodb.find('tools', {'barcode': {'$in': list(tool_barcodes)}})
+                    tools_dict = {t.get('barcode'): t for t in tools_cursor if isinstance(t, dict)}
+
+                workers_dict = {}
+                if worker_barcodes:
+                    workers_cursor = mongodb.find('workers', {'barcode': {'$in': list(worker_barcodes)}})
+                    workers_dict = {w.get('barcode'): w for w in workers_cursor if isinstance(w, dict)}
+
+                for lending, days_lent in overdue_items:
+                    t_barcode = lending.get('tool_barcode')
+                    w_barcode = lending.get('worker_barcode')
+
+                    tool = tools_dict.get(t_barcode)
+                    worker = workers_dict.get(w_barcode)
+
+                    if tool and worker:
+                        overdue_lendings.append({
+                            'name': f"{tool.get('name', 'Unbekanntes Tool')} - {worker.get('name', 'Unbekannter Worker')}",
+                            'status': f'Überfällig ({days_lent} Tage)',
+                            'severity': 'warning'
+                        })
 
             tool_warnings.extend(overdue_lendings)
 

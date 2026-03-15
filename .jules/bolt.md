@@ -18,3 +18,7 @@
 ## 2026-03-15 - [LendingService N+1 Optimization]
 **Learning:** Multiple methods in `LendingService` (active lendings, recent usage, history) were performing N+1 database queries. These can be optimized into single aggregation pipelines using `$lookup`.
 **Action:** Use aggregation for joined data. In Top-K queries like `get_recent_consumable_usage`, place `$sort` and `$limit` BEFORE `$lookup` to minimize the join workload and improve memory efficiency.
+
+## 2026-03-15 - [Dashboard Overdue Lendings O(N) to O(1) Batch Queries]
+**Learning:** `app/routes/admin/dashboard.py` had a severe N+1 bottleneck when identifying overdue lendings (older than 30 days). For each overdue item in `current_lendings`, the system executed a `find_one` for the tool and a `find_one` for the worker.
+**Action:** Always collect necessary keys (like barcodes) into a `set` during iteration, then use `$in` operators to query MongoDB once for all needed tools and once for all needed workers. Build an in-memory dictionary lookup to construct the final output. This shifts DB complexity from N+1 to O(1) queries and dramatically improves dashboard load times under high volume.
