@@ -352,12 +352,12 @@ def migrate_old_data_to_settings():
 
 def get_next_ticket_number():
     """
-    Generiert die nächste Auftragsnummer im Format YYMM-XXX.
+    Generiert die nächste Auftragsnummer im Format YYMM-NNN.
     
     Die Nummer setzt sich zusammen aus:
     - YY: Letzte 2 Ziffern des Jahres
     - MM: Monat mit führender Null
-    - XXX: Fortlaufende Nummer für diesen Monat
+    - NNN: Fortlaufende Nummer für diesen Monat
     
     Returns:
         str: Nächste verfügbare Auftragsnummer
