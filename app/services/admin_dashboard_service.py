@@ -263,7 +263,8 @@ class AdminDashboardService:
             warnings = {
                 'defect_tools': [],
                 'overdue_lendings': [],
-                'low_stock_consumables': []
+                'low_stock_consumables': [],
+                'duplicate_lendings': []
             }
             
             # Defekte Werkzeuge
@@ -386,12 +387,38 @@ class AdminDashboardService:
                         continue
             except Exception as e:
                 logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+
+            # Doppelte Ausleihen (Bolt ⚡ Fix)
+            try:
+                # Finde alle aktiven Ausleihen
+                active_lendings = list(mongodb.find('lendings', {'returned_at': None}))
+                lending_counts = {}
+                for lending in active_lendings:
+                    bc = lending.get('tool_barcode')
+                    if bc:
+                        lending_counts[bc] = lending_counts.get(bc, 0) + 1
+
+                duplicate_barcodes = [bc for bc, count in lending_counts.items() if count > 1]
+                if duplicate_barcodes:
+                    # Lade Tools für diese Barcodes in einem Rutsch
+                    tools = list(mongodb.find('tools', {'barcode': {'$in': duplicate_barcodes}, 'deleted': {'$ne': True}}))
+                    tools_map = {t.get('barcode'): t for t in tools}
+
+                    for bc in duplicate_barcodes:
+                        tool = tools_map.get(bc)
+                        warnings['duplicate_lendings'].append({
+                            'name': f"{tool.get('name', 'Unbekanntes Tool')} (Barcode: {bc})" if tool else f"Unbekanntes Tool (Barcode: {bc})",
+                            'status': f'Doppelte Ausleihen: {lending_counts[bc]}x',
+                            'severity': 'warning'
+                        })
+            except Exception as e:
+                logger.error(f"Fehler beim Laden doppelter Ausleihen: [Interner Fehler]")
             
             return warnings
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Warnungen: [Interner Fehler]")
-            return {'defect_tools': [], 'overdue_lendings': [], 'low_stock_consumables': []}
+            return {'defect_tools': [], 'overdue_lendings': [], 'low_stock_consumables': [], 'duplicate_lendings': []}
 
     @staticmethod
     def get_backup_info() -> Dict[str, Any]:
