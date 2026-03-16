@@ -21,6 +21,23 @@ class ChangeContext:
     note: Optional[str] = None
 
 
+@dataclass
+class TicketStatusChange:
+    """Details für eine Statusänderung"""
+    old_status: str
+    new_status: str
+    changed_by: str
+    note: Optional[str] = None
+
+
+@dataclass
+class AssignmentDetails:
+    """Details für eine Zuweisungsänderung"""
+    old_assignee: Optional[str]
+    new_assignee: Optional[str]
+    note: Optional[str] = None
+
+
 class TicketHistoryService:
     """Service für die Verwaltung der Ticket-Historie"""
     
@@ -94,10 +111,10 @@ class TicketHistoryService:
         return self.log_change(
             ticket_id=ticket_id,
             field='status',
-            old_value=old_status,
-            new_value=new_status,
-            changed_by=changed_by,
-            context=ChangeContext(change_type='status_change', note=note)
+            old_value=change.old_status,
+            new_value=change.new_status,
+            changed_by=change.changed_by,
+            context=ChangeContext(change_type='status_change', note=change.note)
         )
     
     def log_assignment(self, ticket_id: str, details: AssignmentDetails, changed_by: str) -> bool:
@@ -118,7 +135,7 @@ class TicketHistoryService:
             old_value=details.old_assignee or 'Nicht zugewiesen',
             new_value=details.new_assignee or 'Nicht zugewiesen',
             changed_by=changed_by,
-            context=ChangeContext(change_type='assignment', note=note)
+            context=ChangeContext(change_type='assignment', note=details.note)
         )
     
     def log_creation(self, ticket_id: str, created_by: str, ticket_data: Dict[str, Any]) -> bool:
