@@ -374,24 +374,24 @@
             <!-- Grundlegende Informationen -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_name">
                         <span class="label-text">Name</span>
                     </label>
-                    <input type="text" name="name" class="input input-bordered" value="{{ tool.name }}" required>
+                    <input type="text" id="edit_name" name="name" class="input input-bordered" value="{{ tool.name }}" required aria-required="true">
                 </div>
                 
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_barcode">
                         <span class="label-text">Barcode</span>
                     </label>
-                    <input type="text" name="barcode" class="input input-bordered" value="{{ tool.barcode }}" required>
+                    <input type="text" id="edit_barcode" name="barcode" class="input input-bordered" value="{{ tool.barcode }}" required aria-required="true">
                 </div>
                 
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_category">
                         <span class="label-text">Kategorie</span>
                     </label>
-                    <select name="category" class="select select-bordered">
+                    <select id="edit_category" name="category" class="select select-bordered">
                         <option value="">Keine Kategorie</option>
                         {% for category in categories %}
                         <option value="{{ category }}" {{ 'selected' if category == tool.category }}>
@@ -402,10 +402,10 @@
                 </div>
                 
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_location">
                         <span class="label-text">Standort</span>
                     </label>
-                    <select name="location" class="select select-bordered">
+                    <select id="edit_location" name="location" class="select select-bordered">
                         <option value="">Kein Standort</option>
                         {% for location in locations %}
                         <option value="{{ location }}" {{ 'selected' if location == tool.location }}>
@@ -416,10 +416,10 @@
                 </div>
                 
                 <div class="form-control md:col-span-2">
-                    <label class="label">
+                    <label class="label" for="edit_description">
                         <span class="label-text">Beschreibung</span>
                     </label>
-                    <textarea name="description" class="textarea textarea-bordered h-20">{{ tool.description or '' }}</textarea>
+                    <textarea id="edit_description" name="description" class="textarea textarea-bordered h-20">{{ tool.description or '' }}</textarea>
                 </div>
             </div>
             
@@ -434,37 +434,37 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {% if feature_settings.get('tool_field_serial_number', True) %}
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_serial_number">
                         <span class="label-text">Seriennummer</span>
                     </label>
-                    <input type="text" name="serial_number" class="input input-bordered" value="{{ tool.serial_number or '' }}" maxlength="100">
+                    <input type="text" id="edit_serial_number" name="serial_number" class="input input-bordered" value="{{ tool.serial_number or '' }}" maxlength="100">
                 </div>
                 {% endif %}
                 
                 {% if feature_settings.get('tool_field_invoice_number', True) %}
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_invoice_number">
                         <span class="label-text">Rechnungsnummer</span>
                     </label>
-                    <input type="text" name="invoice_number" class="input input-bordered" value="{{ tool.invoice_number or '' }}" maxlength="100">
+                    <input type="text" id="edit_invoice_number" name="invoice_number" class="input input-bordered" value="{{ tool.invoice_number or '' }}" maxlength="100">
                 </div>
                 {% endif %}
                 
                 {% if feature_settings.get('tool_field_mac_address', True) %}
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_mac_address">
                         <span class="label-text">MAC-Adresse (LAN)</span>
                     </label>
-                    <input type="text" name="mac_address" class="input input-bordered" value="{{ tool.mac_address or '' }}" maxlength="17" placeholder="XX:XX:XX:XX:XX:XX">
+                    <input type="text" id="edit_mac_address" name="mac_address" class="input input-bordered" value="{{ tool.mac_address or '' }}" maxlength="17" placeholder="XX:XX:XX:XX:XX:XX">
                 </div>
                 {% endif %}
                 
                 {% if feature_settings.get('tool_field_mac_address_wlan', True) %}
                 <div class="form-control">
-                    <label class="label">
+                    <label class="label" for="edit_mac_address_wlan">
                         <span class="label-text">MAC-Adresse (WLAN)</span>
                     </label>
-                    <input type="text" name="mac_address_wlan" class="input input-bordered" value="{{ tool.mac_address_wlan or '' }}" maxlength="17" placeholder="XX:XX:XX:XX:XX:XX">
+                    <input type="text" id="edit_mac_address_wlan" name="mac_address_wlan" class="input input-bordered" value="{{ tool.mac_address_wlan or '' }}" maxlength="17" placeholder="XX:XX:XX:XX:XX:XX">
                 </div>
                 {% endif %}
             </div>
