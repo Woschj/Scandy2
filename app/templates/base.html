@@ -568,6 +568,61 @@
                 }
             }
         });
+
+        /**
+         * Kopiert Text in die Zwischenablage und gibt visuelles Feedback.
+         * @param {string} text - Der zu kopierende Text.
+         * @param {HTMLElement} btn - Der Button, der den Kopiervorgang ausgelöst hat.
+         * @param {string} successMessage - Nachricht für den Toast.
+         */
+        window.copyToClipboard = function(text, btn, successMessage = 'In die Zwischenablage kopiert') {
+            const originalHtml = btn.innerHTML;
+            const icon = btn.querySelector('i');
+            const originalIconClass = icon ? icon.className : '';
+
+            const performCopy = () => {
+                if (icon) {
+                    icon.className = 'fas fa-check text-success';
+                } else {
+                    btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+                }
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast('success', successMessage);
+                }
+
+                setTimeout(() => {
+                    if (icon) {
+                        icon.className = originalIconClass;
+                    } else {
+                        btn.innerHTML = originalHtml;
+                    }
+                }, 2000);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(performCopy).catch(err => {
+                    console.error('Fehler beim Kopieren: ', err);
+                });
+            } else {
+                // Fallback für ältere Browser
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                textArea.style.top = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    performCopy();
+                } catch (err) {
+                    console.error('Fallback: Kopieren nicht möglich', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        };
     </script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/quickscan.js') }}?v=2"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/lending-service.js') }}" defer></script>
