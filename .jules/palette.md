@@ -9,3 +9,7 @@
 ## 2026-02-15 - [Async Action Feedback]
 **Learning:** Async action triggers (e.g., 'Confirm' buttons) should provide visual feedback by displaying a loading spinner and becoming disabled during processing. The button's original state (HTML content and disabled property) must be restored using a 'finally' block in JavaScript to ensure the UI remains functional regardless of the outcome.
 **Action:** Use a `try...catch...finally` pattern for all async UI interactions to manage loading states and ensure consistency.
+
+## 2026-02-15 - [Timed Feedback for File Downloads]
+**Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
+**Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
