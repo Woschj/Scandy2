@@ -388,29 +388,54 @@ class AdminDashboardService:
             except Exception as e:
                 logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
 
-            # Doppelte Ausleihen (Bolt ⚡ Fix)
+            # Doppelte Ausleihen (Bolt ⚡ Aggregation Fix)
             try:
-                # Finde alle aktiven Ausleihen
-                active_lendings = list(mongodb.find('lendings', {'returned_at': None}))
-                lending_counts = {}
-                for lending in active_lendings:
-                    bc = lending.get('tool_barcode')
-                    if bc:
-                        lending_counts[bc] = lending_counts.get(bc, 0) + 1
+                duplicate_pipeline = [
+                    {'$match': {'returned_at': None}},
+                    {'$group': {
+                        '_id': '$tool_barcode',
+                        'count': {'$sum': 1}
+                    }},
+                    {'$match': {'count': {'$gt': 1}}},
+                    {
+                        '$lookup': {
+                            'from': 'tools',
+                            'localField': '_id',
+                            'foreignField': 'barcode',
+                            'as': 'tool_info'
+                        }
+                    },
+                    {'$unwind': {
+                        'path': '$tool_info',
+                        'preserveNullAndEmptyArrays': True
+                    }}
+                ]
 
-                duplicate_barcodes = [bc for bc, count in lending_counts.items() if count > 1]
-                if duplicate_barcodes:
-                    # Lade Tools für diese Barcodes in einem Rutsch
-                    tools = list(mongodb.find('tools', {'barcode': {'$in': duplicate_barcodes}, 'deleted': {'$ne': True}}))
-                    tools_map = {t.get('barcode'): t for t in tools}
+                duplicates = mongodb.aggregate('lendings', duplicate_pipeline)
 
-                    for bc in duplicate_barcodes:
-                        tool = tools_map.get(bc)
+                for dup in duplicates:
+                    try:
+                        bc = dup.get('_id')
+                        count = dup.get('count', 0)
+                        tool = dup.get('tool_info')
+
+                        # Filter für gelöschte Tools
+                        if tool and tool.get('deleted'):
+                            tool = None
+
+                        if tool:
+                            tool = AdminDashboardService._safe_document_processing(
+                                tool
+                            )
+
                         warnings['duplicate_lendings'].append({
                             'name': f"{tool.get('name', 'Unbekanntes Tool')} (Barcode: {bc})" if tool else f"Unbekanntes Tool (Barcode: {bc})",
-                            'status': f'Doppelte Ausleihen: {lending_counts[bc]}x',
+                            'status': f'Doppelte Ausleihen: {count}x',
                             'severity': 'warning'
                         })
+                    except Exception as e:
+                        logger.warning(f"Fehler bei doppeltem Tool: [Interner Fehler]")
+                        continue
             except Exception as e:
                 logger.error(f"Fehler beim Laden doppelter Ausleihen: [Interner Fehler]")
             
