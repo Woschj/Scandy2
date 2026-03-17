@@ -43,7 +43,16 @@
                             <label class="label">
                                 <span class="label-text font-semibold">Barcode</span>
                             </label>
-                            <p class="text-lg font-mono">{{ tool.barcode }}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-lg font-mono">{{ tool.barcode }}</p>
+                                <button type="button"
+                                        class="btn btn-ghost btn-xs"
+                                        onclick="window.copyToClipboard('{{ tool.barcode }}', this, 'Barcode kopiert')"
+                                        aria-label="Barcode kopieren"
+                                        title="Barcode kopieren">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div>

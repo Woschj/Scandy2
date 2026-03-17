@@ -24,7 +24,16 @@
             
             <!-- Grundinformationen -->
             <div class="space-y-2">
-                <p><strong>Barcode:</strong> {{ worker.barcode }}</p>
+                <div class="flex items-center gap-2">
+                    <p><strong>Barcode:</strong> <span class="font-mono">{{ worker.barcode }}</span></p>
+                    <button type="button"
+                            class="btn btn-ghost btn-xs"
+                            onclick="window.copyToClipboard('{{ worker.barcode }}', this, 'Barcode kopiert')"
+                            aria-label="Barcode kopieren"
+                            title="Barcode kopieren">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
                 <p><strong>Abteilung:</strong> {{ worker.department or 'Keine Abteilung' }}</p>
                 {% if worker.email %}
                 <p><strong>E-Mail:</strong> {{ worker.email }}</p>
