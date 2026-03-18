@@ -36,7 +36,7 @@
 
 {% block table_rows %}
 {% for worker in workers %}
-<tr class="hover data-row" data-department="{{ worker.department or '' }}" data-barcode="{{ worker.barcode }}">
+<tr class="hover data-row group" data-department="{{ worker.department or '' }}" data-barcode="{{ worker.barcode }}">
     <td>
         <div class="flex items-center space-x-3">
             <div>
@@ -47,7 +47,18 @@
         </div>
     </td>
     <td>
-        <div class="badge badge-outline">{{ worker.barcode }}</div>
+        <div class="flex items-center gap-2">
+            <div class="badge badge-outline font-mono">{{ worker.barcode or 'Kein Barcode' }}</div>
+            {% if worker.barcode %}
+            <button type="button"
+                    class="btn btn-ghost btn-xs hidden group-hover:inline-flex focus-visible:inline-flex focus-visible:ring-2 focus-visible:ring-primary"
+                    onclick="window.copyToClipboard('{{ worker.barcode }}', this, 'Barcode kopiert')"
+                    aria-label="Barcode kopieren"
+                    title="Barcode kopieren">
+                <i class="fas fa-copy"></i>
+            </button>
+            {% endif %}
+        </div>
     </td>
     <td>
         {% if worker.department %}
