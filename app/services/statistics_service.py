@@ -96,13 +96,21 @@ class StatisticsService:
         """Findet alle überfälligen Ausleihen (Optimiert mit Aggregation zur Vermeidung von N+1 Problemen)"""
         try:
             today = datetime.now().date()
+            today_dt = datetime.combine(today, datetime.min.time())
             
             # Aggregation-Pipeline zur Vermeidung von N+1 Problemen (Bolt ⚡)
+            # OPTIMIERT: Filtert überfällige Ausleihen direkt in der DB (Bolt ⚡)
             pipeline = [
                 {
                     '$match': {
                         'returned_at': None,
-                        'expected_return_date': {'$exists': True, '$ne': None}
+                        'expected_return_date': {'$exists': True, '$ne': None},
+                        '$or': [
+                            {'expected_return_date': {'$lt': today_dt}},
+                            {'expected_return_date': {
+                                '$lt': today.strftime('%Y-%m-%d')
+                            }}
+                        ]
                     }
                 },
                 {
@@ -131,18 +139,17 @@ class StatisticsService:
             
             for loan in active_loans:
                 expected_date = loan.get('expected_return_date')
-                if not expected_date:
-                    continue
                 
                 # Konvertiere String zu datetime falls nötig
                 if isinstance(expected_date, str):
                     try:
-                        expected_date = datetime.strptime(expected_date, '%Y-%m-%d')
+                        expected_date = datetime.strptime(
+                            expected_date, '%Y-%m-%d'
+                        )
                     except ValueError:
                         continue
                 
-                # Prüfe ob überfällig
-                if expected_date.date() < today:
+                if expected_date:
                     # Nutze die bereits geladenen Informationen statt neuer Datenbankabfragen (N+1 Fix Bolt ⚡)
                     tool = loan.get('tool_info')
                     worker = loan.get('worker_info')

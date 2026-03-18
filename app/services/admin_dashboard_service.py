@@ -191,22 +191,11 @@ class AdminDashboardService:
             # Hole Verbrauchsmaterial-Ausgaben der letzten 30 Tage
             thirty_days_ago = datetime.now() - timedelta(days=30)
             
-            # Sichere Pipeline mit Datumsbehandlung
+            # OPTIMIERT: Direkter Match auf indexiertes Feld used_at (Bolt ⚡)
             pipeline = [
                 {
-                    '$addFields': {
-                        'safe_used_at': {
-                            '$cond': {
-                                'if': {'$type': '$used_at'},
-                                'then': '$used_at',
-                                'else': datetime.now()
-                            }
-                        }
-                    }
-                },
-                {
                     '$match': {
-                        'safe_used_at': {'$gte': thirty_days_ago}
+                        'used_at': {'$gte': thirty_days_ago}
                     }
                 },
                 {
@@ -371,22 +360,36 @@ class AdminDashboardService:
             
             # Verbrauchsmaterial mit niedrigem Bestand
             try:
-                low_stock_consumables = list(mongodb.find('consumables', {'stock': {'$lt': 10}, 'deleted': {'$ne': True}}))
+                # OPTIMIERT: Korrekte Felder und Index-Nutzung via $expr (Bolt ⚡)
+                low_stock_consumables = list(mongodb.find('consumables', {
+                    'deleted': {'$ne': True},
+                    '$expr': {'$lte': ['$quantity', '$min_quantity']}
+                }))
                 for consumable in low_stock_consumables:
                     try:
                         # Sichere Dokumentverarbeitung
-                        consumable = AdminDashboardService._safe_document_processing(consumable)
+                        consumable = AdminDashboardService._safe_document_processing(
+                            consumable
+                        )
                         warnings['low_stock_consumables'].append({
-                            'name': consumable.get('name', 'Unbekanntes Verbrauchsmaterial'),
+                            'name': consumable.get(
+                                'name', 'Unbekanntes Verbrauchsmaterial'
+                            ),
                             'barcode': consumable.get('barcode', ''),
-                            'stock': consumable.get('stock', 0),
+                            'stock': consumable.get('quantity', 0),
                             'severity': 'warning'
                         })
                     except Exception as e:
-                        logger.warning(f"Fehler bei Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+                        logger.warning(
+                            f"Fehler bei Verbrauchsmaterial mit niedrigem "
+                            f"Bestand: [Interner Fehler]"
+                        )
                         continue
             except Exception as e:
-                logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+                logger.error(
+                    f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem "
+                    f"Bestand: [Interner Fehler]"
+                )
 
             # Doppelte Ausleihen (Bolt ⚡ Aggregation Fix)
             try:
@@ -498,28 +501,20 @@ class AdminDashboardService:
             # Berechne Trend der letzten 30 Tage
             thirty_days_ago = datetime.now() - timedelta(days=30)
             
-            # Sichere Pipeline mit Datumsbehandlung
+            # OPTIMIERT: Direkter Match auf indexiertes Feld used_at (Bolt ⚡)
             pipeline = [
                 {
-                    '$addFields': {
-                        'safe_used_at': {
-                            '$cond': {
-                                'if': {'$type': '$used_at'},
-                                'then': '$used_at',
-                                'else': datetime.now()
-                            }
-                        }
-                    }
-                },
-                {
                     '$match': {
-                        'safe_used_at': {'$gte': thirty_days_ago}
+                        'used_at': {'$gte': thirty_days_ago}
                     }
                 },
                 {
                     '$group': {
                         '_id': {
-                            'date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$safe_used_at'}},
+                            'date': {'$dateToString': {
+                                'format': '%Y-%m-%d',
+                                'date': '$used_at'
+                            }},
                             'consumable': '$consumable_barcode'
                         },
                         'total_quantity': {'$sum': '$quantity'}
