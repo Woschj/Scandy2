@@ -18,16 +18,13 @@ def dashboard():
         consumables_forecast = AdminDashboardService.get_consumables_forecast()
         consumable_trend = AdminDashboardService.get_consumable_trend()
 
-        # Starseiten-Hinweise (aktuelle Abteilung)
+        # Starseiten-Hinweise (aktuelle Abteilung) (Bolt ⚡ Optimiert)
         try:
             from flask import g
             from app.services.admin_notification_service import AdminNotificationService
             current_department = getattr(g, 'current_department', None)
-            raw_notices = AdminNotificationService.get_all_notices(current_department)
-            # Nur aktive, nach Priorität/Datum sortiert
-            notices = [n for n in raw_notices if n.get('is_active', False)]
-            from datetime import datetime as _dt
-            notices.sort(key=lambda x: (int(x.get('priority', 0)), x.get('created_at') or _dt.min), reverse=True)
+            # Nutze die optimierte Methode für aktive Hinweise (filtert & sortiert in der DB)
+            notices = AdminNotificationService.get_active_notices(current_department)
         except Exception as _nerr:
             logger.warning(f"Dashboard: Hinweise konnten nicht geladen werden: {_nerr}")
             notices = []
