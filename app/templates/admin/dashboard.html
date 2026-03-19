@@ -20,14 +20,16 @@
             <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Admin Dashboard</h1>
             <p class="text-slate-500 font-medium">Systemübersicht und zentrale Verwaltung</p>
         </div>
+        {% if current_user.role == 'admin' %}
         <div class="flex flex-wrap gap-3">
-            <button class="btn btn-ghost bg-white border-slate-200 shadow-sm hover:bg-slate-50">
+            <a href="{{ url_for('admin.export_all_data') }}" class="btn btn-ghost bg-white border-slate-200 shadow-sm hover:bg-slate-50 export-btn">
                 <i class="fas fa-download mr-2 text-slate-400"></i>Standard Export
-            </button>
-            <button class="btn btn-primary shadow-lg shadow-indigo-100">
+            </a>
+            <a href="{{ url_for('admin.export_excel_detailed') }}" class="btn btn-primary shadow-lg shadow-indigo-100 export-btn">
                 <i class="fas fa-file-excel mr-2"></i>Detaillierter Excel Export
-            </button>
+            </a>
         </div>
+        {% endif %}
     </div>
     
     <!-- Statistik-Karten -->
@@ -390,5 +392,21 @@ function initChart() {
     }
 }
 document.addEventListener('DOMContentLoaded', initChart);
+
+// Handling Export Buttons Loading State
+document.querySelectorAll('.export-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        const originalContent = this.innerHTML;
+        this.classList.add('btn-disabled', 'pointer-events-none');
+        this.innerHTML = '<span class="loading loading-spinner loading-xs mr-2"></span>Exportiert...';
+
+        // Da es sich um einen Datei-Download handelt, gibt es kein einfaches "onload" Event.
+        // Wir setzen den Button nach einer angemessenen Zeit zurück.
+        setTimeout(() => {
+            this.classList.remove('btn-disabled', 'pointer-events-none');
+            this.innerHTML = originalContent;
+        }, 5000);
+    });
+});
 </script>
 {% endblock %}
