@@ -49,27 +49,42 @@
                     <div class="divider">Passwort ändern (optional)</div>
 
                     <div class="form-control mb-4">
-                        <label class="label">
+                        <label class="label" for="current_password">
                             <span class="label-text">Aktuelles Passwort</span>
                         </label>
-                        <input type="password" name="current_password" class="input input-bordered">
+                        <div class="join">
+                            <input type="password" id="current_password" name="current_password" class="input input-bordered join-item w-full">
+                            <button type="button" class="btn btn-bordered join-item" onclick="togglePasswordVisibility('current_password', this)" aria-label="Passwort anzeigen" title="Passwort anzeigen">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-control mb-4">
-                        <label class="label">
+                        <label class="label" for="new_password">
                             <span class="label-text">Neues Passwort</span>
                         </label>
-                        <input type="password" name="new_password" class="input input-bordered" minlength="8">
+                        <div class="join">
+                            <input type="password" id="new_password" name="new_password" class="input input-bordered join-item w-full" minlength="8">
+                            <button type="button" class="btn btn-bordered join-item" onclick="togglePasswordVisibility('new_password', this)" aria-label="Passwort anzeigen" title="Passwort anzeigen">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <label class="label">
                             <span class="label-text-alt">Mindestens 8 Zeichen</span>
                         </label>
                     </div>
 
                     <div class="form-control mb-6">
-                        <label class="label">
+                        <label class="label" for="new_password_confirm">
                             <span class="label-text">Neues Passwort bestätigen</span>
                         </label>
-                        <input type="password" name="new_password_confirm" class="input input-bordered" minlength="8">
+                        <div class="join">
+                            <input type="password" id="new_password_confirm" name="new_password_confirm" class="input input-bordered join-item w-full" minlength="8">
+                            <button type="button" class="btn btn-bordered join-item" onclick="togglePasswordVisibility('new_password_confirm', this)" aria-label="Passwort anzeigen" title="Passwort anzeigen">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="divider">Wochenplan-Einstellungen</div>
