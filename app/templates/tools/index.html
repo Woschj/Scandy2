@@ -61,7 +61,7 @@
 
 {% block table_rows %}
 {% for tool in tools %}
-<tr class="hover data-row" 
+<tr class="hover data-row group"
     data-barcode="{{ tool.barcode }}"
     data-category="{{ tool.category or '' }}" 
     data-location="{{ tool.location or '' }}"
@@ -74,7 +74,18 @@
         </div>
     </td>
     <td>
-        <div class="badge badge-outline">{{ tool.barcode or 'Kein Barcode' }}</div>
+        <div class="flex items-center gap-2">
+            <div class="badge badge-outline font-mono">{{ tool.barcode or 'Kein Barcode' }}</div>
+            {% if tool.barcode %}
+            <button type="button"
+                    class="btn btn-ghost btn-xs hidden group-hover:inline-flex focus-visible:inline-flex focus-visible:ring-2 focus-visible:ring-primary"
+                    onclick="window.copyToClipboard('{{ tool.barcode }}', this, 'Barcode kopiert')"
+                    aria-label="Barcode kopieren"
+                    title="Barcode kopieren">
+                <i class="fas fa-copy"></i>
+            </button>
+            {% endif %}
+        </div>
     </td>
     <td>
         {% if tool.barcode %}
