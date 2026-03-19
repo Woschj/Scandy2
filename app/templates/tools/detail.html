@@ -1001,15 +1001,15 @@ function deleteMedia(filename) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Medium erfolgreich gelöscht!');
+            showToast('success', 'Medium erfolgreich gelöscht!');
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Löschen');
+            showToast('error', data.error || 'Fehler beim Löschen');
         }
     })
     .catch(error => {
         console.error('Delete error:', error);
-        alert('Fehler beim Löschen');
+        showToast('error', 'Fehler beim Löschen');
     });
 }
 
@@ -1021,15 +1021,15 @@ function setPreviewImage(filename) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Preview-Bild erfolgreich gesetzt!');
-            window.location.reload();
+            showToast('success', 'Preview-Bild erfolgreich gesetzt!');
+            setTimeout(() => window.location.reload(), 1000);
         } else {
-            alert(data.error || 'Fehler beim Setzen des Preview-Bildes');
+            showToast('error', data.error || 'Fehler beim Setzen des Preview-Bildes');
         }
     })
     .catch(error => {
         console.error('Set preview error:', error);
-        alert('Fehler beim Setzen des Preview-Bildes');
+        showToast('error', 'Fehler beim Setzen des Preview-Bildes');
     });
 }
 
@@ -1111,7 +1111,7 @@ function uploadModalMedia() {
     const uploadBtn = document.getElementById('modalUploadBtn');
     
     if (!fileInput.files.length) {
-        alert('Bitte wählen Sie eine Datei aus');
+        showToast('warning', 'Bitte wählen Sie eine Datei aus');
         return;
     }
     
@@ -1134,20 +1134,20 @@ function uploadModalMedia() {
             uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
             
             // Erfolgsmeldung anzeigen
-            alert('Medien erfolgreich hochgeladen!');
+            showToast('success', 'Medien erfolgreich hochgeladen!');
             
             // Medien-Listen neu laden
             loadModalMediaList();
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Hochladen');
+            showToast('error', data.error || 'Fehler beim Hochladen');
             uploadBtn.disabled = false;
             uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
         }
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Fehler beim Hochladen');
+        showToast('error', 'Fehler beim Hochladen');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
     });
@@ -1229,16 +1229,16 @@ function deleteModalMedia(filename) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Medium erfolgreich gelöscht!');
+            showToast('success', 'Medium erfolgreich gelöscht!');
             loadModalMediaList();
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Löschen');
+            showToast('error', data.error || 'Fehler beim Löschen');
         }
     })
     .catch(error => {
         console.error('Delete error:', error);
-        alert('Fehler beim Löschen');
+        showToast('error', 'Fehler beim Löschen');
     });
 }
 
@@ -1438,7 +1438,7 @@ function uploadModalMedia() {
     const uploadBtn = document.getElementById('modalUploadBtn');
     
     if (!fileInput.files.length) {
-        alert('Bitte wählen Sie eine Datei aus');
+        showToast('warning', 'Bitte wählen Sie eine Datei aus');
         return;
     }
     
@@ -1455,18 +1455,18 @@ function uploadModalMedia() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message || 'Medium erfolgreich hochgeladen!');
+            showToast('success', data.message || 'Medium erfolgreich hochgeladen!');
             fileInput.value = '';
             document.getElementById('selectedModalFileName').classList.add('hidden');
             closeMediaModal();
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Hochladen');
+            showToast('error', data.error || 'Fehler beim Hochladen');
         }
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Fehler beim Hochladen');
+        showToast('error', 'Fehler beim Hochladen');
     })
     .finally(() => {
         uploadBtn.disabled = false;

@@ -673,7 +673,7 @@ function uploadMedia() {
     const uploadBtn = document.getElementById('uploadBtn');
     
     if (!fileInput.files.length) {
-        alert('Bitte wählen Sie eine Datei aus');
+        showToast('warning', 'Bitte wählen Sie eine Datei aus');
         return;
     }
     
@@ -696,19 +696,19 @@ function uploadMedia() {
             uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
             
             // Erfolgsmeldung anzeigen
-            alert('Medien erfolgreich hochgeladen!');
+            showToast('success', 'Medien erfolgreich hochgeladen!');
             
             // Medien-Galerie neu laden
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Hochladen');
+            showToast('error', data.error || 'Fehler beim Hochladen');
             uploadBtn.disabled = false;
             uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
         }
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Fehler beim Hochladen');
+        showToast('error', 'Fehler beim Hochladen');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Hochladen';
     });
@@ -726,15 +726,15 @@ function deleteMedia(filename) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Medium erfolgreich gelöscht!');
+            showToast('success', 'Medium erfolgreich gelöscht!');
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Löschen');
+            showToast('error', data.error || 'Fehler beim Löschen');
         }
     })
     .catch(error => {
         console.error('Delete error:', error);
-        alert('Fehler beim Löschen');
+        showToast('error', 'Fehler beim Löschen');
     });
 }
 
@@ -746,16 +746,16 @@ function setPreviewImage(filename) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Preview-Bild erfolgreich gesetzt!');
+            showToast('success', 'Preview-Bild erfolgreich gesetzt!');
             // Seite neu laden um Änderungen anzuzeigen
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 1000);
         } else {
-            alert(data.error || 'Fehler beim Setzen des Preview-Bildes');
+            showToast('error', data.error || 'Fehler beim Setzen des Preview-Bildes');
         }
     })
     .catch(error => {
         console.error('Set preview error:', error);
-        alert('Fehler beim Setzen des Preview-Bildes');
+        showToast('error', 'Fehler beim Setzen des Preview-Bildes');
     });
 }
 
@@ -793,11 +793,11 @@ async function deleteConsumable(barcode) {
         if (result.success) {
             window.location.href = '/consumables';
         } else {
-            alert(result.message || 'Ein Fehler ist aufgetreten');
+            showToast('error', result.message || 'Ein Fehler ist aufgetreten');
         }
     } catch (error) {
         console.error('Fehler beim Löschen:', error);
-        alert('Ein Fehler ist aufgetreten');
+        showToast('error', 'Ein Fehler ist aufgetreten');
     }
 }
 
@@ -823,13 +823,14 @@ if (editForm) {
             const result = await response.json();
             
             if (result.success) {
-                window.location.reload();
+                showToast('success', 'Änderungen erfolgreich gespeichert');
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                alert(result.message || 'Ein Fehler ist aufgetreten');
+                showToast('error', result.message || 'Ein Fehler ist aufgetreten');
             }
         } catch (error) {
             console.error('Fehler beim Speichern:', error);
-            alert('Ein Fehler ist aufgetreten');
+            showToast('error', 'Ein Fehler ist aufgetreten');
         }
     });
 }
@@ -857,13 +858,14 @@ if (stockForm) {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.reload();
+                showToast('success', 'Bestand erfolgreich angepasst');
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                alert(result.message || 'Ein Fehler ist aufgetreten');
+                showToast('error', result.message || 'Ein Fehler ist aufgetreten');
             }
         } catch (error) {
             console.error('Fehler beim Anpassen des Bestands:', error);
-            alert('Ein Fehler ist aufgetreten');
+            showToast('error', 'Ein Fehler ist aufgetreten');
         }
     });
 }
@@ -986,7 +988,7 @@ function uploadModalMedia() {
     const uploadBtn = document.getElementById('modalUploadBtn');
     
     if (!fileInput.files.length) {
-        alert('Bitte wählen Sie eine Datei aus');
+        showToast('warning', 'Bitte wählen Sie eine Datei aus');
         return;
     }
     
@@ -1003,18 +1005,18 @@ function uploadModalMedia() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message || 'Medium erfolgreich hochgeladen!');
+            showToast('success', data.message || 'Medium erfolgreich hochgeladen!');
             fileInput.value = '';
             document.getElementById('selectedModalFileName').classList.add('hidden');
             closeMediaModal();
             loadMediaGallery();
         } else {
-            alert(data.error || 'Fehler beim Hochladen');
+            showToast('error', data.error || 'Fehler beim Hochladen');
         }
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Fehler beim Hochladen');
+        showToast('error', 'Fehler beim Hochladen');
     })
     .finally(() => {
         uploadBtn.disabled = false;
