@@ -13,3 +13,7 @@
 ## 2026-02-15 - [Timed Feedback for File Downloads]
 **Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
 **Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
+
+## 2026-03-01 - [Password Visibility Toggle Pattern]
+**Learning:** Implementing password visibility toggles using the DaisyUI `join` component provides a clean, accessible UI. Centralizing the logic in a global `window.togglePasswordVisibility(inputId, btn)` helper allows for easy reuse across login, profile, and reset pages while ensuring consistent behavior (swapping types, icons, and ARIA labels).
+**Action:** Use the `join` component to group password inputs with a toggle button and use `setAttribute('aria-label', ...)` for dynamic accessibility updates.
