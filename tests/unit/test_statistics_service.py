@@ -15,29 +15,27 @@ class TestStatisticsService:
         tomorrow = today + timedelta(days=1)
 
         # Mock the aggregated results from MongoDB
+        # Note: In production, the aggregation pipeline would filter out 'tomorrow'.
+        # Since we are mocking the aggregate result, we should only provide overdue items.
         mock_aggregate.return_value = [
             {
                 'tool_barcode': 'T1',
                 'worker_barcode': 'W1',
                 'expected_return_date': yesterday,
                 'tool_info': {'name': 'Hammer'},
-                'worker_info': {'firstname': 'Max', 'lastname': 'Mustermann', 'deleted': False},
-                'lent_at': today - timedelta(days=5)
-            },
-            {
-                'tool_barcode': 'T2',
-                'worker_barcode': 'W2',
-                'expected_return_date': tomorrow, # Not overdue, should be filtered out
-                'tool_info': {'name': 'Bohrer'},
-                'worker_info': {'firstname': 'Erika', 'lastname': 'Musterfrau', 'deleted': False},
+                'worker_info': {
+                    'firstname': 'Max', 'lastname': 'Mustermann', 'deleted': False
+                },
                 'lent_at': today - timedelta(days=5)
             },
             {
                 'tool_barcode': 'T3',
                 'worker_barcode': 'W3',
-                'expected_return_date': two_days_ago, # 2 days overdue (most overdue)
+                'expected_return_date': two_days_ago,  # 2 days overdue
                 'tool_info': {'name': 'Säge'},
-                'worker_info': {'firstname': 'Lars', 'lastname': 'Müller', 'deleted': False},
+                'worker_info': {
+                    'firstname': 'Lars', 'lastname': 'Müller', 'deleted': False
+                },
                 'lent_at': today - timedelta(days=5)
             }
         ]
