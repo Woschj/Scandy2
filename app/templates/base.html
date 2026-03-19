@@ -623,6 +623,18 @@
                 document.body.removeChild(textArea);
             }
         };
+
+        window.togglePasswordVisibility = (inputId, btn) => {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (!input || !icon) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.className = `fas fa-eye${isPassword ? '-slash' : ''}`;
+            const label = `Passwort ${isPassword ? 'aus' : 'an'}blenden`;
+            btn.title = label;
+            btn.setAttribute('aria-label', label);
+        };
     </script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/quickscan.js') }}?v=2"></script>
     <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/lending-service.js') }}" defer></script>
