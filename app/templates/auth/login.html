@@ -37,7 +37,12 @@
                     <label class="label" for="password">
                         <span class="label-text">Passwort</span>
                     </label>
-                    <input type="password" id="password" name="password" class="input input-bordered" required aria-required="true">
+                    <div class="join w-full">
+                        <input type="password" id="password" name="password" class="input input-bordered join-item w-full" required aria-required="true">
+                        <button type="button" class="btn btn-bordered join-item" onclick="window.togglePasswordVisibility('password', this)" title="Passwort anzeigen" aria-label="Passwort anzeigen">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-control mb-6">

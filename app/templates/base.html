@@ -570,6 +570,24 @@
         });
 
         /**
+         * Toggles password visibility for a given input.
+         * @param {string} inputId - ID of the password input.
+         * @param {HTMLElement} btn - The toggle button element.
+         */
+        window.togglePasswordVisibility = function(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input && icon) {
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+                const label = isPassword ? 'Passwort verbergen' : 'Passwort anzeigen';
+                btn.setAttribute('aria-label', label);
+                btn.setAttribute('title', label);
+            }
+        };
+
+        /**
          * Kopiert Text in die Zwischenablage und gibt visuelles Feedback.
          * @param {string} text - Der zu kopierende Text.
          * @param {HTMLElement} btn - Der Button, der den Kopiervorgang ausgelöst hat.
