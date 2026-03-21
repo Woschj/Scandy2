@@ -570,6 +570,29 @@
         });
 
         /**
+         * Toggelt die Sichtbarkeit eines Passwortfeldes.
+         * @param {string} inputId - Die ID des Passwort-Inputs.
+         * @param {HTMLElement} btn - Der Button, der den Toggle ausgelöst hat.
+         */
+        window.togglePasswordVisibility = function(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) icon.className = 'fas fa-eye-slash';
+                btn.title = 'Passwort ausblenden';
+                btn.setAttribute('aria-label', 'Passwort ausblenden');
+            } else {
+                input.type = 'password';
+                if (icon) icon.className = 'fas fa-eye';
+                btn.title = 'Passwort anzeigen';
+                btn.setAttribute('aria-label', 'Passwort anzeigen');
+            }
+        };
+
+        /**
          * Kopiert Text in die Zwischenablage und gibt visuelles Feedback.
          * @param {string} text - Der zu kopierende Text.
          * @param {HTMLElement} btn - Der Button, der den Kopiervorgang ausgelöst hat.
