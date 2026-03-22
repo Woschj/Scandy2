@@ -29,8 +29,13 @@
                     Admin-Passwort
                 </label>
                 <div class="mt-2">
-                    <input id="password" name="password" type="password" required
-                           class="input input-bordered w-full">
+                    <div class="join w-full">
+                        <input id="password" name="password" type="password" required
+                               class="input input-bordered join-item w-full">
+                        <button type="button" class="btn btn-outline join-item" onclick="window.togglePasswordVisibility('password', this)" aria-label="Passwort anzeigen">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -39,8 +44,13 @@
                     Passwort bestätigen
                 </label>
                 <div class="mt-2">
-                    <input id="confirm_password" name="confirm_password" type="password" required
-                           class="input input-bordered w-full">
+                    <div class="join w-full">
+                        <input id="confirm_password" name="confirm_password" type="password" required
+                               class="input input-bordered join-item w-full">
+                        <button type="button" class="btn btn-outline join-item" onclick="window.togglePasswordVisibility('confirm_password', this)" aria-label="Passwort anzeigen">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -51,7 +61,7 @@
                     Bezeichnung für Tickets
                 </label>
                 <div class="mt-2">
-                    <input id="label_tickets_name" name="label_tickets_name" type="text" 
+                    <input id="label_tickets_name" name="label_tickets_name" type="text"
                            value="Tickets" required
                            class="input input-bordered w-full">
                 </div>
@@ -62,7 +72,7 @@
                     Icon für Tickets (FontAwesome-Klasse)
                 </label>
                 <div class="mt-2">
-                    <input id="label_tickets_icon" name="label_tickets_icon" type="text" 
+                    <input id="label_tickets_icon" name="label_tickets_icon" type="text"
                            value="fas fa-ticket-alt" required
                            class="input input-bordered w-full">
                 </div>
@@ -73,7 +83,7 @@
                     Bezeichnung für Werkzeuge
                 </label>
                 <div class="mt-2">
-                    <input id="label_tools_name" name="label_tools_name" type="text" 
+                    <input id="label_tools_name" name="label_tools_name" type="text"
                            value="Werkzeuge" required
                            class="input input-bordered w-full">
                 </div>
@@ -84,7 +94,7 @@
                     Icon für Werkzeuge (FontAwesome-Klasse)
                 </label>
                 <div class="mt-2">
-                    <input id="label_tools_icon" name="label_tools_icon" type="text" 
+                    <input id="label_tools_icon" name="label_tools_icon" type="text"
                            value="fas fa-tools" required
                            class="input input-bordered w-full">
                 </div>
@@ -95,7 +105,7 @@
                     Bezeichnung für Verbrauchsmaterial
                 </label>
                 <div class="mt-2">
-                    <input id="label_consumables_name" name="label_consumables_name" type="text" 
+                    <input id="label_consumables_name" name="label_consumables_name" type="text"
                            value="Verbrauchsmaterial" required
                            class="input input-bordered w-full">
                 </div>
@@ -106,7 +116,7 @@
                     Icon für Verbrauchsmaterial (FontAwesome-Klasse)
                 </label>
                 <div class="mt-2">
-                    <input id="label_consumables_icon" name="label_consumables_icon" type="text" 
+                    <input id="label_consumables_icon" name="label_consumables_icon" type="text"
                            value="fas fa-box-open" required
                            class="input input-bordered w-full">
                 </div>
