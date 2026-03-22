@@ -145,36 +145,15 @@ def detail(barcode):
     
     categories = get_categories_scoped()
     locations = get_locations_scoped()
-    usages = ConsumableService.get_consumable_usages(barcode)
     
-    # Erstelle Verlaufsliste
-    history = []
-    for usage in usages:
-        worker = mongodb.find_one('workers', {'barcode': usage['worker_barcode']})
-        worker_name = f"{worker['firstname']} {worker['lastname']}" if worker else "Admin"
-        
-        action = "Entnommen" if usage['quantity'] < 0 else "Hinzugefügt"
-        quantity = abs(usage['quantity'])
-        
-        action_date = usage['used_at']
-        if isinstance(action_date, str):
-            try:
-                action_date = datetime.strptime(action_date, '%Y-%m-%d %H:%M:%S')
-            except (ValueError, TypeError):
-                action_date = datetime.now()
-        
-        history.append({
-            'action': action,
-            'quantity': quantity,
-            'worker_name': worker_name,
-            'date': action_date
-        })
+    # Holen der angereicherten Historie (Optimiert via Aggregation Bolt ⚡)
+    history = ConsumableService.get_usage_history(barcode)
     
     return render_template('consumables/details.html',
                          consumable=consumable,
-                       history=history,
+                         history=history,
                          categories=categories,
-                       locations=locations)
+                         locations=locations)
 
 @bp.route('/<barcode>/adjust-stock', methods=['POST'])
 @login_required
@@ -394,7 +373,7 @@ def restock_alert(barcode):
 @bp.route('/usage-history/<barcode>')
 @login_required
 def usage_history(barcode):
-    """Zeigt die Nutzungshistorie eines Verbrauchsmaterials an"""
+    """Zeigt die Nutzungshistorie eines Verbrauchsmaterials an (Optimiert via Aggregation Bolt ⚡)"""
     try:
         history_data = ConsumableService.get_usage_history(barcode)
         if history_data:
