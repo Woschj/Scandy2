@@ -1,5 +1,6 @@
 from flask import Blueprint, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from app.utils.decorators import mitarbeiter_required
 from app.utils.logger import loggers
 import os
@@ -38,7 +39,6 @@ bp = Blueprint('media', __name__)
 def upload_media(entity_type, entity_id):
     """Universeller Medien-Upload für alle Entitäten"""
     # Imports am Anfang
-    from werkzeug.utils import secure_filename
     import uuid
     
     try:
@@ -295,6 +295,8 @@ def upload_media(entity_type, entity_id):
 def delete_media(entity_type, entity_id, filename):
     """Löscht eine Mediendatei"""
     try:
+        # Sicheren Dateinamen erstellen um Path Traversal zu verhindern
+        filename = secure_filename(filename)
         loggers['user_actions'].info(f"=== DELETE START === entity_type={entity_type}, entity_id={entity_id}, filename={filename}")
         
         # Validierung
@@ -463,7 +465,6 @@ def simple_upload_test(entity_type, entity_id):
             loggers['user_actions'].info(f"Datei gefunden: {file.filename}")
             
             # Datei speichern
-            from werkzeug.utils import secure_filename
             import uuid
             import os
             
@@ -512,6 +513,8 @@ def set_preview_image(entity_type, entity_id, filename):
     from bson import ObjectId
     
     try:
+        # Sicheren Dateinamen erstellen um Path Traversal zu verhindern
+        filename = secure_filename(filename)
         loggers['user_actions'].info(f"=== SET PREVIEW START === entity_type={entity_type}, entity_id={entity_id}, filename={filename}")
         
         # Validierung

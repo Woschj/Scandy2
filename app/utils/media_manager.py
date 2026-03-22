@@ -171,6 +171,8 @@ class MediaManager:
     def delete_media(filename, entity_type, entity_id):
         """Löscht eine Mediendatei"""
         try:
+            # Sicheren Dateinamen erstellen um Path Traversal zu verhindern
+            filename = secure_filename(filename)
             upload_folder = MediaManager.get_upload_folder(entity_type, entity_id)
             file_path = os.path.join(upload_folder, filename)
             
