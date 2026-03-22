@@ -20,7 +20,7 @@ Zieltypen:
 - consumables: Nur für Verbrauchsgüter
 - both: Für beide Typen verfügbar
 """
-from typing import Dict, Any, List, Tuple, Optional, Union
+from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 from app.models.mongodb_database import mongodb
 import logging
