@@ -488,17 +488,16 @@ class AdminDebugService:
                     'email_password', 'email_use_tls', 'email_sender_email'
                 ]
                 
-                for key in old_keys:
-                    setting = mongodb.find_one('settings', {'key': key})
-                    if setting:
-                        old_email_settings[key] = setting.get('value', '')
+                settings_list = mongodb.find('settings', {'key': {'$in': old_keys}})
+                for setting in settings_list:
+                    old_email_settings[setting['key']] = setting.get('value', '')
                 
                 # Konvertiere zu neuem Format
                 if old_email_settings.get('email_smtp_server'):
                     new_config = {
                         'mail_server': old_email_settings.get('email_smtp_server', ''),
                         'mail_port': int(old_email_settings.get('email_smtp_port', 587)),
-                        'mail_use_tls': old_email_settings.get('email_use_tls', 'true').lower() == 'true',
+                        'mail_use_tls': str(old_email_settings.get('email_use_tls', 'true')).lower() == 'true',
                         'mail_username': old_email_settings.get('email_username', ''),
                         'mail_password': old_email_settings.get('email_password', ''),
                         'test_email': old_email_settings.get('email_sender_email', ''),
@@ -509,8 +508,7 @@ class AdminDebugService:
                     AdminEmailService.save_email_config(new_config)
                     
                     # Lösche alte Einstellungen
-                    for key in old_keys:
-                        mongodb.delete_one('settings', {'key': key})
+                    mongodb.delete_many('settings', {'key': {'$in': old_keys}})
                     
                     logger.info("E-Mail-Konfiguration erfolgreich migriert")
                     return True, "E-Mail-Konfiguration erfolgreich migriert"
