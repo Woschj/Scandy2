@@ -125,24 +125,64 @@ class ConsumableService:
     
     @staticmethod
     def get_consumable_usages(barcode: str) -> List[Dict[str, Any]]:
+        """Holt die rohen Verbrauchsdaten für ein Verbrauchsmaterial"""
         try:
-            usages = list(mongodb.find('consumable_usages', {'consumable_barcode': barcode}))
-            # Sortiere nach Datum (neueste zuerst)
-            def safe_date_key(usage):
-                used_at = usage.get('used_at')
-                if isinstance(used_at, str):
-                    try:
-                        return datetime.strptime(used_at, '%Y-%m-%d %H:%M:%S')
-                    except (ValueError, TypeError):
-                        return datetime.min
-                elif isinstance(used_at, datetime):
-                    return used_at
-                else:
-                    return datetime.min
-            usages.sort(key=safe_date_key, reverse=True)
-            return usages
+            return list(mongodb.find('consumable_usages', {'consumable_barcode': barcode}, sort=[('used_at', -1)]))
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchshistorie: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Verbrauchsdaten: [Interner Fehler]")
+            return []
+
+    @staticmethod
+    def get_usage_history(barcode: str) -> List[Dict[str, Any]]:
+        """
+        Holt die angereicherte Nutzungshistorie für ein Verbrauchsmaterial (optimiert via Aggregation) (Bolt ⚡)
+        Reduziert Datenbank-Abfragen von O(N) auf O(1).
+        """
+        try:
+            pipeline = [
+                {'$match': {'consumable_barcode': barcode}},
+                {'$sort': {'used_at': -1}},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
+            ]
+
+            usages = mongodb.aggregate('consumable_usages', pipeline)
+
+            # Enriched Result-Set erstellen
+            history = []
+            for usage in usages:
+                worker = usage.get('worker_info', {})
+                worker_name = f"{worker.get('firstname', '')} {worker.get('lastname', '')}".strip() or "Admin"
+
+                # Datums-Konvertierung zur Sicherheit (für Kompatibilität mit dem Template)
+                action_date = usage.get('used_at')
+                if isinstance(action_date, str):
+                    try:
+                        action_date = datetime.strptime(action_date, '%Y-%m-%d %H:%M:%S')
+                    except (ValueError, TypeError):
+                        action_date = datetime.now()
+                elif not isinstance(action_date, datetime):
+                    action_date = datetime.now()
+
+                history.append({
+                    'action': "Entnommen" if usage.get('quantity', 0) < 0 else "Hinzugefügt",
+                    'quantity': abs(usage.get('quantity', 0)),
+                    'worker_name': worker_name,
+                    'worker_barcode': usage.get('worker_barcode'),
+                    'date': action_date
+                })
+
+            return history
+
+        except Exception as e:
+            logger.error(f"Fehler beim Laden der Nutzungshistorie: {e}")
             return []
     
     @staticmethod

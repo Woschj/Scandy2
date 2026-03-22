@@ -26,3 +26,7 @@
 ## 2026-03-16 - [Aggregation Index Usage and Correctness]
 **Learning:** In `AdminDashboardService`, use direct `$match` on indexed fields at the start of aggregation pipelines instead of normalising with `$addFields` first, as the latter prevents index usage and forces a collection scan. Additionally, using `$expr` for field-to-field comparisons (e.g., `quantity` <= `min_quantity`) allows for dynamic logic while still potentially benefiting from compound indexes on those fields.
 **Action:** Always place `$match` on indexed fields as the first stage. Ensure business logic (like low stock) uses correct field names and database-level comparisons rather than hardcoded Python values.
+
+## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
+**Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
+**Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
