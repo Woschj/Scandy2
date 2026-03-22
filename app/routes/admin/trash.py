@@ -1,3 +1,4 @@
+from werkzeug.utils import secure_filename
 from .blueprint import bp
 from .shared import *
 @bp.route('/trash')
@@ -448,7 +449,6 @@ def delete_logo(filename):
     """Logo löschen"""
     try:
         import os
-        from werkzeug.utils import secure_filename
 
         safe_filename = secure_filename(filename)
         logo_path = os.path.join(current_app.root_path, 'static', 'uploads', 'logos', safe_filename)
@@ -656,6 +656,8 @@ def delete_ticket_category_legacy(category):
 def delete_backup(filename):
     """Löscht ein Backup (JSON oder Native)"""
     try:
+        # Sicheren Dateinamen erstellen um Path Traversal zu verhindern
+        filename = secure_filename(filename)
         from app.utils.backup_manager import backup_manager
         import shutil
 
