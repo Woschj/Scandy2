@@ -20,14 +20,8 @@ class AdminNotificationService:
     def get_notifications() -> List[Dict[str, Any]]:
         """Hole alle Benachrichtigungen"""
         try:
-            notifications = list(mongodb.find('notifications', {}, sort=[('created_at', -1)]))
-            
-            # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
-            for notification in notifications:
-                if '_id' in notification:
-                    notification['_id'] = str(notification['_id'])
-            
-            return notifications
+            # OPTIMIERT: mongodb.find konvertiert _id bereits zu string (Bolt ⚡)
+            return list(mongodb.find('notifications', {}, sort=[('created_at', -1)]))
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Benachrichtigungen: [Interner Fehler]")
@@ -135,14 +129,8 @@ class AdminNotificationService:
     def get_unread_notifications() -> List[Dict[str, Any]]:
         """Hole alle ungelesenen Benachrichtigungen"""
         try:
-            notifications = list(mongodb.find('notifications', {'is_read': False}, sort=[('created_at', -1)]))
-            
-            # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
-            for notification in notifications:
-                if '_id' in notification:
-                    notification['_id'] = str(notification['_id'])
-            
-            return notifications
+            # OPTIMIERT: mongodb.find konvertiert _id bereits zu string (Bolt ⚡)
+            return list(mongodb.find('notifications', {'is_read': False}, sort=[('created_at', -1)]))
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der ungelesenen Benachrichtigungen: [Interner Fehler]")
@@ -152,13 +140,30 @@ class AdminNotificationService:
     def get_notification_count() -> Dict[str, int]:
         """Hole Anzahl der Benachrichtigungen"""
         try:
-            total_count = mongodb.count_documents('notifications', {})
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
+            # OPTIMIERT: Konsolidierung der Zählung in einer einzigen Aggregation (Bolt ⚡)
+            pipeline = [
+                {
+                    '$group': {
+                        '_id': None,
+                        'total': {'$sum': 1},
+                        'unread': {
+                            '$sum': {'$cond': [{'$eq': ['$is_read', False]}, 1, 0]}
+                        }
+                    }
+                }
+            ]
+            results = list(mongodb.aggregate('notifications', pipeline))
+            if not results:
+                return {'total': 0, 'unread': 0, 'read': 0}
+
+            stats = results[0]
+            total = stats.get('total', 0)
+            unread = stats.get('unread', 0)
             
             return {
-                'total': total_count,
-                'unread': unread_count,
-                'read': total_count - unread_count
+                'total': total,
+                'unread': unread,
+                'read': total - unread
             }
             
         except Exception as e:
@@ -332,35 +337,51 @@ class AdminNotificationService:
     def get_notification_statistics() -> Dict[str, Any]:
         """Hole Benachrichtigungs-Statistiken"""
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
+            # OPTIMIERT: Konsolidierung von 11 count_documents in eine einzige Aggregation (Bolt ⚡)
+            pipeline = [
+                {
+                    '$group': {
+                        '_id': None,
+                        'total_count': {'$sum': 1},
+                        'unread_count': {'$sum': {'$cond': [{'$eq': ['$is_read', False]}, 1, 0]}},
+                        'read_count': {'$sum': {'$cond': [{'$eq': ['$is_read', True]}, 1, 0]}},
+                        'info': {'$sum': {'$cond': [{'$eq': ['$type', 'info']}, 1, 0]}},
+                        'warning': {'$sum': {'$cond': [{'$eq': ['$type', 'warning']}, 1, 0]}},
+                        'error': {'$sum': {'$cond': [{'$eq': ['$type', 'error']}, 1, 0]}},
+                        'success': {'$sum': {'$cond': [{'$eq': ['$type', 'success']}, 1, 0]}},
+                        'low': {'$sum': {'$cond': [{'$eq': ['$priority', 'low']}, 1, 0]}},
+                        'normal': {'$sum': {'$cond': [{'$eq': ['$priority', 'normal']}, 1, 0]}},
+                        'high': {'$sum': {'$cond': [{'$eq': ['$priority', 'high']}, 1, 0]}},
+                        'urgent': {'$sum': {'$cond': [{'$eq': ['$priority', 'urgent']}, 1, 0]}}
+                    }
+                }
+            ]
             
-            # Nach Typ
-            type_stats = {}
-            notification_types = ['info', 'warning', 'error', 'success']
+            results = list(mongodb.aggregate('notifications', pipeline))
+            if not results:
+                return {
+                    'total_count': 0, 'unread_count': 0, 'read_count': 0,
+                    'type_stats': {t: 0 for t in ['info', 'warning', 'error', 'success']},
+                    'priority_stats': {p: 0 for p in ['low', 'normal', 'high', 'urgent']}
+                }
             
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
-            
-            # Nach Priorität
-            priority_stats = {}
-            priorities = ['low', 'normal', 'high', 'urgent']
-            
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
-            
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
-            
+            s = results[0]
             return {
-                'total_count': total_count,
-                'type_stats': type_stats,
-                'priority_stats': priority_stats,
-                'unread_count': unread_count,
-                'read_count': read_count
+                'total_count': s.get('total_count', 0),
+                'unread_count': s.get('unread_count', 0),
+                'read_count': s.get('read_count', 0),
+                'type_stats': {
+                    'info': s.get('info', 0),
+                    'warning': s.get('warning', 0),
+                    'error': s.get('error', 0),
+                    'success': s.get('success', 0)
+                },
+                'priority_stats': {
+                    'low': s.get('low', 0),
+                    'normal': s.get('normal', 0),
+                    'high': s.get('high', 0),
+                    'urgent': s.get('urgent', 0)
+                }
             }
             
         except Exception as e:
@@ -380,14 +401,9 @@ class AdminNotificationService:
             query = {}
             if department:
                 query['department'] = department
-            notices = list(mongodb.find('homepage_notices', query, sort=[('created_at', -1)]))
             
-            # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
-            for notice in notices:
-                if '_id' in notice:
-                    notice['_id'] = str(notice['_id'])
-            
-            return notices
+            # OPTIMIERT: mongodb.find konvertiert _id bereits zu string (Bolt ⚡)
+            return list(mongodb.find('homepage_notices', query, sort=[('created_at', -1)]))
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Benachrichtigungen: [Interner Fehler]")
