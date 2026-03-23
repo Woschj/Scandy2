@@ -23,14 +23,8 @@ class AdminUserService:
     def get_all_users() -> List[Dict[str, Any]]:
         """Hole alle Benutzer"""
         try:
-            users = list(mongodb.find('users', {}))
-            
-            # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
-            for user in users:
-                if '_id' in user:
-                    user['_id'] = str(user['_id'])
-            
-            return users
+            # OPTIMIERT: mongodb.find konvertiert _id bereits zu string (Bolt ⚡)
+            return list(mongodb.find('users', {}))
             
         except Exception as e:
             logger.error(f"Fehler beim Laden aller Benutzer: [Interner Fehler]")
