@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               aria-controls="list-table-body">
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -22,6 +23,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="search-status" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -45,8 +47,14 @@
                             {% block table_headers %}{% endblock %}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="list-table-body">
                         {% block table_rows %}{% endblock %}
+                        <tr id="no-results-row" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/60">
+                                <i class="fas fa-search text-2xl mb-2"></i>
+                                <p>Keine Ergebnisse gefunden.</p>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +90,36 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const statusRegion = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('no-results-row');
+
+    function updateResultCount() {
+        const rows = document.querySelectorAll('.data-row');
+        let visibleCount = 0;
+        rows.forEach(row => {
+            if (row.style.display !== 'none') visibleCount++;
+        });
+
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('hidden', visibleCount > 0);
+        }
+
+        if (statusRegion) {
+            statusRegion.textContent = visibleCount === 1
+                ? '1 Ergebnis gefunden'
+                : `${visibleCount} Ergebnisse gefunden`;
+        }
+    }
+
+    // Globaler Shortcut für Suche (/)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -100,6 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            updateResultCount();
         });
 
         if (clearSearch) {
@@ -220,6 +260,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+
+            updateResultCount();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +373,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+
+            updateResultCount();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
