@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block filters %}
-<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="departmentFilter" aria-label="Abteilung filtern">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="departmentFilter" aria-label="Abteilung filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Abteilungen</option>
     {% for department in departments %}
     <option value="{{ department }}">{{ department }}</option>
@@ -119,26 +119,3 @@
 </tr>
 {% endfor %}
 {% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script nonce="{{ csp_nonce }}">
-document.addEventListener('DOMContentLoaded', function() {
-    // Filter-Funktionalität
-    function applyFilters() {
-        const department = document.getElementById('departmentFilter').value;
-        
-        document.querySelectorAll('.data-row').forEach(row => {
-            const matchesDepartment = !department || row.dataset.department === department;
-            row.style.display = matchesDepartment ? '' : 'none';
-        });
-    }
-
-    // Filter-Event-Listener
-    const departmentFilter = document.getElementById('departmentFilter');
-    if (departmentFilter) {
-        departmentFilter.addEventListener('change', applyFilters);
-    }
-});
-</script>
-{% endblock %} 

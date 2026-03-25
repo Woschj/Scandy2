@@ -21,21 +21,21 @@
 {% endblock %}
 
 {% block filters %}
-<select class="select select-bordered w-full max-w-xs" id="categoryFilter" aria-label="Kategorie filtern">
+<select class="select select-bordered w-full max-w-xs" id="categoryFilter" aria-label="Kategorie filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Kategorien</option>
     {% for category in categories %}
     <option value="{{ category }}">{{ category }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs" id="locationFilter" aria-label="Standort filtern">
+<select class="select select-bordered w-full max-w-xs" id="locationFilter" aria-label="Standort filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Standorte</option>
     {% for location in locations %}
     <option value="{{ location }}">{{ location }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs" id="stockFilter" aria-label="Bestand filtern">
+<select class="select select-bordered w-full max-w-xs" id="stockFilter" aria-label="Bestand filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Bestände</option>
     <option value="low">Niedriger Bestand</option>
     <option value="normal">Normaler Bestand</option>
@@ -57,7 +57,7 @@
 {% for consumable in consumables %}
 <tr class="hover data-row group"
     data-barcode="{{ consumable.barcode }}"
-    data-category="{{ consumable.category }}" 
+    data-category="{{ consumable.category }}"
     data-location="{{ consumable.location }}"
     data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
     <td>

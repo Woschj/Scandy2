@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="resultsAnnouncement" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,22 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12 bg-base-100">
+                                <div class="flex flex-col items-center gap-3">
+                                    <div class="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center text-3xl opacity-50">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div class="text-lg font-bold opacity-75">Keine Ergebnisse gefunden</div>
+                                    <p class="text-sm opacity-50">Versuchen Sie es mit anderen Suchbegriffen oder setzen Sie die Filter zurück.</p>
+                                    <button type="button"
+                                            class="btn btn-ghost btn-sm mt-2"
+                                            onclick="document.getElementById('searchInput').value = ''; if(window.applyAllFilters) window.applyAllFilters(); else document.getElementById('searchInput').dispatchEvent(new Event('input')); document.getElementById('searchInput').focus();">
+                                        Suche zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,35 +95,89 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+// Shortcut for search (/)
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.focus();
+    }
+});
+
+/**
+ * Centralized filter function for list views.
+ * Updates row visibility, toggles empty state, and announces results.
+ */
+window.applyAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const noResultsRow = document.getElementById('noResultsRow');
+    const announcement = document.getElementById('resultsAnnouncement');
+    const clearSearch = document.getElementById('clearSearch');
+
+    // Get all potential custom filters
+    const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+
+    const category = categoryFilter ? categoryFilter.value : null;
+    const location = locationFilter ? locationFilter.value : null;
+    const status = statusFilter ? statusFilter.value : null;
+    const stock = stockFilter ? stockFilter.value : null;
+    const department = departmentFilter ? departmentFilter.value : null;
+
+    let visibleCount = 0;
+    const rows = document.querySelectorAll('.data-row');
+
+    rows.forEach(row => {
+        const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+        const matchesCategory = !category || row.dataset.category === category;
+        const matchesLocation = !location || row.dataset.location === location;
+        const matchesStatus = !status || row.dataset.status === status;
+        const matchesStock = !stock || row.dataset.stock === stock;
+        const matchesDepartment = !department || row.dataset.department === department;
+
+        const isVisible = matchesSearch && matchesCategory && matchesLocation && matchesStatus && matchesStock && matchesDepartment;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    // Toggle clear button
+    if (clearSearch) {
+        if (searchTerm.length > 0) {
+            clearSearch.classList.remove('hidden');
+        } else {
+            clearSearch.classList.add('hidden');
+        }
+    }
+
+    // Toggle empty state
+    if (noResultsRow) {
+        noResultsRow.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    // Accessibility announcement
+    if (announcement) {
+        announcement.textContent = visibleCount === 1
+            ? "1 Ergebnis gefunden"
+            : `${visibleCount} Ergebnisse gefunden`;
+    }
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+        searchInput.addEventListener('input', window.applyAllFilters);
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.applyAllFilters();
                 searchInput.focus();
             });
         }
