@@ -21,21 +21,21 @@
 {% endblock %}
 
 {% block filters %}
-<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="categoryFilter" aria-label="Kategorie filtern">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="categoryFilter" aria-label="Kategorie filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Kategorien</option>
     {% for category in categories %}
     <option value="{{ category }}">{{ category }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="locationFilter" aria-label="Standort filtern">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="locationFilter" aria-label="Standort filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Standorte</option>
     {% for location in locations %}
     <option value="{{ location }}">{{ location }}</option>
     {% endfor %}
 </select>
 
-<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="statusFilter" aria-label="Status filtern">
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="statusFilter" aria-label="Status filtern" onchange="window.applyAllFilters()">
     <option value="">Alle Status</option>
     <option value="verfügbar">Verfügbar</option>
     <option value="ausgeliehen">Ausgeliehen</option>
