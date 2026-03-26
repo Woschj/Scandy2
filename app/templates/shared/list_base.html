@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -47,6 +47,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100%" class="text-center py-12 text-base-content/50">
+                                <i class="fas fa-search fa-2x mb-2"></i>
+                                <p class="font-medium">Keine Ergebnisse gefunden</p>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -76,12 +82,25 @@
     {% endif %}
 </div>
 
+<!-- Results Accessibility Announcement -->
+<div id="resultsAnnouncement" class="sr-only" aria-live="polite"></div>
+
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const resultsAnnouncement = document.getElementById('resultsAnnouncement');
+
+    // Keyboard shortcut '/' to focus search
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            if (searchInput) searchInput.focus();
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -96,10 +115,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            let visibleCount = 0;
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isVisible = searchableContent.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', visibleCount > 0);
+            }
+            if (resultsAnnouncement) {
+                resultsAnnouncement.textContent = visibleCount === 1 ? '1 Ergebnis gefunden.' : `${visibleCount} Ergebnisse gefunden.`;
+            }
         });
 
         if (clearSearch) {
