@@ -9,12 +9,16 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
+                        <div class="absolute right-24 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                            <span id="resultCount" class="badge badge-sm badge-ghost opacity-0 transition-opacity duration-200">0 Ergebnisse</span>
+                        </div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +51,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <i class="fas fa-search text-4xl mb-4 opacity-20"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Versuchen Sie es mit anderen Suchbegriffen oder Filtern</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -84,6 +97,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
+        // Globaler Keyboard-Shortcut für Fokus (/) und zum Löschen (Esc)
+        document.addEventListener('keydown', function(e) {
+            // Wenn der Benutzer nicht bereits in einem Eingabefeld schreibt
+            const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
+                          document.activeElement.isContentEditable;
+
+            if (e.key === '/' && !isInput) {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -109,6 +142,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
+        }
+
+        // MutationObserver zur Überwachung der Zeilensichtbarkeit (für Suche und Filter)
+        const tableBody = document.querySelector('table tbody');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const resultCountBadge = document.getElementById('resultCount');
+        const searchStatus = document.getElementById('searchStatus');
+
+        if (tableBody && noResultsRow && resultCountBadge) {
+            const updateResultStats = () => {
+                const allRows = tableBody.querySelectorAll('.data-row');
+                const visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none');
+                const count = visibleRows.length;
+
+                // Update No Results Row
+                if (count === 0 && allRows.length > 0) {
+                    noResultsRow.classList.remove('hidden');
+                } else {
+                    noResultsRow.classList.add('hidden');
+                }
+
+                // Update Result Count Badge
+                resultCountBadge.textContent = `${count} ${count === 1 ? 'Ergebnis' : 'Ergebnisse'}`;
+                if (searchInput.value !== '') {
+                    resultCountBadge.classList.remove('opacity-0');
+                    resultCountBadge.classList.add('opacity-100');
+                } else {
+                    resultCountBadge.classList.add('opacity-0');
+                    resultCountBadge.classList.remove('opacity-100');
+                }
+
+                // Update Screen Reader Status
+                if (searchStatus) {
+                    searchStatus.textContent = `${count} ${count === 1 ? 'Ergebnis gefunden' : 'Ergebnisse gefunden'}`;
+                }
+            };
+
+            const observer = new MutationObserver((mutations) => {
+                updateResultStats();
+            });
+
+            // Überwache das Table-Body auf Änderungen an Kind-Elementen und Attributen (Sichtbarkeit)
+            observer.observe(tableBody, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+
+            // Initialer Aufruf
+            updateResultStats();
         }
     }
 
