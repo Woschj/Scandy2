@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="search-status" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,8 +89,44 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('search-status');
+
+    // Focus search on '/' key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+    });
 
     if (searchInput) {
+        // Clear search on 'Escape'
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (this.value) {
+                    this.value = '';
+                    this.dispatchEvent(new Event('input'));
+                } else {
+                    this.blur();
+                }
+            }
+        });
+
+        function updateSearchFeedback() {
+            const rows = document.querySelectorAll('.data-row');
+            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', visibleRows.length > 0);
+            }
+
+            if (searchStatus) {
+                const count = visibleRows.length;
+                searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+            }
+        }
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -100,7 +143,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            updateSearchFeedback();
         });
+
+        // Use MutationObserver to detect changes in row visibility from other filters
+        const tableBody = document.querySelector('table.table tbody');
+        if (tableBody) {
+            let feedbackAnimationFrame;
+            const observer = new MutationObserver((mutations) => {
+                const hasStyleMutation = mutations.some(m => m.type === 'attributes' && m.attributeName === 'style');
+                if (hasStyleMutation) {
+                    if (feedbackAnimationFrame) cancelAnimationFrame(feedbackAnimationFrame);
+                    feedbackAnimationFrame = requestAnimationFrame(updateSearchFeedback);
+                }
+            });
+
+            // Start observing rows for style changes (display: none)
+            document.querySelectorAll('.data-row').forEach(row => {
+                observer.observe(row, { attributes: true });
+            });
+        }
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
