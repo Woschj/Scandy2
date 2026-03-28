@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 opacity-50">
+                                    <i class="fas fa-search-minus text-4xl mb-2"></i>
+                                    <span class="text-lg font-medium">Keine Ergebnisse gefunden</span>
+                                    <span class="text-sm">Versuchen Sie es mit einem anderen Suchbegriff oder passen Sie die Filter an.</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -109,6 +119,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
+        }
+
+        // Shortcut: '/' focuses search input, 'Esc' clears or blurs
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement !== searchInput &&
+                !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                searchInput.focus();
+            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
+        // Dynamic results observer
+        const tbody = document.querySelector('table tbody');
+        const statusEl = document.getElementById('search-status');
+        const noResultsRow = document.getElementById('noResultsRow');
+
+        if (tbody && statusEl && noResultsRow) {
+            const updateStatus = () => {
+                requestAnimationFrame(() => {
+                    const visibleRows = Array.from(tbody.querySelectorAll('.data-row')).filter(r => r.style.display !== 'none');
+                    const count = visibleRows.length;
+
+                    noResultsRow.classList.toggle('hidden', count > 0);
+
+                    const text = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+                    statusEl.textContent = text;
+                });
+            };
+
+            const observer = new MutationObserver((mutations) => {
+                const hasStyleChange = mutations.some(m => m.type === 'attributes' && m.attributeName === 'style');
+                const hasChildChange = mutations.some(m => m.type === 'childList');
+                if (hasStyleChange || hasChildChange) {
+                    updateStatus();
+                }
+            });
+
+            observer.observe(tbody, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                attributeFilter: ['style']
+            });
+
+            // Initial update
+            updateStatus();
         }
     }
 
