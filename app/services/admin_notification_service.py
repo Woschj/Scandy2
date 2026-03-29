@@ -330,47 +330,52 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
-        """Hole Benachrichtigungs-Statistiken"""
+        """
+        Hole Benachrichtigungs-Statistiken
+        OPTIMIERT: 1 Aggregation statt 11 Abfragen (Bolt ⚡)
+        """
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
-            
-            # Nach Typ
-            type_stats = {}
-            notification_types = ['info', 'warning', 'error', 'success']
-            
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
-            
-            # Nach Priorität
-            priority_stats = {}
-            priorities = ['low', 'normal', 'high', 'urgent']
-            
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
-            
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
-            
+            pipeline = [{'$group': {
+                '_id': None,
+                'total': {'$sum': 1},
+                'unread': {'$sum': {'$cond': [{'$eq': ['$is_read', False]}, 1, 0]}},
+                'read': {'$sum': {'$cond': [{'$eq': ['$is_read', True]}, 1, 0]}},
+                'info': {'$sum': {'$cond': [{'$eq': ['$type', 'info']}, 1, 0]}},
+                'warn': {'$sum': {'$cond': [{'$eq': ['$type', 'warning']}, 1, 0]}},
+                'err': {'$sum': {'$cond': [{'$eq': ['$type', 'error']}, 1, 0]}},
+                'succ': {'$sum': {'$cond': [{'$eq': ['$type', 'success']}, 1, 0]}},
+                'low': {'$sum': {'$cond': [{'$eq': ['$priority', 'low']}, 1, 0]}},
+                'norm': {'$sum': {'$cond': [{'$eq': ['$priority', 'normal']}, 1, 0]}},
+                'high': {'$sum': {'$cond': [{'$eq': ['$priority', 'high']}, 1, 0]}},
+                'urg': {'$sum': {'$cond': [{'$eq': ['$priority', 'urgent']}, 1, 0]}}
+            }}]
+
+            results = mongodb.aggregate('notifications', pipeline)
+            res = results[0] if results else {}
+
             return {
-                'total_count': total_count,
-                'type_stats': type_stats,
-                'priority_stats': priority_stats,
-                'unread_count': unread_count,
-                'read_count': read_count
+                'total_count': res.get('total', 0),
+                'type_stats': {
+                    'info': res.get('info', 0),
+                    'warning': res.get('warn', 0),
+                    'error': res.get('err', 0),
+                    'success': res.get('succ', 0)
+                },
+                'priority_stats': {
+                    'low': res.get('low', 0),
+                    'normal': res.get('norm', 0),
+                    'high': res.get('high', 0),
+                    'urgent': res.get('urg', 0)
+                },
+                'unread_count': res.get('unread', 0),
+                'read_count': res.get('read', 0)
             }
-            
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Benachrichtigungs-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler bei Benachrichtigungs-Statistiken: {e}")
             return {
-                'total_count': 0,
-                'type_stats': {},
-                'priority_stats': {},
-                'unread_count': 0,
-                'read_count': 0
+                'total_count': 0, 'unread_count': 0, 'read_count': 0,
+                'type_stats': {t: 0 for t in ['info', 'warning', 'error', 'success']},
+                'priority_stats': {p: 0 for p in ['low', 'normal', 'high', 'urgent']}
             }
 
     @staticmethod
