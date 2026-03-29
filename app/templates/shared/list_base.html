@@ -7,14 +7,15 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
+                <div class="form-control flex-1 relative">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center justify-center text-base-content/50">
+                                    <i class="fas fa-search text-4xl mb-3 opacity-20"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Versuchen Sie es mit einem anderen Suchbegriff</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,10 +92,32 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('noResultsRow');
 
     if (searchInput) {
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // '/' fokussiert die Suche
+            if (e.key === '/' && document.activeElement !== searchInput &&
+                !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            // 'Esc' leert oder verlässt die Suche
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            let visibleCount = 0;
 
             // Toggle clear button
             if (clearSearch) {
@@ -98,8 +130,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isVisible = searchableContent.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // Empty State Handling
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', visibleCount > 0);
+            }
+
+            // Screen Reader Feedback
+            if (searchStatus) {
+                if (searchTerm) {
+                    searchStatus.textContent = `${visibleCount} Ergebnis(se) gefunden für "${searchTerm}"`;
+                } else {
+                    searchStatus.textContent = '';
+                }
+            }
         });
 
         if (clearSearch) {
