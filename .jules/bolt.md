@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-03-23 - [Department Scoping in Aggregations]
+**Learning:** When refactoring service methods to use direct MongoDB aggregations, it is critical to manually re-apply department scoping logic. Bypassing service methods like `get_all_consumables` in favor of direct collection aggregations can bypass implicit filters and lead to multi-department data leakage.
+**Action:** Always check for `g.current_department` and include it in the initial `$match` stage of any new aggregation pipeline to ensure proper data isolation.
