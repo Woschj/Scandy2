@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="search-status" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -45,8 +46,16 @@
                             {% block table_headers %}{% endblock %}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="list-table-body">
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10 text-gray-500 bg-gray-50/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-3xl opacity-20"></i>
+                                    <p>Keine Ergebnisse gefunden</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,8 +91,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const tableBody = document.getElementById('list-table-body');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('search-status');
 
     if (searchInput) {
+        // Global Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ignore if user is typing in an input or textarea
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                if (e.key === 'Escape' && document.activeElement === searchInput) {
+                    searchInput.blur();
+                }
+                return;
+            }
+
+            if (e.key === '/') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (searchInput.value) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -110,6 +149,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.focus();
             });
         }
+    }
+
+    // MutationObserver für Suchergebnisse und Empty State
+    if (tableBody && noResultsRow && searchStatus) {
+        const updateSearchStatus = () => {
+            requestAnimationFrame(() => {
+                const rows = tableBody.querySelectorAll('.data-row');
+                const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+                const count = visibleRows.length;
+
+                if (count === 0 && rows.length > 0) {
+                    noResultsRow.classList.remove('hidden');
+                    searchStatus.textContent = "Keine Ergebnisse gefunden";
+                } else {
+                    noResultsRow.classList.add('hidden');
+                    searchStatus.textContent = `${count} Ergebnisse gefunden`;
+                }
+            });
+        };
+
+        const observer = new MutationObserver((mutations) => {
+            const hasStyleChange = mutations.some(m => m.type === 'attributes' && m.attributeName === 'style');
+            const hasChildChange = mutations.some(m => m.type === 'childList');
+            if (hasStyleChange || hasChildChange) {
+                updateSearchStatus();
+            }
+        });
+
+        observer.observe(tableBody, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['style']
+        });
+
+        // Initialer Check
+        updateSearchStatus();
     }
 
     // Sortier-Funktionalität
