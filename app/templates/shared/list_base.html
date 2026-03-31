@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +89,25 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const tbody = document.querySelector('table tbody');
+
+    // Keyboard Shortcuts: '/' to focus, 'Esc' to clear/blur
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value !== '') {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                searchInput.blur();
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -101,6 +127,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        // MutationObserver to track visible rows and update status/no-results UI
+        if (tbody && searchStatus && noResultsRow) {
+            const observer = new MutationObserver(() => {
+                const visibleRows = Array.from(tbody.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+                const count = visibleRows.length;
+
+                // Update screen reader status
+                searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+
+                // Show/hide no results row
+                if (count === 0) {
+                    noResultsRow.classList.remove('hidden');
+                } else {
+                    noResultsRow.classList.add('hidden');
+                }
+            });
+
+            observer.observe(tbody, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
+            // Initial trigger
+            searchInput.dispatchEvent(new Event('input'));
+        }
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
