@@ -150,16 +150,31 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_count() -> Dict[str, int]:
-        """Hole Anzahl der Benachrichtigungen"""
+        """
+        Hole Anzahl der Benachrichtigungen (Optimiert via Aggregation Bolt ⚡)
+        Reduziert Datenbank-Roundtrips von 2 auf 1.
+        """
         try:
-            total_count = mongodb.count_documents('notifications', {})
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
+            pipeline = [{
+                '$facet': {
+                    'total': [{'$count': 'count'}],
+                    'unread': [{'$match': {'is_read': False}}, {'$count': 'count'}]
+                }
+            }]
             
-            return {
-                'total': total_count,
-                'unread': unread_count,
-                'read': total_count - unread_count
-            }
+            result = list(mongodb.aggregate('notifications', pipeline))
+            if result:
+                stats = result[0]
+                total = stats['total'][0]['count'] if stats.get('total') else 0
+                unread = stats['unread'][0]['count'] if stats.get('unread') else 0
+
+                return {
+                    'total': total,
+                    'unread': unread,
+                    'read': total - unread
+                }
+
+            return {'total': 0, 'unread': 0, 'read': 0}
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Benachrichtigungsanzahl: [Interner Fehler]")
@@ -330,30 +345,52 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
-        """Hole Benachrichtigungs-Statistiken"""
+        """
+        Hole Benachrichtigungs-Statistiken (Optimiert via Aggregation Bolt ⚡)
+        Reduziert Datenbank-Roundtrips von 11 auf 1.
+        """
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
+            pipeline = [{
+                '$facet': {
+                    'total': [{'$count': 'count'}],
+                    'type_stats': [{'$group': {'_id': '$type', 'count': {'$sum': 1}}}],
+                    'priority_stats': [{'$group': {'_id': '$priority', 'count': {'$sum': 1}}}],
+                    'status_stats': [{'$group': {'_id': '$is_read', 'count': {'$sum': 1}}}]
+                }
+            }]
             
-            # Nach Typ
-            type_stats = {}
-            notification_types = ['info', 'warning', 'error', 'success']
+            result = list(mongodb.aggregate('notifications', pipeline))
+            if not result:
+                return {
+                    'total_count': 0, 'type_stats': {}, 'priority_stats': {},
+                    'unread_count': 0, 'read_count': 0
+                }
+
+            stats = result[0]
             
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
+            # Gesamtanzahl extrahieren
+            total_count = stats['total'][0]['count'] if stats.get('total') else 0
             
-            # Nach Priorität
-            priority_stats = {}
-            priorities = ['low', 'normal', 'high', 'urgent']
-            
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
-            
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
+            # Typ-Statistiken (vordefinierte Keys sicherstellen)
+            type_stats = {t: 0 for t in ['info', 'warning', 'error', 'success']}
+            for item in stats.get('type_stats', []):
+                if item['_id'] in type_stats:
+                    type_stats[item['_id']] = item['count']
+
+            # Priorität-Statistiken (vordefinierte Keys sicherstellen)
+            priority_stats = {p: 0 for p in ['low', 'normal', 'high', 'urgent']}
+            for item in stats.get('priority_stats', []):
+                if item['_id'] in priority_stats:
+                    priority_stats[item['_id']] = item['count']
+
+            # Gelesen/Ungelesen extrahieren
+            unread_count = 0
+            read_count = 0
+            for item in stats.get('status_stats', []):
+                if item['_id'] is False:
+                    unread_count = item['count']
+                elif item['_id'] is True:
+                    read_count = item['count']
             
             return {
                 'total_count': total_count,
