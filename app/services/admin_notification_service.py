@@ -150,16 +150,34 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_count() -> Dict[str, int]:
-        """Hole Anzahl der Benachrichtigungen"""
+        """Hole Anzahl der Benachrichtigungen (Optimiert mit Aggregation) (Bolt ⚡)"""
         try:
-            total_count = mongodb.count_documents('notifications', {})
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
+            pipeline = [
+                {
+                    '$facet': {
+                        'total': [{'$count': 'count'}],
+                        'unread': [
+                            {'$match': {'is_read': False}},
+                            {'$count': 'count'}
+                        ]
+                    }
+                }
+            ]
             
-            return {
-                'total': total_count,
-                'unread': unread_count,
-                'read': total_count - unread_count
-            }
+            results = mongodb.aggregate('notifications', pipeline)
+
+            if results:
+                data = results[0]
+                total = data.get('total', [{}])[0].get('count', 0) if data.get('total') else 0
+                unread = data.get('unread', [{}])[0].get('count', 0) if data.get('unread') else 0
+
+                return {
+                    'total': total,
+                    'unread': unread,
+                    'read': total - unread
+                }
+
+            return {'total': 0, 'unread': 0, 'read': 0}
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Benachrichtigungsanzahl: [Interner Fehler]")
@@ -330,37 +348,53 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
-        """Hole Benachrichtigungs-Statistiken"""
+        """Hole Benachrichtigungs-Statistiken (Optimiert mit Aggregation) (Bolt ⚡)"""
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
-            
-            # Nach Typ
-            type_stats = {}
             notification_types = ['info', 'warning', 'error', 'success']
-            
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
-            
-            # Nach Priorität
-            priority_stats = {}
             priorities = ['low', 'normal', 'high', 'urgent']
             
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
+            facet_pipeline = {
+                'total': [{'$count': 'count'}],
+                'unread': [{'$match': {'is_read': False}}, {'$count': 'count'}],
+                'read': [{'$match': {'is_read': True}}, {'$count': 'count'}]
+            }
             
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
+            # Dynamisch Facets für Typen und Prioritäten hinzufügen
+            for n_type in notification_types:
+                facet_pipeline[f'type_{n_type}'] = [
+                    {'$match': {'type': n_type}},
+                    {'$count': 'count'}
+                ]
+            
+            for priority in priorities:
+                facet_pipeline[f'priority_{priority}'] = [
+                    {'$match': {'priority': priority}},
+                    {'$count': 'count'}
+                ]
+            
+            results = mongodb.aggregate('notifications', [{'$facet': facet_pipeline}])
+
+            if results:
+                data = results[0]
+
+                # Hilfsfunktion zum sicheren Abrufen der Counts
+                def get_c(key):
+                    return data.get(key, [{}])[0].get('count', 0) if data.get(key) else 0
+
+                return {
+                    'total_count': get_c('total'),
+                    'type_stats': {t: get_c(f'type_{t}') for t in notification_types},
+                    'priority_stats': {p: get_c(f'priority_{p}') for p in priorities},
+                    'unread_count': get_c('unread'),
+                    'read_count': get_c('read')
+                }
             
             return {
-                'total_count': total_count,
-                'type_stats': type_stats,
-                'priority_stats': priority_stats,
-                'unread_count': unread_count,
-                'read_count': read_count
+                'total_count': 0,
+                'type_stats': {},
+                'priority_stats': {},
+                'unread_count': 0,
+                'read_count': 0
             }
             
         except Exception as e:
