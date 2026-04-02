@@ -9,12 +9,14 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               autocomplete="off">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-10 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-3xl opacity-20"></i>
+                                    <p>Keine Ergebnisse für Ihre Suche gefunden</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -84,6 +94,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
+        // Globaler Keyboard-Shortcut: '/' zum Suchen
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -108,6 +134,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearSearch.classList.add('hidden');
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
+            });
+        }
+
+        // MutationObserver zur automatischen Aktualisierung des Suchstatus und der "Keine Ergebnisse"-Zeile
+        const tableBody = document.querySelector('table tbody');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('search-status');
+
+        if (tableBody && noResultsRow && searchStatus) {
+            const observer = new MutationObserver(function() {
+                const rows = Array.from(tableBody.querySelectorAll('.data-row'));
+                const visibleRows = rows.filter(row => row.style.display !== 'none');
+                const count = visibleRows.length;
+
+                // Update "No Results" Row
+                noResultsRow.style.display = (count === 0 && rows.length > 0) ? '' : 'none';
+
+                // Update ARIA status
+                if (searchInput.value !== '') {
+                    searchStatus.textContent = count === 1
+                        ? '1 Ergebnis gefunden'
+                        : count + ' Ergebnisse gefunden';
+                } else {
+                    searchStatus.textContent = '';
+                }
+            });
+
+            observer.observe(tableBody, {
+                attributes: true,
+                subtree: true,
+                attributeFilter: ['style']
             });
         }
     }
