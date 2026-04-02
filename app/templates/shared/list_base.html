@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 text-base-content/50">
+                                    <i class="fas fa-search text-4xl mb-2"></i>
+                                    <p class="font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suche oder Filter an</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,8 +92,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const tbody = document.querySelector('table tbody');
+
+    // Shortcut '/' zum Fokussieren der Suche
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+    });
 
     if (searchInput) {
+        // Esc zum Leeren oder Verlassen
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (searchInput.value) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -110,6 +143,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.focus();
             });
         }
+    }
+
+    // MutationObserver für Such-Status und "Keine Ergebnisse" Zeile
+    if (tbody && (searchStatus || noResultsRow)) {
+        const observer = new MutationObserver(() => {
+            const visibleRows = Array.from(document.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+            const count = visibleRows.length;
+
+            if (searchStatus) {
+                searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+            }
+
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', count > 0);
+            }
+        });
+
+        observer.observe(tbody, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
+        // Initialer Check
+        searchInput?.dispatchEvent(new Event('input'));
     }
 
     // Sortier-Funktionalität
