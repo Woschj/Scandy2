@@ -7,14 +7,15 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
+                <div class="form-control flex-1 relative">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,8 +89,27 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const tableBody = document.querySelector('table tbody');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('search-status');
 
     if (searchInput) {
+        // Fokus auf Suchfeld mit '/' Taste
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                this.dispatchEvent(new Event('input'));
+                this.blur();
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -101,6 +127,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        // MutationObserver für Feedback und Empty State
+        if (tableBody) {
+            const updateSearchFeedback = () => {
+                const visibleRows = Array.from(tableBody.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+                const count = visibleRows.length;
+
+                if (noResultsRow) {
+                    noResultsRow.classList.toggle('hidden', count > 0);
+                }
+
+                if (searchStatus) {
+                    searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+                }
+            };
+
+            const observer = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                for (const mutation of mutations) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        shouldUpdate = true;
+                        break;
+                    }
+                }
+                if (shouldUpdate) updateSearchFeedback();
+            });
+
+            observer.observe(tableBody, {
+                attributes: true,
+                subtree: true,
+                attributeFilter: ['style']
+            });
+
+            // Initialer Check
+            updateSearchFeedback();
+        }
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
