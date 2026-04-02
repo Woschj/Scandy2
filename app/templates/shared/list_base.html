@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <span id="search-status" class="sr-only" aria-live="polite"></span>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 text-base-content/50">
+                                    <i class="fas fa-search text-3xl mb-2"></i>
+                                    <span class="font-medium">Keine Ergebnisse gefunden</span>
+                                    <span class="text-sm">Passen Sie Ihre Suchanfrage oder Filter an.</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +92,24 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('search-status');
+
+    // Globaler Shortcut ( / für Fokus, Esc für Clear/Blur)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                searchInput.blur();
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -96,10 +124,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
+            const rows = document.querySelectorAll('.data-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isVisible = searchableContent.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // "Keine Ergebnisse" anzeigen
+            if (noResultsRow) {
+                if (visibleCount === 0 && rows.length > 0) {
+                    noResultsRow.classList.remove('hidden');
+                } else {
+                    noResultsRow.classList.add('hidden');
+                }
+            }
+
+            // Screen Reader Status aktualisieren
+            if (searchStatus) {
+                searchStatus.textContent = visibleCount === 1
+                    ? '1 Ergebnis gefunden'
+                    : `${visibleCount} Ergebnisse gefunden`;
+            }
         });
 
         if (clearSearch) {
