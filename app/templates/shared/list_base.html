@@ -9,9 +9,10 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -109,6 +116,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const active = document.activeElement;
+            if (e.key === '/' && !active.tagName.match(/INPUT|TEXTAREA/) && !active.isContentEditable) {
+                e.preventDefault(); searchInput.focus();
+            }
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (searchInput.value) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); }
+                else searchInput.blur();
+            }
+        });
+        const tableBody = document.querySelector('table tbody');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('searchStatus');
+        if (tableBody && noResultsRow && searchStatus) {
+            new MutationObserver((mutations) => {
+                if (mutations.some(m => m.attributeName === 'style')) {
+                    const count = Array.from(tableBody.querySelectorAll('.data-row')).filter(r => r.style.display !== 'none').length;
+                    noResultsRow.classList.toggle('hidden', count > 0);
+                    searchStatus.textContent = `${count} Ergebnis${count !== 1 ? 'se' : ''} gefunden`;
+                }
+            }).observe(tableBody, { attributes: true, subtree: true, attributeFilter: ['style'] });
         }
     }
 
