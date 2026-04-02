@@ -9,12 +9,13 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -84,6 +91,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -98,9 +116,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                if (searchableContent.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
             });
         });
+
+        // Feedback-Logik
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('search-status');
+
+        function updateSearchFeedback() {
+            const visibleRows = Array.from(document.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+            const count = visibleRows.length;
+
+            if (count === 0) {
+                noResultsRow.classList.remove('hidden');
+            } else {
+                noResultsRow.classList.add('hidden');
+            }
+
+            if (searchStatus) {
+                searchStatus.textContent = `${count} Ergebnisse gefunden`;
+            }
+        }
+
+        // MutationObserver zur Überwachung von Sichtbarkeitsänderungen
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            for (const mutation of mutations) {
+                if (mutation.target.classList.contains('data-row') && mutation.attributeName === 'style') {
+                    shouldUpdate = true;
+                    break;
+                }
+                if (mutation.type === 'childList') {
+                    shouldUpdate = true;
+                    break;
+                }
+            }
+            if (shouldUpdate) {
+                updateSearchFeedback();
+            }
+        });
+
+        observer.observe(tbody, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['style']
+        });
+
+        // Initialer Aufruf
+        updateSearchFeedback();
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
