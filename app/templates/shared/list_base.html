@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 text-base-content/50">
+                                    <i class="fas fa-search text-3xl mb-2"></i>
+                                    <p class="font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suchanfrage oder Filter an</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,8 +92,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
 
     if (searchInput) {
+        // Globaler Shortcut '/' um Suche zu fokussieren
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.value = '';
+                searchInput.blur();
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -96,10 +121,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
+            const rows = document.querySelectorAll('.data-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isVisible = searchableContent.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // Update Status und No Results Row
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', visibleCount > 0 || searchTerm === '');
+            }
+
+            if (searchStatus) {
+                if (searchTerm) {
+                    searchStatus.textContent = `${visibleCount} Ergebnisse gefunden für "${searchTerm}"`;
+                } else {
+                    searchStatus.textContent = '';
+                }
+            }
         });
 
         if (clearSearch) {
