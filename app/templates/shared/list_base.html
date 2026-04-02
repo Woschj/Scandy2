@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50 italic">
+                                <i class="fas fa-search mb-2 block text-2xl"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +89,27 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const tbody = document.querySelector('table tbody');
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        // '/' focuses search (unless in input/textarea)
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+        // 'Esc' clears search if focused
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                searchInput.blur();
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -110,6 +138,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.focus();
             });
         }
+    }
+
+    // Observer für Such-Feedback (Ergebnisse zählen, "Keine Ergebnisse" anzeigen)
+    if (tbody && searchStatus) {
+        const updateSearchFeedback = () => {
+            const allRows = Array.from(tbody.querySelectorAll('.data-row'));
+            const visibleRows = allRows.filter(row => row.style.display !== 'none');
+            const count = visibleRows.length;
+
+            // Update ARIA status
+            if (searchInput?.value || document.querySelectorAll('select[id$="Filter"]').length > 0) {
+                searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+            } else {
+                searchStatus.textContent = '';
+            }
+
+            // Toggle No Results row
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', count > 0 || allRows.length === 0);
+            }
+        };
+
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            mutations.forEach(mutation => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    shouldUpdate = true;
+                }
+            });
+            if (shouldUpdate) updateSearchFeedback();
+        });
+
+        observer.observe(tbody, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['style']
+        });
+
+        // Initialer Check
+        updateSearchFeedback();
     }
 
     // Sortier-Funktionalität
