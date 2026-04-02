@@ -9,12 +9,13 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -45,8 +46,16 @@
                             {% block table_headers %}{% endblock %}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="table-body">
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-4xl opacity-20"></i>
+                                    <p>Keine Ergebnisse gefunden</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -84,6 +93,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // '/' fokussiert Suche
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            // 'Esc' leert/verlässt Suche
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.blur();
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -101,6 +125,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
         });
+
+        // MutationObserver für Such-Status und No-Results-Row
+        const tableBody = document.getElementById('table-body');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('search-status');
+
+        if (tableBody && noResultsRow) {
+            const updateTableStatus = () => {
+                const visibleRows = Array.from(tableBody.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+                const totalRows = tableBody.querySelectorAll('.data-row').length;
+
+                if (visibleRows.length === 0 && totalRows > 0) {
+                    noResultsRow.classList.remove('hidden');
+                } else {
+                    noResultsRow.classList.add('hidden');
+                }
+
+                if (searchStatus && searchInput.value) {
+                    searchStatus.textContent = `${visibleRows.length} Ergebnisse gefunden`;
+                } else if (searchStatus) {
+                    searchStatus.textContent = '';
+                }
+            };
+
+            const observer = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        shouldUpdate = true;
+                    }
+                });
+                if (shouldUpdate) updateTableStatus();
+            });
+
+            observer.observe(tableBody, {
+                attributes: true,
+                subtree: true,
+                attributeFilter: ['style']
+            });
+
+            // Initialer Check
+            updateTableStatus();
+        }
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
