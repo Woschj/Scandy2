@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="search-status" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-10 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-4xl mb-2 opacity-20"></i>
+                                    <p class="font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suche oder Filter an</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -110,6 +120,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.focus();
             });
         }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Focus search with '/'
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            // Clear/Blur search with 'Esc'
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+    }
+
+    // Update search status and "no results" row
+    function updateSearchStatus() {
+        const rows = document.querySelectorAll('.data-row');
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('search-status');
+
+        if (noResultsRow) {
+            noResultsRow.style.display = (rows.length > 0 && visibleRows.length === 0) ? '' : 'none';
+        }
+
+        if (searchStatus) {
+            const countText = `${visibleRows.length} ${visibleRows.length === 1 ? 'Ergebnis' : 'Ergebnisse'} gefunden`;
+            searchStatus.textContent = countText;
+        }
+    }
+
+    const tableBody = document.querySelector('table tbody');
+    if (tableBody) {
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            for (const mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && mutation.target.classList.contains('data-row')) {
+                    shouldUpdate = true;
+                    break;
+                }
+            }
+            if (shouldUpdate) updateSearchStatus();
+        });
+
+        observer.observe(tableBody, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['style']
+        });
+
+        // Initial call
+        updateSearchStatus();
     }
 
     // Sortier-Funktionalität
