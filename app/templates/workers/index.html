@@ -124,21 +124,18 @@
 {{ super() }}
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
-    // Filter-Funktionalität
-    function applyFilters() {
-        const department = document.getElementById('departmentFilter').value;
-        
+    window.applyFilters = function() {
+        const dep = document.getElementById('departmentFilter').value;
+        const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
         document.querySelectorAll('.data-row').forEach(row => {
-            const matchesDepartment = !department || row.dataset.department === department;
-            row.style.display = matchesDepartment ? '' : 'none';
+            const mD = !dep || row.dataset.department === dep;
+            const mS = !term || row.textContent.toLowerCase().includes(term);
+            row.style.display = mD && mS ? '' : 'none';
         });
+        window.updateSearchStatus();
     }
-
-    // Filter-Event-Listener
-    const departmentFilter = document.getElementById('departmentFilter');
-    if (departmentFilter) {
-        departmentFilter.addEventListener('change', applyFilters);
-    }
+    const filter = document.getElementById('departmentFilter');
+    if (filter) filter.addEventListener('change', applyFilters);
 });
 </script>
-{% endblock %} 
+{% endblock %}
