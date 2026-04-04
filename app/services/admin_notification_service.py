@@ -150,16 +150,39 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_count() -> Dict[str, int]:
-        """Hole Anzahl der Benachrichtigungen"""
+        """
+        Hole Anzahl der Benachrichtigungen (optimiert via Aggregation)
+        Reduziert Datenbank-Roundtrips von 2 auf 1 (Bolt ⚡)
+        """
         try:
-            total_count = mongodb.count_documents('notifications', {})
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
+            # OPTIMIERT: Verwende Aggregation zur Reduzierung der Roundtrips (Bolt ⚡)
+            pipeline = [
+                {
+                    '$group': {
+                        '_id': None,
+                        'total': {'$sum': 1},
+                        'unread': {
+                            '$sum': {
+                                '$cond': [{'$eq': ['$is_read', False]}, 1, 0]
+                            }
+                        }
+                    }
+                }
+            ]
             
-            return {
-                'total': total_count,
-                'unread': unread_count,
-                'read': total_count - unread_count
-            }
+            result = list(mongodb.aggregate('notifications', pipeline))
+
+            if result:
+                stats = result[0]
+                total = stats.get('total', 0)
+                unread = stats.get('unread', 0)
+                return {
+                    'total': total,
+                    'unread': unread,
+                    'read': total - unread
+                }
+
+            return {'total': 0, 'unread': 0, 'read': 0}
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Benachrichtigungsanzahl: [Interner Fehler]")
@@ -330,37 +353,63 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
-        """Hole Benachrichtigungs-Statistiken"""
+        """
+        Hole Benachrichtigungs-Statistiken (optimiert via Aggregation)
+        Reduziert Datenbank-Roundtrips von 11 auf 1 (Bolt ⚡)
+        """
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
+            # OPTIMIERT: Verwende $facet zur gleichzeitigen Berechnung aller Statistiken (Bolt ⚡)
+            pipeline = [
+                {
+                    '$facet': {
+                        'total': [{'$count': 'count'}],
+                        'type_stats': [
+                            {'$group': {'_id': '$type', 'count': {'$sum': 1}}}
+                        ],
+                        'priority_stats': [
+                            {'$group': {'_id': '$priority', 'count': {'$sum': 1}}}
+                        ],
+                        'unread_count': [
+                            {'$match': {'is_read': False}},
+                            {'$count': 'count'}
+                        ]
+                    }
+                }
+            ]
             
-            # Nach Typ
-            type_stats = {}
-            notification_types = ['info', 'warning', 'error', 'success']
+            result = list(mongodb.aggregate('notifications', pipeline))
             
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
+            if not result:
+                return {
+                    'total_count': 0,
+                    'type_stats': {},
+                    'priority_stats': {},
+                    'unread_count': 0,
+                    'read_count': 0
+                }
             
-            # Nach Priorität
-            priority_stats = {}
-            priorities = ['low', 'normal', 'high', 'urgent']
+            stats = result[0]
+            total = stats['total'][0]['count'] if stats['total'] else 0
+            unread = stats['unread_count'][0]['count'] if stats['unread_count'] else 0
             
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
-            
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
+            # Formatiere Typ-Statistiken
+            type_mapping = {t: 0 for t in ['info', 'warning', 'error', 'success']}
+            for item in stats.get('type_stats', []):
+                if item['_id'] in type_mapping:
+                    type_mapping[item['_id']] = item['count']
+
+            # Formatiere Prioritäts-Statistiken
+            priority_mapping = {p: 0 for p in ['low', 'normal', 'high', 'urgent']}
+            for item in stats.get('priority_stats', []):
+                if item['_id'] in priority_mapping:
+                    priority_mapping[item['_id']] = item['count']
             
             return {
-                'total_count': total_count,
-                'type_stats': type_stats,
-                'priority_stats': priority_stats,
-                'unread_count': unread_count,
-                'read_count': read_count
+                'total_count': total,
+                'type_stats': type_mapping,
+                'priority_stats': priority_mapping,
+                'unread_count': unread,
+                'read_count': total - unread
             }
             
         except Exception as e:
