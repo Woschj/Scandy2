@@ -9,12 +9,14 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               autocomplete="off">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,12 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <i class="fas fa-search mb-2 text-2xl block"></i>
+                                Keine Ergebnisse gefunden
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,34 +86,45 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const status = document.getElementById('searchStatus');
+    const noResults = document.getElementById('noResultsRow');
+    if (status) status.textContent = rows.length > 0 ? `${visibleRows.length} von ${rows.length} gefunden` : '';
+    if (noResults) noResults.classList.toggle('hidden', visibleRows.length > 0 || rows.length === 0);
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            if (searchInput) { e.preventDefault(); searchInput.focus(); }
+        } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.blur();
+        }
+    });
+
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            if (clearSearch) clearSearch.classList.toggle('hidden', searchTerm.length === 0);
 
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            } else {
+                document.querySelectorAll('.data-row').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                });
+                window.updateSearchStatus();
             }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
@@ -142,7 +161,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const noResults = document.getElementById('noResultsRow');
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row !== noResults);
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+        if (noResults) tbody.appendChild(noResults);
     }
 
     // Tool-spezifische Funktionen
@@ -208,19 +229,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const statusFilter = document.getElementById('statusFilter');
 
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
+        window.applyFilters = function() {
+            const category = categoryFilter.value, location = locationFilter.value, status = statusFilter.value;
+            const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
+                const matchesSearch = !term || row.textContent.toLowerCase().includes(term);
+                row.style.display = matchesCategory && matchesLocation && matchesStatus && matchesSearch ? '' : 'none';
             });
-        }
+            window.updateSearchStatus();
+        };
 
         categoryFilter.addEventListener('change', applyFilters);
         locationFilter.addEventListener('change', applyFilters);
@@ -319,19 +340,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const stockFilter = document.getElementById('stockFilter');
 
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
+        window.applyFilters = function() {
+            const category = categoryFilter.value, location = locationFilter.value, stock = stockFilter.value;
+            const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
+                const matchesSearch = !term || row.textContent.toLowerCase().includes(term);
+                row.style.display = matchesCategory && matchesLocation && matchesStock && matchesSearch ? '' : 'none';
             });
-        }
+            window.updateSearchStatus();
+        };
 
         categoryFilter.addEventListener('change', applyFilters);
         locationFilter.addEventListener('change', applyFilters);
