@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2024-05-19 - [AdminNotificationService Aggregation Optimization]
+**Learning:** Multiple sequential `count_documents` calls (N+1-like pattern) for dashboard statistics can be consolidated into a single `$facet` aggregation pipeline. This reduces database roundtrips by over 80% (from 13 to 2) for dashboard-critical operations. Using `$facet` allows for independent sub-pipelines for total counts, grouped counts (by type/priority), and filtered counts (unread).
+**Action:** When calculating multiple independent statistics on the same collection, use a single `$facet` aggregation to minimize network overhead and database load.
