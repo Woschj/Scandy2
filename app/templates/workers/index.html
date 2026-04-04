@@ -125,19 +125,23 @@
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Filter-Funktionalität
-    function applyFilters() {
+    window.applyFilters = function() {
         const department = document.getElementById('departmentFilter').value;
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
         
         document.querySelectorAll('.data-row').forEach(row => {
             const matchesDepartment = !department || row.dataset.department === department;
-            row.style.display = matchesDepartment ? '' : 'none';
+            const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+            row.style.display = (matchesDepartment && matchesSearch) ? '' : 'none';
         });
+        window.updateSearchStatus();
     }
 
     // Filter-Event-Listener
     const departmentFilter = document.getElementById('departmentFilter');
     if (departmentFilter) {
-        departmentFilter.addEventListener('change', applyFilters);
+        departmentFilter.addEventListener('change', window.applyFilters);
     }
 });
 </script>
