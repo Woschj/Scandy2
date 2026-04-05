@@ -7,3 +7,7 @@
 ## 2026-02-15 - [Semantic Form Labels]
 **Learning:** Even with clear visual labels, missing `for` attributes on `<label>` elements prevents proper association with inputs for assistive technologies.
 **Action:** Explicitly link labels and inputs using `for` and `id` attributes in all form components.
+
+## 2026-04-05 - [Synchronized Search and Filter UX]
+**Learning:** In list views with multiple filter sources (search text + dropdowns), independent filter logic leads to visual bugs where one filter overwrites the other. Unifying these through a centralized `applyFilters` logic ensures consistent results and correct "no results" state feedback.
+**Action:** Always implement filtering as a holistic state-check function that combines all active criteria.
