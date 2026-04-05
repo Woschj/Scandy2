@@ -752,6 +752,27 @@
                 document.body.removeChild(textArea);
             }
         };
+
+        /**
+         * Schaltet die Sichtbarkeit eines Passwort-Feldes um.
+         * @param {string} inputId - Die ID des Passwort-Inputs.
+         * @param {HTMLElement} btn - Der Button, der die Funktion aufruft.
+         */
+        window.togglePasswordVisibility = function(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                btn.setAttribute('aria-label', 'Passwort verbergen');
+                btn.setAttribute('title', 'Passwort verbergen');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                btn.setAttribute('aria-label', 'Passwort anzeigen');
+                btn.setAttribute('title', 'Passwort anzeigen');
+            }
+        };
     </script>
     <script nonce="mock_nonce" src="/static?v=2"></script>
     <script nonce="mock_nonce" src="/static" defer></script>
