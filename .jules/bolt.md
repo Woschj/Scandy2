@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-03-23 - [Defensive Aggregation Logic]
+**Learning:** The `mongodb.aggregate` wrapper unconditionally stringifies `_id`, which crashes (KeyError) for stages like `$facet` or `$group` that may omit it. Additionally, `$facet` cannot gather stats from multiple collections simultaneously; it is restricted to the collection it's called on.
+**Action:** Always use defensive `if '_id' in doc` checks in database wrappers. For cross-collection dashboard stats, use separate targeted aggregations and `count_documents` instead of a single broken `$facet` pipeline.

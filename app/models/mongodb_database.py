@@ -169,7 +169,8 @@ class MongoDBDatabase:
         
         if result:
             # ObjectId zu String konvertieren
-            result['_id'] = str(result['_id'])
+            if '_id' in result:
+                result['_id'] = str(result['_id'])
         
         return result
     
@@ -194,7 +195,8 @@ class MongoDBDatabase:
         results = []
         for doc in cursor:
             # ObjectId zu String konvertieren
-            doc['_id'] = str(doc['_id'])
+            if '_id' in doc:
+                doc['_id'] = str(doc['_id'])
             results.append(doc)
         
         return results
@@ -405,7 +407,8 @@ class MongoDBDatabase:
         results = []
         for doc in cursor:
             # ObjectId zu String konvertieren
-            doc['_id'] = str(doc['_id'])
+            if '_id' in doc:
+                doc['_id'] = str(doc['_id'])
             results.append(doc)
         
         return results
