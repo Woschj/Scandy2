@@ -30,3 +30,6 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+## 2026-03-22 - [Cross-Collection Aggregation and Facet Fixes]
+**Learning:** The MongoDB `$facet` stage is scoped to the collection the aggregation is run on. Using it to query "multiple collections" by putting them into different facets only works if all data actually resides in that single collection, which was a bug in the `QueryOptimizer`. Additionally, cross-collection duplicate detection (Tools vs Consumables) is most efficiently handled via `$unionWith` rather than fetching all barcodes into Python memory.
+**Action:** Use separate targeted queries for dashboard statistics across different collections instead of a single invalid facet. Use `$unionWith` for joined-collection aggregations to keep processing on the database side.

@@ -382,69 +382,53 @@ class MongoDBTool:
 
     @classmethod
     def get_duplicate_barcodes(cls) -> List[Dict[str, Any]]:
-        """Prüft auf doppelte Barcodes in Tools und Consumables"""
-        # App-Labels aus der Datenbank laden
-        tools_label = mongodb.find_one('settings', {'key': 'label_tools_name'})
-        consumables_label = mongodb.find_one('settings', {'key': 'label_consumables_name'})
-        
-        # Fallback-Werte falls keine Labels in der DB gefunden werden
-        tools_type = tools_label.get('value', 'Werkzeuge') if tools_label else 'Werkzeuge'
-        consumables_type = consumables_label.get('value', 'Verbrauchsmaterial') if consumables_label else 'Verbrauchsmaterial'
-        
-        # Alle Barcodes sammeln
-        tool_barcodes = list(mongodb.find(cls.COLLECTION_NAME, {
-            'deleted': {'$ne': True},
-            'barcode': {'$exists': True, '$ne': None}
-        }, projection={'barcode': 1, 'name': 1}))
-        
-        consumable_barcodes = list(mongodb.find('consumables', {
-            'deleted': {'$ne': True},
-            'barcode': {'$exists': True, '$ne': None}
-        }, projection={'barcode': 1, 'name': 1}))
-        
-        # Barcode-Zählung
-        barcode_count = {}
-        barcode_entries = {}
-        
-        # Tools hinzufügen
-        for tool in tool_barcodes:
-            bc = tool.get('barcode')
-            if bc:
-                if bc not in barcode_count:
-                    barcode_count[bc] = 0
-                    barcode_entries[bc] = []
-                barcode_count[bc] += 1
-                barcode_entries[bc].append({
-                    'type': tools_type,
-                    'name': tool.get('name', 'Unbekannt'),
-                    'id': str(tool.get('_id'))
-                })
-        
-        # Consumables hinzufügen
-        for consumable in consumable_barcodes:
-            bc = consumable.get('barcode')
-            if bc:
-                if bc not in barcode_count:
-                    barcode_count[bc] = 0
-                    barcode_entries[bc] = []
-                barcode_count[bc] += 1
-                barcode_entries[bc].append({
-                    'type': consumables_type,
-                    'name': consumable.get('name', 'Unbekannt'),
-                    'id': str(consumable.get('_id'))
-                })
-        
-        # Duplikate finden
-        duplicates = []
-        for barcode, count in barcode_count.items():
-            if count > 1:
-                duplicates.append({
-                    'barcode': barcode,
-                    'count': count,
-                    'entries': barcode_entries[barcode]
-                })
-        
-        return duplicates
+        """
+        Findet doppelte Barcodes über verschiedene Collections (Bolt ⚡).
+        Verwendet Aggregation für bessere Performance statt In-Memory Verarbeitung.
+        """
+        try:
+            # App-Labels laden
+            tools_label = mongodb.find_one('settings', {'key': 'label_tools_name'})
+            consumables_label = mongodb.find_one('settings', {'key': 'label_consumables_name'})
+
+            tools_type = tools_label.get('value', 'Werkzeuge') if tools_label else 'Werkzeuge'
+            consumables_type = consumables_label.get('value', 'Verbrauchsmaterial') if consumables_label else 'Verbrauchsmaterial'
+
+            # OPTIMIERT: Aggregation mit $unionWith zur Identifizierung von Duplikaten (Bolt ⚡)
+            pipeline = [
+                {'$match': {'deleted': {'$ne': True}, 'barcode': {'$exists': True, '$ne': None}}},
+                {'$project': {'barcode': 1, 'name': 1, 'type': {'$literal': tools_type}}},
+                {
+                    '$unionWith': {
+                        'coll': 'consumables',
+                        'pipeline': [
+                            {'$match': {'deleted': {'$ne': True}, 'barcode': {'$exists': True, '$ne': None}}},
+                            {'$project': {'barcode': 1, 'name': 1, 'type': {'$literal': consumables_type}}}
+                        ]
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$barcode',
+                        'count': {'$sum': 1},
+                        'entries': {
+                            '$push': {
+                                'type': '$type',
+                                'name': {'$ifNull': ['$name', 'Unbekannt']},
+                                'id': {'$toString': '$_id'}
+                            }
+                        }
+                    }
+                },
+                {'$match': {'count': {'$gt': 1}}},
+                {'$project': {'barcode': '$_id', 'count': 1, 'entries': 1, '_id': 0}},
+                {'$sort': {'count': -1}}
+            ]
+
+            return list(mongodb.aggregate(cls.COLLECTION_NAME, pipeline))
+        except Exception as e:
+            logger.error(f"Fehler bei get_duplicate_barcodes: {e}")
+            return []
 
 class MongoDBWorker:
     """MongoDB-Modell für Mitarbeiter"""
