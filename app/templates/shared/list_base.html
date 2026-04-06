@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 opacity-50">
+                                    <i class="fas fa-search fa-3x"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suche oder Filter an</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,14 +88,41 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+// Basis-Suchfunktion und Filterung
+window.updateSearchStatus = function() {
+    const visibleRows = document.querySelectorAll('.data-row:not([style*="display: none"])').length;
+    const totalRows = document.querySelectorAll('.data-row').length;
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+
+    if (noResultsRow) {
+        noResultsRow.classList.toggle('hidden', visibleRows > 0 || totalRows === 0);
+    }
+
+    if (searchStatus) {
+        searchStatus.textContent = `${visibleRows} von ${totalRows} Ergebnissen gefunden.`;
+    }
+};
+
+window.applyFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    document.querySelectorAll('.data-row').forEach(row => {
+        const searchableContent = row.textContent.toLowerCase();
+        row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+    });
+
+    window.updateSearchStatus();
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
+            const searchTerm = e.target.value;
 
             // Toggle clear button
             if (clearSearch) {
@@ -96,17 +133,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+            window.applyFilters();
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
                 clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.applyFilters();
                 searchInput.focus();
             });
         }
@@ -208,23 +242,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const statusFilter = document.getElementById('statusFilter');
 
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
+        window.applyFilters = function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            const location = locationFilter ? locationFilter.value : '';
+            const status = statusFilter ? statusFilter.value : '';
 
             document.querySelectorAll('.data-row').forEach(row => {
+                const searchableContent = row.textContent.toLowerCase();
+                const matchesSearch = searchableContent.includes(searchTerm);
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStatus = !status || row.dataset.status === status;
 
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
+                row.style.display = matchesSearch && matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
+        if (categoryFilter) categoryFilter.addEventListener('change', window.applyFilters);
+        if (locationFilter) locationFilter.addEventListener('change', window.applyFilters);
+        if (statusFilter) statusFilter.addEventListener('change', window.applyFilters);
         console.log('Filters initialized');
     }
 
@@ -319,23 +358,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const stockFilter = document.getElementById('stockFilter');
 
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
+        window.applyFilters = function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            const location = locationFilter ? locationFilter.value : '';
+            const stock = stockFilter ? stockFilter.value : '';
 
             document.querySelectorAll('.data-row').forEach(row => {
+                const searchableContent = row.textContent.toLowerCase();
+                const matchesSearch = searchableContent.includes(searchTerm);
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStock = !stock || row.dataset.stock === stock;
 
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
+                row.style.display = matchesSearch && matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
+        if (categoryFilter) categoryFilter.addEventListener('change', window.applyFilters);
+        if (locationFilter) locationFilter.addEventListener('change', window.applyFilters);
+        if (stockFilter) stockFilter.addEventListener('change', window.applyFilters);
         console.log('Filters initialized');
     }
 
