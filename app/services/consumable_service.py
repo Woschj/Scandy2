@@ -244,40 +244,83 @@ class ConsumableService:
     
     @staticmethod
     def get_statistics() -> Dict[str, Any]:
-        """Holt Statistiken für Verbrauchsmaterialien"""
+        """
+        Holt Statistiken für Verbrauchsmaterialien (optimiert via Aggregation Bolt ⚡)
+        Reduziert Datenbank-Abfragen von O(N) auf O(1) und offloadet Berechnungen.
+        """
         try:
-            all_consumables = ConsumableService.get_all_consumables()
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$facet': {
+                        'total': [{'$count': 'count'}],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}}
+                        ],
+                        'stock_levels': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'sufficient': {
+                                        '$sum': {
+                                            '$cond': [{'$gte': [{'$ifNull': ['$quantity', 0]}, {'$ifNull': ['$min_quantity', 0]}]}, 1, 0]
+                                        }
+                                    },
+                                    'warning': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$lt': [{'$ifNull': ['$quantity', 0]}, {'$ifNull': ['$min_quantity', 0]}]},
+                                                    {'$gt': [{'$ifNull': ['$quantity', 0]}, 0]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'critical': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$lt': [{'$ifNull': ['$quantity', 0]}, {'$ifNull': ['$min_quantity', 0]}]},
+                                                    {'$lte': [{'$ifNull': ['$quantity', 0]}, 0]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+            aggregation_result = list(mongodb.aggregate('consumables', pipeline))
+            if not aggregation_result:
+                return {
+                    'total_consumables': 0, 'categories': {}, 'locations': {},
+                    'stock_levels': {'sufficient': 0, 'warning': 0, 'critical': 0}
+                }
+
+            result = aggregation_result[0]
             
             stats = {
-                'total_consumables': len(all_consumables),
-                'categories': {},
-                'locations': {},
-                'stock_levels': {
-                    'sufficient': 0,
-                    'warning': 0,
-                    'critical': 0
-                }
+                'total_consumables': result['total'][0]['count'] if result['total'] else 0,
+                'categories': {c['_id']: c['count'] for c in result['categories']},
+                'locations': {l['_id']: l['count'] for l in result['locations']},
+                'stock_levels': result['stock_levels'][0] if result['stock_levels'] else {'sufficient': 0, 'warning': 0, 'critical': 0}
             }
             
-            # Kategorie- und Standort-Statistiken
-            for consumable in all_consumables:
-                category = consumable.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = consumable.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-                
-                # Bestandslevel
-                quantity = consumable.get('quantity', 0)
-                min_quantity = consumable.get('min_quantity', 0)
-                
-                if quantity >= min_quantity:
-                    stats['stock_levels']['sufficient'] += 1
-                elif quantity > 0:
-                    stats['stock_levels']['warning'] += 1
-                else:
-                    stats['stock_levels']['critical'] += 1
-            
+            if 'stock_levels' in stats and '_id' in stats['stock_levels']:
+                del stats['stock_levels']['_id']
+
             return stats
             
         except Exception as e:
