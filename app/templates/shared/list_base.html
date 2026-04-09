@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <span id="searchStatus" class="sr-only" aria-live="polite"></span>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-3xl opacity-20"></i>
+                                    <span>Keine Ergebnisse für die gewählten Filter gefunden.</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,39 +87,75 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+// Basis-Suchfunktion und Filter
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+    // Globaler Shortcut ( / ) zum Suchen
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
             }
+        }
+    });
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            if (clearSearch) {
+                clearSearch.classList.toggle('hidden', !this.value);
+            }
+            window.applyFilters();
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                this.classList.add('hidden');
+                window.applyFilters();
                 searchInput.focus();
             });
         }
     }
+
+    // Zentralisierte Filter-Logik
+    window.applyFilters = function() {
+        const searchTerm = (searchInput?.value || '').toLowerCase();
+        const activeFilters = Array.from(document.querySelectorAll('select[id$="Filter"]')).map(select => ({
+            id: select.id.replace('Filter', ''),
+            value: select.value
+        }));
+        const noResultsRow = document.getElementById('noResultsRow');
+        const searchStatus = document.getElementById('searchStatus');
+        let visibleCount = 0;
+
+        document.querySelectorAll('.data-row').forEach(row => {
+            const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+            const matchesDropdowns = activeFilters.every(filter => !filter.value || row.dataset[filter.id] === filter.value);
+
+            const isVisible = matchesSearch && matchesDropdowns;
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('hidden', visibleCount > 0);
+        }
+
+        if (searchStatus) {
+            searchStatus.textContent = `${visibleCount} Ergebnisse gefunden.`;
+        }
+    };
+
+    // Event-Listener für alle Dropdown-Filter
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.addEventListener('change', window.applyFilters);
+    });
+
+    // Initialer Aufruf
+    window.applyFilters();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -142,7 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const noResultsRow = document.getElementById('noResultsRow');
+        const rows = Array.from(tbody.querySelectorAll('tr:not(#noResultsRow)'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,39 +241,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+        if (noResultsRow) tbody.appendChild(noResultsRow);
     }
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
-    console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
@@ -303,42 +321,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Tools
-    console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
-    console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
@@ -414,8 +401,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Verbrauchsgüter
-    console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
