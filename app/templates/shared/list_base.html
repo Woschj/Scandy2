@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +48,17 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10 text-slate-400">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-3xl opacity-20"></i>
+                                    <p class="font-medium">Keine Ergebnisse für Ihre Suche gefunden.</p>
+                                    <button type="button" class="btn btn-sm btn-ghost mt-2" onclick="window.resetAllFilters()">
+                                        Suche zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,35 +94,96 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+
+    // Export functions to window for use in child templates or other scripts
+    window.updateSearchStatus = function() {
+        const rows = document.querySelectorAll('.data-row');
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('hidden', visibleRows.length > 0);
+        }
+
+        if (searchStatus) {
+            searchStatus.textContent = `${visibleRows.length} Ergebnisse gefunden.`;
+        }
+    };
+
+    window.applyFilters = function() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const filters = Array.from(document.querySelectorAll('select[id$="Filter"]')).map(select => ({
+            id: select.id.replace('Filter', ''),
+            value: select.value
+        }));
+
+        document.querySelectorAll('.data-row').forEach(row => {
+            const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+            const matchesFilters = filters.every(f => !f.value || row.dataset[f.id] === f.value);
+
+            row.style.display = matchesSearch && matchesFilters ? '' : 'none';
+        });
+
+        window.updateSearchStatus();
+    };
+
+    window.resetAllFilters = function() {
+        if (searchInput) searchInput.value = '';
+        if (clearSearch) clearSearch.classList.add('hidden');
+        document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+            select.value = '';
+        });
+        window.applyFilters();
+        if (searchInput) searchInput.focus();
+    };
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
-            // Toggle clear button
             if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+                clearSearch.classList.toggle('hidden', searchTerm.length === 0);
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+            window.applyFilters();
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
                 clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.applyFilters();
                 searchInput.focus();
             });
         }
     }
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Only if not in an input/textarea
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                clearSearch?.click();
+            }
+            return;
+        }
+
+        if (e.key === '/') {
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        }
+    });
+
+    // Attach listeners to all dropdown filters
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.addEventListener('change', window.applyFilters);
+    });
+
+    // Initial status update
+    window.updateSearchStatus();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -173,8 +246,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Sortiere die Zeilen
-        rows.sort((a, b) => {
+        // Sortiere die Zeilen (ohne NoResultsRow)
+        const dataRows = rows.filter(r => !r.id || r.id !== 'noResultsRow');
+        dataRows.sort((a, b) => {
             const aValue = a.children[column]?.textContent.trim() || '';
             const bValue = b.children[column]?.textContent.trim() || '';
 
@@ -194,39 +268,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Entferne und füge sortierte Zeilen wieder hinzu
-        rows.forEach(row => tbody.appendChild(row));
+        dataRows.forEach(row => tbody.appendChild(row));
+        // NoResultsRow immer am Ende behalten
+        if (noResultsRow) tbody.appendChild(noResultsRow);
     }
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
     console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
 
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
@@ -304,40 +353,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Tools
     console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
     console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
 
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
@@ -415,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Verbrauchsgüter
     console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
