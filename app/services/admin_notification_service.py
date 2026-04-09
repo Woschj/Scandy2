@@ -34,6 +34,28 @@ class AdminNotificationService:
             return []
 
     @staticmethod
+    def get_active_notices(department: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Hole alle aktiven Benachrichtigungen (Notices) (Bolt ⚡)"""
+        try:
+            query = {'is_active': True}
+            if department:
+                query['department'] = department
+
+            # Sortiere nach Priorität (absteigend) und Erstellungsdatum (absteigend)
+            notices = list(mongodb.find('homepage_notices', query, sort=[('priority', -1), ('created_at', -1)]))
+
+            # Konvertiere ObjectIds zu Strings für JSON-Serialisierung
+            for notice in notices:
+                if '_id' in notice:
+                    notice['_id'] = str(notice['_id'])
+
+            return notices
+
+        except Exception as e:
+            logger.error(f"Fehler beim Laden der aktiven Benachrichtigungen: [Interner Fehler]")
+            return []
+
+    @staticmethod
     def create_notification(notification_data: Dict[str, Any]) -> Tuple[bool, str, Optional[str]]:
         """
         Erstellt eine neue Benachrichtigung
@@ -150,10 +172,29 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_count() -> Dict[str, int]:
-        """Hole Anzahl der Benachrichtigungen"""
+        """Hole Anzahl der Benachrichtigungen (Bolt ⚡)"""
         try:
-            total_count = mongodb.count_documents('notifications', {})
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
+            # OPTIMIERT: Verwende Aggregation zur Reduzierung von Datenbank-Abfragen
+            pipeline = [
+                {
+                    '$facet': {
+                        'total': [{'$count': 'count'}],
+                        'unread': [
+                            {'$match': {'is_read': False}},
+                            {'$count': 'count'}
+                        ]
+                    }
+                }
+            ]
+
+            result = list(mongodb.aggregate('notifications', pipeline))
+
+            if not result:
+                return {'total': 0, 'unread': 0, 'read': 0}
+
+            facet_result = result[0]
+            total_count = facet_result['total'][0]['count'] if facet_result['total'] else 0
+            unread_count = facet_result['unread'][0]['count'] if facet_result['unread'] else 0
             
             return {
                 'total': total_count,
@@ -330,30 +371,60 @@ class AdminNotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict[str, Any]:
-        """Hole Benachrichtigungs-Statistiken"""
+        """Hole Benachrichtigungs-Statistiken (Bolt ⚡)"""
         try:
-            # Gesamtanzahl
-            total_count = mongodb.count_documents('notifications', {})
+            # OPTIMIERT: Verwende Aggregation mit Facets zur Reduzierung von Datenbank-Abfragen
+            pipeline = [
+                {
+                    '$facet': {
+                        'total': [{'$count': 'count'}],
+                        'by_type': [
+                            {'$group': {'_id': '$type', 'count': {'$sum': 1}}}
+                        ],
+                        'by_priority': [
+                            {'$group': {'_id': '$priority', 'count': {'$sum': 1}}}
+                        ],
+                        'by_read': [
+                            {'$group': {'_id': '$is_read', 'count': {'$sum': 1}}}
+                        ]
+                    }
+                }
+            ]
             
-            # Nach Typ
-            type_stats = {}
-            notification_types = ['info', 'warning', 'error', 'success']
+            result = list(mongodb.aggregate('notifications', pipeline))
+
+            if not result:
+                return {
+                    'total_count': 0,
+                    'type_stats': {},
+                    'priority_stats': {},
+                    'unread_count': 0,
+                    'read_count': 0
+                }
             
-            for notification_type in notification_types:
-                count = mongodb.count_documents('notifications', {'type': notification_type})
-                type_stats[notification_type] = count
+            facet_result = result[0]
             
-            # Nach Priorität
-            priority_stats = {}
-            priorities = ['low', 'normal', 'high', 'urgent']
+            total_count = facet_result['total'][0]['count'] if facet_result['total'] else 0
             
-            for priority in priorities:
-                count = mongodb.count_documents('notifications', {'priority': priority})
-                priority_stats[priority] = count
+            type_stats = {t['_id']: t['count'] for t in facet_result['by_type'] if t['_id']}
+            # Ensure all expected types are present
+            for n_type in ['info', 'warning', 'error', 'success']:
+                if n_type not in type_stats:
+                    type_stats[n_type] = 0
+
+            priority_stats = {p['_id']: p['count'] for p in facet_result['by_priority'] if p['_id']}
+            # Ensure all expected priorities are present
+            for priority in ['low', 'normal', 'high', 'urgent']:
+                if priority not in priority_stats:
+                    priority_stats[priority] = 0
             
-            # Ungelesen vs. gelesen
-            unread_count = mongodb.count_documents('notifications', {'is_read': False})
-            read_count = mongodb.count_documents('notifications', {'is_read': True})
+            unread_count = 0
+            read_count = 0
+            for r in facet_result['by_read']:
+                if r['_id'] is False:
+                    unread_count = r['count']
+                elif r['_id'] is True:
+                    read_count = r['count']
             
             return {
                 'total_count': total_count,
