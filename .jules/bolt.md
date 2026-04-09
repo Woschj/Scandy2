@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-04-09 - Consolidating Multiple Statistics Queries with $facet
+**Learning:** Using the MongoDB $facet stage allows the consolidation of multiple independent aggregation pipelines (e.g., counts by type, status, and priority) into a single database roundtrip. This is particularly effective for dashboard statistics that would otherwise require O(K) queries (where K is the number of metrics). Additionally, manual O(N) loops for _id-to-string conversion in service layers are redundant in this codebase as the mongodb.find wrapper already handles this conversion.
+**Action:** Use $facet for any service method that performs more than 2-3 independent count_documents or aggregate calls on the same collection. Always verify if the database wrapper handles ID normalization before implementing manual conversion loops.
