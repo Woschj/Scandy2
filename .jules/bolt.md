@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-04-10 - [Safe Aggregation for Empty Collections]
+**Learning:** MongoDB aggregation using $facet returns a single document with empty arrays for each facet if the collection is empty or filters match nothing. Attempting to access [0] on these empty arrays in Python causes an IndexError. Additionally, the $not operator in aggregation pipelines requires an array operand: {'$not': ['$is_borrowed']}.
+**Action:** Always check the length of facet result arrays before accessing index 0. Ensure $not expressions are correctly wrapped in arrays within aggregation pipelines.
