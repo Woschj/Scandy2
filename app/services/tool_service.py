@@ -602,30 +602,112 @@ class ToolService:
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
+        Reduziert Datenbank-Abfragen von O(N) auf O(1) und eliminiert Python-Loops.
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$facet': {
+                        'base_counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'defect': {'$sum': {'$cond': [{'$eq': ['$status', 'defekt']}, 1, 0]}}
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}}
+                        ],
+                        'lending_stats': [
+                            {
+                                '$lookup': {
+                                    'from': 'lendings',
+                                    'localField': 'barcode',
+                                    'foreignField': 'tool_barcode',
+                                    'as': 'active_lendings'
+                                }
+                            },
+                            {
+                                '$addFields': {
+                                    'is_borrowed': {
+                                        '$gt': [
+                                            {'$size': {
+                                                '$filter': {
+                                                    'input': '$active_lendings',
+                                                    'as': 'l',
+                                                    'cond': {'$eq': ['$$l.returned_at', None]}
+                                                }
+                                            }},
+                                            0
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'borrowed': {'$sum': {'$cond': ['$is_borrowed', 1, 0]}},
+                                    'available': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': [{'$ifNull': ['$status', 'verfügbar']}, 'verfügbar']},
+                                                    {'$not': ['$is_borrowed']}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+            result = mongodb.aggregate('tools', pipeline)
             
             stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
+                'total_tools': 0,
+                'available_tools': 0,
+                'borrowed_tools': 0,
+                'defect_tools': 0,
                 'categories': {},
                 'locations': {}
             }
-            
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
+
+            if result:
+                data = result[0]
+                base_list = data.get('base_counts', [])
+                base = base_list[0] if base_list else {}
+
+                lending_list = data.get('lending_stats', [])
+                lending = lending_list[0] if lending_list else {}
+
+                stats['total_tools'] = base.get('total', 0)
+                stats['defect_tools'] = base.get('defect', 0)
+                stats['borrowed_tools'] = lending.get('borrowed', 0)
+                stats['available_tools'] = lending.get('available', 0)
+
+                for cat in data.get('categories', []):
+                    stats['categories'][cat['_id']] = cat['count']
                 
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
+                for loc in data.get('locations', []):
+                    stats['locations'][loc['_id']] = loc['count']
             
             return stats
             
