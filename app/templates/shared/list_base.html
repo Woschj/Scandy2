@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,13 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden"><td colspan="100" class="text-center py-8">
+                            <div class="flex flex-col items-center gap-2 opacity-50">
+                                <i class="fas fa-search text-3xl"></i>
+                                <p>Keine Ergebnisse gefunden</p>
+                                <button type="button" class="btn btn-ghost btn-xs underline" onclick="window.resetAllFilters()">Zurücksetzen</button>
+                            </div>
+                        </td></tr>
                     </tbody>
                 </table>
             </div>
@@ -83,25 +91,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
+    window.updateSearchStatus = () => {
+        const visible = document.querySelectorAll('.data-row:not([style*="display: none"])').length;
+        document.getElementById('noResultsRow')?.classList.toggle('hidden', visible > 0);
+        if (searchStatus) searchStatus.textContent = `${visible} Ergebnisse gefunden`;
+    };
+    window.resetAllFilters = () => {
+        if (searchInput) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); searchInput.focus(); }
+        document.querySelectorAll('select[id$="Filter"]').forEach(s => { s.value = ''; s.dispatchEvent(new Event('change')); });
+    };
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
+            const term = e.target.value.toLowerCase();
+            if (clearSearch) clearSearch.classList.toggle('hidden', term.length === 0);
             document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
             });
+            window.updateSearchStatus();
         });
-
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
@@ -111,6 +118,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    document.addEventListener('keydown', e => {
+        const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+        if (e.key === '/' && !isInput) { e.preventDefault(); searchInput?.focus(); }
+        else if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); }
+            else searchInput.blur();
+        }
+    });
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -142,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+        const noRes = document.getElementById('noResultsRow');
+        if (noRes) tbody.appendChild(noRes);
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
