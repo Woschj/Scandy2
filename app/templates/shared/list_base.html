@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <span id="searchStatus" class="sr-only" aria-live="polite"></span>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,7 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden"><td colspan="100" class="text-center py-12"><div class="flex flex-col items-center justify-center text-base-content/50"><i class="fas fa-search-minus text-4xl mb-4"></i><p class="text-lg font-medium">Keine Ergebnisse gefunden</p><p class="text-sm mb-4">Versuchen Sie es mit einem anderen Suchbegriff oder setzen Sie die Filter zurück.</p><button type="button" class="btn btn-sm btn-outline" onclick="window.resetAllFilters()">Filter zurücksetzen</button></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +80,29 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+// Globaler Shortcut für Suche
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) { e.preventDefault(); searchInput.focus(); }
+    }
+});
+
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+    if (noResultsRow) noResultsRow.classList.toggle('hidden', visibleRows.length > 0);
+    if (searchStatus) searchStatus.textContent = `${visibleRows.length} Ergebnisse gefunden`;
+};
+
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); }
+    document.querySelectorAll('select[id$="Filter"]').forEach(s => { s.value = ''; s.dispatchEvent(new Event('change')); });
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -86,20 +111,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
+            if (clearSearch) clearSearch.classList.toggle('hidden', searchTerm.length === 0);
 
             document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
             });
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -142,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+        if (noResultsRow) tbody.appendChild(noResultsRow);
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
