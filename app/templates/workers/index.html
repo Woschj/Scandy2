@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesDepartment = !department || row.dataset.department === department;
             row.style.display = matchesDepartment ? '' : 'none';
         });
+        window.updateSearchStatus();
     }
 
     // Filter-Event-Listener
