@@ -4,6 +4,7 @@
 <div class="space-y-4">
     <!-- Suchleiste und Filter -->
     <div class="card bg-base-100 shadow-lg card-compact">
+        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
@@ -11,7 +12,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -47,6 +48,19 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center text-base-content/20">
+                                        <i class="fas fa-search text-3xl"></i>
+                                    </div>
+                                    <div class="text-lg font-medium opacity-50">Keine Ergebnisse gefunden</div>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-ghost btn-sm">
+                                        Suche zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +92,48 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+/**
+ * Aktualisiert den Status der Suche (Ergebniszähler und Leere-Meldung).
+ * Wird global exportiert, damit es von Filterskripten aufgerufen werden kann.
+ */
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+
+    if (!noResultsRow || !searchStatus) return;
+
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const count = visibleRows.length;
+
+    // Toggle "Keine Ergebnisse" Zeile
+    noResultsRow.style.display = count === 0 ? '' : 'none';
+
+    // Update screen reader status
+    let statusText = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+    if (count === 0) statusText = 'Keine Ergebnisse gefunden';
+    searchStatus.textContent = statusText;
+};
+
+/**
+ * Setzt alle Filter (Suche und Dropdowns) zurück.
+ */
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+    }
+
+    // Alle Selects zurücksetzen, deren ID auf "Filter" endet
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = '';
+        select.dispatchEvent(new Event('change'));
+    });
+
+    window.updateSearchStatus();
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -100,6 +156,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -110,6 +168,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchInput.focus();
             });
         }
+
+        // Global Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            const activeTag = document.activeElement.tagName;
+            const isInputActive = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+            // '/' to focus search
+            if (e.key === '/' && !isInputActive) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+
+            // 'Escape' to reset
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                window.resetAllFilters();
+                searchInput.blur();
+            }
+        });
     }
 
     // Sortier-Funktionalität
@@ -142,7 +218,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
+        const noResultsRow = document.getElementById('noResultsRow');
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
