@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -29,8 +29,9 @@
             </div>
 
             <!-- Filter -->
-            <div class="flex flex-wrap gap-3 mt-4">
+            <div class="flex flex-wrap gap-3 mt-4 items-center">
                 {% block filters %}{% endblock %}
+                <div id="searchStatus" class="text-sm text-base-content/60 ml-auto" aria-live="polite"></div>
             </div>
         </div>
     </div>
@@ -47,6 +48,22 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none !important;">
+                            <td colspan="100" class="text-center py-12 bg-base-100">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-search text-2xl opacity-20"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                        <p class="text-sm opacity-60">Versuchen Sie andere Suchbegriffe oder setzen Sie die Filter zurück.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="window.resetAllFilters()">
+                                        <i class="fas fa-undo mr-2"></i> Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,8 +95,24 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row'), visible = Array.from(rows).filter(r => r.style.display !== 'none');
+    const status = document.getElementById('searchStatus'), none = document.getElementById('noResultsRow');
+    if (status) status.textContent = `${visible.length} von ${rows.length} Einträgen angezeigt`;
+    if (none) none.style.setProperty('display', visible.length > 0 ? 'none' : 'table-row', 'important');
+};
+window.resetAllFilters = function() {
+    const s = document.getElementById('searchInput'); if (s) { s.value = ''; s.dispatchEvent(new Event('input')); }
+    document.querySelectorAll('select[id$="Filter"]').forEach(sel => { sel.value = ''; sel.dispatchEvent(new Event('change')); });
+};
 document.addEventListener('DOMContentLoaded', function() {
+    window.updateSearchStatus();
+    document.addEventListener('keydown', e => {
+        const s = document.getElementById('searchInput'); if (!s) return;
+        const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+        if (e.key === '/' && !isInput) { e.preventDefault(); s.focus(); }
+        else if (e.key === 'Escape') { isInput ? s.blur() : (s.value !== '' && window.resetAllFilters()); }
+    });
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
@@ -100,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -194,7 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Entferne und füge sortierte Zeilen wieder hinzu
-        rows.forEach(row => tbody.appendChild(row));
+        rows.forEach(row => { if (row.id !== 'noResultsRow') tbody.appendChild(row); });
+        if (typeof noResultsRow !== 'undefined') tbody.appendChild(noResultsRow);
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
