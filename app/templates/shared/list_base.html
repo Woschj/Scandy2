@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,25 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12 bg-base-100">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="bg-base-200 p-6 rounded-full">
+                                        <i class="fas fa-search text-4xl opacity-20"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <h3 class="text-lg font-bold">Keine Ergebnisse gefunden</h3>
+                                        <p class="text-base-content/60">Versuchen Sie es mit anderen Suchbegriffen oder Filtern.</p>
+                                    </div>
+                                    <button type="button"
+                                            onclick="window.resetAllFilters()"
+                                            class="btn btn-primary btn-sm">
+                                        <i class="fas fa-redo-alt mr-2"></i>
+                                        Suche & Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,10 +98,82 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+/**
+ * Aktualisiert das Such-Feedback (Anzahl der Ergebnisse und "Keine Ergebnisse"-Zeile).
+ */
+window.updateSearchStatus = function() {
+    const dataRows = document.querySelectorAll('.data-row');
+    const visibleRows = Array.from(dataRows).filter(row => row.style.display !== 'none');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+
+    if (noResultsRow) {
+        if (visibleRows.length === 0 && dataRows.length > 0) {
+            noResultsRow.classList.remove('hidden');
+        } else {
+            noResultsRow.classList.add('hidden');
+        }
+    }
+
+    if (searchStatus) {
+        const count = visibleRows.length;
+        let statusText = '';
+        if (count === 0) {
+            statusText = 'Keine Ergebnisse gefunden';
+        } else if (count === 1) {
+            statusText = '1 Ergebnis gefunden';
+        } else {
+            statusText = `${count} Ergebnisse gefunden`;
+        }
+        searchStatus.textContent = statusText;
+    }
+};
+
+/**
+ * Setzt alle Filter und die Suche zurück.
+ */
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+    }
+
+    // Setze alle Dropdown-Filter zurück (IDs, die auf 'Filter' enden)
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = '';
+        select.dispatchEvent(new Event('change'));
+    });
+
+    if (searchInput) {
+        searchInput.focus();
+    }
+
+    window.updateSearchStatus();
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+
+    // Globaler Keyboard-Shortcut Handler
+    document.addEventListener('keydown', function(e) {
+        // Ignoriere, wenn der Benutzer in einem Eingabefeld tippt
+        const activeElement = document.activeElement;
+        const isTyping = activeElement.tagName === 'INPUT' ||
+                         activeElement.tagName === 'TEXTAREA' ||
+                         activeElement.isContentEditable;
+
+        if (e.key === '/' && !isTyping) {
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        } else if (e.key === 'Escape') {
+            window.resetAllFilters();
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -100,14 +192,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
-                searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
-                searchInput.focus();
+                window.resetAllFilters();
             });
         }
     }
@@ -220,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -306,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Running tools page script immediately');
     initializeFilters();
     loadToolPreviews();
+    window.updateSearchStatus();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
@@ -331,6 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -417,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Running consumables page script immediately');
     initializeFilters();
     loadConsumablePreviews();
+    window.updateSearchStatus();
     {% endif %}
 });
 </script>
