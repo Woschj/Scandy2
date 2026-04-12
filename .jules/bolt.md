@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-04-12 - [ConsumableService Aggregation Optimization]
+**Learning:** Offloading statistics calculation to MongoDB via a single $facet aggregation pipeline eliminated an O(N) Python loop and reduced network overhead. However, the application's MongoDB wrapper expected an '_id' field in every result, which faceted results lack, necessitating a defensive check in the database module.
+**Action:** When using $facet or other aggregation stages that may omit '_id', ensure the database wrapper handles missing keys gracefully. Always verify that $facet output arrays are accessed safely (e.g., checking if the list is non-empty) to avoid index errors on empty collections.
