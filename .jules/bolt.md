@@ -23,6 +23,10 @@
 **Learning:** N+1 queries embedded within route-level Python loops (e.g., retrieving `tool` and `worker` via `mongodb.find_one()` inside a `for` loop) can be reliably replaced by MongoDB aggregation pipelines using `$lookup` and `$unwind`. In `app/routes/admin/system.py`, replacing these loops with an aggregation pipeline successfully and robustly eliminates the N+1 problem without altering the intended output behavior (because `$unwind` simulates an inner join). Using `.get('field', fallback)` when reconstructing dictionaries from the pipeline output safeguards against `KeyError` crashes.
 **Action:** When finding manual loops over database records that trigger additional queries per iteration, extract the logic into a single `$lookup`-based aggregation pipeline. Always use `.get()` to handle the result map defensively. Remember to delete temporary benchmark scripts before requesting code review or submitting.
 
+## 2024-06-05 - [Optimizing Dashboard Statistics with $facet]
+**Learning:** `ConsumableService.get_statistics` was refactored to use a single `$facet` aggregation pipeline, replacing an O(N) Python loop and reducing network/memory overhead from O(N) to O(1) for dashboard statistics. The new implementation handles department scoping and uses `$ifNull` for robust calculations.
+**Action:** Use `$facet` for dashboard-style summaries to consolidate multiple counts and groupings into a single database roundtrip.
+
 ## 2026-03-16 - [Aggregation Index Usage and Correctness]
 **Learning:** In `AdminDashboardService`, use direct `$match` on indexed fields at the start of aggregation pipelines instead of normalising with `$addFields` first, as the latter prevents index usage and forces a collection scan. Additionally, using `$expr` for field-to-field comparisons (e.g., `quantity` <= `min_quantity`) allows for dynamic logic while still potentially benefiting from compound indexes on those fields.
 **Action:** Always place `$match` on indexed fields as the first stage. Ensure business logic (like low stock) uses correct field names and database-level comparisons rather than hardcoded Python values.
