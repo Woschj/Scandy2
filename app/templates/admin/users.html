@@ -217,6 +217,9 @@
 
                 row.style.display = visible ? '' : 'none';
             });
+            if (typeof window.updateSearchStatus === 'function') {
+                window.updateSearchStatus();
+            }
         }
 
         function applySort() {

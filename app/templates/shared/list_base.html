@@ -14,7 +14,9 @@
                                placeholder="Suchen..."
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               aria-describedby="searchStatus">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,25 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <!-- Leer-Zustand -->
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="bg-base-200 p-6 rounded-full">
+                                        <i class="fas fa-search text-4xl opacity-20"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <h3 class="text-lg font-bold">Keine Ergebnisse gefunden</h3>
+                                        <p class="text-base-content/60">Versuchen Sie es mit anderen Filtern oder Suchbegriffen.</p>
+                                    </div>
+                                    <button type="button"
+                                            onclick="window.resetAllFilters()"
+                                            class="btn btn-outline btn-primary btn-sm">
+                                        Alle Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +99,55 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+// Status-Update Funktion (Ergebnisse zählen und Leer-Zustand anzeigen)
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const statusEl = document.getElementById('searchStatus');
+
+    if (noResultsRow) {
+        if (visibleRows.length === 0 && rows.length > 0) {
+            noResultsRow.classList.remove('hidden');
+        } else {
+            noResultsRow.classList.add('hidden');
+        }
+    }
+
+    if (statusEl) {
+        statusEl.textContent = visibleRows.length === 1
+            ? "1 Ergebnis gefunden"
+            : visibleRows.length + " Ergebnisse gefunden";
+    }
+};
+
+// Filter zurücksetzen Funktion
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    if (searchInput) {
+        searchInput.value = '';
+        if (clearSearch) clearSearch.classList.add('hidden');
+    }
+
+    // Alle Dropdown-Filter zurücksetzen
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = '';
+    });
+
+    // Event auslösen um Tabellen zu aktualisieren
+    if (searchInput) {
+        searchInput.dispatchEvent(new Event('input'));
+    }
+
+    // Fallback: Falls kein searchInput da ist (unwahrscheinlich in list_base), manuell triggern
+    const firstFilter = document.querySelector('select[id$="Filter"]');
+    if (firstFilter) {
+        firstFilter.dispatchEvent(new Event('change'));
+    }
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -100,6 +170,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -142,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -173,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Sortiere die Zeilen
+        // Sortiere die Zeilen (ohne den Leer-Zustand)
         rows.sort((a, b) => {
             const aValue = a.children[column]?.textContent.trim() || '';
             const bValue = b.children[column]?.textContent.trim() || '';
@@ -220,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
