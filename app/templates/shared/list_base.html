@@ -8,7 +8,11 @@
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
-                    <label for="searchInput" class="sr-only">Suchen</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="searchInput" class="text-xs font-semibold uppercase tracking-wider text-base-content/50 ml-1">Suchen</label>
+                        <span id="visualCounter" class="badge badge-sm badge-ghost font-medium"></span>
+                        <span id="searchStatus" class="sr-only" aria-live="polite"></span>
+                    </div>
                     <div class="join w-full">
                         <input type="text"
                                placeholder="Suchen..."
@@ -47,6 +51,23 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <!-- No Results Row -->
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-search text-2xl opacity-20"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                        <p class="text-sm opacity-60">Versuchen Sie es mit anderen Suchbegriffen oder Filtern.</p>
+                                    </div>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-outline btn-sm">
+                                        <i class="fas fa-sync-alt mr-2"></i> Suche zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +103,53 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+
+    /**
+     * Aktualisiert die Anzeige der Suchergebnisse (Zähler und No-Results-State).
+     */
+    window.updateSearchStatus = function() {
+        const rows = document.querySelectorAll('.data-row');
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const count = visibleRows.length;
+        const total = rows.length;
+
+        if (visualCounter) {
+            visualCounter.textContent = `${count} von ${total} gefunden`;
+        }
+
+        if (searchStatus) {
+            searchStatus.textContent = `${count} von ${total} Ergebnissen angezeigt`;
+        }
+
+        if (noResultsRow) {
+            if (count === 0 && total > 0) {
+                noResultsRow.classList.remove('hidden');
+            } else {
+                noResultsRow.classList.add('hidden');
+            }
+        }
+    };
+
+    /**
+     * Setzt alle Filter und die Suche zurück.
+     */
+    window.resetAllFilters = function() {
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
+        // Alle Dropdown-Filter zurücksetzen (IDs enden auf 'Filter')
+        document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+            select.value = '';
+            select.dispatchEvent(new Event('change'));
+        });
+
+        if (searchInput) searchInput.focus();
+    };
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -96,10 +164,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
+        document.querySelectorAll('tbody tr').forEach(row => {
+            if (row.id === 'noResultsRow') return;
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -111,6 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Initialen Status setzen
+    window.updateSearchStatus();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -142,7 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        // Nur Daten-Zeilen sortieren, nicht die No-Results-Zeile
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +270,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+
+        // No-Results-Row immer am Ende behalten
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
     }
 
     // Tool-spezifische Funktionen
@@ -213,13 +293,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const location = locationFilter.value;
             const status = statusFilter.value;
 
-            document.querySelectorAll('.data-row').forEach(row => {
+            document.querySelectorAll('tbody tr').forEach(row => {
+                if (row.id === 'noResultsRow') return;
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStatus = !status || row.dataset.status === status;
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -324,13 +407,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const location = locationFilter.value;
             const stock = stockFilter.value;
 
-            document.querySelectorAll('.data-row').forEach(row => {
+            document.querySelectorAll('tbody tr').forEach(row => {
+                if (row.id === 'noResultsRow') return;
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStock = !stock || row.dataset.stock === stock;
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);

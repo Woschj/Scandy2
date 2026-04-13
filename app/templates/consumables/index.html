@@ -57,7 +57,7 @@
 {% for consumable in consumables %}
 <tr class="hover data-row group"
     data-barcode="{{ consumable.barcode }}"
-    data-category="{{ consumable.category }}" 
+    data-category="{{ consumable.category }}"
     data-location="{{ consumable.location }}"
     data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
     <td>
