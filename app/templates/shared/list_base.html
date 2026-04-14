@@ -24,6 +24,11 @@
                     </div>
                 </div>
 
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                    <span id="visualCounter" class="badge badge-ghost font-medium">0 Ergebnisse</span>
+                    <span id="searchStatus" class="sr-only" aria-live="polite"></span>
+                </div>
+
                 <!-- Aktionen -->
                 {% block actions %}{% endblock %}
             </div>
@@ -78,6 +83,25 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+/**
+ * Aktualisiert die Anzeige der Suchergebnisse (Zähler und Feedback).
+ */
+window.updateSearchStatus = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+    if (!visualCounter && !searchStatus) return;
+
+    let visibleCount = 0;
+    rows.forEach(row => { if (row.style.display !== 'none') visibleCount++; });
+
+    if (visualCounter) {
+        visualCounter.textContent = `${visibleCount} Ergebnis${visibleCount !== 1 ? 'se' : ''}`;
+        visualCounter.className = `badge ${visibleCount > 0 ? 'badge-ghost' : 'badge-error'} font-medium`;
+    }
+    if (searchStatus) searchStatus.textContent = `${visibleCount} Ergebnisse gefunden.`;
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -100,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -220,6 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -305,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sofortige Ausführung für Tools
     console.log('Running tools page script immediately');
     initializeFilters();
+    window.updateSearchStatus();
     loadToolPreviews();
     {% endif %}
 
@@ -331,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -416,6 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sofortige Ausführung für Verbrauchsgüter
     console.log('Running consumables page script immediately');
     initializeFilters();
+    window.updateSearchStatus();
     loadConsumablePreviews();
     {% endif %}
 });
