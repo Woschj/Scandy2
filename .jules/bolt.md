@@ -30,3 +30,6 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+## 2026-04-14 - [Tool Statistics Aggregation]
+**Learning:** Calling `get_all_tools()` to calculate statistics is a performance anti-pattern. While it's convenient to reuse code, `get_all_tools()` performs expensive joins and post-processing on every document. For statistics, a targeted `$facet` pipeline that uses `$lookup` only to check for active lendings is much more efficient.
+**Action:** Always use targeted aggregation pipelines for dashboard statistics rather than reusing full-list fetching methods.

@@ -602,35 +602,117 @@ class ToolService:
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            # Das Department-Scoping wird automatisch von mongodb.aggregate übernommen.
+            pipeline = [
+                {'$match': {'deleted': {'$ne': True}}},
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'localField': 'barcode',
+                        'foreignField': 'tool_barcode',
+                        'as': 'all_lendings'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'is_borrowed': {
+                            '$gt': [
+                                {
+                                    '$size': {
+                                        '$filter': {
+                                            'input': '$all_lendings',
+                                            'as': 'l',
+                                            'cond': {'$eq': ['$$l.returned_at', None]}
+                                        }
+                                    }
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    '$facet': {
+                        'base_counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'borrowed': {
+                                        '$sum': {'$cond': ['$is_borrowed', 1, 0]}
+                                    },
+                                    'defect': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$is_borrowed', False]},
+                                                    {'$eq': ['$status', 'defekt']}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'available': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$is_borrowed', False]},
+                                                    {'$or': [
+                                                        {'$eq': ['$status', 'verfügbar']},
+                                                        {'$eq': [{'$ifNull': ['$status', '']}, '']}
+                                                    ]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'by_category': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}}
+                        ],
+                        'by_location': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}}
+                        ]
+                    }
+                }
+            ]
+
+            result = mongodb.aggregate('tools', pipeline)
             
+            if not result or not result[0].get('base_counts'):
+                return {
+                    'total_tools': 0,
+                    'available_tools': 0,
+                    'borrowed_tools': 0,
+                    'defect_tools': 0,
+                    'categories': {},
+                    'locations': {}
+                }
+
+            facet_result = result[0]
+            base = facet_result['base_counts'][0]
+
             stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
-                'categories': {},
-                'locations': {}
+                'total_tools': base.get('total', 0),
+                'available_tools': base.get('available', 0),
+                'borrowed_tools': base.get('borrowed', 0),
+                'defect_tools': base.get('defect', 0),
+                'categories': {c['_id']: c['count'] for c in facet_result.get('by_category', [])},
+                'locations': {loc['_id']: loc['count'] for loc in facet_result.get('by_location', [])}
             }
-            
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
             
             return stats
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
             return {
                 'total_tools': 0,
                 'available_tools': 0,
