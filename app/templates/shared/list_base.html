@@ -47,6 +47,11 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 opacity-50">
+                                Keine Ergebnisse gefunden. <button type="button" class="link link-primary" onclick="window.resetAllFilters()">Filter zurücksetzen</button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +83,18 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+window.updateEmptyState = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const empty = Array.from(rows).every(r => r.style.display === 'none');
+    document.getElementById('noResultsRow')?.classList.toggle('hidden', !empty || rows.length === 0);
+};
+
+window.resetAllFilters = function() {
+    const search = document.getElementById('searchInput');
+    if (search) { search.value = ''; search.dispatchEvent(new Event('input')); }
+    document.querySelectorAll('select[id$="Filter"]').forEach(s => { s.value = ''; s.dispatchEvent(new Event('change')); });
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -100,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+            window.updateEmptyState();
         });
 
         if (clearSearch) {
@@ -220,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateEmptyState();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateEmptyState();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
