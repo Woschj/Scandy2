@@ -129,9 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const department = document.getElementById('departmentFilter').value;
         
         document.querySelectorAll('.data-row').forEach(row => {
-            const matchesDepartment = !department || row.dataset.department === department;
-            row.style.display = matchesDepartment ? '' : 'none';
+            row.style.display = (!department || row.dataset.department === department) ? '' : 'none';
         });
+        window.updateSearchUI();
     }
 
     // Filter-Event-Listener
