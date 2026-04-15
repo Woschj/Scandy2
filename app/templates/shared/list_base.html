@@ -15,6 +15,8 @@
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="visualCounter" class="badge badge-ghost join-item h-auto hidden px-4 border-y border-base-content/10">0</div>
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12 bg-base-100">
+                                <i class="fas fa-search text-4xl opacity-20 mb-4 block"></i>
+                                <h3 class="text-lg font-bold">Keine Ergebnisse gefunden</h3>
+                                <p class="text-base-content/60 mb-4">Passen Sie Ihre Suche oder Filter an.</p>
+                                <button type="button" onclick="location.reload()" class="btn btn-primary btn-sm">Filter zurücksetzen</button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,7 +88,14 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+window.updateSearchUI = () => {
+    const rows = document.querySelectorAll('.data-row'), visible = [...rows].filter(r => r.style.display !== 'none');
+    const vc = document.getElementById('visualCounter'), ss = document.getElementById('searchStatus'), nr = document.getElementById('noResultsRow');
+    if (vc) { vc.textContent = visible.length; vc.classList.toggle('hidden', visible.length === rows.length); }
+    if (ss) ss.textContent = `${visible.length} Ergebnisse.`;
+    if (nr) nr.classList.toggle('hidden', visible.length > 0);
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
@@ -97,9 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
             });
+            window.updateSearchUI();
         });
 
         if (clearSearch) {
@@ -220,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchUI();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchUI();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
