@@ -8,13 +8,16 @@
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
-                    <label for="searchInput" class="sr-only">Suchen</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="searchInput" class="text-xs font-bold text-base-content/50 uppercase ml-1">Suche</label>
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
+                        <div id="visualCounter" class="badge badge-ghost badge-sm hidden"></div>
+                    </div>
                     <div class="join w-full">
                         <input type="text"
                                placeholder="Suchen..."
                                class="input input-bordered join-item w-full"
-                               id="searchInput"
-                               aria-label="Suchen">
+                               id="searchInput">
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +50,22 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="bg-base-200 p-6 rounded-full">
+                                        <i class="fas fa-search fa-3x opacity-20"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <h3 class="text-lg font-bold">Keine Ergebnisse gefunden</h3>
+                                        <p class="text-base-content/60">Versuchen Sie es mit anderen Suchbegriffen oder setzen Sie die Filter zurück.</p>
+                                    </div>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-undo mr-2"></i> Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +97,49 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+// Globale UI-Funktionen
+window.updateSearchUI = function() {
+    const rows = document.querySelectorAll('.data-row');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        if (row.style.display !== 'none') visibleCount++;
+    });
+
+    // Update Counter
+    if (visualCounter) {
+        visualCounter.textContent = `${visibleCount} ${visibleCount === 1 ? 'Ergebnis' : 'Ergebnisse'}`;
+        visualCounter.classList.toggle('hidden', visibleCount === rows.length && document.getElementById('searchInput').value === '');
+    }
+
+    // Update Screen Reader Status
+    if (searchStatus) {
+        searchStatus.textContent = `${visibleCount} ${visibleCount === 1 ? 'Ergebnis gefunden' : 'Ergebnisse gefunden'}`;
+    }
+
+    // Toggle Empty State
+    if (noResultsRow) {
+        noResultsRow.classList.toggle('hidden', visibleCount > 0);
+    }
+};
+
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+    }
+
+    // Alle Select-Filter zurücksetzen
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = '';
+        select.dispatchEvent(new Event('change'));
+    });
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -100,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+            window.updateSearchUI();
         });
 
         if (clearSearch) {
@@ -220,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchUI();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchUI();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
