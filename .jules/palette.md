@@ -13,3 +13,7 @@
 ## 2026-02-15 - [Timed Feedback for File Downloads]
 **Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
 **Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
+
+## 2026-02-15 - [Unified Filter Synchronization]
+**Learning:** In list views with multiple independent filters (e.g., text search + multiple dropdowns), local filtering logic often leads to UX "dead ends" where users lose track of why no results are showing. Centralizing filtering logic in a base template ensures all filters remain synchronized and allows for a robust "No results" state with a global reset action.
+**Action:** Use a centralized `updateSearchUI` function that aggregates all filters (search terms and dropdowns) and provides immediate feedback through result counters and accessible ARIA live regions.
