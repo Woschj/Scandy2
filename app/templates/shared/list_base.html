@@ -9,6 +9,7 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                     <div class="join w-full">
                         <input type="text"
                                placeholder="Suchen..."
@@ -21,6 +22,9 @@
                         <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
+                    </div>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span id="visualCounter" class="badge badge-sm badge-ghost hidden">0 Ergebnisse</span>
                     </div>
                 </div>
 
@@ -47,6 +51,20 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="text-slate-400">
+                                        <i class="fas fa-search fa-3x"></i>
+                                    </div>
+                                    <div class="text-lg font-medium text-slate-600">Keine Ergebnisse gefunden</div>
+                                    <p class="text-slate-400">Versuchen Sie es mit anderen Suchbegriffen oder setzen Sie die Filter zurück.</p>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="window.resetAllFilters()">
+                                        <i class="fas fa-undo mr-2"></i> Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -96,10 +114,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+            if (typeof window.updateSearchUI === 'function') {
+                window.updateSearchUI();
+            } else {
+                document.querySelectorAll('.data-row').forEach(row => {
+                    const searchableContent = row.textContent.toLowerCase();
+                    row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                });
+            }
         });
 
         if (clearSearch) {
@@ -197,6 +219,40 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.forEach(row => tbody.appendChild(row));
     }
 
+    /**
+     * Zentralisierte Suche und Filter-Logik. Synchronisiert Text-Suche und Dropdown-Filter.
+     */
+    window.updateSearchUI = () => {
+        const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
+        const filters = Array.from(document.querySelectorAll('select[id$="Filter"]')).filter(s => s.value);
+        let visible = 0;
+
+        document.querySelectorAll('.data-row').forEach(row => {
+            const matchesSearch = !term || row.textContent.toLowerCase().includes(term);
+            const matchesFilters = filters.every(f => row.dataset[f.id.replace('Filter', '')] === f.value);
+            row.style.display = (matchesSearch && matchesFilters) ? (visible++, '') : 'none';
+        });
+
+        document.getElementById('noResultsRow')?.classList.toggle('hidden', visible > 0);
+        const counter = document.getElementById('visualCounter');
+        if (counter) {
+            counter.textContent = `${visible} Ergebnis${visible === 1 ? '' : 'se'}`;
+            counter.className = `badge badge-sm mt-2 ${visible > 0 ? 'badge-ghost' : 'badge-error'} ${(!term && !filters.length) ? 'hidden' : ''}`;
+        }
+        const status = document.getElementById('searchStatus');
+        if (status) status.textContent = `${visible} Ergebnis${visible === 1 ? ' gefunden' : 'se gefunden'}.`;
+    };
+
+    /**
+     * Setzt alle Filter und die Suche zurück.
+     */
+    window.resetAllFilters = () => {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); }
+        document.querySelectorAll('select[id$="Filter"]').forEach(s => { s.value = ''; s.dispatchEvent(new Event('change')); });
+        window.updateSearchUI();
+    };
+
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
     console.log('=== TOOLS PAGE SCRIPT LOADED ===');
@@ -209,6 +265,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusFilter = document.getElementById('statusFilter');
 
         function applyFilters() {
+            if (typeof window.updateSearchUI === 'function') {
+                window.updateSearchUI();
+                return;
+            }
             const category = categoryFilter.value;
             const location = locationFilter.value;
             const status = statusFilter.value;
@@ -320,6 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const stockFilter = document.getElementById('stockFilter');
 
         function applyFilters() {
+            if (typeof window.updateSearchUI === 'function') {
+                window.updateSearchUI();
+                return;
+            }
             const category = categoryFilter.value;
             const location = locationFilter.value;
             const stock = stockFilter.value;
