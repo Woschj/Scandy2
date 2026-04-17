@@ -6,7 +6,6 @@ from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 from app.models.mongodb_database import mongodb
 from flask import g
-from app.utils.database_helpers import get_categories_from_settings, get_locations_from_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,8 +20,8 @@ class ConsumableService:
             if getattr(g, 'current_department', None):
                 query['department'] = g.current_department
             return list(mongodb.find('consumables', query))
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterialien: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Verbrauchsmaterialien: [Interner Fehler]")
             return []
     
     @staticmethod
@@ -59,8 +58,8 @@ class ConsumableService:
                 consumable_data['custom_fields'] = data['custom_fields']
             mongodb.insert_one('consumables', consumable_data)
             return True, 'Verbrauchsmaterial wurde erfolgreich hinzugefügt'
-        except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Verbrauchsmaterials: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Hinzufügen des Verbrauchsmaterials: [Interner Fehler]")
             return False, 'Fehler beim Hinzufügen des Verbrauchsmaterials'
     
     @staticmethod
@@ -108,8 +107,8 @@ class ConsumableService:
                 }
                 mongodb.insert_one('consumable_usages', usage_data)
             return True, 'Verbrauchsmaterial erfolgreich aktualisiert', new_barcode
-        except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Verbrauchsmaterials: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Aktualisieren des Verbrauchsmaterials: [Interner Fehler]")
             return False, 'Ein interner Fehler ist aufgetreten.', None
     
     @staticmethod
@@ -119,8 +118,8 @@ class ConsumableService:
             if getattr(g, 'current_department', None):
                 filter_query['department'] = g.current_department
             return mongodb.find_one('consumables', filter_query)
-        except Exception as e:
-            logger.error(f"Fehler beim Laden des Verbrauchsmaterials: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden des Verbrauchsmaterials: [Interner Fehler]")
             return None
     
     @staticmethod
@@ -128,8 +127,8 @@ class ConsumableService:
         """Holt die rohen Verbrauchsdaten für ein Verbrauchsmaterial"""
         try:
             return list(mongodb.find('consumable_usages', {'consumable_barcode': barcode}, sort=[('used_at', -1)]))
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsdaten: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Verbrauchsdaten: [Interner Fehler]")
             return []
 
     @staticmethod
@@ -193,8 +192,8 @@ class ConsumableService:
                 return True, 'Verbrauchsmaterial erfolgreich gelöscht'
             else:
                 return False, 'Fehler beim Löschen'
-        except Exception as e:
-            logger.error(f"Fehler beim Löschen des Verbrauchsmaterials: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Löschen des Verbrauchsmaterials: [Interner Fehler]")
             return False, 'Fehler beim Löschen'
     
     @staticmethod
@@ -238,57 +237,91 @@ class ConsumableService:
             action = "hinzugefügt" if quantity_change > 0 else "entnommen"
             return True, f'{abs(quantity_change)} Stück {action}. Neuer Bestand: {new_quantity}'
             
-        except Exception as e:
-            logger.error(f"Fehler beim Anpassen des Bestands: [Interner Fehler]")
-            return False, f'Fehler beim Anpassen des Bestands: [Interner Fehler]'
+        except Exception:
+            logger.error("Fehler beim Anpassen des Bestands: [Interner Fehler]")
+            return False, 'Fehler beim Anpassen des Bestands: [Interner Fehler]'
     
     @staticmethod
     def get_statistics() -> Dict[str, Any]:
-        """Holt Statistiken für Verbrauchsmaterialien"""
+        """
+        Holt Statistiken für Verbrauchsmaterialien (optimiert via Aggregation Bolt ⚡)
+        Reduziert Datenbank-Abfragen von O(N) auf O(1) und eliminiert Python-Loops.
+        """
         try:
-            all_consumables = ConsumableService.get_all_consumables()
+            # Basis-Filter für Verbrauchsmaterialien (Bolt ⚡)
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            # Aggregation-Pipeline zur Performance-Optimierung
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$facet': {
+                        'base_counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'sufficient': {
+                                        '$sum': {'$cond': [{'$gte': ['$quantity', '$min_quantity']}, 1, 0]}
+                                    },
+                                    'warning': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$lt': ['$quantity', '$min_quantity']},
+                                                    {'$gt': ['$quantity', 0]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'critical': {
+                                        '$sum': {'$cond': [{'$lte': ['$quantity', 0]}, 1, 0]}
+                                    }
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}}
+                        ]
+                    }
+                }
+            ]
             
-            stats = {
-                'total_consumables': len(all_consumables),
-                'categories': {},
-                'locations': {},
+            result = mongodb.aggregate('consumables', pipeline)
+
+            if not result or not result[0]['base_counts']:
+                return {
+                    'total_consumables': 0,
+                    'categories': {},
+                    'locations': {},
+                    'stock_levels': {'sufficient': 0, 'warning': 0, 'critical': 0}
+                }
+            
+            data = result[0]
+            base = data['base_counts'][0]
+            
+            return {
+                'total_consumables': base.get('total', 0),
+                'categories': {c['_id']: c['count'] for c in data['categories'] if c['_id']},
+                'locations': {loc['_id']: loc['count'] for loc in data['locations'] if loc['_id']},
                 'stock_levels': {
-                    'sufficient': 0,
-                    'warning': 0,
-                    'critical': 0
+                    'sufficient': base.get('sufficient', 0),
+                    'warning': base.get('warning', 0),
+                    'critical': base.get('critical', 0)
                 }
             }
             
-            # Kategorie- und Standort-Statistiken
-            for consumable in all_consumables:
-                category = consumable.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = consumable.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-                
-                # Bestandslevel
-                quantity = consumable.get('quantity', 0)
-                min_quantity = consumable.get('min_quantity', 0)
-                
-                if quantity >= min_quantity:
-                    stats['stock_levels']['sufficient'] += 1
-                elif quantity > 0:
-                    stats['stock_levels']['warning'] += 1
-                else:
-                    stats['stock_levels']['critical'] += 1
-            
-            return stats
-            
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: {e}")
             return {
                 'total_consumables': 0,
                 'categories': {},
                 'locations': {},
-                'stock_levels': {
-                    'sufficient': 0,
-                    'warning': 0,
-                    'critical': 0
-                }
+                'stock_levels': {'sufficient': 0, 'warning': 0, 'critical': 0}
             } 
