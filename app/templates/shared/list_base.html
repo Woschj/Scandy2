@@ -7,6 +7,10 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-none hidden sm:block">
+                    <div id="visualCounter" class="badge badge-primary badge-outline font-bold">0</div>
+                    <span id="searchStatus" class="sr-only" aria-live="polite">0 Ergebnisse gefunden</span>
+                </div>
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
@@ -47,6 +51,22 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="py-12 text-center">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="bg-base-200 p-6 rounded-full">
+                                        <i class="fas fa-search text-4xl opacity-20"></i>
+                                    </div>
+                                    <div class="max-w-xs">
+                                        <h4 class="text-lg font-bold">Keine Ergebnisse gefunden</h4>
+                                        <p class="text-sm opacity-60">Versuchen Sie es mit einem anderen Suchbegriff oder setzen Sie die Filter zurück.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm mt-2" onclick="window.resetAllFilters()">
+                                        Alle Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,39 +98,120 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+/**
+ * Aktualisiert die Anzeige basierend auf Suche und Filtern.
+ */
+window.updateSearchUI = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const dropdowns = Array.from(document.querySelectorAll('select[id$="Filter"]'));
+    const rows = document.querySelectorAll('.data-row');
+    const clearSearch = document.getElementById('clearSearch');
+
+    // Such-Löschen Button umschalten
+    if (clearSearch) {
+        if (searchTerm.length > 0) {
+            clearSearch.classList.remove('hidden');
+        } else {
+            clearSearch.classList.add('hidden');
+        }
+    }
+
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        let matchesSearch = true;
+        if (searchTerm) {
+            matchesSearch = row.textContent.toLowerCase().includes(searchTerm);
+        }
+
+        let matchesDropdowns = true;
+        dropdowns.forEach(dropdown => {
+            const filterType = dropdown.id.replace('Filter', '');
+            const filterValue = dropdown.value;
+            if (filterValue) {
+                // Erwarte data-Attribut (z.B. data-category für categoryFilter)
+                const rowValue = row.dataset[filterType];
+                if (rowValue !== filterValue) {
+                    matchesDropdowns = false;
+                }
+            }
+        });
+
+        const isVisible = matchesSearch && matchesDropdowns;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    // Counter und Empty State aktualisieren
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+
+    if (visualCounter) visualCounter.textContent = visibleCount;
+    if (searchStatus) searchStatus.textContent = `${visibleCount} Ergebnisse gefunden`;
+
+    if (noResultsRow) {
+        if (visibleCount === 0 && (searchTerm || dropdowns.some(d => d.value))) {
+            noResultsRow.classList.remove('hidden');
+        } else {
+            noResultsRow.classList.add('hidden');
+        }
+    }
+};
+
+/**
+ * Setzt alle Filter und die Suche zurück.
+ */
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
+    document.querySelectorAll('select[id$="Filter"]').forEach(dropdown => {
+        dropdown.value = '';
+    });
+
+    window.updateSearchUI();
+    if (searchInput) searchInput.focus();
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+        searchInput.addEventListener('input', window.updateSearchUI);
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.updateSearchUI();
                 searchInput.focus();
             });
         }
     }
+
+    // Dropdown-Listener hinzufügen
+    document.querySelectorAll('select[id$="Filter"]').forEach(dropdown => {
+        dropdown.addEventListener('change', window.updateSearchUI);
+    });
+
+    // Globaler Keyboard-Shortcut 'Esc' zum Zurücksetzen
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const activeElement = document.activeElement;
+            const isInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+
+            if (isInput || (searchInput && searchInput.value) || Array.from(document.querySelectorAll('select[id$="Filter"]')).some(d => d.value)) {
+                window.resetAllFilters();
+            }
+        }
+    });
+
+    // Initialer Counter-Update
+    window.updateSearchUI();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -201,33 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if request.endpoint == 'tools.index' %}
     console.log('=== TOOLS PAGE SCRIPT LOADED ===');
 
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
@@ -304,40 +378,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Tools
     console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
     console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
 
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
@@ -415,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Verbrauchsgüter
     console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
