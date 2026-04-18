@@ -4,11 +4,10 @@ Alle Werkzeug-Funktionalitäten an einem Ort
 """
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
-from flask import current_app, g
+from flask import g
 from app.models.mongodb_database import mongodb
 from app.services.lending_service import LendingService
 from app.services.utility_service import UtilityService
-from app.utils.database_helpers import get_categories_from_settings, get_locations_from_settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -147,8 +146,8 @@ class ToolService:
             
             return processed_tools
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeuge: [Interner Fehler]")
             return []
     
     def get_tool_by_barcode(self, barcode: str) -> Optional[Dict[str, Any]]:
@@ -171,7 +170,7 @@ class ToolService:
                 tool['id'] = str(tool['_id'])
             return tool
             
-        except Exception as e:
+        except Exception:
             logger.error(f"Fehler beim Laden des Werkzeugs {barcode}: [Interner Fehler]")
             return None
     
@@ -236,9 +235,9 @@ class ToolService:
             logger.info(f"Werkzeug erstellt: {barcode}")
             return True, 'Werkzeug wurde erfolgreich erstellt', barcode
             
-        except Exception as e:
-            logger.error(f"Fehler beim Erstellen des Werkzeugs: [Interner Fehler]")
-            return False, f'Fehler beim Erstellen des Werkzeugs: [Interner Fehler]', None
+        except Exception:
+            logger.error("Fehler beim Erstellen des Werkzeugs: [Interner Fehler]")
+            return False, 'Fehler beim Erstellen des Werkzeugs: [Interner Fehler]', None
     
     def update_tool(self, barcode: str, tool_data: Dict[str, Any]) -> Tuple[bool, str, Optional[str]]:
         """
@@ -314,9 +313,9 @@ class ToolService:
             logger.info(f"Werkzeug aktualisiert: {barcode} -> {new_barcode}")
             return True, 'Werkzeug erfolgreich aktualisiert', new_barcode
             
-        except Exception as e:
-            logger.error(f"Fehler beim Aktualisieren des Werkzeugs: [Interner Fehler]")
-            return False, f'Fehler beim Aktualisieren: [Interner Fehler]', barcode
+        except Exception:
+            logger.error("Fehler beim Aktualisieren des Werkzeugs: [Interner Fehler]")
+            return False, 'Fehler beim Aktualisieren: [Interner Fehler]', barcode
     
     def delete_tool(self, barcode: str, permanent: bool = False) -> Tuple[bool, str]:
         """
@@ -365,9 +364,9 @@ class ToolService:
                 logger.info(f"Werkzeug soft-gelöscht: {barcode}")
                 return True, 'Werkzeug gelöscht'
                 
-        except Exception as e:
-            logger.error(f"Fehler beim Löschen des Werkzeugs: [Interner Fehler]")
-            return False, f'Fehler beim Löschen: [Interner Fehler]'
+        except Exception:
+            logger.error("Fehler beim Löschen des Werkzeugs: [Interner Fehler]")
+            return False, 'Fehler beim Löschen: [Interner Fehler]'
     
     def change_tool_status(self, barcode: str, new_status: str) -> Tuple[bool, str]:
         """
@@ -404,9 +403,9 @@ class ToolService:
             logger.info(f"Werkzeug-Status geändert: {barcode} -> {new_status}")
             return True, f'Status erfolgreich auf "{new_status}" geändert'
             
-        except Exception as e:
-            logger.error(f"Fehler beim Ändern des Werkzeug-Status: [Interner Fehler]")
-            return False, f'Fehler beim Ändern: [Interner Fehler]'
+        except Exception:
+            logger.error("Fehler beim Ändern des Werkzeug-Status: [Interner Fehler]")
+            return False, 'Fehler beim Ändern: [Interner Fehler]'
     
     def get_tool_details(self, barcode: str) -> Optional[Dict[str, Any]]:
         """
@@ -469,8 +468,8 @@ class ToolService:
             
             return tool
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Details: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeug-Details: [Interner Fehler]")
             return None
     
     def search_tools(self, query: str) -> List[Dict[str, Any]]:
@@ -505,8 +504,8 @@ class ToolService:
             
             return tools
             
-        except Exception as e:
-            logger.error(f"Fehler bei der Werkzeug-Suche: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler bei der Werkzeug-Suche: [Interner Fehler]")
             return []
     
     def get_tools_by_category(self, category: str) -> List[Dict[str, Any]]:
@@ -532,8 +531,8 @@ class ToolService:
             
             return tools
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Kategorie: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeuge nach Kategorie: [Interner Fehler]")
             return []
     
     def get_tools_by_location(self, location: str) -> List[Dict[str, Any]]:
@@ -559,8 +558,8 @@ class ToolService:
             
             return tools
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Standort: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeuge nach Standort: [Interner Fehler]")
             return []
     
     def get_tools_by_status(self, status: str) -> List[Dict[str, Any]]:
@@ -596,48 +595,116 @@ class ToolService:
                 
                 return tools
             
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeuge nach Status: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeuge nach Status: [Interner Fehler]")
             return []
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
+        Reduziert Datenbank-Abfragen und Python-Processing von O(N) auf O(1) Speicherkomplexität.
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            # Basis-Filter für Werkzeuge
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'localField': 'barcode',
+                        'foreignField': 'tool_barcode',
+                        'as': 'active_lendings'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'is_borrowed': {
+                            '$gt': [
+                                {'$size': {
+                                    '$filter': {
+                                        'input': '$active_lendings',
+                                        'as': 'l',
+                                        'cond': {'$eq': ['$$l.returned_at', None]}
+                                    }
+                                }},
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    '$facet': {
+                        'base_counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'available': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$status', 'verfügbar']},
+                                                    {'$eq': ['$is_borrowed', False]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'borrowed': {
+                                        '$sum': {'$cond': ['$is_borrowed', 1, 0]}
+                                    },
+                                    'defect': {
+                                        '$sum': {'$cond': [{'$eq': ['$status', 'defekt']}, 1, 0]}
+                                    }
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}},
+                            {'$project': {'category': '$_id', 'count': 1, '_id': 0}},
+                            {'$sort': {'category': 1}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}},
+                            {'$project': {'location': '$_id', 'count': 1, '_id': 0}},
+                            {'$sort': {'location': 1}}
+                        ]
+                    }
+                }
+            ]
+
+            result = mongodb.aggregate('tools', pipeline)
             
-            stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
-                'categories': {},
-                'locations': {}
+            if not result:
+                return {
+                    'total_tools': 0, 'available_tools': 0, 'borrowed_tools': 0, 'defect_tools': 0,
+                    'categories': {}, 'locations': {}
+                }
+
+            data = result[0]
+            base = data['base_counts'][0] if data['base_counts'] else {}
+            
+            return {
+                'total_tools': base.get('total', 0),
+                'available_tools': base.get('available', 0),
+                'borrowed_tools': base.get('borrowed', 0),
+                'defect_tools': base.get('defect', 0),
+                'categories': {cat['category']: cat['count'] for cat in data.get('categories', [])},
+                'locations': {loc['location']: loc['count'] for loc in data.get('locations', [])}
             }
             
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
             return {
-                'total_tools': 0,
-                'available_tools': 0,
-                'borrowed_tools': 0,
-                'defect_tools': 0,
-                'categories': {},
-                'locations': {}
+                'total_tools': 0, 'available_tools': 0, 'borrowed_tools': 0, 'defect_tools': 0,
+                'categories': {}, 'locations': {}
             }
     
     def export_tools(self) -> str:
@@ -678,8 +745,8 @@ class ToolService:
             
             return output.getvalue()
             
-        except Exception as e:
-            logger.error(f"Fehler beim Export der Werkzeuge: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Export der Werkzeuge: [Interner Fehler]")
             return ""
     
     def _convert_datetime_fields(self, tool: Dict[str, Any]) -> Dict[str, Any]:
@@ -704,7 +771,7 @@ class ToolService:
                                 break
                             except ValueError:
                                 continue
-                    except Exception as e:
+                    except Exception:
                         logger.warning(f"Fehler bei Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn alle Formate fehlschlagen, setze auf None
                         tool[field] = None
@@ -715,7 +782,7 @@ class ToolService:
                     # Versuche es als datetime zu konvertieren
                     try:
                         tool[field] = datetime.fromisoformat(str(tool[field]))
-                    except Exception as e:
+                    except Exception:
                         logger.warning(f"Fehler bei ISO-Datumskonvertierung für Feld {field}: [Interner Fehler]")
                         # Wenn Konvertierung fehlschlägt, setze auf None
                         tool[field] = None
@@ -761,7 +828,7 @@ class ToolService:
                         # Software der Gruppe hinzufügen
                         for software_id in group['software']:
                             current_software.add(software_id)
-                except Exception as e:
+                except Exception:
                     logger.warning(f"Fehler beim Laden der Nutzergruppe {group_id}: [Interner Fehler]")
             
             # Zurück zur Liste konvertieren und Tool aktualisieren
@@ -769,6 +836,6 @@ class ToolService:
             
             return tool
             
-        except Exception as e:
-            logger.error(f"Fehler beim Zusammenführen der Software aus Nutzergruppen: [Interner Fehler]")
+        except Exception:
+            logger.error("Fehler beim Zusammenführen der Software aus Nutzergruppen: [Interner Fehler]")
             return tool
