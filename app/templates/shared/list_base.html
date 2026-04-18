@@ -9,19 +9,23 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
-                        <input type="text"
-                               placeholder="Suchen..."
-                               class="input input-bordered join-item w-full"
-                               id="searchInput"
-                               aria-label="Suchen">
-                        <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
-                            <i class="fas fa-search"></i>
-                        </button>
+                    <div class="flex items-center gap-2">
+                        <div class="join w-full">
+                            <input type="text"
+                                   placeholder="Suchen..."
+                                   class="input input-bordered join-item w-full"
+                                   id="searchInput"
+                                   aria-label="Suchen">
+                            <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <span id="visualCounter" class="badge badge-primary badge-outline whitespace-nowrap hidden">0 Treffer</span>
                     </div>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +51,23 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-search text-3xl opacity-20"></i>
+                                    </div>
+                                    <div class="text-center">
+                                        <h3 class="font-bold text-lg">Keine Treffer gefunden</h3>
+                                        <p class="text-base-content/60">Versuchen Sie es mit anderen Suchbegriffen oder Filtern.</p>
+                                    </div>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-undo mr-2"></i>
+                                        Alle Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,39 +99,89 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+/**
+ * Aktualisiert die UI basierend auf Suchbegriff und Filtern.
+ * Sammelt alle Dropdowns mit ID '*Filter' und kombiniert sie mit der Textsuche.
+ */
+window.updateSearchUI = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const filters = Array.from(document.querySelectorAll('select[id$="Filter"]')).map(select => ({
+        id: select.id.replace('Filter', ''),
+        value: select.value
+    }));
+
+    let visibleCount = 0;
+    const rows = document.querySelectorAll('.data-row');
+
+    rows.forEach(row => {
+        const textMatch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+        const filterMatch = filters.every(f => !f.value || row.dataset[f.id] === f.value);
+
+        const isVisible = textMatch && filterMatch;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    // UI Feedback aktualisieren
+    const visualCounter = document.getElementById('visualCounter');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+    const clearSearch = document.getElementById('clearSearch');
+
+    if (visualCounter) {
+        visualCounter.textContent = `${visibleCount} Treffer`;
+        visualCounter.classList.toggle('hidden', !searchTerm && filters.every(f => !f.value));
+    }
+
+    if (noResultsRow) {
+        noResultsRow.classList.toggle('hidden', visibleCount > 0 || (rows.length === 0));
+    }
+
+    if (searchStatus) {
+        searchStatus.textContent = visibleCount === 0 ? 'Keine Treffer gefunden' : `${visibleCount} Treffer gefunden`;
+    }
+
+    if (clearSearch && searchInput) {
+        clearSearch.classList.toggle('hidden', !searchInput.value);
+    }
+};
+
+/**
+ * Setzt alle Filter und das Suchfeld zurück.
+ */
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = '';
+    });
+
+    window.updateSearchUI();
+    if (searchInput) searchInput.focus();
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+        searchInput.addEventListener('input', window.updateSearchUI);
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.updateSearchUI();
                 searchInput.focus();
             });
         }
     }
+
+    // Event-Listener für alle Filter-Dropdowns
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.addEventListener('change', window.updateSearchUI);
+    });
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -201,33 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if request.endpoint == 'tools.index' %}
     console.log('=== TOOLS PAGE SCRIPT LOADED ===');
 
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
@@ -304,40 +348,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Tools
     console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
     console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
 
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
@@ -415,7 +431,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sofortige Ausführung für Verbrauchsgüter
     console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
