@@ -9,12 +9,14 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
                                placeholder="Suchen..."
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="visualCounter" class="badge badge-ghost absolute right-24 top-1/2 -translate-y-1/2 z-10 hidden">0</div>
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,20 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center gap-4">
+                                    <div class="text-5xl opacity-20">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div class="text-xl font-medium opacity-50">Keine Ergebnisse gefunden</div>
+                                    <p class="text-sm opacity-40">Versuchen Sie es mit anderen Suchbegriffen oder setzen Sie die Filter zurück.</p>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-primary btn-sm mt-2">
+                                        <i class="fas fa-undo mr-2"></i> Alle Filter zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,39 +94,101 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+/**
+ * Zentralisierte Such- und Filter-Logik für alle Listenansichten.
+ * Aggregiert Suchbegriff und alle Dropdown-Filter (IDs enden auf 'Filter').
+ */
+window.updateSearchUI = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.data-row');
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const clearSearchBtn = document.getElementById('clearSearch');
+
+    // Alle Filter-Dropdowns finden (IDs enden auf 'Filter')
+    const filters = Array.from(document.querySelectorAll('select[id$="Filter"]')).map(select => ({
+        id: select.id,
+        value: select.value,
+        dataAttr: select.id.replace('Filter', '')
+    })).filter(f => f.value !== "");
+
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const textMatch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+        const filterMatch = filters.every(f => row.dataset[f.dataAttr] === f.value);
+
+        const isVisible = textMatch && filterMatch;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
+
+    // UI Feedback aktualisieren
+    if (visualCounter) {
+        visualCounter.textContent = visibleCount;
+        visualCounter.classList.toggle('hidden', visibleCount === rows.length && !searchTerm && filters.length === 0);
+    }
+
+    if (searchStatus) {
+        searchStatus.textContent = `${visibleCount} von ${rows.length} Einträgen gefunden.`;
+    }
+
+    if (noResultsRow) {
+        noResultsRow.classList.toggle('hidden', visibleCount > 0 || rows.length === 0);
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.classList.toggle('hidden', !searchTerm);
+    }
+};
+
+/**
+ * Setzt alle Filter und das Suchfeld zurück.
+ */
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.value = "";
+    });
+
+    window.updateSearchUI();
+    if (searchInput) searchInput.focus();
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+        searchInput.addEventListener('input', window.updateSearchUI);
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                window.updateSearchUI();
                 searchInput.focus();
             });
         }
+
+        // Globale Shortcuts (Slash zum Suchen, Esc zum Löschen)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+                window.resetAllFilters();
+            }
+        });
     }
+
+    // Dropdown-Filter automatisch verknüpfen
+    document.querySelectorAll('select[id$="Filter"]').forEach(select => {
+        select.addEventListener('change', window.updateSearchUI);
+    });
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -199,35 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
-    console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
@@ -303,42 +352,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Tools
-    console.log('Running tools page script immediately');
-    initializeFilters();
+    {% if request.endpoint == 'tools.index' %}
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
-    console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
@@ -414,8 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Verbrauchsgüter
-    console.log('Running consumables page script immediately');
-    initializeFilters();
+    {% if request.endpoint == 'consumables.index' %}
     loadConsumablePreviews();
     {% endif %}
 });
