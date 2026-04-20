@@ -59,7 +59,7 @@
     data-barcode="{{ consumable.barcode }}"
     data-category="{{ consumable.category }}" 
     data-location="{{ consumable.location }}"
-    data-stock="{% if consumable.quantity == 0 %}none{% elif consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
+    data-stock="{% if consumable.quantity <= consumable.min_quantity %}low{% else %}normal{% endif %}">
     <td>
         <div class="consumable-media-preview" data-barcode="{{ consumable.barcode }}" data-preview-image="{{ consumable.preview_image or '' }}">
             <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
