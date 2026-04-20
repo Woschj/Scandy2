@@ -602,43 +602,120 @@ class ToolService:
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
+        Reduziert Datenbank-Abfragen und Speicherverbrauch durch serverseitige Berechnung.
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            # Basis-Filter für Werkzeuge
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'let': {'tool_barcode': '$barcode'},
+                        'pipeline': [
+                            {
+                                '$match': {
+                                    '$expr': {
+                                        '$and': [
+                                            {'$eq': ['$tool_barcode', '$$tool_barcode']},
+                                            {'$eq': ['$returned_at', None]}
+                                        ]
+                                    }
+                                }
+                            },
+                            {'$limit': 1}
+                        ],
+                        'as': 'active_lending'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'is_borrowed': {'$gt': [{'$size': '$active_lending'}, 0]},
+                        'processed_status': {
+                            '$cond': {
+                                'if': {'$gt': [{'$size': '$active_lending'}, 0]},
+                                'then': 'ausgeliehen',
+                                'else': {'$ifNull': ['$status', 'verfügbar']}
+                            }
+                        }
+                    }
+                },
+                {
+                    '$facet': {
+                        'counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'available': {
+                                        '$sum': {
+                                            '$cond': [{'$eq': ['$processed_status', 'verfügbar']}, 1, 0]
+                                        }
+                                    },
+                                    'borrowed': {
+                                        '$sum': {
+                                            '$cond': ['$is_borrowed', 1, 0]
+                                        }
+                                    },
+                                    'defect': {
+                                        '$sum': {
+                                            '$cond': [{'$eq': ['$processed_status', 'defekt']}, 1, 0]
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}}
+                        ]
+                    }
+                }
+            ]
             
-            stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
-                'categories': {},
-                'locations': {}
-            }
+            result = list(mongodb.aggregate('tools', pipeline))
             
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
+            if not result:
+                return self._get_empty_stats()
                 
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
+            data = result[0]
+            counts = data.get('counts', [{}])[0] if data.get('counts') else {}
+
+            stats = {
+                'total_tools': counts.get('total', 0),
+                'available_tools': counts.get('available', 0),
+                'borrowed_tools': counts.get('borrowed', 0),
+                'defect_tools': counts.get('defect', 0),
+                'categories': {item['_id']: item['count'] for item in data.get('categories', [])},
+                'locations': {item['_id']: item['count'] for item in data.get('locations', [])}
+            }
             
             return stats
             
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
-            return {
-                'total_tools': 0,
-                'available_tools': 0,
-                'borrowed_tools': 0,
-                'defect_tools': 0,
-                'categories': {},
-                'locations': {}
-            }
+            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: {str(e)}")
+            return self._get_empty_stats()
+
+    def _get_empty_stats(self) -> Dict[str, Any]:
+        """Gibt ein leeres Statistik-Objekt zurück"""
+        return {
+            'total_tools': 0,
+            'available_tools': 0,
+            'borrowed_tools': 0,
+            'defect_tools': 0,
+            'categories': {},
+            'locations': {}
+        }
     
     def export_tools(self) -> str:
         """
