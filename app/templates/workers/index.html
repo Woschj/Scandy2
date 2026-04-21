@@ -36,7 +36,7 @@
 
 {% block table_rows %}
 {% for worker in workers %}
-<tr class="hover data-row group" data-department="{{ worker.department or '' }}" data-barcode="{{ worker.barcode }}">
+<tr class="hover data-row group" data-department="{{ worker.department or '' }}" data-barcode="{{ worker.barcode }}" data-worker="{{ worker.firstname }} {{ worker.lastname }}">
     <td>
         <div class="flex items-center space-x-3">
             <div>
@@ -124,20 +124,10 @@
 {{ super() }}
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
-    // Filter-Funktionalität
-    function applyFilters() {
-        const department = document.getElementById('departmentFilter').value;
-        
-        document.querySelectorAll('.data-row').forEach(row => {
-            const matchesDepartment = !department || row.dataset.department === department;
-            row.style.display = matchesDepartment ? '' : 'none';
-        });
-    }
-
     // Filter-Event-Listener
     const departmentFilter = document.getElementById('departmentFilter');
     if (departmentFilter) {
-        departmentFilter.addEventListener('change', applyFilters);
+        departmentFilter.addEventListener('change', window.updateSearchUI);
     }
 });
 </script>
