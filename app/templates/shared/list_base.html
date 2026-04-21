@@ -22,6 +22,12 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="searchFeedback" class="mt-1 flex items-center justify-between px-1 hidden">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
+                        <div id="visualCounter" class="badge badge-ghost badge-sm gap-1 opacity-70">
+                            <span class="count">0</span> Ergebnisse
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +53,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 bg-base-200/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search text-2xl opacity-20 mb-2"></i>
+                                    <h3 class="font-bold">Keine Ergebnisse gefunden</h3>
+                                    <button type="button" class="btn btn-link btn-xs" onclick="document.getElementById('clearSearch')?.click()">Suche löschen</button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -86,30 +101,47 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.data-row');
+            let visibleCount = 0;
 
             // Toggle clear button
             if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+                clearSearch.classList.toggle('hidden', !searchTerm);
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+            rows.forEach(row => {
+                const isVisible = row.textContent.toLowerCase().includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // Feedback aktualisieren
+            const feedback = document.getElementById('searchFeedback');
+            const status = document.getElementById('searchStatus');
+            const counter = document.getElementById('visualCounter');
+            const noResults = document.getElementById('noResultsRow');
+
+            if (feedback) feedback.classList.toggle('hidden', !searchTerm);
+            if (status) status.textContent = `${visibleCount} Ergebnisse gefunden.`;
+            if (counter) counter.querySelector('.count').textContent = visibleCount;
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0 || !searchTerm);
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
         }
+
+        // Shortcut: '/' fokussiert Suche
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
     }
 
     // Sortier-Funktionalität
