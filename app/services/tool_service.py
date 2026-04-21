@@ -602,43 +602,136 @@ class ToolService:
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
+        Vermeidet das Laden aller Werkzeug-Details und führt Berechnungen in der DB aus.
+        Erreicht O(1) Speicherkomplexität bezogen auf die Anzahl der Werkzeuge.
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            # Basis-Filter für aktive Werkzeuge
+            match_query = {'deleted': {'$ne': True}}
+            if getattr(g, 'current_department', None):
+                match_query['department'] = g.current_department
+
+            # Aggregation-Pipeline zur Performance-Optimierung
+            # Nutzt highly-compatible $lookup Syntax (let/pipeline) zur Minimierung des Join-Workloads
+            pipeline = [
+                {'$match': match_query},
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'let': {'tool_barcode': '$barcode'},
+                        'pipeline': [
+                            {
+                                '$match': {
+                                    '$expr': {
+                                        '$and': [
+                                            {'$eq': ['$tool_barcode', '$$tool_barcode']},
+                                            {'$eq': ['$returned_at', None]}
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        'as': 'active_lendings'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'is_borrowed': {'$gt': [{'$size': '$active_lendings'}, 0]},
+                        'effective_status': {'$ifNull': ['$status', 'verfügbar']}
+                    }
+                },
+                {
+                    '$facet': {
+                        'counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total': {'$sum': 1},
+                                    'available': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$is_borrowed', False]},
+                                                    {'$eq': ['$effective_status', 'verfügbar']}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'borrowed': {
+                                        '$sum': {
+                                            '$cond': ['$is_borrowed', 1, 0]
+                                        }
+                                    },
+                                    'defect': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$is_borrowed', False]},
+                                                    {'$eq': ['$effective_status', 'defekt']}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {
+                                '$group': {
+                                    '_id': {'$ifNull': ['$category', 'Keine Kategorie']},
+                                    'count': {'$sum': 1}
+                                }
+                            }
+                        ],
+                        'locations': [
+                            {
+                                '$group': {
+                                    '_id': {'$ifNull': ['$location', 'Kein Standort']},
+                                    'count': {'$sum': 1}
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+            result = list(mongodb.aggregate('tools', pipeline))
             
-            stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
-                'categories': {},
-                'locations': {}
-            }
+            if not result:
+                return self._get_empty_statistics()
+
+            stats_data = result[0]
+            counts = stats_data['counts'][0] if stats_data['counts'] else {'total': 0, 'available': 0, 'borrowed': 0, 'defect': 0}
             
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
             return {
-                'total_tools': 0,
-                'available_tools': 0,
-                'borrowed_tools': 0,
-                'defect_tools': 0,
-                'categories': {},
-                'locations': {}
+                'total_tools': counts.get('total', 0),
+                'available_tools': counts.get('available', 0),
+                'borrowed_tools': counts.get('borrowed', 0),
+                'defect_tools': counts.get('defect', 0),
+                'categories': {item['_id']: item['count'] for item in stats_data['categories'] if item['_id'] is not None},
+                'locations': {item['_id']: item['count'] for item in stats_data['locations'] if item['_id'] is not None}
             }
+
+        except Exception as e:
+            logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: {str(e)}")
+            return self._get_empty_statistics()
+
+    def _get_empty_statistics(self) -> Dict[str, Any]:
+        """Gibt leere Statistik-Struktur zurück"""
+        return {
+            'total_tools': 0,
+            'available_tools': 0,
+            'borrowed_tools': 0,
+            'defect_tools': 0,
+            'categories': {},
+            'locations': {}
+        }
     
     def export_tools(self) -> str:
         """
