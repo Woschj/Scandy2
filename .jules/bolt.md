@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-04-21 - [Optimized Statistics with $facet and compatible $lookup]
+**Learning:** For dashboard statistics, a single `$facet` aggregation pipeline is the gold standard for performance, but when joining with other collections (like lendings), using the `let`/`pipeline` syntax for `$lookup` ensures maximum compatibility (MongoDB 3.6+) and allows filtering joined records before they enter the main pipeline, reducing memory overhead.
+**Action:** Always prefer `let`/`pipeline` in `$lookup` for complex joins and ensure `if item['_id'] is not None` is used when converting distribution results from `$facet` to ensure empty strings (valid categories/locations) are preserved.
