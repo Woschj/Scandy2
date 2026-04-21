@@ -65,7 +65,8 @@
     data-barcode="{{ tool.barcode }}"
     data-category="{{ tool.category or '' }}" 
     data-location="{{ tool.location or '' }}"
-    data-status="{{ tool.status or '' }}">
+    data-status="{{ tool.status or '' }}"
+    data-tool="{{ tool.name }}">
     <td>
         <div class="tool-media-preview" data-barcode="{{ tool.barcode }}" data-preview-image="{{ tool.preview_image or '' }}">
             <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
