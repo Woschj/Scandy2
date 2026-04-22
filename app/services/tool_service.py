@@ -602,43 +602,130 @@ class ToolService:
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """
-        Holt Statistiken für Werkzeuge
+        Holt Statistiken für Werkzeuge (optimiert via Aggregation) (Bolt ⚡)
         
         Returns:
             Dict: Verschiedene Statistiken
         """
         try:
-            all_tools = self.get_all_tools()
+            # Aggregation-Pipeline zur Berechnung aller Statistiken in einem Datenbank-Roundtrip
+            # Wir replizieren exakt die Logik von get_all_tools() für das Status-Mapping,
+            # um 100%ige Kompatibilität mit der Legacy-Implementierung zu gewährleisten.
+            pipeline = [
+                {'$match': {'deleted': {'$ne': True}}},
+                # Join mit lendings um den Ausleihstatus zu bestimmen
+                {
+                    '$lookup': {
+                        'from': 'lendings',
+                        'let': {'barcode': '$barcode'},
+                        'pipeline': [
+                            {
+                                '$match': {
+                                    '$expr': {
+                                        '$and': [
+                                            {'$eq': ['$tool_barcode', '$$barcode']},
+                                            {'$eq': ['$returned_at', None]}
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        'as': 'active_lending'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'is_borrowed': {'$gt': [{'$size': '$active_lending'}, 0]}
+                    }
+                },
+                {
+                    '$facet': {
+                        'counts': [
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'total_tools': {'$sum': 1},
+                                    'available_tools': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$is_borrowed', False]},
+                                                    # Legacy: Wenn status null/leer, gilt es als 'verfügbar'
+                                                    {'$in': [{'$ifNull': ['$status', 'verfügbar']}, ['verfügbar', '']]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    },
+                                    'borrowed_tools': {
+                                        '$sum': {'$cond': ['$is_borrowed', 1, 0]}
+                                    },
+                                    'defect_tools': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$eq': ['$status', 'defekt']},
+                                                    # Legacy: Status wird bei Verleih überschrieben,
+                                                    # daher zählen verliehene Tools nicht als 'defekt'.
+                                                    {'$eq': ['$is_borrowed', False]}
+                                                ]},
+                                                1, 0
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        'categories': [
+                            {'$group': {'_id': {'$ifNull': ['$category', 'Keine Kategorie']}, 'count': {'$sum': 1}}},
+                            {'$sort': {'count': -1}}
+                        ],
+                        'locations': [
+                            {'$group': {'_id': {'$ifNull': ['$location', 'Kein Standort']}, 'count': {'$sum': 1}}},
+                            {'$sort': {'count': -1}}
+                        ]
+                    }
+                }
+            ]
+
+            # mongodb ist in diesem Modul importiert (siehe Zeile 7)
+            result = mongodb.aggregate('tools', pipeline)
+
+            if not result:
+                return self._get_empty_stats()
+
+            data = result[0]
+            counts = data['counts'][0] if data['counts'] else {}
+
+            # Formatiere Kategorien und Standorte als Dictionaries
+            categories = {item['_id']: item['count'] for item in data['categories']}
+            locations = {item['_id']: item['count'] for item in data['locations']}
             
             stats = {
-                'total_tools': len(all_tools),
-                'available_tools': len([t for t in all_tools if t['status'] == 'verfügbar' and not t.get('is_borrowed', False)]),
-                'borrowed_tools': len([t for t in all_tools if t.get('is_borrowed', False)]),
-                'defect_tools': len([t for t in all_tools if t['status'] == 'defekt']),
-                'categories': {},
-                'locations': {}
+                'total_tools': counts.get('total_tools', 0),
+                'available_tools': counts.get('available_tools', 0),
+                'borrowed_tools': counts.get('borrowed_tools', 0),
+                'defect_tools': counts.get('defect_tools', 0),
+                'categories': categories,
+                'locations': locations
             }
-            
-            # Kategorie-Statistiken
-            for tool in all_tools:
-                category = tool.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = tool.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
             
             return stats
             
         except Exception as e:
             logger.error(f"Fehler beim Laden der Werkzeug-Statistiken: [Interner Fehler]")
-            return {
-                'total_tools': 0,
-                'available_tools': 0,
-                'borrowed_tools': 0,
-                'defect_tools': 0,
-                'categories': {},
-                'locations': {}
-            }
+            return self._get_empty_stats()
+
+    def _get_empty_stats(self) -> Dict[str, Any]:
+        """Gibt ein leeres Statistik-Objekt zurück"""
+        return {
+            'total_tools': 0,
+            'available_tools': 0,
+            'borrowed_tools': 0,
+            'defect_tools': 0,
+            'categories': {},
+            'locations': {}
+        }
     
     def export_tools(self) -> str:
         """
