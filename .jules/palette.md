@@ -13,3 +13,7 @@
 ## 2026-02-15 - [Timed Feedback for File Downloads]
 **Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
 **Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
+
+## 2026-04-02 - [Global Keyboard Shortcuts and Input Focus]
+**Learning:** When implementing global keyboard shortcuts (e.g., '/' to focus search), it is critical to exclude the trigger if the user is already focused on an 'INPUT' or 'TEXTAREA'. This prevents the shortcut character from being typed into an active field or interfering with the user's current data entry.
+**Action:** Always wrap global shortcut listeners in a check like `if (!['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))`.
