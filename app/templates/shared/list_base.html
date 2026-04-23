@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 opacity-50">
+                                    <i class="fas fa-search text-3xl"></i>
+                                    <p>Keine Ergebnisse gefunden.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -84,6 +93,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clearSearch');
 
     if (searchInput) {
+        // Globale Shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+        });
+
+        window.updateSearchStatus = function() {
+            const rows = document.querySelectorAll('.data-row');
+            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            const noResultsRow = document.getElementById('noResultsRow');
+            const statusRegion = document.getElementById('searchStatus');
+
+            if (noResultsRow) {
+                noResultsRow.classList.toggle('hidden', visibleRows.length > 0);
+            }
+
+            if (statusRegion) {
+                statusRegion.textContent = visibleRows.length === 0
+                    ? 'Keine Ergebnisse gefunden'
+                    : `${visibleRows.length} Ergebnisse gefunden`;
+            }
+        };
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -100,6 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -193,8 +232,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Entferne und füge sortierte Zeilen wieder hinzu
-        rows.forEach(row => tbody.appendChild(row));
+        // Entferne und füge sortierte Zeilen wieder hinzu (außer NoResults)
+        rows.forEach(row => {
+            if (row.id !== 'noResultsRow') {
+                tbody.appendChild(row);
+            }
+        });
+
+        // NoResultsRow immer am Ende halten
+        const noResultsRow = document.getElementById('noResultsRow');
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +382,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
