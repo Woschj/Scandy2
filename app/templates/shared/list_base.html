@@ -11,10 +11,11 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               autocomplete="off">
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -22,6 +23,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -47,6 +49,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search-minus text-3xl opacity-20"></i>
+                                    <p>Keine passenden Einträge gefunden.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,10 +88,45 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
+// Basis-Suchfunktion und UX-Verbesserungen
+window.updateSearchStatus = function() {
+    const dataRows = document.querySelectorAll('.data-row');
+    const visibleRows = Array.from(dataRows).filter(row => row.style.display !== 'none');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('searchStatus');
+
+    if (noResultsRow) {
+        noResultsRow.style.display = visibleRows.length > 0 ? 'none' : '';
+    }
+
+    if (searchStatus) {
+        searchStatus.textContent = visibleRows.length === 1
+            ? '1 Ergebnis gefunden'
+            : `${visibleRows.length} Ergebnisse gefunden`;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+
+    // Globale Shortcuts
+    document.addEventListener('keydown', function(e) {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+
+        if (e.key === '/' && document.activeElement !== searchInput && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            searchInput.focus();
+        } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                searchInput.blur();
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -89,23 +134,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Toggle clear button
             if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+                clearSearch.classList.toggle('hidden', searchTerm.length === 0);
             }
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
@@ -142,7 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function sortTable(column, th) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const noResultsRow = document.getElementById('noResultsRow');
+        const rows = Array.from(tbody.querySelectorAll('.data-row'));
 
         // Update Sort-Direction
         if (currentSort.column === column) {
@@ -195,6 +238,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+
+        // NoResultsRow immer am Ende behalten
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
     }
 
     // Tool-spezifische Funktionen
@@ -220,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
