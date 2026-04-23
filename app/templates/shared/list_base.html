@@ -10,8 +10,9 @@
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
+                        <span id="search-status" class="sr-only" aria-live="polite"></span>
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <i class="fas fa-search mb-4 text-4xl opacity-20"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suche oder Filter an.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,6 +92,55 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const searchStatus = document.getElementById('search-status');
+    const tableBody = document.querySelector('table tbody');
+
+    // Shortcut: '/' zum Fokussieren, 'Esc' zum Leeren/Verlassen
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput.focus();
+        } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput.value !== '') {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                searchInput.blur();
+            }
+        }
+    });
+
+    function updateSearchUI() {
+        const rows = Array.from(tableBody.querySelectorAll('.data-row'));
+        const visibleRows = rows.filter(row => row.style.display !== 'none');
+
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('hidden', visibleRows.length > 0);
+        }
+
+        if (searchStatus) {
+            const count = visibleRows.length;
+            const total = rows.length;
+            searchStatus.textContent = `${count} von ${total} Ergebnissen angezeigt`;
+        }
+    }
+
+    // Beobachte Änderungen an der Zeilensichtbarkeit (für Filter & Suche)
+    if (tableBody) {
+        const observer = new MutationObserver((mutations) => {
+            if (mutations.some(m => m.type === 'attributes' && m.attributeName === 'style')) {
+                // Nutze requestAnimationFrame um UI-Updates zu bündeln
+                requestAnimationFrame(updateSearchUI);
+            }
+        });
+
+        observer.observe(tableBody, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['style']
+        });
+    }
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
