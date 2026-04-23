@@ -30,3 +30,7 @@
 ## 2026-03-22 - [Jinja2 Compatibility in Aggregations]
 **Learning:** MongoDB aggregation pipelines often return date fields as strings if that's how they are stored, but Jinja2 templates in this app expect 'datetime' objects for formatting filters.
 **Action:** Always perform manual date-string-to-datetime conversion in the Service layer after executing an aggregation pipeline to prevent UI regressions and template crashes.
+
+## 2026-04-03 - [Aggregation Facet Optimization]
+**Learning:** Using `$facet` in MongoDB aggregation pipelines allows calculating multiple independent statistics (counts, groupings, conditional sums) in a single database roundtrip. This eliminates O(N) Python loops and significantly reduces network payload by returning only the final counts instead of full document lists.
+**Action:** Replace Python-based statistical loops with `$facet` aggregation. Ensure behavioral parity with Python's `.get(..., 0)` by using `{$ifNull: ['$field', 0]}` for both sides of comparison operators within the pipeline.
