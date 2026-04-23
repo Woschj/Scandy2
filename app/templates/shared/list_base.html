@@ -11,10 +11,12 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
-                               aria-label="Suchen">
+                               aria-label="Suchen"
+                               autocomplete="off">
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +49,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-slate-500">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fas fa-search fa-2x opacity-20"></i>
+                                    <span>Keine Ergebnisse für diese Suche gefunden.</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,24 +92,52 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+
+    // Hilfsfunktion zur Aktualisierung des Suchstatus
+    window.updateSearchStatus = function() {
+        if (!searchInput) return;
+
+        const rows = document.querySelectorAll('.data-row');
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const count = visibleRows.length;
+
+        if (searchStatus) {
+            searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+        }
+
+        if (noResultsRow) {
+            noResultsRow.classList.toggle('hidden', count > 0);
+        }
+    };
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+        // Globaler Shortcut ( / ) zum Fokussieren der Suche
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement !== searchInput &&
+                !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                searchInput.focus();
             }
+            // Esc zum Aufheben des Fokus oder Leeren der Suche
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+        });
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
+        searchInput.addEventListener('input', function(e) {
+            if (clearSearch) clearSearch.classList.toggle('hidden', e.target.value.length === 0);
+
+            if (typeof window.applyFilters === 'function') {
+                window.applyFilters();
+            } else {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.data-row').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                });
+                window.updateSearchStatus();
+            }
         });
 
         if (clearSearch) {
@@ -194,7 +232,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Entferne und füge sortierte Zeilen wieder hinzu
-        rows.forEach(row => tbody.appendChild(row));
+        rows.forEach(row => {
+            if (row.id !== 'noResultsRow') {
+                tbody.appendChild(row);
+            }
+        });
+
+        // NoResultsRow immer am Ende behalten
+        if (noResultsRow) {
+            tbody.appendChild(noResultsRow);
+        }
     }
 
     // Tool-spezifische Funktionen
@@ -208,23 +255,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const statusFilter = document.getElementById('statusFilter');
 
-        function applyFilters() {
+        window.applyFilters = function() {
             const category = categoryFilter.value;
             const location = locationFilter.value;
             const status = statusFilter.value;
+            const searchTerm = searchInput?.value.toLowerCase() || '';
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStatus = !status || row.dataset.status === status;
+                const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
 
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
+                row.style.display = (matchesCategory && matchesLocation && matchesStatus && matchesSearch) ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
+        categoryFilter.addEventListener('change', window.applyFilters);
+        locationFilter.addEventListener('change', window.applyFilters);
+        statusFilter.addEventListener('change', window.applyFilters);
         console.log('Filters initialized');
     }
 
@@ -319,23 +369,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const locationFilter = document.getElementById('locationFilter');
         const stockFilter = document.getElementById('stockFilter');
 
-        function applyFilters() {
+        window.applyFilters = function() {
             const category = categoryFilter.value;
             const location = locationFilter.value;
             const stock = stockFilter.value;
+            const searchTerm = searchInput?.value.toLowerCase() || '';
 
             document.querySelectorAll('.data-row').forEach(row => {
                 const matchesCategory = !category || row.dataset.category === category;
                 const matchesLocation = !location || row.dataset.location === location;
                 const matchesStock = !stock || row.dataset.stock === stock;
+                const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
 
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
+                row.style.display = (matchesCategory && matchesLocation && matchesStock && matchesSearch) ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
+        categoryFilter.addEventListener('change', window.applyFilters);
+        locationFilter.addEventListener('change', window.applyFilters);
+        stockFilter.addEventListener('change', window.applyFilters);
         console.log('Filters initialized');
     }
 
