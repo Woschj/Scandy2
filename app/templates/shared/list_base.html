@@ -8,13 +8,14 @@
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
-                    <label for="searchInput" class="sr-only">Suchen</label>
+                    <label for="searchInput" class="sr-only">Suchen (Drücken Sie "/", um zu fokussieren)</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... (/)"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="search-status" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -47,6 +48,15 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" style="display: none;">
+                            <td colspan="100%" class="text-center py-8">
+                                <div class="flex flex-col items-center gap-2 opacity-50">
+                                    <i class="fas fa-search-minus text-4xl"></i>
+                                    <p class="text-lg">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Versuchen Sie einen anderen Suchbegriff</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,10 +92,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('noResultsRow');
 
     if (searchInput) {
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // "/" focuses the search input
+            if (e.key === '/' && document.activeElement !== searchInput && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            // "Esc" clears or blurs
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            let visibleCount = 0;
 
             // Toggle clear button
             if (clearSearch) {
@@ -96,10 +127,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            document.querySelectorAll('.data-row').forEach(row => {
+            const rows = document.querySelectorAll('.data-row');
+            rows.forEach(row => {
                 const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const isVisible = searchableContent.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // Update status and no-results row
+            if (noResultsRow) {
+                noResultsRow.style.display = visibleCount === 0 && rows.length > 0 ? '' : 'none';
+            }
+
+            if (searchStatus) {
+                if (searchTerm.length > 0) {
+                    searchStatus.textContent = `${visibleCount} Ergebnis(se) gefunden für "${searchTerm}"`;
+                } else {
+                    searchStatus.textContent = '';
+                }
+            }
         });
 
         if (clearSearch) {
