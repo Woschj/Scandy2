@@ -11,7 +11,7 @@
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -22,6 +22,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <div id="search-status" class="sr-only" aria-live="polite"></div>
                 </div>
 
                 <!-- Aktionen -->
@@ -46,6 +47,11 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-8 text-base-content/50">
+                                Keine Ergebnisse gefunden.
+                            </td>
+                        </tr>
                         {% block table_rows %}{% endblock %}
                     </tbody>
                 </table>
@@ -82,8 +88,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchStatus = document.getElementById('search-status');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const tableBody = document.querySelector('table tbody');
 
     if (searchInput) {
+        // Keyboard Shortcuts: / zum Fokussieren, Esc zum Leeren/Verlassen
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
 
@@ -195,6 +219,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Entferne und füge sortierte Zeilen wieder hinzu
         rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // MutationObserver für Live-Feedback (Suchergebnisse zählen & 'Keine Ergebnisse' Zeile)
+    if (tableBody && searchStatus && noResultsRow) {
+        const observer = new MutationObserver(() => {
+            const visibleRows = Array.from(document.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none');
+            const count = visibleRows.length;
+
+            // Update aria-live status
+            searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+
+            // Toggle 'No Results' row
+            if (count === 0) {
+                noResultsRow.classList.remove('hidden');
+            } else {
+                noResultsRow.classList.add('hidden');
+            }
+        });
+
+        // Wir beobachten Style-Änderungen an den data-rows
+        document.querySelectorAll('.data-row').forEach(row => {
+            observer.observe(row, { attributes: true, attributeFilter: ['style'] });
+        });
+
+        // Initialer Check
+        const initialVisible = Array.from(document.querySelectorAll('.data-row')).filter(row => row.style.display !== 'none').length;
+        if (initialVisible === 0 && document.querySelectorAll('.data-row').length > 0) {
+            noResultsRow.classList.remove('hidden');
+        }
     }
 
     // Tool-spezifische Funktionen
