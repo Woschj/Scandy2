@@ -9,9 +9,10 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
+                    <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                     <div class="join w-full">
                         <input type="text"
-                               placeholder="Suchen..."
+                               placeholder="Suchen... ( / )"
                                class="input input-bordered join-item w-full"
                                id="searchInput"
                                aria-label="Suchen">
@@ -47,6 +48,17 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-12 text-base-content/50">
+                                <div class="flex flex-col items-center gap-3">
+                                    <div class="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mb-2">
+                                        <i class="fas fa-search fa-2x opacity-20"></i>
+                                    </div>
+                                    <span class="text-lg font-medium">Keine Ergebnisse gefunden</span>
+                                    <p class="text-sm">Versuchen Sie es mit anderen Suchbegriffen oder Filtern.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,10 +90,53 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
+/**
+ * Aktualisiert den Suchstatus für Screenreader und zeigt/versteckt die "Keine Ergebnisse"-Zeile.
+ */
+window.updateSearchStatus = function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchStatus = document.getElementById('searchStatus');
+    const noResultsRow = document.getElementById('noResultsRow');
+    const rows = document.querySelectorAll('.data-row');
+
+    if (!searchInput || !searchStatus || !noResultsRow) return;
+
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const count = visibleRows.length;
+
+    // Update ARIA live region
+    searchStatus.textContent = count === 1 ? '1 Ergebnis gefunden' : `${count} Ergebnisse gefunden`;
+
+    // Toggle "No results" row
+    noResultsRow.classList.toggle('hidden', count > 0);
+};
+
 // Basis-Suchfunktion
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+
+    // Globale Keyboard-Shortcuts
+    document.addEventListener('keydown', function(e) {
+        // '/' zum Fokussieren (wenn nicht bereits in einem Input)
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        }
+        // 'Esc' zum Aufheben des Fokus oder Löschen
+        if (e.key === 'Escape') {
+            if (document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
@@ -100,6 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchableContent = row.textContent.toLowerCase();
                 row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
             });
+
+            window.updateSearchStatus();
         });
 
         if (clearSearch) {
@@ -111,6 +168,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Initialen Status setzen
+    window.updateSearchStatus();
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -220,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
@@ -331,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
             });
+            window.updateSearchStatus();
         }
 
         categoryFilter.addEventListener('change', applyFilters);
