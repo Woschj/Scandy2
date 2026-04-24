@@ -9,18 +9,21 @@
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <div class="form-control flex-1">
                     <label for="searchInput" class="sr-only">Suchen</label>
-                    <div class="join w-full">
+                    <div class="join w-full relative">
                         <input type="text"
                                placeholder="Suchen..."
-                               class="input input-bordered join-item w-full"
+                               class="input input-bordered join-item w-full pr-10"
                                id="searchInput"
                                aria-label="Suchen">
-                        <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
+                        <button type="button" id="clearSearch" class="btn btn-ghost btn-xs absolute right-12 top-1/2 -translate-y-1/2 hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
                         <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
+                    </div>
+                    <div id="searchFeedback" class="mt-2 hidden">
+                        <span id="visualCounter" class="badge badge-sm badge-ghost">0 Ergebnisse</span>
                     </div>
                 </div>
 
@@ -47,6 +50,14 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="noResultsRow" class="hidden">
+                            <td colspan="100" class="text-center py-10 bg-base-100/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <h3 class="font-bold">Keine Ergebnisse</h3>
+                                    <button type="button" onclick="window.resetAllFilters()" class="btn btn-primary btn-xs">Reset</button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -78,39 +89,41 @@
 
 <!-- Scripts -->
 <script nonce="{{ csp_nonce }}">
-// Basis-Suchfunktion
-document.addEventListener('DOMContentLoaded', function() {
+/** Zentralisierte Such- und Filter-Logik */
+window.updateSearchUI = function() {
     const searchInput = document.getElementById('searchInput');
-    const clearSearch = document.getElementById('clearSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const filters = Array.from(document.querySelectorAll('select[id$="Filter"]'));
+    const rows = document.querySelectorAll('.data-row');
+    let visibleCount = 0;
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
+    rows.forEach(row => {
+        const matchesSearch = !searchTerm || row.textContent.toLowerCase().includes(searchTerm);
+        const matchesFilters = filters.every(f => !f.value || row.dataset[f.id.replace('Filter', '')] === f.value);
+        const isVisible = matchesSearch && matchesFilters;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount++;
+    });
 
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
+    document.getElementById('noResultsRow')?.classList.toggle('hidden', visibleCount > 0);
+    const counter = document.getElementById('visualCounter');
+    if (counter) counter.textContent = `${visibleCount} ${visibleCount === 1 ? 'Ergebnis' : 'Ergebnisse'}`;
+    document.getElementById('searchFeedback')?.classList.toggle('hidden', !searchTerm && filters.every(f => !f.value));
+    document.getElementById('clearSearch')?.classList.toggle('hidden', !searchTerm);
+};
 
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+window.resetAllFilters = function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    document.querySelectorAll('select[id$="Filter"]').forEach(f => f.value = '');
+    window.updateSearchUI();
+    searchInput?.focus();
+};
 
-        if (clearSearch) {
-            clearSearch.addEventListener('click', function() {
-                searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
-                searchInput.focus();
-            });
-        }
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('searchInput')?.addEventListener('input', window.updateSearchUI);
+    document.querySelectorAll('select[id$="Filter"]').forEach(f => f.addEventListener('change', window.updateSearchUI));
+    document.getElementById('clearSearch')?.addEventListener('click', window.resetAllFilters);
 
     // Sortier-Funktionalität
     let currentSort = { column: null, direction: 'asc' };
@@ -199,35 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tool-spezifische Funktionen
     {% if request.endpoint == 'tools.index' %}
-    console.log('=== TOOLS PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const statusFilter = document.getElementById('statusFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const status = statusFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStatus = !status || row.dataset.status === status;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStatus ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Werkzeuge laden
     function loadToolPreviews() {
         console.log('=== LOADING TOOL PREVIEWS ===');
@@ -303,42 +287,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Tools
-    console.log('Running tools page script immediately');
-    initializeFilters();
     loadToolPreviews();
     {% endif %}
 
     // Verbrauchsgüter-spezifische Funktionen
     {% if request.endpoint == 'consumables.index' %}
-    console.log('=== CONSUMABLES PAGE SCRIPT LOADED ===');
-
-    // Filter-Funktionalität
-    function initializeFilters() {
-        console.log('Initializing filters...');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const stockFilter = document.getElementById('stockFilter');
-
-        function applyFilters() {
-            const category = categoryFilter.value;
-            const location = locationFilter.value;
-            const stock = stockFilter.value;
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const matchesCategory = !category || row.dataset.category === category;
-                const matchesLocation = !location || row.dataset.location === location;
-                const matchesStock = !stock || row.dataset.stock === stock;
-
-                row.style.display = matchesCategory && matchesLocation && matchesStock ? '' : 'none';
-            });
-        }
-
-        categoryFilter.addEventListener('change', applyFilters);
-        locationFilter.addEventListener('change', applyFilters);
-        stockFilter.addEventListener('change', applyFilters);
-        console.log('Filters initialized');
-    }
-
     // Medien-Vorschau für Verbrauchsgüter laden
     function loadConsumablePreviews() {
         console.log('=== LOADING CONSUMABLE PREVIEWS ===');
@@ -414,8 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Sofortige Ausführung für Verbrauchsgüter
-    console.log('Running consumables page script immediately');
-    initializeFilters();
     loadConsumablePreviews();
     {% endif %}
 });
