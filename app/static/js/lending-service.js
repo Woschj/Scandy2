@@ -11,70 +11,52 @@
     function initializeLendingService() {
         log('=== LENDING SERVICE INITIALIZATION START ===');
         log('Script location:', document.currentScript?.src || 'Unknown location');
-        
+
         // Event-Listener für Rückgabe-Buttons
         initializeReturnButtons();
-        
+
         // Event-Listener für Ausleihe-Buttons
         initializeLendButtons();
-        
+
         // Event-Listener für Material-Entnahme
         initializeMaterialConsumption();
-        
+
         // Event-Listener für Arbeitszeiten
         initializeWorkTimeTracking();
-        
+
         log('=== LENDING SERVICE INITIALIZATION COMPLETE ===');
     }
 
     // Rückgabe-Funktionalität
-    function returnTool(barcode, button = null) {
+    async function returnTool(barcode, button = null) {
         log('Starte Rückgabe für:', barcode);
-        
-        // Bestätigung in einem separaten Task
-        Promise.resolve().then(() => {
-            if (!confirm('Möchten Sie dieses Werkzeug wirklich zurückgeben?')) {
-                if (button) {
-                    button.disabled = false;
-                    button.style.opacity = '1';
-                }
-                return;
-            }
-
-            // Fetch in einem separaten Task
-            Promise.resolve().then(() => {
-                fetch('/api/lending/return', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tool_barcode: barcode
-                    })
-                })
-                .then(response => response.json())
-                .then(result => {
-                    log('Rückgabe Ergebnis:', result);
-                    if (result.success) {
-                        showLendingToast('success', 'Werkzeug erfolgreich zurückgegeben');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        showLendingToast('error', result.message || 'Fehler bei der Rückgabe');
-                        if (button) {
-                            button.disabled = false;
-                            button.style.opacity = '1';
-                        }
-                    }
-                })
-                .catch(error => {
-                    showLendingToast('error', 'Ein Fehler ist aufgetreten');
-                    if (button) {
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                    }
-                });
-            });
+        const confirmed = await window.confirmAction({
+            title: 'Werkzeug zurückgeben?',
+            message: 'Möchten Sie dieses Werkzeug wirklich zurückgeben?',
+            confirmText: 'Rückgabe'
         });
+        if (!confirmed) {
+            if (button) { button.disabled = false; button.style.opacity = '1'; }
+            return;
+        }
+        try {
+            const response = await fetch('/api/lending/return', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({tool_barcode: barcode})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showLendingToast('success', 'Werkzeug erfolgreich zurückgegeben');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showLendingToast('error', result.message || 'Fehler bei der Rückgabe');
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+            }
+        } catch (error) {
+            showLendingToast('error', 'Ein Fehler ist aufgetreten');
+            if (button) { button.disabled = false; button.style.opacity = '1'; }
+        }
     }
 
     // Ausleihe-Funktionalität
@@ -136,24 +118,24 @@
     // Event-Listener für Rückgabe-Buttons
     function initializeReturnButtons() {
         log('Initialisiere Event-Listener');
-        
+
         // Event-Delegation statt individuelle Event-Listener
         document.addEventListener('click', function(e) {
             const button = e.target.closest('[data-action="return"]');
             if (!button) return;
-            
+
             e.preventDefault();
             e.stopPropagation();
-            
+
             const barcode = button.dataset.barcode;
             if (!barcode) return;
-            
+
             // Verhindere mehrfache Klicks
             if (button.disabled) return;
-            
+
             button.disabled = true;
             button.style.opacity = '0.6';
-            
+
             // Sofortige visuelle Rückmeldung
             requestAnimationFrame(() => {
                 returnTool(barcode, button);
@@ -165,11 +147,11 @@
     function initializeLendButtons() {
         function addLendButtonListeners() {
             const lendButtons = document.querySelectorAll('[data-action="lend"]');
-            
+
             lendButtons.forEach(button => {
                 const barcode = button.dataset.barcode;
                 log('Initialisiere Button mit Barcode:', barcode);
-                
+
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const workerBarcode = prompt('Bitte geben Sie den Mitarbeiter-Barcode ein:');
@@ -243,26 +225,26 @@
     // Auftragsdetails speichern
     window.saveAuftragDetails = function(ticketId) {
         log('Leite zur Auftragsdetails-Seite weiter...');
-        
+
         // Sammle alle Formulardaten
         const formData = new FormData();
-        
+
         // Material-Daten
         const materialBarcodes = document.querySelectorAll('input[name="material_barcode[]"]');
         const materialQuantities = document.querySelectorAll('input[name="material_quantity[]"]');
-        
+
         for (let i = 0; i < materialBarcodes.length; i++) {
             if (materialBarcodes[i].value && materialQuantities[i].value) {
                 formData.append('material_barcode[]', materialBarcodes[i].value);
                 formData.append('material_quantity[]', materialQuantities[i].value);
             }
         }
-        
+
         // Arbeitszeit-Daten
         const workDates = document.querySelectorAll('input[name="work_date[]"]');
         const workHours = document.querySelectorAll('input[name="work_hours[]"]');
         const workDescriptions = document.querySelectorAll('input[name="work_description[]"]');
-        
+
         for (let i = 0; i < workDates.length; i++) {
             if (workDates[i].value && workHours[i].value && workDescriptions[i].value) {
                 formData.append('work_date[]', workDates[i].value);
@@ -270,7 +252,7 @@
                 formData.append('work_description[]', workDescriptions[i].value);
             }
         }
-        
+
         // Speichere Daten
         fetch(`/tickets/${ticketId}/auftrag-details`, {
             method: 'POST',
@@ -306,7 +288,7 @@
                 </div>
             `;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.remove();
             }, 3000);
@@ -315,72 +297,45 @@
 
     // Globale returnItem-Funktion für manuelle Ausleihe
     window.LendingService = {
-        returnItem: function(barcode) {
-            return new Promise((resolve, reject) => {
-                // Verhindere mehrfache Klicks
-                const button = event?.target?.closest('[data-action="return"]');
-                if (button) {
-                    button.disabled = true;
-                    button.style.opacity = '0.6';
-                }
-                
-                // Bestätigung in einem separaten Task
-                Promise.resolve().then(() => {
-                    if (!confirm('Möchten Sie dieses Werkzeug wirklich zurückgeben?')) {
-                        if (button) {
-                            button.disabled = false;
-                            button.style.opacity = '1';
-                        }
-                        resolve(false);
-                        return;
-                    }
-
-                    // Fetch in einem separaten Task
-                    Promise.resolve().then(() => {
-                        fetch('/api/lending/return', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                tool_barcode: barcode,
-                                worker_barcode: null  // Wird vom Server automatisch ermittelt
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(result => {
-                            if (result.success) {
-                                showLendingToast('success', 'Werkzeug erfolgreich zurückgegeben');
-                                resolve(true);
-                            } else {
-                                showLendingToast('error', result.message || 'Fehler bei der Rückgabe');
-                                if (button) {
-                                    button.disabled = false;
-                                    button.style.opacity = '1';
-                                }
-                                resolve(false);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Fehler bei der Rückgabe:', error);
-                            showLendingToast('error', 'Ein Fehler ist aufgetreten');
-                            if (button) {
-                                button.disabled = false;
-                                button.style.opacity = '1';
-                            }
-                            resolve(false);
-                        });
-                    });
-                });
+        returnItem: async function(barcode) {
+            const button = event?.target?.closest('[data-action="return"]');
+            if (button) { button.disabled = true; button.style.opacity = '0.6'; }
+            const confirmed = await window.confirmAction({
+                title: 'Werkzeug zurückgeben?',
+                message: 'Möchten Sie dieses Werkzeug wirklich zurückgeben?',
+                confirmText: 'Rückgabe'
             });
+            if (!confirmed) {
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+                return false;
+            }
+            try {
+                const response = await fetch('/api/lending/return', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify({tool_barcode: barcode, worker_barcode: null})
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showLendingToast('success', 'Werkzeug erfolgreich zurückgegeben');
+                    return true;
+                } else {
+                    showLendingToast('error', result.message || 'Fehler bei der Rückgabe');
+                    if (button) { button.disabled = false; button.style.opacity = '1'; }
+                    return false;
+                }
+            } catch (error) {
+                showLendingToast('error', 'Ein Fehler ist aufgetreten');
+                if (button) { button.disabled = false; button.style.opacity = '1'; }
+                return false;
+            }
         }
     };
 
     // Auftragsdetails-Funktionen (für Ticket-Details-Seite)
     function initializeAuftragDetails() {
         log('Initialisiere Auftragsdetails-Funktionen');
-        
+
         // Material-Zeile hinzufügen für Auftragsdetails (Tabelle)
         const materialRows = document.getElementById('materialRows');
         if (materialRows) {
@@ -420,7 +375,7 @@
 
         // Event-Listener für bestehende Zeilen initialisieren
         initializeExistingRows();
-        
+
         // Initiale Berechnungen durchführen
         updateSummeMaterial();
         updateSummeArbeit();
@@ -432,19 +387,19 @@
         // Event-Listener für Menge und Einzelpreis
         const mengeInput = row.querySelector('.menge-input');
         const einzelpreisInput = row.querySelector('.einzelpreis-input');
-        
+
         if (mengeInput) {
             mengeInput.addEventListener('input', () => {
                 updateRowSum(row);
             });
         }
-        
+
         if (einzelpreisInput) {
             einzelpreisInput.addEventListener('input', () => {
                 updateRowSum(row);
             });
         }
-        
+
         // Event-Listener für Löschen-Button
         const deleteBtn = row.querySelector('.delete-material-btn');
         if (deleteBtn) {
@@ -454,7 +409,7 @@
                 updateGesamtsumme();
             });
         }
-        
+
         // Initiale Berechnung
         updateRowSum(row);
     }
@@ -468,7 +423,7 @@
                 updateGesamtsumme();
             });
         }
-        
+
         // Event-Listener für Löschen-Button
         const deleteBtn = row.querySelector('.delete-arbeit-btn');
         if (deleteBtn) {
@@ -485,7 +440,7 @@
         document.querySelectorAll('#materialRows .material-row').forEach(row => {
             initializeMaterialRowEvents(row);
         });
-        
+
         // Arbeitszeilen
         document.querySelectorAll('#arbeitenRows .arbeit-row').forEach(row => {
             initializeArbeitRowEvents(row);
@@ -496,24 +451,24 @@
         const mengeInput = row.querySelector('.menge-input');
         const einzelpreisInput = row.querySelector('.einzelpreis-input');
         const gesamtpreisInput = row.querySelector('input[name="gesamtpreis"]');
-        
+
         if (!mengeInput || !einzelpreisInput || !gesamtpreisInput) {
             return;
         }
-        
+
         const menge = parseFloat(mengeInput.value) || 0;
         const einzelpreis = parseFloat(einzelpreisInput.value) || 0;
         const gesamtpreis = menge * einzelpreis;
-        
+
         gesamtpreisInput.value = gesamtpreis.toFixed(2);
-        
+
         updateSummeMaterial();
         updateGesamtsumme();
     }
 
     function updateSummeMaterial() {
         let summe = 0;
-        
+
         document.querySelectorAll('#materialRows .material-row').forEach(row => {
             const gesamtpreisInput = row.querySelector('input[name="gesamtpreis"]');
             if (gesamtpreisInput) {
@@ -521,19 +476,19 @@
                 summe += gesamtpreis;
             }
         });
-        
+
         const summeElement = document.getElementById('summeMaterial');
         if (summeElement) {
             summeElement.textContent = summe.toFixed(2) + ' €';
             log('Materialsumme gesetzt auf:', summe.toFixed(2));
         }
-        
+
         updateGesamtsumme();
     }
 
     function updateSummeArbeit() {
         let summe = 0;
-        
+
         document.querySelectorAll('#arbeitenRows .arbeit-row').forEach(row => {
             const arbeitsstundenInput = row.querySelector('.arbeitsstunden-input');
             if (arbeitsstundenInput) {
@@ -541,27 +496,27 @@
                 summe += stunden;
             }
         });
-        
+
         const summeElement = document.getElementById('summeArbeit');
         if (summeElement) {
             summeElement.textContent = summe.toFixed(2) + ' h';
             log('Arbeitssumme gesetzt auf:', summe.toFixed(2));
         }
-        
+
         updateGesamtsumme();
     }
 
     function updateGesamtsumme() {
         const summeMaterialElement = document.getElementById('summeMaterial');
         const gesamtsummeElement = document.getElementById('gesamtsumme');
-        
+
         if (!summeMaterialElement || !gesamtsummeElement) {
             return;
         }
-        
+
         const summeMaterialText = summeMaterialElement.textContent;
         const summeMaterial = parseFloat(summeMaterialText.replace(' €', '')) || 0;
-        
+
         gesamtsummeElement.textContent = summeMaterial.toFixed(2) + ' €';
         log('Gesamtsumme gesetzt auf:', summeMaterial.toFixed(2));
     }

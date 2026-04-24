@@ -4,19 +4,14 @@
  * @param {string} barcode - Der Barcode des zu löschenden Eintrags
  * @returns {Promise} - Ein Promise mit dem Ergebnis der Löschoperation
  */
-function deleteItem(type, barcode) {
-    // Bestätigungsdialog mit spezifischer Nachricht
-    const typeNames = {
-        'tool': 'Werkzeug',
-        'consumable': 'Verbrauchsmaterial',
-        'worker': 'Mitarbeiter'
-    };
-    
-    const confirmMessage = `Möchten Sie diesen ${typeNames[type]} wirklich in den Papierkorb verschieben?`;
-    
-    if (!confirm(confirmMessage)) {
-        return Promise.reject('Abgebrochen durch Benutzer');
-    }
+async function deleteItem(type, barcode) {
+    const typeNames = {'tool': 'Werkzeug', 'consumable': 'Verbrauchsmaterial', 'worker': 'Mitarbeiter'};
+    const confirmed = await window.confirmAction({
+        title: `${typeNames[type]} löschen?`,
+        message: `Möchten Sie ${type === 'worker' ? 'diesen' : 'dieses'} ${typeNames[type]} wirklich in den Papierkorb verschieben?`,
+        confirmText: 'Löschen', confirmClass: 'btn-error'
+    });
+    if (!confirmed) return;
     
     // Barcode bereinigen
     const cleanBarcode = barcode.trim();
@@ -38,36 +33,18 @@ function deleteItem(type, barcode) {
         body: JSON.stringify({ barcode: cleanBarcode })
     };
     
-    return fetch(url, requestConfig)
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.message || `HTTP-Fehler! Status: ${response.status}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
+    try {
+        const response = await fetch(url, requestConfig);
+        const data = await response.json();
         if (data.success) {
-            // Erfolgsmeldung anzeigen
-            showNotification(data.message || `${typeNames[type]} wurde in den Papierkorb verschoben`, 'success');
-            
-            // Optional: Seite neu laden oder Element aus DOM entfernen
-            if (document.querySelector(`[data-barcode="${cleanBarcode}"]`)) {
-                document.querySelector(`[data-barcode="${cleanBarcode}"]`).remove();
-            } else {
-                window.location.reload();
-            }
-        } else {
-            throw new Error(data.message || 'Unbekannter Fehler beim Löschen');
-        }
-        return data;
-    })
-    .catch(error => {
-        console.error('Error in deleteItem:', error);
+            showNotification(data.message || `${typeNames[type]} gelöscht`, 'success');
+            const row = document.querySelector(`[data-barcode="${cleanBarcode}"]`);
+            if (row) { row.remove(); if (window.updateSearchUI) window.updateSearchUI(); }
+            else window.location.reload();
+        } else throw new Error(data.message);
+    } catch (error) {
         showNotification(error.message || 'Fehler beim Löschen', 'error');
-        throw error;
-    });
+    }
 }
 
 /**
