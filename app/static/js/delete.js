@@ -12,7 +12,9 @@ function deleteItem(type, barcode) {
         'worker': 'Mitarbeiter'
     };
     
-    const confirmMessage = `Möchten Sie diesen ${typeNames[type]} wirklich in den Papierkorb verschieben?`;
+    // Grammatikalisch korrekte Artikel: 'dieses' für Neutrum (Werkzeug, Verbrauchsmaterial), 'diesen' für Maskulin (Mitarbeiter)
+    const article = (type === 'worker') ? 'diesen' : 'dieses';
+    const confirmMessage = `Möchten Sie ${article} ${typeNames[type]} wirklich in den Papierkorb verschieben?`;
     
     if (!confirm(confirmMessage)) {
         return Promise.reject('Abgebrochen durch Benutzer');
@@ -52,9 +54,13 @@ function deleteItem(type, barcode) {
             // Erfolgsmeldung anzeigen
             showNotification(data.message || `${typeNames[type]} wurde in den Papierkorb verschoben`, 'success');
             
-            // Optional: Seite neu laden oder Element aus DOM entfernen
-            if (document.querySelector(`[data-barcode="${cleanBarcode}"]`)) {
-                document.querySelector(`[data-barcode="${cleanBarcode}"]`).remove();
+            // Optional: Seite neu laden oder Element aus DOM entfernen mit Animation
+            const element = document.querySelector(`[data-barcode="${cleanBarcode}"]`);
+            if (element) {
+                element.style.transition = 'all 0.4s ease';
+                element.style.opacity = '0';
+                element.style.transform = 'translateX(30px)';
+                setTimeout(() => element.remove(), 400);
             } else {
                 window.location.reload();
             }

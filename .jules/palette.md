@@ -13,3 +13,7 @@
 ## 2026-02-15 - [Timed Feedback for File Downloads]
 **Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
 **Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
+
+## 2025-05-15 - [German Localization for Deletion Messages]
+**Learning:** In German confirmation dialogs for item deletion, the article must match the gender of the noun. Masculine nouns (e.g., 'Mitarbeiter') use 'diesen', while neuter nouns (e.g., 'Werkzeug', 'Verbrauchsmaterial') use 'dieses'.
+**Action:** Always check the gender of the item being deleted and use a conditional article in the confirmation string.
