@@ -7,12 +7,12 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
+                <div class="form-control flex-1 relative">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
                                placeholder="Suchen..."
-                               class="input input-bordered join-item w-full"
+                               class="input input-bordered join-item w-full pr-12"
                                id="searchInput"
                                aria-label="Suchen">
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
@@ -21,6 +21,10 @@
                         <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
                             <i class="fas fa-search"></i>
                         </button>
+                    </div>
+                    <div id="searchFeedback" class="hidden absolute right-16 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <span id="visualCounter" class="badge badge-primary badge-sm font-bold">0</span>
+                        <span id="searchStatus" class="sr-only" aria-live="polite"></span>
                     </div>
                 </div>
 
@@ -47,6 +51,18 @@
                     </thead>
                     <tbody>
                         {% block table_rows %}{% endblock %}
+                        <tr id="emptyStateRow" class="hidden">
+                            <td colspan="100%" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-base-content/50">
+                                    <i class="fas fa-search fa-3x mb-4 opacity-20"></i>
+                                    <p class="text-lg font-medium">Keine Ergebnisse gefunden</p>
+                                    <p class="text-sm">Passen Sie Ihre Suchbegriffe oder Filter an.</p>
+                                    <button type="button" class="btn btn-ghost btn-sm mt-4" onclick="document.getElementById('clearSearch').click()">
+                                        Suche zurücksetzen
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -82,34 +98,69 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
+    const searchFeedback = document.getElementById('searchFeedback');
+    const visualCounter = document.getElementById('visualCounter');
+    const searchStatus = document.getElementById('searchStatus');
+    const emptyStateRow = document.getElementById('emptyStateRow');
+
+    function updateSearchUI() {
+        if (!searchInput) return;
+
+        const searchTerm = searchInput.value.toLowerCase();
+        let visibleCount = 0;
+        let totalCount = 0;
+
+        // Toggle clear button and feedback visibility
+        if (searchTerm.length > 0) {
+            clearSearch?.classList.remove('hidden');
+            searchFeedback?.classList.remove('hidden');
+        } else {
+            clearSearch?.classList.add('hidden');
+            searchFeedback?.classList.add('hidden');
+        }
+
+        document.querySelectorAll('.data-row').forEach(row => {
+            totalCount++;
+            const searchableContent = row.textContent.toLowerCase();
+            const isVisible = searchableContent.includes(searchTerm);
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // Update counters and empty state
+        if (visualCounter) visualCounter.textContent = visibleCount;
+        if (searchStatus) {
+            searchStatus.textContent = searchTerm.length > 0
+                ? `${visibleCount} von ${totalCount} Ergebnissen gefunden`
+                : '';
+        }
+
+        if (emptyStateRow) {
+            emptyStateRow.classList.toggle('hidden', visibleCount > 0 || totalCount === 0);
+        }
+    }
 
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-
-            // Toggle clear button
-            if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
-            }
-
-            document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
-            });
-        });
+        searchInput.addEventListener('input', updateSearchUI);
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
-                searchInput.dispatchEvent(new Event('input'));
+                updateSearchUI();
                 searchInput.focus();
             });
         }
+
+        // Global shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                clearSearch.click();
+            }
+        });
     }
 
     // Sortier-Funktionalität
