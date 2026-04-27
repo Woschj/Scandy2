@@ -13,3 +13,7 @@
 ## 2026-02-15 - [Timed Feedback for File Downloads]
 **Learning:** For file downloads (like Excel exports) where the server response doesn't provide a trivial hook for JavaScript to detect completion, a timed loading state (e.g., 5 seconds) provides a significantly better UX than no feedback. It acknowledges the user's action and prevents multiple clicks while the server generates the file.
 **Action:** Apply a temporary `disabled` state and `loading` indicator to export links/buttons using a `setTimeout` to restore the original state after a reasonable delay (5-10s).
+
+## 2026-02-15 - [Search Visibility Feedback]
+**Learning:** Users lack immediate feedback on search results in large lists. Adding a "X Treffer" badge within the search input provides instant confirmation of the filter's impact. Combining this with an 'aria-live="polite"' region ensures that screen reader users are also informed of the count changes without losing focus on the input.
+**Action:** Implement a results counter and ARIA-live announcement for all searchable list views to improve accessibility and perceived speed.

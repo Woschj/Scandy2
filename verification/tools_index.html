@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="csrf-token" content="">
-    <title>Scandy</title>
+    <title>Werkzeuge</title>
     <meta name="current-department" content="IT">
 
     <!-- Favicon -->
@@ -466,13 +466,538 @@
         <!-- Main Content -->
         <main id="main-content" class="relative z-0 ml-[260px] main-content-with-sidebar">
 
-            <div class="max-w-7xl mx-auto">
-                <!-- Info-Karte (nur für QuickScan) -->
+<div class="space-y-4">
+    <!-- Suchleiste und Filter -->
+    <div class="card bg-base-100 shadow-lg card-compact">
+        <div class="card-body">
+            <!-- Suchleiste und Aktionen -->
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="form-control flex-1 relative">
+                    <label for="searchInput" class="sr-only">Suchen</label>
+                    <div class="join w-full">
+                        <input type="text"
+                               placeholder="Suchen..."
+                               class="input input-bordered join-item w-full pr-16"
+                               id="searchInput"
+                               aria-label="Suchen">
+                        <div id="searchFeedback" class="absolute right-28 top-1/2 -translate-y-1/2 hidden z-10 pointer-events-none">
+                            <span id="resultsCount" class="badge badge-sm badge-ghost opacity-70"></span>
+                        </div>
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
+                        <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-square join-item" aria-label="Suche ausführen">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aktionen -->
 
 
-                <!-- Hauptinhalt -->
+<div class="flex gap-2">
+    <a href="/tools/add" class="btn btn-primary hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+        <i class="fas fa-plus me-2"></i> Werkzeuge hinzufügen
+    </a>
+</div>
+
 
             </div>
+
+            <!-- Filter -->
+            <div class="flex flex-wrap gap-3 mt-4">
+
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="categoryFilter" aria-label="Kategorie filtern">
+    <option value="">Alle Kategorien</option>
+
+    <option value="Handwerkzeuge">Handwerkzeuge</option>
+
+    <option value="Elektrowerkzeuge">Elektrowerkzeuge</option>
+
+</select>
+
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="locationFilter" aria-label="Standort filtern">
+    <option value="">Alle Standorte</option>
+
+    <option value="Werkstatt">Werkstatt</option>
+
+    <option value="Lager">Lager</option>
+
+</select>
+
+<select class="select select-bordered w-full max-w-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200" id="statusFilter" aria-label="Status filtern">
+    <option value="">Alle Status</option>
+    <option value="verfügbar">Verfügbar</option>
+    <option value="ausgeliehen">Ausgeliehen</option>
+    <option value="überfällig">Überfällig</option>
+    <option value="defekt">Defekt</option>
+</select>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Datentabelle -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body p-0">
+            <div class="table-container">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+
+<th>Bild</th>
+<th>Barcode</th>
+<th>Name</th>
+<th>Kategorie</th>
+<th>Standort</th>
+<th>Status</th>
+
+<th>Nutzergruppen</th>
+
+<th>Ausgeliehen seit</th>
+<th>Ausgeliehen bis</th>
+<th class="text-right no-sort">Aktionen</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+
+
+<tr class="hover data-row group"
+    data-barcode="12345"
+    data-category="Handwerkzeuge"
+    data-location="Werkstatt"
+    data-status="verfügbar">
+    <td>
+        <div class="tool-media-preview" data-barcode="12345" data-preview-image="">
+            <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tools text-base-content/40"></i>
+            </div>
+        </div>
+    </td>
+    <td>
+        <div class="flex items-center gap-2">
+            <div class="badge badge-outline font-mono">12345</div>
+
+            <button type="button"
+                    class="btn btn-ghost btn-xs hidden group-hover:inline-flex focus-visible:inline-flex focus-visible:ring-2 focus-visible:ring-primary"
+                    onclick="window.copyToClipboard('12345', this, 'Barcode kopiert')"
+                    aria-label="Barcode kopieren"
+                    title="Barcode kopieren">
+                <i class="fas fa-copy"></i>
+            </button>
+
+        </div>
+    </td>
+    <td>
+
+        <a href="/tools/detail" class="link link-hover font-medium">
+            Hammer
+        </a>
+
+    </td>
+    <td>
+        <div class="badge badge-primary badge-outline">Handwerkzeuge</div>
+    </td>
+    <td>
+        <div class="badge badge-secondary badge-outline">Werkstatt</div>
+    </td>
+    <td>
+
+            <div class="badge badge-success gap-1">
+                <i class="fas fa-check"></i>
+                Verfügbar
+            </div>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40 text-sm">-</span>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td class="text-right">
+        <div class="btn-group">
+
+            <a href="/tools/detail"
+               class="btn btn-sm btn-ghost"
+               aria-label="Werkzeuge bearbeiten">
+                <i class="fas fa-edit"></i>
+            </a>
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('tool', '12345')"
+                    aria-label="Werkzeuge löschen">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </div>
+    </td>
+</tr>
+
+<tr class="hover data-row group"
+    data-barcode="67890"
+    data-category="Elektrowerkzeuge"
+    data-location="Lager"
+    data-status="ausgeliehen">
+    <td>
+        <div class="tool-media-preview" data-barcode="67890" data-preview-image="">
+            <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tools text-base-content/40"></i>
+            </div>
+        </div>
+    </td>
+    <td>
+        <div class="flex items-center gap-2">
+            <div class="badge badge-outline font-mono">67890</div>
+
+            <button type="button"
+                    class="btn btn-ghost btn-xs hidden group-hover:inline-flex focus-visible:inline-flex focus-visible:ring-2 focus-visible:ring-primary"
+                    onclick="window.copyToClipboard('67890', this, 'Barcode kopiert')"
+                    aria-label="Barcode kopieren"
+                    title="Barcode kopieren">
+                <i class="fas fa-copy"></i>
+            </button>
+
+        </div>
+    </td>
+    <td>
+
+        <a href="/tools/detail" class="link link-hover font-medium">
+            Bohrmaschine
+        </a>
+
+    </td>
+    <td>
+        <div class="badge badge-primary badge-outline">Elektrowerkzeuge</div>
+    </td>
+    <td>
+        <div class="badge badge-secondary badge-outline">Lager</div>
+    </td>
+    <td>
+
+            <div class="badge badge-warning gap-1">
+                <i class="fas fa-tools"></i>
+                Ausgeliehen
+            </div>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40 text-sm">-</span>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td class="text-right">
+        <div class="btn-group">
+
+            <a href="/tools/detail"
+               class="btn btn-sm btn-ghost"
+               aria-label="Werkzeuge bearbeiten">
+                <i class="fas fa-edit"></i>
+            </a>
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('tool', '67890')"
+                    aria-label="Werkzeuge löschen">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </div>
+    </td>
+</tr>
+
+<tr class="hover data-row group"
+    data-barcode="11223"
+    data-category="Handwerkzeuge"
+    data-location="Werkstatt"
+    data-status="defekt">
+    <td>
+        <div class="tool-media-preview" data-barcode="11223" data-preview-image="">
+            <div class="w-12 h-12 bg-base-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tools text-base-content/40"></i>
+            </div>
+        </div>
+    </td>
+    <td>
+        <div class="flex items-center gap-2">
+            <div class="badge badge-outline font-mono">11223</div>
+
+            <button type="button"
+                    class="btn btn-ghost btn-xs hidden group-hover:inline-flex focus-visible:inline-flex focus-visible:ring-2 focus-visible:ring-primary"
+                    onclick="window.copyToClipboard('11223', this, 'Barcode kopiert')"
+                    aria-label="Barcode kopieren"
+                    title="Barcode kopieren">
+                <i class="fas fa-copy"></i>
+            </button>
+
+        </div>
+    </td>
+    <td>
+
+        <a href="/tools/detail" class="link link-hover font-medium">
+            Schraubenschlüssel
+        </a>
+
+    </td>
+    <td>
+        <div class="badge badge-primary badge-outline">Handwerkzeuge</div>
+    </td>
+    <td>
+        <div class="badge badge-secondary badge-outline">Werkstatt</div>
+    </td>
+    <td>
+
+            <div class="badge badge-error gap-1">
+                <i class="fas fa-wrench"></i>
+                Defekt
+            </div>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40 text-sm">-</span>
+
+    </td>
+
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td>
+
+            <span class="text-base-content/40">-</span>
+
+    </td>
+    <td class="text-right">
+        <div class="btn-group">
+
+            <a href="/tools/detail"
+               class="btn btn-sm btn-ghost"
+               aria-label="Werkzeuge bearbeiten">
+                <i class="fas fa-edit"></i>
+            </a>
+            <button class="btn btn-sm btn-ghost btn-error"
+                    onclick="deleteItem('tool', '11223')"
+                    aria-label="Werkzeuge löschen">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </div>
+    </td>
+</tr>
+
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kontext-Hilfe (optional) -->
+
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title text-lg">
+                <i class="fas fa-question-circle text-primary mr-2"></i>
+                Werkzeuge – Hilfe
+            </h3>
+
+            <p class="text-sm opacity-75 mb-2">So filtern und verwalten Sie Werkzeuge.</p>
+
+
+            <ul class="list-disc list-inside text-sm space-y-1">
+
+                <li>Über die Filter oben können Sie nach Kategorie, Standort und Status einschränken.</li>
+
+                <li>Klicken Sie auf den Namen, um die Detailseite mit Medien und Historie zu öffnen.</li>
+
+                <li>Über das Stiftsymbol bearbeiten Sie Stammdaten; der Papierkorb verschiebt in den Papierkorb (Admin).</li>
+
+                <li>Vorschaubilder werden automatisch aus den Medien geladen; das Sternsymbol setzt das Preview.</li>
+
+            </ul>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script nonce="mock_nonce">
+// Basis-Suchfunktion
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const feedback = document.getElementById('searchFeedback');
+            const status = document.getElementById('searchStatus');
+            const countBadge = document.getElementById('resultsCount');
+            let visibleCount = 0;
+
+            if (clearSearch) {
+                clearSearch.classList.toggle('hidden', searchTerm.length === 0);
+            }
+            if (feedback) {
+                feedback.classList.toggle('hidden', searchTerm.length === 0);
+            }
+
+            document.querySelectorAll('.data-row').forEach(row => {
+                const matches = row.textContent.toLowerCase().includes(searchTerm);
+                row.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            });
+
+            if (countBadge) countBadge.textContent = `${visibleCount} Treffer`;
+            if (status) status.textContent = searchTerm ? `${visibleCount} Ergebnisse für "${searchTerm}"` : "";
+        });
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
+            if (e.key === '/' && !isInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
+    }
+
+    // Sortier-Funktionalität
+    let currentSort = { column: null, direction: 'asc' };
+
+    // Füge Sortier-Icons zu den Tabellen-Headers hinzu
+    document.querySelectorAll('th').forEach(th => {
+        if (!th.classList.contains('no-sort')) {
+            const isRightAligned = th.classList.contains('text-right');
+            const wrapper = document.createElement('button');
+            wrapper.type = 'button';
+            wrapper.className = `flex items-center gap-2 w-full focus:outline-none focus:bg-base-200 p-2 rounded-lg transition-colors ${isRightAligned ? 'justify-end' : ''}`;
+            wrapper.innerHTML = `
+                <span class="font-bold">${th.innerHTML}</span>
+                <span class="sort-icons opacity-50">
+                    <i class="fas fa-sort"></i>
+                </span>
+            `;
+            th.innerHTML = '';
+            th.appendChild(wrapper);
+            th.setAttribute('aria-sort', 'none');
+
+            wrapper.addEventListener('click', () => {
+                const column = Array.from(th.parentElement.children).indexOf(th);
+                sortTable(column, th);
+            });
+        }
+    });
+
+    function sortTable(column, th) {
+        const table = th.closest('table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        // Update Sort-Direction
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+
+        // Update Sort-Icons and ARIA
+        table.querySelectorAll('th').forEach(header => {
+            if (header.classList.contains('no-sort')) return;
+
+            const icon = header.querySelector('.sort-icons');
+            if (header === th) {
+                if (currentSort.direction === 'asc') {
+                    icon.innerHTML = '<i class="fas fa-sort-up"></i>';
+                    header.setAttribute('aria-sort', 'ascending');
+                } else {
+                    icon.innerHTML = '<i class="fas fa-sort-down"></i>';
+                    header.setAttribute('aria-sort', 'descending');
+                }
+                icon.classList.remove('opacity-50');
+            } else {
+                icon.innerHTML = '<i class="fas fa-sort"></i>';
+                icon.classList.add('opacity-50');
+                header.setAttribute('aria-sort', 'none');
+            }
+        });
+
+        // Sortiere die Zeilen
+        rows.sort((a, b) => {
+            const aValue = a.children[column]?.textContent.trim() || '';
+            const bValue = b.children[column]?.textContent.trim() || '';
+
+            // Versuche numerisch zu sortieren, falls beide Werte Zahlen sind
+            const aNum = parseFloat(aValue.replace(/[^0-9.-]+/g,""));
+            const bNum = parseFloat(bValue.replace(/[^0-9.-]+/g,""));
+
+            if (!isNaN(aNum) && !isNaN(bNum) && aValue.match(/^-?\d+(\.\d+)?$/) && bValue.match(/^-?\d+(\.\d+)?$/)) {
+                return currentSort.direction === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+
+            if (currentSort.direction === 'asc') {
+                return aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+            } else {
+                return bValue.localeCompare(aValue, undefined, { numeric: true, sensitivity: 'base' });
+            }
+        });
+
+        // Entferne und füge sortierte Zeilen wieder hinzu
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // Tool-spezifische Funktionen
+
+
+    // Verbrauchsgüter-spezifische Funktionen
+
+});
+</script>
+
+<!-- Delete Script -->
+<script src="/static"></script>
 
         </main>
     </div>

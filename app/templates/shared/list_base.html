@@ -7,14 +7,18 @@
         <div class="card-body">
             <!-- Suchleiste und Aktionen -->
             <div class="flex flex-col md:flex-row gap-4 items-center">
-                <div class="form-control flex-1">
+                <div class="form-control flex-1 relative">
                     <label for="searchInput" class="sr-only">Suchen</label>
                     <div class="join w-full">
                         <input type="text"
                                placeholder="Suchen..."
-                               class="input input-bordered join-item w-full"
+                               class="input input-bordered join-item w-full pr-16"
                                id="searchInput"
                                aria-label="Suchen">
+                        <div id="searchFeedback" class="absolute right-28 top-1/2 -translate-y-1/2 hidden z-10 pointer-events-none">
+                            <span id="resultsCount" class="badge badge-sm badge-ghost opacity-70"></span>
+                        </div>
+                        <div id="searchStatus" class="sr-only" aria-live="polite"></div>
                         <button type="button" id="clearSearch" class="btn btn-ghost join-item hidden" aria-label="Suche löschen">
                             <i class="fas fa-times"></i>
                         </button>
@@ -86,30 +90,51 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
+            const feedback = document.getElementById('searchFeedback');
+            const status = document.getElementById('searchStatus');
+            const countBadge = document.getElementById('resultsCount');
+            let visibleCount = 0;
 
-            // Toggle clear button
             if (clearSearch) {
-                if (searchTerm.length > 0) {
-                    clearSearch.classList.remove('hidden');
-                } else {
-                    clearSearch.classList.add('hidden');
-                }
+                clearSearch.classList.toggle('hidden', searchTerm.length === 0);
+            }
+            if (feedback) {
+                feedback.classList.toggle('hidden', searchTerm.length === 0);
             }
 
             document.querySelectorAll('.data-row').forEach(row => {
-                const searchableContent = row.textContent.toLowerCase();
-                row.style.display = searchableContent.includes(searchTerm) ? '' : 'none';
+                const matches = row.textContent.toLowerCase().includes(searchTerm);
+                row.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
             });
+
+            if (countBadge) countBadge.textContent = `${visibleCount} Treffer`;
+            if (status) status.textContent = searchTerm ? `${visibleCount} Ergebnisse für "${searchTerm}"` : "";
         });
 
         if (clearSearch) {
             clearSearch.addEventListener('click', function() {
                 searchInput.value = '';
-                clearSearch.classList.add('hidden');
                 searchInput.dispatchEvent(new Event('input'));
                 searchInput.focus();
             });
         }
+
+        document.addEventListener('keydown', function(e) {
+            const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
+            if (e.key === '/' && !isInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    searchInput.blur();
+                }
+            }
+        });
     }
 
     // Sortier-Funktionalität
