@@ -26,28 +26,38 @@ The easiest way to get Scandy up and running is using Docker Compose.
 4.  **Access Scandy:**
     Open your browser and navigate to `http://localhost:5000`.
 
-## ⛴️ Installation via Portainer
+## ⛴️ Installation via Portainer (Plug-and-Play)
 
-To install Scandy as a Stack in Portainer:
+Scandy is optimized for deployment as a **Portainer Stack**. This allows for a clean "Plug-and-Play" installation.
 
-1.  Log in to your Portainer instance.
-2.  Go to **Stacks** > **Add stack**.
-3.  Give the stack a name (e.g., `scandy`).
-4.  Select **Web editor** and paste the content of `docker-compose.yml`.
-5.  Under **Environment variables**, add the necessary variables (see list below).
+### Method 1: Repository (Recommended)
+1.  In Portainer, go to **Stacks** > **Add stack**.
+2.  Select **Repository**.
+3.  **Repository URL:** `https://github.com/your-repo/scandy.git`
+4.  **Compose path:** `docker-compose.yml`
+5.  **Environment variables:** Add the variables listed below.
 6.  Click **Deploy the stack**.
 
+### Method 2: Web Editor
+1.  In Portainer, go to **Stacks** > **Add stack**.
+2.  Select **Web editor**.
+3.  Paste the content of the `docker-compose.yml` file.
+4.  **Environment variables:** Add the variables listed below.
+5.  Click **Deploy the stack**.
+
 ## ⚙️ Configuration (Environment Variables)
+
+Add these variables in the Portainer UI under **Environment variables** for the stack:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `APP_PORT` | The port the application will be accessible on. | `5000` |
 | `MONGO_ROOT_USER` | Root username for MongoDB. | `admin` |
-| `MONGO_ROOT_PASSWORD` | Root password for MongoDB. | `change_me_immediately` |
+| `MONGO_ROOT_PASSWORD` | Root password for MongoDB (Change this!). | `change_me_immediately` |
 | `MONGODB_DB` | Name of the database. | `scandy` |
 | `SECRET_KEY` | Flask secret key for session encryption. | `change_me_secret_key` |
 | `FLASK_ENV` | Flask environment (`production` or `development`). | `production` |
-| `TIMEZONE` | System timezone. | `Europe/Berlin` |
+| `TIMEZONE` | System timezone (e.g., `Europe/Berlin`). | `Europe/Berlin` |
 | `ME_PORT` | Port for Mongo Express (Web UI for MongoDB). | `8081` |
 | `ME_BASICAUTH_USER` | Basic auth username for Mongo Express. | `admin` |
 | `ME_BASICAUTH_PASSWORD` | Basic auth password for Mongo Express. | `change_me_immediately` |
