@@ -6,12 +6,14 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 # We need the app directory for Tailwind to scan for classes
 COPY app ./app
-RUN npm install
-RUN npm run build:css
+RUN npm install && npm run build:css
 
 # Stage 2: Final Python Runtime
 FROM python:3.11-slim
 WORKDIR /app
+
+# Create a non-root user
+RUN groupadd -r scandy && useradd -r -g scandy scandy
 
 # Install system dependencies (minimal)
 RUN apt-get update && apt-get install -y \
@@ -30,13 +32,17 @@ COPY . .
 # Copy built CSS from the builder stage
 COPY --from=css-builder /app/app/static/css/main.css /app/app/static/css/main.css
 
-# Ensure necessary directories exist for persistence
-RUN mkdir -p /app/app/uploads /app/app/backups /app/app/logs /app/app/flask_session /app/tmp
+# Ensure necessary directories exist for persistence and set permissions
+RUN mkdir -p /app/app/uploads /app/app/backups /app/app/logs /app/app/flask_session /app/tmp && \
+    chown -R scandy:scandy /app
+
+# Switch to non-root user
+USER scandy
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV FLASK_APP=app/wsgi.py
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FLASK_APP=app/wsgi.py
 
 # Expose the application port
 EXPOSE 5000
