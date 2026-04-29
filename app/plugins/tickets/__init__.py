@@ -1,4 +1,5 @@
 from .routes import bp
+from . import debug_routes # Ensure debug_routes is loaded
 from app.core.plugins import Plugin, plugin_manager
 
 plugin_manager.register(Plugin('tickets', bp, 'ticket_system', url_prefix='/tickets'))
