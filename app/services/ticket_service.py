@@ -762,6 +762,61 @@ class TicketService:
             logger.error(f"Fehler beim Aktualisieren der verantwortlichen Person: [Interner Fehler]")
             return False, f'Fehler beim Aktualisieren: [Interner Fehler]'
     
+    def check_ticket_permission(self, ticket: Dict[str, Any], username: str, role: str, current_department: Optional[str] = None) -> bool:
+        """
+        Prüft ob ein Benutzer Berechtigung für ein Ticket hat
+
+        Args:
+            ticket: Ticket-Daten
+            username: Benutzername
+            role: Benutzerrolle
+            current_department: Aktuelle Abteilung (optional)
+
+        Returns:
+            bool: True wenn Berechtigung vorhanden, False sonst
+        """
+        # Admins können alle Tickets sehen
+        if role == 'admin':
+            return True
+
+        # Department-Gleichheit prüfen: Ticket muss in gleicher Abteilung liegen (falls gesetzt)
+        if current_department:
+            ticket_dept = ticket.get('department')
+            if ticket_dept and ticket_dept != current_department:
+                return False
+
+        # Erstellt von dem Benutzer
+        if ticket.get('created_by') == username:
+            return True
+
+        # Verantwortliche Person hat Zugriff (volle Rechte für Micro-Administration)
+        if ticket.get('responsible') == username:
+            return True
+
+        # Zugewiesen an den Benutzer (Legacy + Mehrfachzuweisung)
+        # Prüfe Legacy-Zuweisung
+        if ticket.get('assigned_to') == username:
+            return True
+
+        # Prüfe Mehrfachzuweisung
+        ticket_id_for_query = self.utility_service.convert_id_for_query(str(ticket['_id']))
+        user_assignments = mongodb.find('ticket_assignments', {'ticket_id': ticket_id_for_query, 'assigned_to': username})
+        if list(user_assignments):  # Wenn Einträge gefunden wurden
+            return True
+
+        # Falls nicht zugewiesen, prüfe Handlungsfeld
+        # Hole Handlungsfelder des Benutzers
+        user_settings = mongodb.find_one('users', {'username': username})
+        if user_settings and user_settings.get('handlungsfelder'):
+            user_handlungsfelder = user_settings['handlungsfelder']
+            ticket_category = ticket.get('category', '')
+
+            # Prüfe ob Ticket-Kategorie in den zugewiesenen Handlungsfeldern ist
+            if ticket_category in user_handlungsfelder:
+                return True
+
+        return False
+
     def _convert_datetime_fields(self, ticket: Dict[str, Any]) -> Dict[str, Any]:
         """
         Konvertiert datetime-Strings zu datetime-Objekten
