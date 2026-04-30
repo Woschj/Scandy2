@@ -5,7 +5,7 @@ from app.models.mongodb_database import mongodb, is_feature_enabled
 from app.utils.decorators import login_required, admin_required, not_teilnehmer_required
 from app.utils.permissions import permission_required
 from app.utils.id_helpers import convert_id_for_query, find_document_by_id
-from .routes import bp, get_ticket_service, check_ticket_permission
+from .routes import bp, get_ticket_service
 import logging
 from datetime import datetime
 from bson import ObjectId

@@ -10,7 +10,7 @@ import zipfile
 import tempfile
 from pathlib import Path
 from app.models.mongodb_database import mongodb
-from app.utils.backup_manager import BackupManager
+from app.utils.unified_backup_manager import UnifiedBackupManager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class BackupService:
     """Zentraler Service für alle Backup-Operationen"""
     
     def __init__(self):
-        self.backup_manager = BackupManager()
+        self.backup_manager = UnifiedBackupManager()
     
     def create_backup(self, include_files: bool = True) -> Tuple[bool, str, Optional[str]]:
         """

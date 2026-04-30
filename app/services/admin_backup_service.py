@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 from app.models.mongodb_database import mongodb
-from app.utils.backup_manager import backup_manager
+from app.utils.unified_backup_manager import unified_backup_manager as backup_manager
 
 logger = logging.getLogger(__name__)
 
@@ -585,7 +585,7 @@ class AdminBackupService:
         Behält alle Datentypen 1:1 bei - keine JSON-Konvertierung!
         """
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.unified_backup_manager import unified_backup_manager as backup_manager
             
             backup_filename = backup_manager.create_native_backup()
             
@@ -607,7 +607,7 @@ class AdminBackupService:
         Behält alle Datentypen 1:1 bei - keine JSON-Konvertierung!
         """
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.unified_backup_manager import unified_backup_manager as backup_manager
             
             success = backup_manager.restore_native_backup(backup_filename)
             
@@ -626,7 +626,7 @@ class AdminBackupService:
     def get_native_backup_list() -> List[Dict[str, Any]]:
         """Hole Liste aller nativen MongoDB-Backups"""
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.unified_backup_manager import unified_backup_manager as backup_manager
             
             return backup_manager.list_native_backups()
             
@@ -661,7 +661,7 @@ class AdminBackupService:
         Erstellt ein hybrides Backup: Native MongoDB + JSON für Kompatibilität
         """
         try:
-            from app.utils.backup_manager import backup_manager
+            from app.utils.unified_backup_manager import unified_backup_manager as backup_manager
             
             result = backup_manager.create_hybrid_backup()
             

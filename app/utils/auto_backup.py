@@ -11,7 +11,7 @@ import socket
 import random
 from datetime import datetime, time as dt_time, timedelta
 from pathlib import Path
-from app.utils.backup_manager import BackupManager
+from app.utils.unified_backup_manager import UnifiedBackupManager
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class AutoBackupScheduler:
     """Automatischer Backup-Scheduler"""
     
     def __init__(self):
-        self.backup_manager = BackupManager()
+        self.backup_manager = UnifiedBackupManager()
         self.running = False
         self.thread = None
         
