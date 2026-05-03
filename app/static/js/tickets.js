@@ -48,8 +48,13 @@ window.showTab = function(tab) {
     }
 };
 
-window.deleteTicket = function(ticketId) {
-    if (confirm('Möchten Sie dieses Ticket wirklich löschen? Es wird in den Papierkorb verschoben.')) {
+window.deleteTicket = async function(ticketId) {
+    const confirmed = await window.confirmAction({
+        title: 'Ticket löschen?',
+        message: 'Möchten Sie dieses Ticket wirklich löschen? Es wird in den Papierkorb verschoben.',
+        confirmText: 'Löschen', confirmClass: 'btn-error'
+    });
+    if (confirmed) {
         fetch(`/tickets/${ticketId}/delete`, {
             method: 'POST',
             headers: {

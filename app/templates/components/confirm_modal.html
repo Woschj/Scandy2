@@ -1,0 +1,28 @@
+<dialog id="confirmModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="confirmModalTitle">Bestätigung</h3>
+        <p class="py-4" id="confirmModalMessage"></p>
+        <div class="modal-action">
+            <button class="btn btn-ghost" id="confirmModalCancelBtn">Abbrechen</button>
+            <button class="btn btn-primary" id="confirmModalConfirmBtn">Bestätigen</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+<script nonce="{{ csp_nonce }}">
+window.confirmAction = (opt) => new Promise(res => {
+    const m = document.getElementById('confirmModal');
+    document.getElementById('confirmModalTitle').textContent = opt.title || 'Bestätigung';
+    document.getElementById('confirmModalMessage').textContent = opt.message || '';
+    const cb = document.getElementById('confirmModalConfirmBtn');
+    const nb = document.getElementById('confirmModalCancelBtn');
+    cb.textContent = opt.confirmText || 'Bestätigen';
+    nb.textContent = opt.cancelText || 'Abbrechen';
+    cb.className = 'btn ' + (opt.confirmClass || 'btn-primary');
+    const cl = () => { cb.removeEventListener('click', hC); nb.removeEventListener('click', hN); m.removeEventListener('close', hN); };
+    const hC = () => { cl(); m.close(); res(true); };
+    const hN = () => { cl(); m.close(); res(false); };
+    cb.addEventListener('click', hC); nb.addEventListener('click', hN);
+    m.addEventListener('close', hN, {once:true}); m.showModal();
+});
+</script>
