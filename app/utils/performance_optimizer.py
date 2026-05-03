@@ -208,133 +208,52 @@ class QueryOptimizer:
     
     @staticmethod
     def get_dashboard_statistics_optimized() -> Dict[str, Any]:
-        """Optimierte Dashboard-Statistiken mit Aggregation"""
+        """Optimierte Dashboard-Statistiken mit gezielten Aggregationen (Bolt ⚡)"""
         try:
-            # Verwende Aggregation statt separate count_documents
-            pipeline = [
-                {
-                    '$facet': {
-                        'tools': [
-                            {'$match': {'deleted': {'$ne': True}}},
-                            {
-                                '$group': {
-                                    '_id': None,
-                                    'total': {'$sum': 1},
-                                    'available': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$in': ['$status', ['available', 'bereit']]},
-                                                1, 0
-                                            ]
-                                        }
-                                    },
-                                    'lent': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$in': ['$status', ['lent', 'ausgeliehen']]},
-                                                1, 0
-                                            ]
-                                        }
-                                    },
-                                    'defect': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$in': ['$status', ['defect', 'defekt']]},
-                                                1, 0
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        ],
-                        'consumables': [
-                            {'$match': {'deleted': {'$ne': True}}},
-                            {
-                                '$group': {
-                                    '_id': None,
-                                    'total': {'$sum': 1},
-                                    'sufficient': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$gt': ['$quantity', '$min_quantity']},
-                                                1, 0
-                                            ]
-                                        }
-                                    },
-                                    'warning': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {
-                                                    '$and': [
-                                                        {'$lte': ['$quantity', '$min_quantity']},
-                                                        {'$gt': ['$quantity', 0]}
-                                                    ]
-                                                },
-                                                1, 0
-                                            ]
-                                        }
-                                    },
-                                    'critical': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$eq': ['$quantity', 0]},
-                                                1, 0
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        ],
-                        'workers': [
-                            {'$match': {'deleted': {'$ne': True}}},
-                            {
-                                '$group': {
-                                    '_id': None,
-                                    'total': {'$sum': 1}
-                                }
-                            }
-                        ],
-                        'lendings': [
-                            {
-                                '$group': {
-                                    '_id': None,
-                                    'active': {
-                                        '$sum': {
-                                            '$cond': [
-                                                {'$eq': ['$returned_at', None]},
-                                                1, 0
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-            
-            result = list(mongodb.aggregate('tools', pipeline))
-            
-            if result:
-                stats = result[0]
-                return {
-                    'tool_stats': stats['tools'][0] if stats['tools'] else {'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
-                    'consumable_stats': stats['consumables'][0] if stats['consumables'] else {'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
-                    'worker_stats': stats['workers'][0] if stats['workers'] else {'total': 0},
-                    'lending_stats': stats['lendings'][0] if stats['lendings'] else {'active': 0}
+            # 1. Tool-Statistiken (Status-Zählung)
+            tool_pipeline = [{'$match': {'deleted': {'$ne': True}}}, {'$group': {
+                '_id': None, 'total': {'$sum': 1},
+                'available': {'$sum': {'$cond': [{'$in': [{'$toLower': {'$ifNull': ['$status', 'available']}}, ['available', 'verfügbar', 'bereit']]}, 1, 0]}},
+                'lent': {'$sum': {'$cond': [{'$in': [{'$toLower': {'$ifNull': ['$status', '']}}, ['lent', 'ausgeliehen']]}, 1, 0]}},
+                'defect': {'$sum': {'$cond': [{'$in': [{'$toLower': {'$ifNull': ['$status', '']}}, ['defect', 'defekt']]}, 1, 0]}}
+            }}]
+            tool_res = list(mongodb.aggregate('tools', tool_pipeline))
+            tool_stats = tool_res[0] if tool_res else {'total': 0, 'available': 0, 'lent': 0, 'defect': 0}
+            tool_stats.pop('_id', None)
+
+            # 2. Consumable-Statistiken
+            cons_pipeline = [{'$match': {'deleted': {'$ne': True}}}, {'$group': {
+                '_id': None, 'total': {'$sum': 1},
+                'sufficient': {'$sum': {'$cond': [{'$gt': ['$quantity', '$min_quantity']}, 1, 0]}},
+                'warning': {'$sum': {'$cond': [{'$and': [{'$lte': ['$quantity', '$min_quantity']}, {'$gt': ['$quantity', 0]}]}, 1, 0]}},
+                'critical': {'$sum': {'$cond': [{'$eq': ['$quantity', 0]}, 1, 0]}}
+            }}]
+            cons_res = list(mongodb.aggregate('consumables', cons_pipeline))
+            cons_stats = cons_res[0] if cons_res else {'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0}
+            cons_stats.pop('_id', None)
+
+            # 3. Worker-Statistiken (inkl. Abteilungs-Breakdown für Home-Page)
+            worker_pipeline = [{'$match': {'deleted': {'$ne': True}}}, {'$facet': {
+                'total': [{'$count': 'count'}],
+                'by_dept': [{'$group': {'_id': '$department', 'count': {'$sum': 1}}}, {'$sort': {'count': -1}}]
+            }}]
+            worker_res = list(mongodb.aggregate('workers', worker_pipeline))
+            if worker_res:
+                wr = worker_res[0]
+                worker_stats = {
+                    'total': wr['total'][0]['count'] if wr['total'] else 0,
+                    'by_department': [{'name': d['_id'] or 'Ohne Abteilung', 'count': d['count']} for d in wr['by_dept']]
                 }
             else:
-                return {
-                    'tool_stats': {'total': 0, 'available': 0, 'lent': 0, 'defect': 0},
-                    'consumable_stats': {'total': 0, 'sufficient': 0, 'warning': 0, 'critical': 0},
-                    'worker_stats': {'total': 0},
-                    'lending_stats': {'active': 0}
-                }
-                
+                worker_stats = {'total': 0, 'by_department': []}
+
+            return {
+                'tool_stats': tool_stats, 'consumable_stats': cons_stats, 'worker_stats': worker_stats,
+                'lending_stats': {'active': mongodb.count_documents('lendings', {'returned_at': None})}
+            }
         except Exception as e:
-            logger.error(f"Error in optimized dashboard statistics: [Interner Fehler]")
-            # Fallback zu den ursprünglichen count_documents
-            return IndexOptimizer._get_dashboard_statistics_fallback()
+            logger.error(f"Error in optimized dashboard statistics: {e}")
+            return QueryOptimizer._get_dashboard_statistics_fallback()
     
     @staticmethod
     def _get_dashboard_statistics_fallback() -> Dict[str, Any]:
