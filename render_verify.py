@@ -54,16 +54,21 @@ def mock_render():
         'notices': []
     }
 
-    # Render dashboard
+    # Render tools index
     try:
-        template = env.get_template('admin/dashboard.html')
-        rendered = template.render(**mock_ctx)
+        mock_tools = [
+            {'barcode': '12345', 'name': 'Hammer', 'category': 'Handwerkzeuge', 'location': 'Werkstatt', 'status': 'verfügbar'},
+            {'barcode': '67890', 'name': 'Bohrmaschine', 'category': 'Elektrowerkzeuge', 'location': 'Lager', 'status': 'ausgeliehen'},
+            {'barcode': '11223', 'name': 'Schraubenschlüssel', 'category': 'Handwerkzeuge', 'location': 'Werkstatt', 'status': 'defekt'}
+        ]
+        template = env.get_template('tools/index.html')
+        rendered = template.render(**mock_ctx, tools=mock_tools, categories=['Handwerkzeuge', 'Elektrowerkzeuge'], locations=['Werkstatt', 'Lager'])
         os.makedirs('verification', exist_ok=True)
-        with open('verification/dashboard.html', 'w') as f:
+        with open('verification/tools_index.html', 'w') as f:
             f.write(rendered)
-        print("Dashboard rendered to verification/dashboard.html")
+        print("Tools index rendered to verification/tools_index.html")
     except Exception as e:
-        print(f"Error rendering dashboard: {e}")
+        print(f"Error rendering tools index: {e}")
 
     # Render base to see quickscan modal (it's included in base.html)
     try:
