@@ -559,6 +559,68 @@ def delete(id):
             'message': 'Fehler beim Löschen des Tickets'
         }), 500
 
+def _get_auftrag_details_data(ticket, id):
+    """Zentralisierte Logik zum Laden der Auftragsdetails, Notizen, Nachrichten und Arbeitslisten."""
+    # Verwende die Ticket-ID für alle Abfragen
+    ticket_id_for_query = convert_id_for_query(id)
+
+    # Füge id-Feld hinzu (für Template-Kompatibilität)
+    ticket['id'] = str(ticket['_id'])
+
+    # Konvertiere alle Datumsfelder zu datetime-Objekten
+    date_fields = ['created_at', 'updated_at', 'resolved_at', 'due_date']
+    for field in date_fields:
+        if ticket.get(field):
+            try:
+                ticket[field] = datetime.strptime(ticket[field], '%Y-%m-%d %H:%M:%S')
+            except (ValueError, TypeError):
+                ticket[field] = None
+
+    # Hole die Notizen für das Ticket
+    notes = mongodb.find('ticket_notes', {'ticket_id': ticket_id_for_query})
+
+    # Hole die Nachrichten für das Ticket
+    messages = mongodb.find('ticket_messages', {'ticket_id': ticket_id_for_query})
+
+    # Hole die Auftragsdetails
+    auftrag_details = mongodb.find_one('auftrag_details', {'ticket_id': ticket_id_for_query})
+
+    # Hole Materialliste
+    material_list = list(mongodb.find('auftrag_material', {'ticket_id': ticket_id_for_query}))
+
+    # Hole Arbeitsliste (Priorität: strukturierte DB-Einträge)
+    arbeit_list = list(mongodb.find('auftrag_arbeit', {'ticket_id': ticket_id_for_query}))
+
+    # Fallback: Verarbeite die ausgeführten Arbeiten aus den Auftragsdetails, falls DB-Liste leer ist
+    if not arbeit_list and auftrag_details and auftrag_details.get('ausgefuehrte_arbeiten'):
+        arbeit_zeilen = auftrag_details['ausgefuehrte_arbeiten'].split('\n')
+        for zeile in arbeit_zeilen:
+            if zeile.strip():
+                teile = zeile.split('|')
+                arbeit_list.append({
+                    'arbeit': teile[0] if len(teile) > 0 else '',
+                    'arbeitsstunden': float(teile[1]) if len(teile) > 1 and teile[1] else 0,
+                    'leistungskategorie': teile[2] if len(teile) > 2 else ''
+                })
+
+    # Füge die Auftragsdetails zum Ticket hinzu, damit das Template darauf zugreifen kann
+    if auftrag_details:
+        ticket['auftrag_details'] = auftrag_details
+        # Füge die Material- und Arbeitslisten hinzu
+        ticket['auftrag_details']['material_list'] = material_list
+        ticket['auftrag_details']['arbeit_list'] = arbeit_list
+    else:
+        # Falls keine Auftragsdetails vorhanden sind, verwende die Ticket-Daten als Fallback
+        ticket['auftrag_details'] = {
+            'bereich': ticket.get('category', ''),
+            'auftraggeber_name': ticket.get('created_by', ''),
+            'auftragsbeschreibung': ticket.get('description', ''),
+            'material_list': material_list,
+            'arbeit_list': arbeit_list
+        }
+
+    return ticket, notes, messages, auftrag_details, material_list, arbeit_list
+
 @bp.route('/<id>/auftrag-details-modal')
 @login_required
 @permission_required('tickets', 'view')
@@ -570,35 +632,7 @@ def auftrag_details_modal(id):
         if not ticket:
             return render_template('404.html'), 404
         
-        # Verwende die Ticket-ID für alle Abfragen
-        ticket_id_for_query = convert_id_for_query(id)
-        
-        # Füge id-Feld hinzu (für Template-Kompatibilität)
-        ticket['id'] = str(ticket['_id'])
-        
-        # Konvertiere alle Datumsfelder zu datetime-Objekten
-        date_fields = ['created_at', 'updated_at', 'resolved_at', 'due_date']
-        for field in date_fields:
-            if ticket.get(field):
-                try:
-                    ticket[field] = datetime.strptime(ticket[field], '%Y-%m-%d %H:%M:%S')
-                except (ValueError, TypeError):
-                    ticket[field] = None
-            
-        # Hole die Notizen für das Ticket
-        notes = mongodb.find('ticket_notes', {'ticket_id': ticket_id_for_query})
-
-        # Hole die Nachrichten für das Ticket
-        messages = mongodb.find('ticket_messages', {'ticket_id': ticket_id_for_query})
-
-        # Hole die Auftragsdetails
-        auftrag_details = mongodb.find_one('auftrag_details', {'ticket_id': ticket_id_for_query})
-        
-        # Hole Materialliste
-        material_list = list(mongodb.find('auftrag_material', {'ticket_id': ticket_id_for_query}))
-        
-        # Hole Arbeitsliste
-        arbeit_list = list(mongodb.find('auftrag_arbeit', {'ticket_id': convert_id_for_query(id)}))
+        ticket, notes, messages, auftrag_details, material_list, arbeit_list = _get_auftrag_details_data(ticket, id)
 
         return render_template('tickets/auftrag_details_modal.html', 
                              ticket=ticket, 
@@ -1584,67 +1618,10 @@ def auftrag_details_page(id):
             flash('Sie haben keine Berechtigung, dieses Ticket zu sehen.', 'error')
             return redirect(url_for('tickets.create'))
         
-        # Füge id-Feld hinzu (für Template-Kompatibilität)
-        ticket['id'] = str(ticket['_id'])
-        
-        # Konvertiere alle Datumsfelder zu datetime-Objekten
-        date_fields = ['created_at', 'updated_at', 'resolved_at', 'due_date']
-        for field in date_fields:
-            if ticket.get(field):
-                try:
-                    ticket[field] = datetime.strptime(ticket[field], '%Y-%m-%d %H:%M:%S')
-                except (ValueError, TypeError):
-                    ticket[field] = None
-        
-        # Verwende die Ticket-ID für alle Abfragen
-        ticket_id_for_query = convert_id_for_query(id)
-            
-        # Hole die Notizen für das Ticket
-        notes = mongodb.find('ticket_notes', {'ticket_id': ticket_id_for_query})
-
-        # Hole die Nachrichten für das Ticket
-        messages = mongodb.find('ticket_messages', {'ticket_id': ticket_id_for_query})
-
-        # Hole die Auftragsdetails
-        auftrag_details = mongodb.find_one('auftrag_details', {'ticket_id': ticket_id_for_query})
-        
-        # Hole Materialliste
-        material_list = list(mongodb.find('auftrag_material', {'ticket_id': ticket_id_for_query}))
-        
-        # Hole Arbeitsliste
-        arbeit_list = list(mongodb.find('auftrag_arbeit', {'ticket_id': ticket_id_for_query}))
-        
-        # Verarbeite die ausgeführten Arbeiten aus den Auftragsdetails
-        arbeit_list = []
-        if auftrag_details and auftrag_details.get('ausgefuehrte_arbeiten'):
-            arbeit_zeilen = auftrag_details['ausgefuehrte_arbeiten'].split('\n')
-            for zeile in arbeit_zeilen:
-                if zeile.strip():
-                    teile = zeile.split('|')
-                    arbeit_list.append({
-                        'arbeit': teile[0] if len(teile) > 0 else '',
-                        'arbeitsstunden': float(teile[1]) if len(teile) > 1 and teile[1] else 0,
-                        'leistungskategorie': teile[2] if len(teile) > 2 else ''
-                    })
+        ticket, notes, messages, auftrag_details, material_list, arbeit_list = _get_auftrag_details_data(ticket, id)
         
         logging.info(f"DEBUG: arbeit_list für Ticket {id}: {arbeit_list}")
         
-        # Füge die Auftragsdetails zum Ticket hinzu, damit das Template darauf zugreifen kann
-        if auftrag_details:
-            ticket['auftrag_details'] = auftrag_details
-            # Füge die Material- und Arbeitslisten hinzu
-            ticket['auftrag_details']['material_list'] = material_list
-            ticket['auftrag_details']['arbeit_list'] = arbeit_list
-        else:
-            # Falls keine Auftragsdetails vorhanden sind, verwende die Ticket-Daten als Fallback
-            ticket['auftrag_details'] = {
-                'bereich': ticket.get('category', ''),
-                'auftraggeber_name': ticket.get('created_by', ''),
-                'auftragsbeschreibung': ticket.get('description', ''),
-                'material_list': material_list,
-                'arbeit_list': arbeit_list
-            }
-
         return render_template('tickets/auftrag_details_page.html', 
                              ticket=ticket, 
                              notes=notes,
