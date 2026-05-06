@@ -1,5 +1,5 @@
 from flask_mail import Mail, Message
-from flask import current_app, has_app_context
+from flask import current_app, has_app_context, render_template
 import os
 import logging
 from datetime import datetime
@@ -654,152 +654,14 @@ def send_auftrag_confirmation_email(ticket_data, auftrag_details, recipient_emai
         subject = f"Auftragsbestätigung - {ticket_data.get('ticket_number', 'Neuer Auftrag')}"
         
         # HTML-E-Mail-Template
-        html_content = f"""
-        <!DOCTYPE html>
-        <html lang="de">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Auftragsbestätigung</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
-                .content {{ background-color: #ffffff; padding: 30px; border: 1px solid #dee2e6; }}
-                .footer {{ background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #6c757d; }}
-                .success-icon {{ color: #28a745; font-size: 48px; margin-bottom: 20px; }}
-                .ticket-number {{ background-color: #e9ecef; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; }}
-                .ticket-number .number {{ font-size: 24px; font-weight: bold; color: #007bff; font-family: monospace; }}
-                .details {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }}
-                .details h3 {{ margin-top: 0; color: #495057; }}
-                .details table {{ width: 100%; border-collapse: collapse; }}
-                .details td {{ padding: 8px; border-bottom: 1px solid #dee2e6; }}
-                .details td:first-child {{ font-weight: bold; width: 30%; }}
-                .priority-badge {{ display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }}
-                .priority-normal {{ background-color: #007bff; color: white; }}
-                .priority-hoch {{ background-color: #dc3545; color: white; }}
-                .priority-niedrig {{ background-color: #6c757d; color: white; }}
-                .next-steps {{ background-color: #d1ecf1; padding: 20px; border-radius: 5px; margin: 20px 0; }}
-                .next-steps h3 {{ margin-top: 0; color: #0c5460; }}
-                .next-steps ul {{ margin: 0; padding-left: 20px; }}
-                .next-steps li {{ margin-bottom: 8px; }}
-                .contact-info {{ background-color: #e2e3e5; padding: 20px; border-radius: 5px; margin: 20px 0; }}
-                .contact-info h3 {{ margin-top: 0; color: #383d41; }}
-                .btn {{ display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; }}
-                .btn:hover {{ background-color: #0056b3; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <div class="success-icon">✓</div>
-                    <h1 style="margin: 0; color: #28a745;">Auftrag erfolgreich erstellt!</h1>
-                    <p style="margin: 10px 0 0 0; color: #6c757d;">Vielen Dank für Ihren Auftrag</p>
-                </div>
-                
-                <div class="content">
-                    <div class="ticket-number">
-                        <p style="margin: 0 0 10px 0; font-weight: bold;">Ihre Auftragsnummer:</p>
-                        <div class="number">{ticket_data.get('ticket_number', 'N/A')}</div>
-                    </div>
-                    
-                    <div class="details">
-                        <h3>Auftragsdetails</h3>
-                        <table>
-                            <tr>
-                                <td>Titel:</td>
-                                <td>{ticket_data.get('title', 'N/A')}</td>
-                            </tr>
-                            <tr>
-                                <td>Kategorie:</td>
-                                <td>{ticket_data.get('category', 'Nicht angegeben')}</td>
-                            </tr>
-                            <tr>
-                                <td>Priorität:</td>
-                                <td>
-                                    <span class="priority-badge priority-{ticket_data.get('priority', 'normal')}">
-                                        {ticket_data.get('priority', 'normal').title()}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Auftraggeber:</td>
-                                <td>{auftrag_details.get('auftraggeber_name', 'N/A')}</td>
-                            </tr>
-                            <tr>
-                                <td>Bereich:</td>
-                                <td>{auftrag_details.get('bereich', 'Nicht angegeben')}</td>
-                            </tr>
-                            <tr>
-                                <td>Erstellt am:</td>
-                                <td>{ticket_data.get('created_at', 'N/A')}</td>
-                            </tr>
-                        </table>
-                        
-                        <h4 style="margin-top: 20px;">Beschreibung:</h4>
-                        <p style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff;">
-                            {ticket_data.get('description', 'Keine Beschreibung vorhanden')}
-                        </p>
-                    </div>
-                    
-                    <div class="next-steps">
-                        <h3>Nächste Schritte</h3>
-                        <ul>
-                            <li>Wir haben Ihren Auftrag in unserem System erfasst</li>
-                            <li>Wir werden die Details besprechen und einen Zeitplan erstellen</li>
-                            <li>Sie erhalten Updates zum Fortschritt Ihres Auftrags</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="contact-info">
-                        <h3>Kontakt</h3>
-                        <p style="margin-bottom: 10px;">Bei Fragen erreichen Sie uns über das Scandy-System.</p>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 30px;">
-                        <a href="/tickets/auftrag-neu" class="btn">Neuen Auftrag erstellen</a>
-                        <a href="/" class="btn" style="background-color: #6c757d;">Zur Startseite</a>
-                    </div>
-                </div>
-                
-                <div class="footer">
-                    <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht auf diese E-Mail.</p>
-                    <p>Scandy - Ihr Auftragssystem</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        html_content = render_template('emails/auftrag_confirmation.html',
+                                       ticket_data=ticket_data,
+                                       auftrag_details=auftrag_details)
         
         # Plain-Text-Version
-        text_content = f"""
-Auftragsbestätigung - {ticket_data.get('ticket_number', 'Neuer Auftrag')}
-
-Vielen Dank für Ihren Auftrag!
-
-Ihre Auftragsnummer: {ticket_data.get('ticket_number', 'N/A')}
-
-AUFTRAGSDETAILS:
-- Titel: {ticket_data.get('title', 'N/A')}
-- Kategorie: {ticket_data.get('category', 'Nicht angegeben')}
-- Priorität: {ticket_data.get('priority', 'normal').title()}
-- Auftraggeber: {auftrag_details.get('auftraggeber_name', 'N/A')}
-- Bereich: {auftrag_details.get('bereich', 'Nicht angegeben')}
-- Erstellt am: {ticket_data.get('created_at', 'N/A')}
-
-Beschreibung:
-{ticket_data.get('description', 'Keine Beschreibung vorhanden')}
-
-NÄCHSTE SCHRITTE:
-- Wir haben Ihren Auftrag in unserem System erfasst
-- Wir werden die Details besprechen und einen Zeitplan erstellen
-- Sie erhalten Updates zum Fortschritt Ihres Auftrags
-
-KONTAKT:
-Bei Fragen erreichen Sie uns über das Scandy-System.
-
-Scandy - Ihr Auftragssystem
-        """
+        text_content = render_template('emails/auftrag_confirmation.txt',
+                                       ticket_data=ticket_data,
+                                       auftrag_details=auftrag_details)
         
         # E-Mail senden
         result = send_email(
