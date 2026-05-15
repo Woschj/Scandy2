@@ -1,0 +1,26 @@
+Auftragsbestätigung - {{ ticket_data.get('ticket_number', 'Neuer Auftrag') }}
+
+Vielen Dank für Ihren Auftrag!
+
+Ihre Auftragsnummer: {{ ticket_data.get('ticket_number', 'N/A') }}
+
+AUFTRAGSDETAILS:
+- Titel: {{ ticket_data.get('title', 'N/A') }}
+- Kategorie: {{ ticket_data.get('category', 'Nicht angegeben') }}
+- Priorität: {{ ticket_data.get('priority', 'normal') | title }}
+- Auftraggeber: {{ auftrag_details.get('auftraggeber_name', 'N/A') }}
+- Bereich: {{ auftrag_details.get('bereich', 'Nicht angegeben') }}
+- Erstellt am: {{ ticket_data.get('created_at', 'N/A') }}
+
+Beschreibung:
+{{ ticket_data.get('description', 'Keine Beschreibung vorhanden') }}
+
+NÄCHSTE SCHRITTE:
+- Wir haben Ihren Auftrag in unserem System erfasst
+- Wir werden die Details besprechen und einen Zeitplan erstellen
+- Sie erhalten Updates zum Fortschritt Ihres Auftrags
+
+KONTAKT:
+Bei Fragen erreichen Sie uns über das Scandy-System.
+
+Scandy - Ihr Auftragssystem
