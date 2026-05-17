@@ -7,7 +7,6 @@ die aus der großen admin.py Datei ausgelagert wurden.
 
 import logging
 import os
-import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from flask import current_app, session
