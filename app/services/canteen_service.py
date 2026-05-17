@@ -3,8 +3,6 @@ Kantinenplan Service für Scandy
 API-basierte Verwaltung von Mahlzeiten
 """
 import csv
-import os
-import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from io import StringIO
