@@ -246,202 +246,200 @@ class AdminDashboardService:
             return []
 
     @staticmethod
+    def _get_defect_tools_warnings() -> List[Dict[str, Any]]:
+        """Hole Warnungen für defekte Werkzeuge"""
+        warnings = []
+        try:
+            defect_tools = list(mongodb.find('tools', {'status': 'defekt', 'deleted': {'$ne': True}}))
+            for tool in defect_tools:
+                try:
+                    tool = AdminDashboardService._safe_document_processing(tool)
+                    warnings.append({
+                        'name': tool.get('name', 'Unbekanntes Tool'),
+                        'barcode': tool.get('barcode', ''),
+                        'status': 'defekt',
+                        'severity': 'error'
+                    })
+                except Exception as e:
+                    logger.warning(f"Fehler bei defektem Tool: [Interner Fehler]")
+                    continue
+        except Exception as e:
+            logger.error(f"Fehler beim Laden defekter Tools: [Interner Fehler]")
+        return warnings
+
+    @staticmethod
+    def _get_overdue_lendings_warnings() -> List[Dict[str, Any]]:
+        """Hole Warnungen für überfällige Ausleihen (neue Logik)"""
+        warnings = []
+        try:
+            overdue_loans = AdminDashboardService.get_overdue_loans()
+            for loan in overdue_loans:
+                try:
+                    warnings.append({
+                        'tool_name': loan.get('tool_name', 'Unbekanntes Tool'),
+                        'tool_barcode': loan.get('tool_barcode', ''),
+                        'worker_name': loan.get('worker_name', 'Unbekannt'),
+                        'worker_barcode': loan.get('worker_barcode', ''),
+                        'days_overdue': loan.get('days_overdue', 0),
+                        'expected_return_date': loan.get('expected_return_date'),
+                        'severity': 'error' if loan.get('days_overdue', 0) > 7 else 'warning'
+                    })
+                except Exception as e:
+                    logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
+                    continue
+        except Exception as e:
+            logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
+        return warnings
+
+    @staticmethod
+    def _get_legacy_overdue_lendings_warnings() -> List[Dict[str, Any]]:
+        """Hole Warnungen für alte überfällige Ausleihen ohne expected_return_date"""
+        warnings = []
+        try:
+            legacy_pipeline = [
+                {
+                    '$match': {
+                        'returned_at': {'$exists': False},
+                        'expected_return_date': {'$exists': False}
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': 'tool_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'tool_info'
+                    }
+                },
+                {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': True}},
+                {
+                    '$lookup': {
+                        'from': 'workers',
+                        'localField': 'worker_barcode',
+                        'foreignField': 'barcode',
+                        'as': 'worker_info'
+                    }
+                },
+                {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
+            ]
+
+            active_lendings = mongodb.aggregate('lendings', legacy_pipeline)
+            
+            for lending in active_lendings:
+                try:
+                    lending = AdminDashboardService._safe_document_processing(lending, ['lent_at', 'due_date'])
+                    lent_at = lending.get('lent_at')
+                    if lent_at and isinstance(lent_at, datetime):
+                        days_overdue = (datetime.now() - lent_at).days
+                        if days_overdue > 14:
+                            tool = lending.get('tool_info')
+                            worker = lending.get('worker_info')
+
+                            if tool and worker:
+                                tool = AdminDashboardService._safe_document_processing(tool)
+                                worker = AdminDashboardService._safe_document_processing(worker)
+
+                                warnings.append({
+                                    'tool_name': tool.get('name', 'Unbekanntes Tool'),
+                                    'worker_name': worker.get('name', 'Unbekannter Worker'),
+                                    'days_overdue': days_overdue,
+                                    'lent_at': lent_at,
+                                    'severity': 'warning'
+                                })
+                except Exception as e:
+                    logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
+                    continue
+        except Exception as e:
+            logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
+        return warnings
+
+    @staticmethod
+    def _get_low_stock_consumables_warnings() -> List[Dict[str, Any]]:
+        """Hole Warnungen für Verbrauchsmaterial mit niedrigem Bestand"""
+        warnings = []
+        try:
+            low_stock_consumables = list(mongodb.find('consumables', {
+                'deleted': {'$ne': True},
+                '$expr': {'$lte': ['$quantity', '$min_quantity']}
+            }))
+            for consumable in low_stock_consumables:
+                try:
+                    consumable = AdminDashboardService._safe_document_processing(consumable)
+                    warnings.append({
+                        'name': consumable.get('name', 'Unbekanntes Verbrauchsmaterial'),
+                        'barcode': consumable.get('barcode', ''),
+                        'stock': consumable.get('quantity', 0),
+                        'severity': 'warning'
+                    })
+                except Exception as e:
+                    logger.warning(f"Fehler bei Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+                    continue
+        except Exception as e:
+            logger.error(f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem Bestand: [Interner Fehler]")
+        return warnings
+
+    @staticmethod
+    def _get_duplicate_lendings_warnings() -> List[Dict[str, Any]]:
+        """Hole Warnungen für doppelte Ausleihen"""
+        warnings = []
+        try:
+            duplicate_pipeline = [
+                {'$match': {'returned_at': None}},
+                {'$group': {
+                    '_id': '$tool_barcode',
+                    'count': {'$sum': 1}
+                }},
+                {'$match': {'count': {'$gt': 1}}},
+                {
+                    '$lookup': {
+                        'from': 'tools',
+                        'localField': '_id',
+                        'foreignField': 'barcode',
+                        'as': 'tool_info'
+                    }
+                },
+                {'$unwind': {
+                    'path': '$tool_info',
+                    'preserveNullAndEmptyArrays': True
+                }}
+            ]
+
+            duplicates = mongodb.aggregate('lendings', duplicate_pipeline)
+
+            for dup in duplicates:
+                try:
+                    bc = dup.get('_id')
+                    count = dup.get('count', 0)
+                    tool = dup.get('tool_info')
+
+                    if tool and tool.get('deleted'):
+                        tool = None
+
+                    if tool:
+                        tool = AdminDashboardService._safe_document_processing(tool)
+
+                    warnings.append({
+                        'name': f"{tool.get('name', 'Unbekanntes Tool')} (Barcode: {bc})" if tool else f"Unbekanntes Tool (Barcode: {bc})",
+                        'status': f'Doppelte Ausleihen: {count}x',
+                        'severity': 'warning'
+                    })
+                except Exception as e:
+                    logger.warning(f"Fehler bei doppeltem Tool: [Interner Fehler]")
+                    continue
+        except Exception as e:
+            logger.error(f"Fehler beim Laden doppelter Ausleihen: [Interner Fehler]")
+        return warnings
+
+    @staticmethod
     def get_warnings() -> Dict[str, List[Dict[str, Any]]]:
         """Hole alle Warnungen für das Dashboard"""
         try:
             warnings = {
-                'defect_tools': [],
-                'overdue_lendings': [],
-                'low_stock_consumables': [],
-                'duplicate_lendings': []
+                'defect_tools': AdminDashboardService._get_defect_tools_warnings(),
+                'overdue_lendings': AdminDashboardService._get_overdue_lendings_warnings() + AdminDashboardService._get_legacy_overdue_lendings_warnings(),
+                'low_stock_consumables': AdminDashboardService._get_low_stock_consumables_warnings(),
+                'duplicate_lendings': AdminDashboardService._get_duplicate_lendings_warnings()
             }
-            
-            # Defekte Werkzeuge
-            try:
-                defect_tools = list(mongodb.find('tools', {'status': 'defekt', 'deleted': {'$ne': True}}))
-                for tool in defect_tools:
-                    try:
-                        # Sichere Dokumentverarbeitung
-                        tool = AdminDashboardService._safe_document_processing(tool)
-                        warnings['defect_tools'].append({
-                            'name': tool.get('name', 'Unbekanntes Tool'),
-                            'barcode': tool.get('barcode', ''),
-                            'status': 'defekt',
-                            'severity': 'error'
-                        })
-                    except Exception as e:
-                        logger.warning(f"Fehler bei defektem Tool: [Interner Fehler]")
-                        continue
-            except Exception as e:
-                logger.error(f"Fehler beim Laden defekter Tools: [Interner Fehler]")
-            
-            # Überfällige Ausleihen - nutze die neue Logik basierend auf expected_return_date
-            try:
-                overdue_loans = AdminDashboardService.get_overdue_loans()
-                
-                for loan in overdue_loans:
-                    try:
-                        warnings['overdue_lendings'].append({
-                            'tool_name': loan.get('tool_name', 'Unbekanntes Tool'),
-                            'tool_barcode': loan.get('tool_barcode', ''),
-                            'worker_name': loan.get('worker_name', 'Unbekannt'), 
-                            'worker_barcode': loan.get('worker_barcode', ''),
-                            'days_overdue': loan.get('days_overdue', 0),
-                            'expected_return_date': loan.get('expected_return_date'),
-                            'severity': 'error' if loan.get('days_overdue', 0) > 7 else 'warning'
-                        })
-                    except Exception as e:
-                        logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
-                        continue
-            except Exception as e:
-                logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
-
-            # Legacy-Fallback für alte Ausleihen ohne expected_return_date (Bolt ⚡ N+1 Fix)
-            try:
-                legacy_pipeline = [
-                    {
-                        '$match': {
-                            'returned_at': {'$exists': False},
-                            'expected_return_date': {'$exists': False}
-                        }
-                    },
-                    {
-                        '$lookup': {
-                            'from': 'tools',
-                            'localField': 'tool_barcode',
-                            'foreignField': 'barcode',
-                            'as': 'tool_info'
-                        }
-                    },
-                    {'$unwind': {'path': '$tool_info', 'preserveNullAndEmptyArrays': True}},
-                    {
-                        '$lookup': {
-                            'from': 'workers',
-                            'localField': 'worker_barcode',
-                            'foreignField': 'barcode',
-                            'as': 'worker_info'
-                        }
-                    },
-                    {'$unwind': {'path': '$worker_info', 'preserveNullAndEmptyArrays': True}}
-                ]
-
-                active_lendings = mongodb.aggregate('lendings', legacy_pipeline)
-                
-                for lending in active_lendings:
-                    try:
-                        # Sichere Dokumentverarbeitung
-                        lending = AdminDashboardService._safe_document_processing(lending, ['lent_at', 'due_date'])
-                        
-                        # Prüfe ob überfällig (mehr als 14 Tage ohne expected_return_date)
-                        lent_at = lending.get('lent_at')
-                        if lent_at and isinstance(lent_at, datetime):
-                            days_overdue = (datetime.now() - lent_at).days
-                            if days_overdue > 14:
-                                # Nutze bereits geladene Daten statt find_one (Bolt ⚡)
-                                tool = lending.get('tool_info')
-                                worker = lending.get('worker_info')
-                                
-                                if tool and worker:
-                                    tool = AdminDashboardService._safe_document_processing(tool)
-                                    worker = AdminDashboardService._safe_document_processing(worker)
-                                    
-                                    warnings['overdue_lendings'].append({
-                                        'tool_name': tool.get('name', 'Unbekanntes Tool'),
-                                        'worker_name': worker.get('name', 'Unbekannter Worker'),
-                                        'days_overdue': days_overdue,
-                                        'lent_at': lent_at,
-                                        'severity': 'warning'
-                                    })
-                    except Exception as e:
-                        logger.warning(f"Fehler bei überfälliger Ausleihe: [Interner Fehler]")
-                        continue
-            except Exception as e:
-                logger.error(f"Fehler beim Laden überfälliger Ausleihen: [Interner Fehler]")
-            
-            # Verbrauchsmaterial mit niedrigem Bestand
-            try:
-                # OPTIMIERT: Korrekte Felder und Index-Nutzung via $expr (Bolt ⚡)
-                low_stock_consumables = list(mongodb.find('consumables', {
-                    'deleted': {'$ne': True},
-                    '$expr': {'$lte': ['$quantity', '$min_quantity']}
-                }))
-                for consumable in low_stock_consumables:
-                    try:
-                        # Sichere Dokumentverarbeitung
-                        consumable = AdminDashboardService._safe_document_processing(
-                            consumable
-                        )
-                        warnings['low_stock_consumables'].append({
-                            'name': consumable.get(
-                                'name', 'Unbekanntes Verbrauchsmaterial'
-                            ),
-                            'barcode': consumable.get('barcode', ''),
-                            'stock': consumable.get('quantity', 0),
-                            'severity': 'warning'
-                        })
-                    except Exception as e:
-                        logger.warning(
-                            f"Fehler bei Verbrauchsmaterial mit niedrigem "
-                            f"Bestand: [Interner Fehler]"
-                        )
-                        continue
-            except Exception as e:
-                logger.error(
-                    f"Fehler beim Laden von Verbrauchsmaterial mit niedrigem "
-                    f"Bestand: [Interner Fehler]"
-                )
-
-            # Doppelte Ausleihen (Bolt ⚡ Aggregation Fix)
-            try:
-                duplicate_pipeline = [
-                    {'$match': {'returned_at': None}},
-                    {'$group': {
-                        '_id': '$tool_barcode',
-                        'count': {'$sum': 1}
-                    }},
-                    {'$match': {'count': {'$gt': 1}}},
-                    {
-                        '$lookup': {
-                            'from': 'tools',
-                            'localField': '_id',
-                            'foreignField': 'barcode',
-                            'as': 'tool_info'
-                        }
-                    },
-                    {'$unwind': {
-                        'path': '$tool_info',
-                        'preserveNullAndEmptyArrays': True
-                    }}
-                ]
-
-                duplicates = mongodb.aggregate('lendings', duplicate_pipeline)
-
-                for dup in duplicates:
-                    try:
-                        bc = dup.get('_id')
-                        count = dup.get('count', 0)
-                        tool = dup.get('tool_info')
-
-                        # Filter für gelöschte Tools
-                        if tool and tool.get('deleted'):
-                            tool = None
-
-                        if tool:
-                            tool = AdminDashboardService._safe_document_processing(
-                                tool
-                            )
-
-                        warnings['duplicate_lendings'].append({
-                            'name': f"{tool.get('name', 'Unbekanntes Tool')} (Barcode: {bc})" if tool else f"Unbekanntes Tool (Barcode: {bc})",
-                            'status': f'Doppelte Ausleihen: {count}x',
-                            'severity': 'warning'
-                        })
-                    except Exception as e:
-                        logger.warning(f"Fehler bei doppeltem Tool: [Interner Fehler]")
-                        continue
-            except Exception as e:
-                logger.error(f"Fehler beim Laden doppelter Ausleihen: [Interner Fehler]")
-            
             return warnings
             
         except Exception as e:
