@@ -1012,6 +1012,7 @@ def fix_backup_fields():
     """Korrigiert fehlende Felder in der Datenbank nach Backup-Restore"""
     try:
         from app.services.admin_backup_service import AdminBackupService
+        from pymongo import UpdateOne
 
         # Führe die Korrektur aus
         fixed_count = AdminBackupService._fix_missing_created_at_fields()
@@ -1019,46 +1020,61 @@ def fix_backup_fields():
         # Zusätzliche Korrekturen für Dashboard-Probleme
         dashboard_fixes = 0
 
-        # Stelle sicher, dass alle Tools ein gültiges created_at Feld haben
-        all_tools = mongodb.find('tools', {})
-        for tool in all_tools:
-            created_at = tool.get('created_at')
-            if created_at is None:
-                # Verwende updated_at oder aktuelles Datum
-                fallback_date = tool.get('updated_at') or datetime.now()
-                if isinstance(fallback_date, str):
-                    try:
-                        fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S.%f')
-                    except ValueError:
-                        try:
-                            fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S')
-                        except ValueError:
-                            fallback_date = datetime.now()
+        # Filter für fehlende Felder, optimiert für MongoDB
+        missing_created_at_filter = {
+            '$or': [{'created_at': None}, {'created_at': {'$exists': False}}]
+        }
 
-                mongodb.update_one('tools',
-                                 {'_id': tool['_id']},
-                                 {'$set': {'created_at': fallback_date}})
-                dashboard_fixes += 1
+        # Stelle sicher, dass alle Tools ein gültiges created_at Feld haben
+        tools_to_fix = mongodb.find('tools', missing_created_at_filter)
+        tool_updates = []
+        for tool in tools_to_fix:
+            # Verwende updated_at oder aktuelles Datum
+            fallback_date = tool.get('updated_at') or datetime.now()
+            if isinstance(fallback_date, str):
+                try:
+                    fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S.%f')
+                except ValueError:
+                    try:
+                        fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        fallback_date = datetime.now()
+
+            tool_updates.append(
+                UpdateOne(
+                    {'_id': tool['_id']},
+                    {'$set': {'created_at': fallback_date}}
+                )
+            )
+            dashboard_fixes += 1
+
+        if tool_updates:
+            mongodb.get_collection('tools').bulk_write(tool_updates, ordered=False)
 
         # Stelle sicher, dass alle Workers ein gültiges created_at Feld haben
-        all_workers = mongodb.find('workers', {})
-        for worker in all_workers:
-            created_at = worker.get('created_at')
-            if created_at is None:
-                fallback_date = worker.get('updated_at') or datetime.now()
-                if isinstance(fallback_date, str):
+        workers_to_fix = mongodb.find('workers', missing_created_at_filter)
+        worker_updates = []
+        for worker in workers_to_fix:
+            fallback_date = worker.get('updated_at') or datetime.now()
+            if isinstance(fallback_date, str):
+                try:
+                    fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S.%f')
+                except ValueError:
                     try:
-                        fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S.%f')
+                        fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S')
                     except ValueError:
-                        try:
-                            fallback_date = datetime.strptime(fallback_date, '%Y-%m-%d %H:%M:%S')
-                        except ValueError:
-                            fallback_date = datetime.now()
+                        fallback_date = datetime.now()
 
-                mongodb.update_one('workers',
-                                 {'_id': worker['_id']},
-                                 {'$set': {'created_at': fallback_date}})
-                dashboard_fixes += 1
+            worker_updates.append(
+                UpdateOne(
+                    {'_id': worker['_id']},
+                    {'$set': {'created_at': fallback_date}}
+                )
+            )
+            dashboard_fixes += 1
+
+        if worker_updates:
+            mongodb.get_collection('workers').bulk_write(worker_updates, ordered=False)
 
         total_fixes = fixed_count + dashboard_fixes
 
