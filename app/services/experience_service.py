@@ -1,7 +1,6 @@
 from datetime import datetime
 from app.models.experience import Experience
 from app.models.job import Job
-from app.models.user import User
 from app.utils.logger import loggers
 from bson import ObjectId
 
