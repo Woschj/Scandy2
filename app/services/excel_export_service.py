@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Dict, List, Any, BinaryIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.worksheet.worksheet import Worksheet
 from app.models.mongodb_database import mongodb
 import logging
