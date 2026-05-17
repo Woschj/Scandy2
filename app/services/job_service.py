@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from app.models.job import Job
 from app.utils.logger import loggers
 from bson import ObjectId
-from typing import Tuple
 
 class JobService:
     """Service für Job-Management"""
