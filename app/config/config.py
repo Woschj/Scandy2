@@ -181,7 +181,7 @@ class DevelopmentConfig(Config):
     """Entwicklungs-Konfiguration"""
     DEBUG = os.environ.get('FLASK_DEBUG', '1') in ('1', 'true', 'True')
     TESTING = False
-    SECRET_KEY = 'dev-key-not-for-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(32))
     SESSION_COOKIE_SECURE = False
     REMEMBER_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = False  # Erlaubt JavaScript-Zugriff für Debugging
@@ -190,7 +190,7 @@ class TestingConfig(Config):
     """Test-Konfiguration"""
     DEBUG = True
     TESTING = True
-    SECRET_KEY = 'test-key-not-for-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(32))
     SESSION_COOKIE_SECURE = False
     REMEMBER_COOKIE_SECURE = False
     # MongoDB für Tests
