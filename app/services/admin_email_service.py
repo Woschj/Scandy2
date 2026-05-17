@@ -21,11 +21,10 @@ class AdminEmailService:
         """Hole alle E-Mail-Einstellungen"""
         try:
             settings = {}
-            rows = mongodb.find('settings', {})
+            rows = mongodb.find('settings', {'key': {'$regex': '^email_'}})
             
             for row in rows:
-                if row['key'].startswith('email_'):
-                    settings[row['key']] = row['value']
+                settings[row['key']] = row['value']
             
             return settings
             
