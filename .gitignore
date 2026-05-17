@@ -135,3 +135,4 @@ package-lock.json
 scandy_backup_*.json
 scandy_backup_*.zip
 scandy_weekly_backup_*.zip
+.dev_secret_key
