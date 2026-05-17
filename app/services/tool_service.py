@@ -4,7 +4,7 @@ Alle Werkzeug-Funktionalitäten an einem Ort
 """
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
-from flask import current_app, g
+from flask import g
 from app.models.mongodb_database import mongodb
 from app.services.lending_service import LendingService
 from app.services.utility_service import UtilityService
