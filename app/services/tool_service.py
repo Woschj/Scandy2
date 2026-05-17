@@ -8,7 +8,7 @@ from flask import current_app, g
 from app.models.mongodb_database import mongodb
 from app.services.lending_service import LendingService
 from app.services.utility_service import UtilityService
-from app.utils.database_helpers import get_categories_from_settings, get_locations_from_settings
+from app.utils.database_helpers import get_locations_from_settings
 import logging
 
 logger = logging.getLogger(__name__)
