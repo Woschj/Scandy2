@@ -3,7 +3,6 @@ Zentraler Validation Service für Scandy
 Alle Formular-Validierungen an einem Ort
 """
 from typing import Dict, List, Tuple, Any
-from werkzeug.security import generate_password_hash
 import re
 import logging
 
