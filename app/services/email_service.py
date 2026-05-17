@@ -3,9 +3,10 @@ Zentraler Email Service für Scandy
 Alle E-Mail-Funktionalitäten an einem Ort
 """
 from typing import Dict, Any, List, Optional
-from flask import current_app, render_template_string
+from flask import current_app
 from app.utils.email_utils import send_email
 from app.services.admin_email_templates_service import AdminEmailTemplatesService
+from jinja2.sandbox import SandboxedEnvironment
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,15 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Zentraler Service für alle E-Mail-Operationen"""
     
+    @staticmethod
+    def _safe_render_template(template_str: str, **context) -> str:
+        """
+        Rendert einen Template-String sicher in einer Sandbox, um SSTI zu verhindern.
+        """
+        env = SandboxedEnvironment(autoescape=True)
+        template = env.from_string(template_str)
+        return template.render(**context)
+
     @staticmethod
     def send_password_reset_email(user_email: str, reset_token: str, username: str) -> bool:
         """
@@ -53,7 +63,7 @@ class EmailService:
             <p>Der Link ist 24 Stunden gültig.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
-            html_content = render_template_string(template, username=username, reset_link=reset_link)
+            html_content = EmailService._safe_render_template(template, username=username, reset_link=reset_link)
             return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
@@ -137,7 +147,7 @@ class EmailService:
             <p>Bitte ändern Sie Ihr Passwort nach der ersten Anmeldung.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
-            html_content = render_template_string(template, username=username, password=password, firstname=firstname, login_url=login_url)
+            html_content = EmailService._safe_render_template(template, username=username, password=password, firstname=firstname, login_url=login_url)
             return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
@@ -170,13 +180,13 @@ class EmailService:
             
             template = f"""
             <div style="padding: 15px; border: 1px solid; border-radius: 5px; {style}">
-                <h3>{{ subject }}</h3>
-                <p>{{ message }}</p>
+                <h3>{{{{ subject }}}}</h3>
+                <p>{{{{ message }}}}</p>
             </div>
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
             
-            html_content = render_template_string(template, subject=subject, message=message)
+            html_content = EmailService._safe_render_template(template, subject=subject, message=message)
             
             return send_email(user_email, subject, html_content)
             
@@ -225,7 +235,7 @@ class EmailService:
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
             
-            html_content = render_template_string(template, 
+            html_content = EmailService._safe_render_template(template,
                                                 action_message=action_messages.get(action, "Benachrichtigung"),
                                                 ticket=ticket_data)
             
@@ -271,7 +281,7 @@ class EmailService:
             <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
             """
             
-            html_content = render_template_string(template, 
+            html_content = EmailService._safe_render_template(template,
                                                 action_message=action_messages.get(action, "Ausleihe-Benachrichtigung"),
                                                 lending=lending_data)
             
