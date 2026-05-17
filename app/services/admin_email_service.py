@@ -7,7 +7,7 @@ die aus der großen admin.py Datei ausgelagert wurden.
 
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 from app.models.mongodb_database import mongodb
 from app.utils.email_utils import send_email
 

@@ -26,9 +26,7 @@ from app.utils.filters import register_filters, status_color, priority_color
 import logging
 from app.utils.error_handler import handle_errors
 from flask_compress import Compress
-from app.utils.auth_utils import needs_setup
 from pathlib import Path
-import sys
 from flask_login import LoginManager, current_user
 from app.utils.context_processors import register_context_processors
 from app.config import Config
