@@ -14,6 +14,54 @@ class EmailService:
     """Zentraler Service für alle E-Mail-Operationen"""
     
     @staticmethod
+    def _get_base_url() -> str:
+        """Holt die Basis-URL, bevorzugt Request-Context, Fallback auf Config"""
+        try:
+            from flask import request, has_request_context
+            if has_request_context():
+                return (request.url_root or '').rstrip('/')
+            else:
+                return current_app.config.get('BASE_URL', 'http://localhost:5000')
+        except Exception:
+            return current_app.config.get('BASE_URL', 'http://localhost:5000')
+
+    @staticmethod
+    def _ensure_credentials_in_content(content: Optional[str], username: str, password: str, is_html: bool = True) -> Optional[str]:
+        """Stellt sicher, dass Benutzername und Passwort im Inhalt vorhanden sind"""
+        if not content:
+            return content
+
+        if str(password) in content:
+            return content
+
+        if is_html:
+            extra_content = (
+                f"<hr><p><strong>Benutzername:</strong> {username}<br>"
+                f"<strong>Passwort:</strong> {password}</p>"
+            )
+        else:
+            extra_content = f"\n\n---\nBenutzername: {username}\nPasswort: {password}\n"
+
+        return content + extra_content
+
+    @staticmethod
+    def _get_fallback_welcome_html() -> str:
+        """Gibt das Fallback HTML-Template für neue Benutzer zurück"""
+        return """
+            <h2>Willkommen bei Scandy!</h2>
+            <p>Hallo {{ firstname }},</p>
+            <p>Ihr Benutzerkonto wurde erfolgreich erstellt.</p>
+            <p><strong>Ihre Zugangsdaten:</strong></p>
+            <ul>
+                <li><strong>Benutzername:</strong> {{ username }}</li>
+                <li><strong>Passwort:</strong> {{ password }}</li>
+            </ul>
+            <p>Login: <a href='{{ login_url }}'>{{ login_url }}</a></p>
+            <p>Bitte ändern Sie Ihr Passwort nach der ersten Anmeldung.</p>
+            <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
+            """
+
+    @staticmethod
     def send_password_reset_email(user_email: str, reset_token: str, username: str) -> bool:
         """
         Sendet E-Mail für Passwort-Reset
@@ -28,22 +76,22 @@ class EmailService:
         """
         try:
             subject_default = "Scandy - Passwort zurücksetzen"
-            # Bevorzuge Request-URL, fallback auf BASE_URL aus Config
-            try:
-                from flask import request, has_request_context
-                if has_request_context():
-                    base_url = (request.url_root or '').rstrip('/')
-                else:
-                    base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
-            except Exception:
-                base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
+            base_url = EmailService._get_base_url()
             reset_link = f"{base_url}/auth/reset/{reset_token}"
+
             rendered = AdminEmailTemplatesService.render_template_by_key('password_reset', {
                 'username': username,
                 'reset_link': reset_link,
             })
+
             if rendered and (rendered.get('html_content') or rendered.get('text_content')):
-                return send_email(user_email, rendered.get('subject') or subject_default, rendered.get('html_content'), rendered.get('text_content'))
+                return send_email(
+                    user_email,
+                    rendered.get('subject') or subject_default,
+                    rendered.get('html_content'),
+                    rendered.get('text_content')
+                )
+
             # Fallback: inline-Template
             template = """
             <h2>Passwort zurücksetzen</h2>
@@ -75,17 +123,10 @@ class EmailService:
             bool: True wenn erfolgreich gesendet
         """
         try:
-            # Bevorzuge Request-URL, fallback auf BASE_URL aus Config
-            try:
-                from flask import request, has_request_context
-                if has_request_context():
-                    base_url = (request.url_root or '').rstrip('/')
-                else:
-                    base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
-            except Exception:
-                base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
+            base_url = EmailService._get_base_url()
             login_url = f"{base_url}/auth/login"
             subject_default = "Scandy - Ihre Zugangsdaten"
+
             # Kontext mit Synonymen für bessere Template-Kompatibilität
             context = {
                 'firstname': firstname,
@@ -96,48 +137,41 @@ class EmailService:
                 'new_password': password,
                 'temp_password': password,
             }
+
             rendered = AdminEmailTemplatesService.render_template_by_key('user_welcome', context)
+
             if rendered and (rendered.get('html_content') or rendered.get('text_content')):
                 html_content = rendered.get('html_content')
                 text_content = rendered.get('text_content')
 
                 # Sicherstellen, dass Zugangsdaten tatsächlich inhaltlich enthalten sind
                 try:
-                    def _contains_pwd(s: Optional[str]) -> bool:
-                        return bool(s) and (str(password) in s)
-
-                    # Falls das Template das Passwort nicht renderte, hänge einen kompakten Block an
-                    if not _contains_pwd(html_content):
-                        extra_html = (
-                            f"<hr><p><strong>Benutzername:</strong> {username}<br>"
-                            f"<strong>Passwort:</strong> {password}</p>"
-                        )
-                        html_content = (html_content or "") + extra_html
-                    if not _contains_pwd(text_content):
-                        extra_text = (
-                            f"\n\n---\nBenutzername: {username}\nPasswort: {password}\n"
-                        )
-                        text_content = (text_content or "") + extra_text
+                    html_content = EmailService._ensure_credentials_in_content(
+                        html_content, username, password, is_html=True
+                    )
+                    text_content = EmailService._ensure_credentials_in_content(
+                        text_content, username, password, is_html=False
+                    )
                 except Exception:
                     # Im Zweifel unverändert senden
                     pass
 
-                return send_email(user_email, rendered.get('subject') or subject_default, html_content, text_content)
+                return send_email(
+                    user_email,
+                    rendered.get('subject') or subject_default,
+                    html_content,
+                    text_content
+                )
+
             # Fallback: inline-Template
-            template = """
-            <h2>Willkommen bei Scandy!</h2>
-            <p>Hallo {{ firstname }},</p>
-            <p>Ihr Benutzerkonto wurde erfolgreich erstellt.</p>
-            <p><strong>Ihre Zugangsdaten:</strong></p>
-            <ul>
-                <li><strong>Benutzername:</strong> {{ username }}</li>
-                <li><strong>Passwort:</strong> {{ password }}</li>
-            </ul>
-            <p>Login: <a href='{{ login_url }}'>{{ login_url }}</a></p>
-            <p>Bitte ändern Sie Ihr Passwort nach der ersten Anmeldung.</p>
-            <p>Mit freundlichen Grüßen<br>Ihr Scandy-Team</p>
-            """
-            html_content = render_template_string(template, username=username, password=password, firstname=firstname, login_url=login_url)
+            template = EmailService._get_fallback_welcome_html()
+            html_content = render_template_string(
+                template,
+                username=username,
+                password=password,
+                firstname=firstname,
+                login_url=login_url
+            )
             return send_email(user_email, subject_default, html_content)
             
         except Exception as e:
