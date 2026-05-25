@@ -210,7 +210,87 @@ class BackupService:
         except Exception as e:
             logger.error(f"Fehler beim Wiederherstellen aus Archiv: [Interner Fehler]")
             return False, f"Fehler beim Wiederherstellen aus Archiv: [Interner Fehler]"
-    
+
+    def _analyze_backup_format(self, backup_data: Dict[str, Any]) -> Tuple[Dict[str, Any], Any]:
+        """Analysiert das Format und die Version der Backup-Daten"""
+        if 'data' in backup_data:
+            # Neues Format mit Metadata
+            has_metadata = True
+            has_datatype_preservation = backup_data.get('metadata', {}).get('datatype_preservation', False)
+            data_section = backup_data['data']
+            format_type = 'new'
+            version_estimate = '2.0+' if has_datatype_preservation else '1.0-1.9'
+        else:
+            # Altes Format
+            has_metadata = False
+            has_datatype_preservation = False
+            data_section = backup_data
+            format_type = 'old'
+
+            # Schätze Version basierend auf vorhandenen Collections
+            if 'jobs' in data_section:
+                version_estimate = '1.5+'
+            elif 'tickets' in data_section:
+                version_estimate = '1.0+'
+            else:
+                version_estimate = 'pre-1.0'
+
+        format_info = {
+            'is_old_format': format_type == 'old',
+            'version_estimate': version_estimate,
+            'collections_found': list(data_section.keys()) if isinstance(data_section, dict) else [],
+            'total_documents': sum(len(docs) for docs in data_section.values() if isinstance(docs, list)) if isinstance(data_section, dict) else 0,
+            'has_metadata': has_metadata,
+            'has_datatype_preservation': has_datatype_preservation,
+            'format_type': format_type
+        }
+
+        return format_info, data_section
+
+    def _restore_collections_data(self, data_section: Dict[str, Any], format_info: Dict[str, Any]) -> Tuple[bool, str]:
+        """Stellt die Collections aus dem data_section wieder her"""
+        # ERWEITERTE Collections-Liste für verschiedene Backup-Versionen (ohne users)
+        collections_to_restore = [
+            'tools', 'workers', 'consumables', 'lendings',
+            'consumable_usages', 'tickets', 'settings', 'work_times', 'jobs', 'timesheets',
+            'auftrag_details', 'auftrag_material', 'email_config',
+            'email_settings', 'system_logs', 'homepage_notices'
+        ]
+
+        restore_stats = {
+            'total_collections': 0,
+            'successful_collections': 0,
+            'failed_collections': 0,
+            'total_documents': 0
+        }
+
+        for collection_name in collections_to_restore:
+            if collection_name in data_section:
+                restore_stats['total_collections'] += 1
+
+                try:
+                    # Collection leeren
+                    mongodb.db[collection_name].delete_many({})
+
+                    # Dokumente wiederherstellen mit erweiterter Konvertierung
+                    documents = data_section[collection_name]
+                    if documents:
+                        mongodb.db[collection_name].insert_many(documents)
+                        restore_stats['successful_collections'] += 1
+                        restore_stats['total_documents'] += len(documents)
+
+                        logger.info(f"✅ Collection {collection_name}: {len(documents)} Dokumente wiederhergestellt")
+
+                except Exception as e:
+                    logger.error(f"❌ Fehler beim Wiederherstellen der Collection {collection_name}: [Interner Fehler]")
+                    restore_stats['failed_collections'] += 1
+
+        success_message = f"Backup erfolgreich wiederhergestellt ({format_info['version_estimate']} Format)"
+        success_message += f" - {restore_stats['successful_collections']}/{restore_stats['total_collections']} Collections"
+        success_message += f" - {restore_stats['total_documents']} Dokumente"
+
+        return True, success_message
+
     def _restore_from_json(self, json_path: str) -> Tuple[bool, str]:
         """Stellt ein Backup aus einer JSON-Datei wieder her mit erweiterter Unterstützung für alte Formate"""
         try:
@@ -218,94 +298,18 @@ class BackupService:
             with open(json_path, 'r', encoding='utf-8') as f:
                 backup_data = json.load(f)
             
-            # ERWEITERTE Backup-Format-Erkennung (ohne rekursive Aufrufe)
-            if 'data' in backup_data:
-                # Neues Format mit Metadata
-                has_metadata = True
-                has_datatype_preservation = backup_data.get('metadata', {}).get('datatype_preservation', False)
-                data_section = backup_data['data']
-                format_type = 'new'
-                version_estimate = '2.0+' if has_datatype_preservation else '1.0-1.9'
-            else:
-                # Altes Format
-                has_metadata = False
-                has_datatype_preservation = False
-                data_section = backup_data
-                format_type = 'old'
-                
-                # Schätze Version basierend auf vorhandenen Collections
-                if 'jobs' in data_section:
-                    version_estimate = '1.5+'
-                elif 'tickets' in data_section:
-                    version_estimate = '1.0+'
-                else:
-                    version_estimate = 'pre-1.0'
+            # Analysiere das Backup-Format
+            format_info, data_section = self._analyze_backup_format(backup_data)
             
-            format_info = {
-                'is_old_format': format_type == 'old',
-                'version_estimate': version_estimate,
-                'collections_found': list(data_section.keys()) if isinstance(data_section, dict) else [],
-                'total_documents': sum(len(docs) for docs in data_section.values() if isinstance(docs, list)) if isinstance(data_section, dict) else 0,
-                'has_metadata': has_metadata,
-                'has_datatype_preservation': has_datatype_preservation,
-                'format_type': format_type
-            }
-            
-            logger.info(f"Backup-Format erkannt: {format_type} ({version_estimate})")
+            logger.info(f"Backup-Format erkannt: {format_info['format_type']} ({format_info['version_estimate']})")
             
             # Backup validieren mit erweiterter Unterstützung
             is_valid, validation_message = self.backup_manager._validate_backup_data(backup_data)
             if not is_valid:
                 return False, f"Ungültiges Backup: {validation_message}"
             
-            # ERWEITERTE Collections-Liste für verschiedene Backup-Versionen (ohne users)
-            collections_to_restore = [
-                'tools', 'workers', 'consumables', 'lendings', 
-                'consumable_usages', 'tickets', 'settings', 'work_times', 'jobs', 'timesheets',
-                'auftrag_details', 'auftrag_material', 'email_config', 
-                'email_settings', 'system_logs', 'homepage_notices'
-            ]
-            
-            # Bestimme welche Collections im Backup vorhanden sind
-            if format_info['has_metadata']:
-                data_section = backup_data['data']
-            else:
-                # Altes Format - verwende direkt
-                data_section = backup_data
-            
-            restore_stats = {
-                'total_collections': 0,
-                'successful_collections': 0,
-                'failed_collections': 0,
-                'total_documents': 0
-            }
-            
-            for collection_name in collections_to_restore:
-                if collection_name in data_section:
-                    restore_stats['total_collections'] += 1
-                    
-                    try:
-                        # Collection leeren
-                        mongodb.db[collection_name].delete_many({})
-                        
-                        # Dokumente wiederherstellen mit erweiterter Konvertierung
-                        documents = data_section[collection_name]
-                        if documents:
-                            mongodb.db[collection_name].insert_many(documents)
-                            restore_stats['successful_collections'] += 1
-                            restore_stats['total_documents'] += len(documents)
-                            
-                            logger.info(f"✅ Collection {collection_name}: {len(documents)} Dokumente wiederhergestellt")
-                        
-                    except Exception as e:
-                        logger.error(f"❌ Fehler beim Wiederherstellen der Collection {collection_name}: [Interner Fehler]")
-                        restore_stats['failed_collections'] += 1
-            
-            success_message = f"Backup erfolgreich wiederhergestellt ({format_info['version_estimate']} Format)"
-            success_message += f" - {restore_stats['successful_collections']}/{restore_stats['total_collections']} Collections"
-            success_message += f" - {restore_stats['total_documents']} Dokumente"
-            
-            return True, success_message
+            # Collections aus dem data_section wiederherstellen
+            return self._restore_collections_data(data_section, format_info)
             
         except Exception as e:
             logger.error(f"Fehler beim Wiederherstellen aus JSON: [Interner Fehler]")
