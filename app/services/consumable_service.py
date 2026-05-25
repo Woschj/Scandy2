@@ -244,44 +244,104 @@ class ConsumableService:
     
     @staticmethod
     def get_statistics() -> Dict[str, Any]:
-        """Holt Statistiken für Verbrauchsmaterialien"""
+        """
+        Holt Statistiken für Verbrauchsmaterialien (optimiert via Aggregation Bolt ⚡)
+        Reduziert Datenbank-Abfragen und In-Memory-Verarbeitung.
+        """
         try:
-            all_consumables = ConsumableService.get_all_consumables()
-            
-            stats = {
-                'total_consumables': len(all_consumables),
-                'categories': {},
-                'locations': {},
-                'stock_levels': {
-                    'sufficient': 0,
-                    'warning': 0,
-                    'critical': 0
+            pipeline = [
+                {'$match': {'deleted': {'$ne': True}}},
+                {
+                    '$facet': {
+                        'total_count': [{'$count': 'count'}],
+                        'categories': [
+                            {'$group': {
+                                '_id': {'$ifNull': ['$category', 'Keine Kategorie']},
+                                'count': {'$sum': 1}
+                            }}
+                        ],
+                        'locations': [
+                            {'$group': {
+                                '_id': {'$ifNull': ['$location', 'Kein Standort']},
+                                'count': {'$sum': 1}
+                            }}
+                        ],
+                        'stock_levels': [
+                            {
+                                '$project': {
+                                    'qty': {'$ifNull': ['$quantity', 0]},
+                                    'min_qty': {'$ifNull': ['$min_quantity', 0]}
+                                }
+                            },
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'sufficient': {
+                                        '$sum': {
+                                            '$cond': [{'$gte': ['$qty', '$min_qty']}, 1, 0]
+                                        }
+                                    },
+                                    'warning': {
+                                        '$sum': {
+                                            '$cond': [
+                                                {'$and': [
+                                                    {'$lt': ['$qty', '$min_qty']},
+                                                    {'$gt': ['$qty', 0]}
+                                                ]}, 1, 0
+                                            ]
+                                        }
+                                    },
+                                    'critical': {
+                                        '$sum': {
+                                            '$cond': [{'$lte': ['$qty', 0]}, 1, 0]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
                 }
+            ]
+
+            results = list(mongodb.aggregate('consumables', pipeline))
+            
+            if not results or not results[0].get('total_count'):
+                return {
+                    'total_consumables': 0,
+                    'categories': {},
+                    'locations': {},
+                    'stock_levels': {'sufficient': 0, 'warning': 0, 'critical': 0}
+                }
+
+            data = results[0]
+            
+            # Format results
+            total = data['total_count'][0]['count'] if data.get('total_count') else 0
+
+            categories = {}
+            for cat in data.get('categories', []):
+                categories[cat['_id']] = cat['count']
+                
+            locations = {}
+            for loc in data.get('locations', []):
+                locations[loc['_id']] = loc['count']
+                
+            stock_levels = {'sufficient': 0, 'warning': 0, 'critical': 0}
+            if data.get('stock_levels'):
+                sl = data['stock_levels'][0]
+                stock_levels['sufficient'] = sl.get('sufficient', 0)
+                stock_levels['warning'] = sl.get('warning', 0)
+                stock_levels['critical'] = sl.get('critical', 0)
+
+            return {
+                'total_consumables': total,
+                'categories': categories,
+                'locations': locations,
+                'stock_levels': stock_levels
             }
             
-            # Kategorie- und Standort-Statistiken
-            for consumable in all_consumables:
-                category = consumable.get('category', 'Keine Kategorie')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                location = consumable.get('location', 'Kein Standort')
-                stats['locations'][location] = stats['locations'].get(location, 0) + 1
-                
-                # Bestandslevel
-                quantity = consumable.get('quantity', 0)
-                min_quantity = consumable.get('min_quantity', 0)
-                
-                if quantity >= min_quantity:
-                    stats['stock_levels']['sufficient'] += 1
-                elif quantity > 0:
-                    stats['stock_levels']['warning'] += 1
-                else:
-                    stats['stock_levels']['critical'] += 1
-            
-            return stats
-            
         except Exception as e:
-            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: [Interner Fehler]")
+            logger.error(f"Fehler beim Laden der Verbrauchsmaterial-Statistiken: {e}")
             return {
                 'total_consumables': 0,
                 'categories': {},
@@ -291,4 +351,4 @@ class ConsumableService:
                     'warning': 0,
                     'critical': 0
                 }
-            } 
+            }
