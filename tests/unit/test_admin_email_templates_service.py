@@ -166,3 +166,68 @@ class TestAdminEmailTemplatesService:
         # starttls should not be called for port 465
         mock_server_instance.starttls.assert_not_called()
         mock_server_instance.sendmail.assert_called_once()
+
+    @patch('app.services.admin_email_templates_service.AdminEmailTemplatesService.get_template_by_key')
+    @patch('app.services.admin_email_templates_service.render_template_string')
+    def test_render_template_by_key_success(self, mock_render_template_string, mock_get_template_by_key, mock_template):
+        # Wir testen die gesamte Funktionalität inkl. resolve_template_key_for_action
+        # Da kein Mapping existiert (oder wir mocken keines), gibt es einfach den Key zurück
+        mock_get_template_by_key.return_value = mock_template
+
+        # render_template_string is called 3 times, let's mock it to return predictable values
+        mock_render_template_string.side_effect = ['Rendered Subject', 'Rendered HTML', 'Rendered Text']
+
+        context = {'test_var': 'value'}
+
+        result = AdminEmailTemplatesService.render_template_by_key('action_key', context)
+
+        assert result is not None
+        # Verify the returned dict matches exactly what the code constructs
+        assert result['subject'] == 'Rendered Subject'
+        assert result['html_content'] == 'Rendered HTML'
+        assert result['text_content'] == 'Rendered Text'
+
+        mock_get_template_by_key.assert_called_once()
+        assert mock_render_template_string.call_count == 3
+
+    @patch('app.services.admin_email_templates_service.AdminEmailTemplatesService.get_template_by_key')
+    def test_render_template_by_key_not_found(self, mock_get_template_by_key):
+        mock_get_template_by_key.return_value = None
+
+        result = AdminEmailTemplatesService.render_template_by_key('action_key', {})
+
+        assert result is None
+        mock_get_template_by_key.assert_called_once()
+
+    @patch('app.services.admin_email_templates_service.AdminEmailTemplatesService.get_template_by_key')
+    @patch('app.services.admin_email_templates_service.render_template_string')
+    def test_render_template_by_key_exception(self, mock_render_template_string, mock_get_template_by_key, mock_template):
+        mock_get_template_by_key.return_value = mock_template
+
+        # Force exception
+        mock_render_template_string.side_effect = Exception("Render error")
+
+        result = AdminEmailTemplatesService.render_template_by_key('action_key', {})
+
+        assert result is None
+
+    @patch('app.services.admin_email_templates_service.AdminEmailTemplatesService.get_template_by_key')
+    @patch('app.services.admin_email_templates_service.render_template_string')
+    def test_render_template_by_key_missing_fields(self, mock_render_template_string, mock_get_template_by_key):
+        # Template with missing/empty fields
+        mock_template_empty = {
+            'subject': '',
+            'html_content': None
+            # text_content missing completely
+        }
+        mock_get_template_by_key.return_value = mock_template_empty
+
+        result = AdminEmailTemplatesService.render_template_by_key('action_key', {})
+
+        assert result is not None
+        assert result['subject'] is None
+        assert result['html_content'] is None
+        assert result['text_content'] is None
+
+        # render_template_string should not be called since fields are empty/None
+        mock_render_template_string.assert_not_called()
