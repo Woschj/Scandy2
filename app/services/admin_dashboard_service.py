@@ -258,7 +258,7 @@ class AdminDashboardService:
             
             # Defekte Werkzeuge
             try:
-                defect_tools = list(mongodb.find('tools', {'status': 'defekt', 'deleted': {'$ne': True}}))
+                defect_tools = list(mongodb.find('tools', {'status': 'defekt', 'deleted': {'$ne': True}}, projection={'name': 1, 'barcode': 1}))
                 for tool in defect_tools:
                     try:
                         # Sichere Dokumentverarbeitung
