@@ -713,23 +713,29 @@ class LendingService:
                 'tool_barcode': {'$exists': True}
             }))
             
-            unique_tool_barcodes = list({l.get('tool_barcode') for l in orphaned_lendings if l.get('tool_barcode')})
-            tools_cache = {}
-            if unique_tool_barcodes:
-                tools = mongodb.find('tools', {
-                    'barcode': {'$in': unique_tool_barcodes},
-                    'deleted': {'$ne': True}
-                })
-                tools_cache = {t.get('barcode'): t for t in tools}
+            # Extract tool barcodes to query active tools in bulk
+            tool_barcodes_for_orphans = list({
+                lending_doc['tool_barcode'] for lending_doc in orphaned_lendings
+                if lending_doc.get('tool_barcode')
+            })
 
-            for lending in orphaned_lendings:
-                tool_barcode = lending.get('tool_barcode')
-                tool = tools_cache.get(tool_barcode)
+            if tool_barcodes_for_orphans:
+                # Get all active tools in one query
+                active_tools = list(mongodb.find('tools', {
+                    'barcode': {'$in': tool_barcodes_for_orphans},
+                    'deleted': {'$ne': True}
+                }))
                 
-                if not tool:
-                    # Werkzeug existiert nicht mehr, Ausleihe löschen
-                    mongodb.delete_one('lendings', {'_id': lending['_id']})
-                    cleaned_count += 1
+                # Create a set of active tool barcodes for O(1) lookup
+                active_tool_barcodes = {t.get('barcode') for t in active_tools if t.get('barcode')}
+
+                for lending in orphaned_lendings:
+                    tool_barcode = lending.get('tool_barcode')
+
+                    if not tool_barcode or tool_barcode not in active_tool_barcodes:
+                        # Werkzeug existiert nicht mehr, Ausleihe löschen
+                        mongodb.delete_one('lendings', {'_id': lending['_id']})
+                        cleaned_count += 1
             
             # 3. Doppelte aktive Ausleihen bereinigen (behalte die neueste)
             tool_barcodes = [lending['tool_barcode'] for lending in orphaned_lendings]
